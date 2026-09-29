@@ -29,6 +29,12 @@ input,select{min-height:44px;border:1px solid #bdc8ce;border-radius:9px;padding:
 label small{display:block;color:var(--muted);margin-bottom:5px}
 @media(max-width:560px){.top{padding:10px 10px 11px}.brand{gap:10px;min-height:76px}.brand img{width:112px;height:76px}.brand h1{font-size:22px}.wrap{padding:10px}.card{padding:12px}.leader-row{grid-template-columns:36px minmax(80px,1fr) 72px 62px}.score-grid{grid-template-columns:minmax(90px,1fr) 118px 70px}.score-input{display:none!important}.mobile-score-input{display:inline-block!important;width:92px;text-align:center;font-size:22px;font-weight:900}.mobile-only{display:inline!important}.desktop-only{display:none!important}.mobile-strokes{display:block;margin-top:4px;font-size:11px;color:var(--muted)}.mobile-stepper{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:5px}.mobile-stepper button:disabled{opacity:.35}.golf-result{display:block;margin:6px auto 0;font-size:13px;max-width:115px}.mobile-hole-guide{display:block;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#f8fafb}.mobile-hole-guide .guide-title{font-weight:900;font-size:15px;margin-bottom:8px}.mobile-hole-guide .guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.mobile-hole-guide .guide-item{border:1px solid var(--line);border-radius:9px;padding:7px 8px;background:#fff;text-align:center;font-size:12px}.mobile-hole-guide .guide-item strong{display:block;font-size:13px}}
 
+.shamble-area{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.shamble-team{border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff}
+.shamble-player{display:grid;grid-template-columns:minmax(120px,1fr) 82px 100px;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.shamble-player input{width:82px;text-align:center;font-size:18px;font-weight:800}
+.shamble-low{margin-top:10px;padding:9px 10px;border-radius:9px;background:#f8fafb;font-weight:800}
+@media(max-width:560px){.shamble-player{grid-template-columns:minmax(110px,1fr) 74px 88px}.shamble-player input{width:74px}}
 .team-editor{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px;margin-top:12px}
 .editor-card{border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff}
 .editor-card h3{margin:0 0 10px}
@@ -136,10 +142,11 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </div>
 </div>
 <div class="card">
-<div class="score-grid">
+<div id="frontNineScoreGrid" class="score-grid">
 <div class="head">TEAM</div><div class="head" style="text-align:center"><span class="desktop-only">STROKES</span><span class="mobile-only">GOLF SCORE</span></div><div class="head" style="text-align:center">CUP PTS</div>
 <div id="scoreRows" style="display:contents"></div>
 </div>
+<div id="shambleScoreArea" class="shamble-area hidden"></div>
 <div id="saveMsg" class="status" style="margin-top:12px"></div>
 </div>
 </section>
@@ -258,7 +265,7 @@ if(!cfg?.supabaseUrl||!supabaseKey){connection("EllenG configuration did not loa
 const db=window.supabase.createClient(cfg.supabaseUrl,supabaseKey);
 connection("✓ App connected — live scoring ready.",true);
 const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
-let tournament=null, scores=[], trashMessages=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, user=null, captainTeam=null, isCommissioner=false, hole=1;
+let tournament=null, scores=[], playerScores=[], trashMessages=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, user=null, captainTeam=null, isCommissioner=false, hole=1;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
@@ -426,6 +433,75 @@ function renderProgress(){
  $("progressSummary").innerHTML=`<span class="badge">${complete}/18 holes complete</span><span class="badge">${18-complete} pending</span>`;
  $("progressGrid").innerHTML=cards;
 }
+
+function teamRosterGolfers(teamIndex){
+ const rawTeam=draftState?.teams?.[teamIndex];
+ const roster=Array.isArray(rawTeam?.roster)?rawTeam.roster:[];
+ const golfers=Array.isArray(draftState?.golfers)?draftState.golfers:[];
+ return roster.map(r=>{
+   if(typeof r==="number")return {index:r,name:golfers[r]?.name||`Golfer ${r+1}`};
+   if(r&&typeof r==="object"){
+     const idx=Number(r.golferIndex);
+     if(Number.isInteger(idx))return {index:idx,name:r.name||golfers[idx]?.name||`Golfer ${idx+1}`};
+   }
+   return null;
+ }).filter(x=>x&&x.name);
+}
+function renderShambleScoring(par,pts){
+ const area=$("shambleScoreArea"), front=$("frontNineScoreGrid");
+ if(!area||!front)return;
+ if(hole<=9){area.classList.add("hidden");front.classList.remove("hidden");return}
+ front.classList.add("hidden");area.classList.remove("hidden");
+ area.innerHTML=teams.map((t,teamIndex)=>{
+   const roster=teamRosterGolfers(teamIndex);
+   if(!roster.length){
+     return `<div class="shamble-team"><div class="row between"><strong>${esc(t.name)}</strong><span class="badge">SHAMBLE</span></div><div class="note" style="margin-top:8px">No drafted golfers are on this team yet.</div></div>`;
+   }
+   const entered=roster.map(g=>playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===hole&&Number(x.golfer_index)===g.index));
+   const complete=entered.every(Boolean);
+   const low=complete?Math.min(...entered.map(x=>Number(x.score))):null;
+   const lowGolf=low==null?null:relativeGolf(low,par);
+   const rows=roster.map(g=>{
+     const row=playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===hole&&Number(x.golfer_index)===g.index);
+     const v=row?.score??"";
+     const rg=v===""?null:relativeGolf(Number(v),par);
+     return `<div class="shamble-player"><div><strong>${esc(g.name)}</strong></div><div><input class="shamble-player-score" type="number" min="1" max="20" step="1" inputmode="numeric" data-team="${teamIndex}" data-golfer="${g.index}" value="${v}" ${canEditTeam(teamIndex)?"":"disabled"}></div><div style="text-align:right">${v===""?'<span class="status">—</span>':`<strong>${esc(rg.rel)}</strong><div class="status">${esc(rg.label)}</div>`}</div></div>`;
+   }).join("");
+   const pointText=pts[teamIndex]==null?"—":pts[teamIndex].toFixed(pts[teamIndex]%1?1:0);
+   const summary=complete?`LOW TEAM SCORE: ${low} strokes • ${esc(lowGolf.rel)} ${esc(lowGolf.label)} • ${pointText} Cup pts`:`Waiting on ${entered.filter(Boolean).length}/${roster.length} player scores. Team score posts after everyone finishes.`;
+   return `<div class="shamble-team"><div class="row between"><div><strong>${esc(t.name)}</strong><div class="status">Best tee shot, then everyone plays their own ball.</div></div><span class="badge">LOW SCORE COUNTS</span></div>${rows}<div class="shamble-low">${summary}</div></div>`;
+ }).join("");
+ document.querySelectorAll(".shamble-player-score:not([disabled])").forEach(inp=>inp.addEventListener("change",()=>savePlayerShambleScore(Number(inp.dataset.team),Number(inp.dataset.golfer),inp.value)));
+}
+async function savePlayerShambleScore(teamIndex,golferIndex,val){
+ if(hole<10||hole>18||!canEditTeam(teamIndex))return;
+ const el=$("saveMsg"); el.textContent="Saving shamble score…";
+ const score=val===""?null:Number(val);
+ try{
+   if(score===null){
+     const {error}=await db.from("elleng_player_hole_scores").delete().eq("tournament_id",TOURNAMENT_ID).eq("hole",hole).eq("team_index",teamIndex).eq("golfer_index",golferIndex);
+     if(error)throw error;
+   }else{
+     if(!Number.isInteger(score)||score<1||score>20)throw new Error("Enter a score from 1 to 20.");
+     const {error}=await db.from("elleng_player_hole_scores").upsert({tournament_id:TOURNAMENT_ID,hole,team_index:teamIndex,golfer_index:golferIndex,score,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:"tournament_id,hole,team_index,golfer_index"});
+     if(error)throw error;
+   }
+   await loadScores();
+   const roster=teamRosterGolfers(teamIndex);
+   const rows=roster.map(g=>playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===hole&&Number(x.golfer_index)===g.index));
+   if(roster.length&&rows.every(Boolean)){
+     const low=Math.min(...rows.map(x=>Number(x.score)));
+     const {error}=await db.from("elleng_team_scores").upsert({tournament_id:TOURNAMENT_ID,team_index:teamIndex,hole,score:low,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:"tournament_id,team_index,hole"});
+     if(error)throw error;
+   }else{
+     const {error}=await db.from("elleng_team_scores").delete().eq("tournament_id",TOURNAMENT_ID).eq("team_index",teamIndex).eq("hole",hole);
+     if(error)throw error;
+   }
+   await loadScores();
+   el.textContent="Saved. Lowest completed player score becomes the team score.";
+   renderAll();
+ }catch(e){el.textContent=e?.message||"Unable to save shamble score."}
+}
 function renderScoring(){
  renderHolebar();
  const parView=$("captainParView");
@@ -449,6 +525,12 @@ function renderScoring(){
  }
  $("entryHint").textContent=isCommissioner?`Commissioner: edit scores for any team. Mobile uses golf score vs par; desktop uses actual strokes.`:captainTeam!=null?`You can edit ${teams[captainTeam]?.name||"your team"}. On mobile use − / 0 / +; the app converts it to strokes automatically.`:"Scores are view-only.";
  const pts=pointsForHole(hole);
+ renderShambleScoring(par,pts);
+ if(hole>9){
+   $("scoreRows").innerHTML="";
+   $("entryHint").textContent=isCommissioner?`Back 9 Shamble: enter each golfer's individual score. The app uses the lowest score as the official team score.`:captainTeam!=null?`Back 9 Shamble: enter every golfer's score for ${teams[captainTeam]?.name||"your team"}. The lowest score automatically becomes the team score.`:"Scores are view-only.";
+   return;
+ }
  $("scoreRows").innerHTML=teams.map((t,i)=>{
   const r=scores.find(x=>x.team_index===i&&x.hole===hole),v=r?.score??"", g=relativeGolf(v===""?null:Number(v),par);
   const relValue=v===""?"":Number(v)-par;
@@ -502,7 +584,14 @@ async function loadBase(){
   if(ce)throw ce; const mine=(c||[]).find(x=>x.user_id===user.id); captainTeam=mine?Number(mine.team_index):null;
  }
 }
-async function loadScores(){const {data,error}=await db.from("elleng_team_scores").select("*").eq("tournament_id",TOURNAMENT_ID);if(error)throw error;scores=data||[]}
+async function loadScores(){
+ const {data,error}=await db.from("elleng_team_scores").select("*").eq("tournament_id",TOURNAMENT_ID);
+ if(error)throw error;scores=data||[];
+ if(user){
+  const {data:ps,error:pe}=await db.from("elleng_player_hole_scores").select("*").eq("tournament_id",TOURNAMENT_ID);
+  if(pe)throw pe;playerScores=ps||[];
+ }else playerScores=[];
+}
 function teamOptions(selected=""){return '<option value="">Available / Unassigned</option>'+teams.map((t,i)=>`<option value="${i}" ${String(selected)===String(i)?"selected":""}>${esc(t.name)}</option>`).join("")}
 function draftGolferCount(){let n=Number(draftState?.golferCount||draftState?.golfers?.length||24);return Math.max(8,Math.min(36,Number.isInteger(n)?n:24))}
 function ensureDraftShape(){
@@ -615,7 +704,9 @@ async function clearScoresOnly(){
  try{
   const {error}=await db.from("elleng_team_scores").delete().eq("tournament_id",TOURNAMENT_ID);
   if(error)throw error;
-  scores=[]; renderAll(); if(msg)msg.textContent="All live scores were cleared. Teams and golfers were left unchanged.";
+  const {error:pe}=await db.from("elleng_player_hole_scores").delete().eq("tournament_id",TOURNAMENT_ID);
+  if(pe)throw pe;
+  scores=[]; playerScores=[]; renderAll(); if(msg)msg.textContent="All live scores were cleared, including Back 9 individual shamble scores. Teams and golfers were left unchanged.";
  }catch(e){if(msg)msg.textContent=e?.message||"Unable to clear scores."}
 }
 async function archiveAndStartNew(){
@@ -633,6 +724,8 @@ async function archiveAndStartNew(){
   const {error:ae}=await db.from("elleng_tournament_archives").insert(archivePayload); if(ae)throw ae;
   if(msg)msg.textContent="Archive saved. Resetting tournament…";
   if(msg)msg.textContent="Archive saved. Resetting teams, captains and tournament data…";
+  const {error:playerResetError}=await db.from("elleng_player_hole_scores").delete().eq("tournament_id",TOURNAMENT_ID);
+  if(playerResetError)throw playerResetError;
   const {data:resetData,error:resetError}=await db.functions.invoke("captain-admin",{body:{action:"reset_tournament",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,tournament_name:name,tournament_date:date}});
   if(resetError)throw resetError;
   if(resetData?.error)throw new Error(resetData.error);
@@ -686,7 +779,9 @@ function subscribeLive(){
  liveChannel=db.channel("elleng-live-scoring")
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_team_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e)}})
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_trash_talk",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadTrashTalk();renderTrashTalk()}catch(e){console.error(e)}});
- if(user)liveChannel=liveChannel.on("postgres_changes",{event:"UPDATE",schema:"public",table:"elleng_tournaments",filter:`id=eq.${TOURNAMENT_ID}`},async p=>{tournament=p.new;renderAll()});
+ if(user)liveChannel=liveChannel
+  .on("postgres_changes",{event:"*",schema:"public",table:"elleng_player_hole_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e)}})
+  .on("postgres_changes",{event:"UPDATE",schema:"public",table:"elleng_tournaments",filter:`id=eq.${TOURNAMENT_ID}`},async p=>{tournament=p.new;renderAll()});
  liveChannel.subscribe();
 }
 async function enterViewer(){
