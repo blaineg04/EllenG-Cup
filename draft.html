@@ -6,6 +6,12 @@
 <title>EllenG Cup Live Draft</title>
 <link rel="stylesheet" href="style.css">
 <style>
+.top{background:linear-gradient(90deg,#08253b 0%,#08253b 68%,#0b304b 100%)!important;color:white!important;padding:14px 16px!important;border-bottom:4px solid #d5a72c!important;overflow:hidden!important;display:block!important}
+.brand{max-width:1100px;margin:auto;display:flex;align-items:center;gap:18px;min-height:92px;position:relative}
+.brand img{width:150px!important;height:92px!important;object-fit:contain!important;object-position:left center!important;border:0!important;border-radius:0!important;background:transparent!important;padding:0!important;box-shadow:none!important;filter:drop-shadow(0 6px 10px rgba(0,0,0,.22))!important;flex:0 0 auto}
+.brand h1{margin:0;font-size:27px;line-height:1.05}.brand p{margin:6px 0 0;opacity:.86;font-size:13px;letter-spacing:.02em}
+@media(max-width:560px){.top{padding:10px 10px 11px!important}.brand{gap:10px;min-height:76px}.brand img{width:112px!important;height:76px!important}.brand h1{font-size:22px}}
+
 .comm-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .comm-panel{border:2px solid #d5a72c}
 .comm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
@@ -29,11 +35,11 @@
 </style>
 </head>
 <body>
-<div class="top">
-  <img src="gator.png" style="width:118px;height:82px;object-fit:contain;object-position:center;background:#fff;padding:6px;border-radius:16px;border:3px solid #d5a72c;box-shadow:0 5px 16px rgba(0,0,0,.16)">
-  <div><h1>EllenG Cup — Live Draft</h1><div>Official Live Draft Board • supports 2–9 teams • 8–36 golfers</div></div>
+<header class="top"><div class="brand">
+  <img src="gator.png" alt="EllenG Cup gator logo">
+  <div><h1>EllenG Cup</h1><p>LIVE DRAFT ROOM • 2–9 TEAMS • 8–36 GOLFERS</p></div>
   <div style="margin-left:auto" id="connection">CONNECTING</div>
-</div>
+</div></header>
 
 <div class="wrap">
 
