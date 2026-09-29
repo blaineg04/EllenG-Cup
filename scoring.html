@@ -114,6 +114,7 @@ function normalPoints(values){
 }
 function pointsForHole(h){
  const vals=teams.map((_,i)=>{const r=scores.find(x=>x.team_index===i&&x.hole===h);return r&&r.score!=null?Number(r.score):NaN});
+ if(vals.filter(Number.isFinite).length<6)return Array(6).fill(null);
  if(tournament&&Number(tournament.gator_hole)===h){
    const out=Array(6).fill(null), valid=vals.filter(Number.isFinite); if(!valid.length)return out; const low=Math.min(...valid), winners=[];vals.forEach((v,i)=>{if(v===low)winners.push(i)});winners.forEach(i=>out[i]=12/winners.length);vals.forEach((v,i)=>{if(Number.isFinite(v)&&out[i]===null)out[i]=0});return out;
  }
