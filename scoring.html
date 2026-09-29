@@ -973,7 +973,38 @@ $("saveAdmin").addEventListener("click",async()=>{
 });
 $("reloadAdmin").addEventListener("click",async()=>{if(!isCommissioner)return;$("adminMsg").textContent="Reloading…";try{await loadBase();await loadScores();renderAll();$("adminMsg").textContent="Current data reloaded."}catch(e){$("adminMsg").textContent=e.message}});
 $("saveTeams").addEventListener("click",async()=>{if(!isCommissioner)return;ensureDraftShape();$("teamEditMsg").textContent="Saving…";document.querySelectorAll("[data-team-name]").forEach(x=>{let i=Number(x.dataset.teamName);draftState.teams[i].name=x.value.trim()||`Team ${i+1}`});document.querySelectorAll("[data-team-captain]").forEach(x=>draftState.teams[Number(x.dataset.teamCaptain)].captain=x.value.trim());document.querySelectorAll("[data-team-email]").forEach(x=>draftState.teams[Number(x.dataset.teamEmail)].captainEmail=x.value.trim());try{await saveDraftState($("teamEditMsg"))}catch(e){}});
-$("addGolferBtn").addEventListener("click",async()=>{if(!isCommissioner)return;ensureDraftShape();const name=$("newGolferName").value.trim();if(!name){$("addGolferMsg").textContent="Enter the golfer's name.";return}const teamVal=$("newGolferTeam").value;const g={name,hcp:$("newGolferHcp").value.trim(),band:$("newGolferBand").value,team:teamVal===""?null:Number(teamVal)};draftState.golfers.push(g);$("addGolferMsg").textContent="Saving…";try{await saveDraftState($("addGolferMsg"));$("newGolferName").value="";$("newGolferHcp").value="";$("newGolferTeam").value=""}catch(e){}});
+$("addGolferBtn").addEventListener("click",async()=>{
+ if(!isCommissioner)return;
+ ensureDraftShape();
+ const name=$("newGolferName").value.trim();
+ if(!name){$("addGolferMsg").textContent="Enter the golfer's name.";return}
+ const teamVal=$("newGolferTeam").value;
+ const g={name,hcp:$("newGolferHcp").value.trim(),band:$("newGolferBand").value,team:teamVal===""?null:Number(teamVal)};
+ const emptyIndex=draftState.golfers.findIndex(x=>!(x?.name||"").trim()&&(x?.team==null||x?.team===""));
+ const addingNewSlot=emptyIndex===-1;
+ if(addingNewSlot&&draftState.golfers.length>=36){$("addGolferMsg").textContent="The app currently supports a maximum of 36 golfers.";return}
+ if(addingNewSlot)draftState.golfers.push(g);else draftState.golfers[emptyIndex]=g;
+ const newGolferCount=Math.max(draftGolferCount(),draftState.golfers.length);
+ const neededTeams=Math.ceil(newGolferCount/draftTeamSize());
+ if(neededTeams>9){
+   if(addingNewSlot)draftState.golfers.pop();else draftState.golfers[emptyIndex]={name:"",hcp:"",band:"",team:null};
+   $("addGolferMsg").textContent=`Adding this golfer would require ${neededTeams} teams. The app currently supports a maximum of 9 teams.`;
+   return;
+ }
+ draftState.golferCount=newGolferCount;
+ while(draftState.teams.length<neededTeams)draftState.teams.push({name:`Team ${draftState.teams.length+1}`,captain:"",captainEmail:"",roster:[]});
+ $("addGolferMsg").textContent="Saving…";
+ try{
+   if(neededTeams>activeTeamCount()){
+     const {data,error}=await db.from("elleng_tournaments").update({team_count:neededTeams,updated_at:new Date().toISOString()}).eq("id",TOURNAMENT_ID).select().single();
+     if(error)throw error; tournament=data;
+   }
+   await saveDraftState($("addGolferMsg"));
+   $("newGolferName").value="";$("newGolferHcp").value="";$("newGolferTeam").value="";
+   const splitNote=isSplitPair()&&draftGolferCount()%4!==0?` Split-Pair mode will be ready after ${4-(draftGolferCount()%4)} more golfer${4-(draftGolferCount()%4)===1?"":"s"} are added.`:"";
+   $("addGolferMsg").textContent=`Golfer added. Setup is now ${draftGolferCount()} golfers and ${activeTeamCount()} teams.${splitNote}`;
+ }catch(e){$("addGolferMsg").textContent=e?.message||"Unable to add golfer."}
+});
 $("savePlayers").addEventListener("click",async()=>{if(!isCommissioner)return;ensureDraftShape();$("playerEditMsg").textContent="Saving…";draftState.golfers.forEach((g,i)=>{const n=document.querySelector(`[data-player-name="${i}"]`),b=document.querySelector(`[data-player-band="${i}"]`),h=document.querySelector(`[data-player-hcp="${i}"]`),t=document.querySelector(`[data-player-team="${i}"]`);if(n)g.name=n.value.trim();if(b)g.band=b.value;if(h)g.hcp=h.value.trim();if(t)g.team=t.value===""?null:Number(t.value)});try{await saveDraftState($("playerEditMsg"))}catch(e){}});
 $("trashPostBtn").addEventListener("click",postTrashTalk);
 $("trashMessage").addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter")postTrashTalk()});
