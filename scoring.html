@@ -23,7 +23,15 @@ input,select{min-height:44px;border:1px solid #bdc8ce;border-radius:9px;padding:
 .badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800;background:#edf1f3}.gator-badge{background:#fff3c8;color:#6c5200}
 .note{font-size:13px;line-height:1.45;color:var(--muted)}.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
 label small{display:block;color:var(--muted);margin-bottom:5px}
-@media(max-width:560px){.brand img{width:58px;height:58px}.brand h1{font-size:21px}.wrap{padding:10px}.card{padding:12px}.leader-row{grid-template-columns:36px minmax(80px,1fr) 72px 62px}.score-grid{grid-template-columns:minmax(90px,1fr) 80px 70px}.score-input{width:74px}}
+@media(max-width:560px){
+.brand img{width:58px;height:58px}.brand h1{font-size:21px}.wrap{padding:10px}.card{padding:12px}
+.tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;overflow:visible;padding-bottom:0}
+.tab{width:100%;padding:11px 8px;font-size:14px;text-align:center}
+.holebar{grid-template-columns:repeat(9,minmax(0,1fr));gap:4px;overflow:visible}
+.holebtn{min-width:0;padding:10px 0;font-size:14px}
+.leader-row{grid-template-columns:36px minmax(80px,1fr) 72px 62px}
+.score-grid{grid-template-columns:minmax(90px,1fr) 80px 70px}.score-input{width:74px}
+}
 </style>
 </head>
 <body>
