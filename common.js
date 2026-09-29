@@ -2,10 +2,12 @@
 const cfg=window.ELLENG_CONFIG;
 const db=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey);
 const bands=["A","B","C","D"];
+const bandRanges={A:"0–9",B:"10–17",C:"18–25",D:"26+"};
+function bandRange(b){return bandRanges[b]||"—"}
 function fresh(){
  return {golfers:Array.from({length:24},()=>({name:"",hcp:"",band:"A",team:null})),
  teams:Array.from({length:6},(_,i)=>({name:"Team "+(i+1),captain:"",roster:[]})),
- picks:[],draftType:"snake",timerLength:60,timerEndsAt:null,timerPaused:true};
+ picks:[],draftType:"snake",timerLength:60,timerEndsAt:null,timerPaused:true,tournamentName:"EllenG Cup",tournamentDate:null};
 }
 let S=fresh();
 function order(n){let r=Math.floor(n/6),p=n%6;return S.draftType==="snake"&&r%2?5-p:p}
