@@ -163,6 +163,22 @@ function renderAdmin(){
 function renderAll(){
  $("liveBadge").textContent=(tournament?.status||"setup").toUpperCase();$("roleLabel").textContent=isCommissioner?"Commissioner":captainTeam!=null?`${teams[captainTeam].name} Captain`:"Viewer";renderLeaderboard();renderScoring();renderAdmin();
 }
+let syncBusy=false;
+async function syncLive(){
+ if(syncBusy||!user)return;
+ syncBusy=true;
+ try{
+  const {data:t,error:te}=await db.from("elleng_tournaments").select("*").eq("id",TOURNAMENT_ID).single();
+  if(te)throw te;
+  tournament=t;
+  await loadScores();
+  renderAll();
+ }catch(e){console.error("Live sync failed:",e)}
+ finally{syncBusy=false}
+}
+setInterval(syncLive,5000);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")syncLive()});
+window.addEventListener("focus",syncLive);
 async function enterApp(){
  $("loginMsg").textContent="Signed in — loading tournament…";
  try{
