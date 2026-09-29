@@ -143,7 +143,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   </div>
 </div>
 <div class="card">
-  <div class="row between"><div><h2 style="margin:0">Course Scorecard</h2><div class="status">Blue and White tee yardages for the selected tournament routing.</div></div><span class="badge">COURSE LIBRARY</span></div>
+  <div class="row between"><div><h2 style="margin:0">Course Scorecard</h2><div class="status">Tee yardages, par and handicap information for the selected course.</div></div><span class="badge">COURSE LIBRARY</span></div>
   <div id="courseScorecard" class="course-table-wrap"></div>
 </div>
 </section>
@@ -249,7 +249,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   </div>
   <div class="admin-grid">
 
-    <label><small>Golf course</small><select id="courseSelect"><option value="bayou-din">Bayou Din Golf Club — Beaumont, TX</option><option value="brentwood">Brentwood Country Club — Beaumont, TX</option></select></label>
+    <label><small>Golf course</small><select id="courseSelect"><option value="bayou-din">Bayou Din Golf Club — Beaumont, TX</option><option value="brentwood">Brentwood Country Club — Beaumont, TX</option><option value="babe-zaharias">Babe Zaharias Golf Course — Port Arthur, TX</option></select></label>
     <label><small>Course routing</small><select id="courseRouteSelect"><option value="front-back">Front → Back</option><option value="links-front">Links → Front</option><option value="links-back">Links → Back</option></select></label>
     <label><small>Tournament status</small><select id="statusSelect"><option value="setup">Setup</option><option value="live">Live</option><option value="complete">Complete</option><option value="archived">Archived</option></select></label>
     <label><small>Playing format</small><select id="playFormatSelect"><option value="standard">Standard EllenG — Front 9 Scramble / Back 9 Shamble</option><option value="split_pair">Split-Pair Scramble — two 2-man pairs per 4-man team</option></select></label>
@@ -363,6 +363,13 @@ const COURSE_LIBRARY={
    routes:{
     "championship-18":{label:"Championship 18",par:[4,3,4,5,4,4,4,3,4,5,3,4,5,4,5,3,4,4],handicap:[13,17,3,1,9,7,5,15,11,4,16,10,6,12,2,18,14,8],gold:[409,175,390,524,360,300,409,179,395,532,185,401,520,393,538,174,356,449],blue:[379,165,370,504,318,275,325,169,371,519,165,385,451,255,522,164,348,431],green:[335,155,370,474,310,260,316,162,354,473,137,375,420,250,445,150,334,375],red:[278,148,361,448,302,250,310,142,305,448,110,367,410,245,439,135,293,365]}
    }
+ },
+ "babe-zaharias":{
+   name:"Babe Zaharias Golf Course",location:"Port Arthur, TX",image:"babe-zaharias.jpg",bakedText:true,
+   tees:[{key:"blue",label:"Blue"},{key:"white",label:"White"},{key:"gold",label:"Gold"},{key:"red",label:"Red"}],
+   routes:{
+    "championship-18":{label:"Championship 18",par:[4,3,5,4,4,4,3,4,5,5,4,3,5,4,3,4,4,4],handicap:[13,15,1,11,7,9,17,5,3,2,14,16,4,12,18,10,8,6],blue:[368,174,542,388,416,385,186,428,538,513,369,196,564,396,177,398,401,428],white:[340,148,510,358,378,358,155,398,518,476,339,165,530,371,149,368,372,400],gold:[235,125,463,291,320,321,120,369,455,437,297,137,510,337,119,349,331,352],red:[212,109,407,281,311,301,113,304,377,410,278,119,438,310,111,293,306,322]}
+   }
  }
 };
 function activeCourseId(){return draftState?.courseId&&COURSE_LIBRARY[draftState.courseId]?draftState.courseId:"bayou-din"}
@@ -393,6 +400,7 @@ function renderCourse(){
  const browsingActive=browseId===activeId&&browseRoute===activeRouteId;
  if($("activeCourseBadge"))$("activeCourseBadge").textContent=browsingActive?"TOURNAMENT COURSE":"BROWSING ONLY";
  if($("courseHeroImage")){ $("courseHeroImage").src=c.image; $("courseHeroImage").alt=`${c.name} course`; }
+ const overlay=document.querySelector("#courseView .course-overlay"); if(overlay)overlay.style.display=c.bakedText?"none":"block";
  if($("courseNameDisplay"))$("courseNameDisplay").textContent=c.name;
  if($("courseRouteDisplay"))$("courseRouteDisplay").textContent=`${c.location} • ${r.label}${browsingActive?" • Active tournament course":" • Course library preview"}`;
  if($("courseSummaryBadges"))$("courseSummaryBadges").innerHTML=`<span class="badge">Par ${r.par.reduce((a,b)=>a+b,0)}</span>`+(c.tees||[]).map(t=>`<span class="badge">${t.label} ${(r[t.key]||[]).reduce((a,b)=>a+Number(b||0),0).toLocaleString()} yds</span>`).join("");
