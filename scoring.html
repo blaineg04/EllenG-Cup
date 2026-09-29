@@ -50,6 +50,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div class="card"><div class="tabs">
 <button class="tab active" data-view="leaderboard">Leaderboard</button>
 <button class="tab" data-view="teams">Teams</button>
+<button class="tab" data-view="progress">Hole Progress</button>
 <button class="tab" data-view="scoring">Enter Scores</button>
 <button id="adminTab" class="tab hidden" data-view="admin">Commissioner</button>
 </div></div>
@@ -66,6 +67,14 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div class="card">
 <div class="row between"><div><h2 style="margin:0">Teams & Rosters</h2><div class="status">Automatically synced from the EllenG Cup draft.</div></div><span class="badge">LIVE DRAFT SYNC</span></div>
 <div id="teamCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:14px"></div>
+</div>
+</section>
+
+<section id="progressView" class="view hidden">
+<div class="card">
+<div class="row between"><div><h2 style="margin:0">Live Hole Progress</h2><div class="status">See which holes are complete and which teams still need to enter a score.</div></div><span class="badge">AUTO-SYNC</span></div>
+<div id="progressSummary" class="row" style="margin-top:14px"></div>
+<div id="progressGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-top:12px"></div>
 </div>
 </section>
 
@@ -148,6 +157,23 @@ function renderTeams(){
   return `<div style="border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff"><div class="row between"><strong style="font-size:17px">${esc(t.name)}</strong><span class="badge">Team ${i+1}</span></div><div class="status" style="margin:5px 0 10px">Captain: ${esc(captain)}</div>${players}</div>`;
  }).join("");
 }
+function renderProgress(){
+ let complete=0;
+ const cards=Array.from({length:18},(_,i)=>{
+  const h=i+1;
+  const entered=teams.map((_,ti)=>scores.some(x=>x.team_index===ti&&x.hole===h&&x.score!=null));
+  const count=entered.filter(Boolean).length;
+  const done=count===6;if(done)complete++;
+  const missing=entered.map((ok,ti)=>ok?null:teams[ti].name).filter(Boolean);
+  const g=tournament&&tournament.gator_revealed&&Number(tournament.gator_hole)===h;
+  return `<div style="border:1px solid var(--line);border-radius:11px;padding:11px;background:#fff">
+   <div class="row between"><strong>Hole ${h}${g?" 🐊":""}</strong><span class="badge">${done?"COMPLETE":count+"/6"}</span></div>
+   <div class="status" style="margin-top:6px">${done?"All scores entered":count===0?"Waiting on all teams":"Missing: "+missing.map(esc).join(", ")}</div>
+  </div>`;
+ }).join("");
+ $("progressSummary").innerHTML=`<span class="badge">${complete}/18 holes complete</span><span class="badge">${18-complete} pending</span>`;
+ $("progressGrid").innerHTML=cards;
+}
 function renderScoring(){
  renderHolebar(); $("holeFormat").textContent=hole<=9?"4-MAN SCRAMBLE":"4-MAN SHAMBLE";
  $("entryHint").textContent=isCommissioner?"Commissioner: you can edit all six teams.":captainTeam!=null?`You can edit ${teams[captainTeam].name}. Other teams are view-only.`:"Scores are view-only.";
@@ -186,7 +212,7 @@ function renderAdmin(){
  if(!isCommissioner)return;$("adminTab").classList.remove("hidden");$("statusSelect").value=tournament.status;$("gatorHole").value=tournament.gator_hole??"";$("gatorReveal").value=String(!!tournament.gator_revealed);$("cargoTeam").innerHTML='<option value="">Not awarded</option>'+teams.map((t,i)=>`<option value="${i}">${esc(t.name)} — +6 points</option>`).join("");$("cargoTeam").value=tournament.final_cargo_team??"";
 }
 function renderAll(){
- $("liveBadge").textContent=(tournament?.status||"setup").toUpperCase();$("roleLabel").textContent=isCommissioner?"Commissioner":captainTeam!=null?`${teams[captainTeam].name} Captain`:"Viewer";renderLeaderboard();renderTeams();renderScoring();renderAdmin();
+ $("liveBadge").textContent=(tournament?.status||"setup").toUpperCase();$("roleLabel").textContent=isCommissioner?"Commissioner":captainTeam!=null?`${teams[captainTeam].name} Captain`:"Viewer";renderLeaderboard();renderTeams();renderProgress();renderScoring();renderAdmin();
 }
 let syncBusy=false;
 async function syncLive(){
