@@ -1,19 +1,73 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EllenG Cup Live Draft</title><link rel="stylesheet" href="style.css"></head><body>
-<div class="top"><img src="gator.jpeg"><div><h1>EllenG Cup — Live Draft</h1><div>Official Live Draft Board</div></div><div style="margin-left:auto" id="connection">CONNECTING</div></div>
-<div class="wrap"><div class="card" style="margin-bottom:12px"><button id="soundToggle" class="gold">🔊 Enable Draft Sounds</button><span id="soundStatus" class="muted" style="margin-left:10px">Sound off</span></div><div class="card"><div class="bar"><div><strong id="onclock">Loading draft…</strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div class="muted">LIVE PICK CLOCK</div></div></div></div><div id="teams" class="teams"></div><div class="card" style="margin-top:12px"><h3>Available Golfers</h3><div style="overflow:auto"><table><thead><tr><th>Golfer</th><th>Rank</th><th>Handicap Range</th><th>Status</th></tr></thead><tbody id="publicPool"></tbody></table></div></div><div class="card" style="margin-top:12px"><h3>Draft Log</h3><div id="log" class="muted"></div></div></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script>
-let draftSoundEnabled=false,lastSoundPickCount=null,audioCtx=null;
-async function enableDraftSound(){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")await audioCtx.resume();draftSoundEnabled=!draftSoundEnabled;document.getElementById("soundToggle").textContent=draftSoundEnabled?"🔇 Mute Draft Sounds":"🔊 Enable Draft Sounds";document.getElementById("soundStatus").textContent=draftSoundEnabled?"Sound ON — test growl played":"Sound off";if(draftSoundEnabled){gatorGrowl(true);setTimeout(()=>{if(draftSoundEnabled)document.getElementById("soundStatus").textContent="Gator sound ON"},1400)}}catch(e){draftSoundEnabled=false;document.getElementById("soundStatus").textContent="Audio blocked — tap again"}}
-function gatorGrowl(force=false){
-  if(!draftSoundEnabled && !force) return;
-  const growl = new Audio("gator-growl-no-water.wav");
-  growl.volume = 1.0;
-  growl.currentTime = 0;
-  growl.play().catch(e => console.log("Growl sound error:", e));
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>EllenG Cup</title>
+<style>
+:root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.hero{background:var(--navy);color:#fff;border-bottom:5px solid var(--gold);padding:28px 18px 34px}
+.hero-inner{max-width:760px;margin:auto;text-align:center}
+.logo{width:112px;height:112px;object-fit:cover;border-radius:50%;border:3px solid var(--gold);display:block;margin:0 auto 14px}
+h1{margin:0;font-size:34px}
+.tag{margin:8px 0 0;color:#d9e2e8;font-size:15px;letter-spacing:.04em}
+.wrap{max-width:760px;margin:auto;padding:18px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:14px}
+.intro{text-align:center}
+.intro h2{margin:0 0 8px;font-size:23px}
+.intro p{margin:0;color:var(--muted);line-height:1.45}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.action{display:block;text-decoration:none;border-radius:16px;padding:22px 18px;min-height:150px;border:2px solid var(--line);background:#fff;color:var(--ink)}
+.action strong{display:block;font-size:23px;margin-top:8px}
+.action span{display:block;color:var(--muted);font-size:14px;line-height:1.4;margin-top:7px}
+.icon{font-size:34px}
+.draft{border-color:var(--gold)}
+.score{border-color:var(--green)}
+.draft strong{color:#8b6810}
+.score strong{color:var(--green)}
+.small{font-size:13px;color:var(--muted);text-align:center;margin-top:16px}
+@media(max-width:560px){
+ .hero{padding:22px 14px 28px}
+ .logo{width:92px;height:92px}
+ h1{font-size:29px}
+ .wrap{padding:12px}
+ .actions{grid-template-columns:1fr}
+ .action{min-height:auto;padding:19px 17px}
 }
-function checkDraftSound(){let n=S.picks.length;if(lastSoundPickCount===null){lastSoundPickCount=n;return}if(n>lastSoundPickCount)gatorGrowl();lastSoundPickCount=n}
-function render(){checkDraftSound();let done=S.picks.length>=24,t=order(S.picks.length);document.getElementById("onclock").textContent=done?"DRAFT COMPLETE":"ON THE CLOCK: "+S.teams[t].name;document.getElementById("meta").textContent=done?"All 24 golfers drafted":`Round ${Math.floor(S.picks.length/6)+1} • Pick ${S.picks.length+1} of 24`;document.getElementById("teams").innerHTML=S.teams.map((tm,i)=>`<div class="team"><div class="teamhead"><strong>${esc(tm.name)}</strong><div class="muted" style="color:#ddd">${tm.captain?"Captain: "+esc(tm.captain):""}</div><div style="font-size:11px">${bands.map(b=>b+" "+tbc(i,b)).join(" • ")}</div></div><div class="roster">${Array.from({length:4},(_,j)=>{let g=S.golfers[tm.roster[j]];return g?`<div class="slot"><strong>${esc(g.name)}</strong> <span class="badge">${g.band}</span><div class="muted">${bandRange(g.band)}</div></div>`:`<div class="slot muted">Open roster spot</div>`}).join("")}</div></div>`).join("");document.getElementById("publicPool").innerHTML=S.golfers.filter(g=>g.name && g.team==null).map(g=>`<tr><td><strong>${esc(g.name)}</strong></td><td><span class="badge">${g.band}</span></td><td>${bandRange(g.band)}</td><td>AVAILABLE</td></tr>`).join("");document.getElementById("log").innerHTML=S.picks.length?S.picks.map((p,i)=>`${i+1}. ${esc(S.teams[p.team].name)} — ${esc(S.golfers[p.golfer].name)} (${S.golfers[p.golfer].band})`).join("<br>"):"Waiting for the first pick.";draw()}
-function draw(){let x=remaining();document.getElementById("clock").textContent=Math.floor(x/60)+":"+String(x%60).padStart(2,"0");document.getElementById("clock").style.color=x<=10?"#9b2f2f":""}
-document.getElementById("soundToggle").onclick=enableDraftSound;
-(async()=>{try{await load();render();subscribe(render);setInterval(draw,500)}catch(e){document.getElementById("onclock").textContent="Supabase is not connected yet."}})();
-</script></body></html>
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-inner">
+    <img class="logo" src="gator.jpeg" alt="EllenG Cup gator logo">
+    <h1>EllenG Cup</h1>
+    <div class="tag">DRAFT • LIVE SCORING • TOURNAMENT DAY</div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="card intro">
+    <h2>Welcome to the EllenG Cup</h2>
+    <p>One permanent link for the draft and tournament scoring. Choose where you want to go.</p>
+
+    <div class="actions">
+      <a class="action draft" href="draft.html">
+        <div class="icon">🏌️</div>
+        <strong>Draft Room</strong>
+        <span>Open the live draft board, see teams, available golfers, the pick clock, and draft results.</span>
+      </a>
+
+      <a class="action score" href="scoring.html">
+        <div class="icon">🏆</div>
+        <strong>Live Scoring</strong>
+        <span>Enter tournament scores, follow the leaderboard, track hole progress, Gator Hole, and Final Cargo.</span>
+      </a>
+    </div>
+  </section>
+
+  <div class="small">Bookmark this page — this is the main EllenG Cup link.</div>
+</main>
+</body>
+</html>
