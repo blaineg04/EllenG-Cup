@@ -195,8 +195,9 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
     <label><small>Handicap range</small><select id="selfBandSelect"><option value="A">A • 0–9</option><option value="B">B • 10–17</option><option value="C">C • 18–25</option><option value="D">D • 26+</option></select></label>
     <label><small>Exact handicap (optional)</small><input id="selfHandicapInput" type="number" min="0" max="54" step="0.1" inputmode="decimal" placeholder="Leave blank if unknown"></label>
     <label><small>Your personal PIN</small><input id="selfPinInput" type="password" inputmode="numeric" maxlength="6" placeholder="4–6 digits"></label>
+    <label><small>One-time activation code</small><input id="selfActivationInput" type="text" inputmode="numeric" maxlength="6" placeholder="First time only"></label>
   </div>
-  <div class="note" style="margin-top:10px">First time: create your own 4–6 digit PIN. After that, use the same PIN whenever you change your handicap. If you forget it, the Commissioner can reset it.</div>
+  <div class="note" style="margin-top:10px"><strong>First time only:</strong> get your 6-digit activation code from the Commissioner, enter it here, and create your own 4–6 digit personal PIN. After activation, your personal PIN is the only PIN you use for handicap changes and score entry. If it is forgotten, the Commissioner can issue a new activation code.</div>
   <div class="row" style="margin-top:12px"><button id="saveSelfHandicap" class="primary" type="button">Save My Handicap</button></div>
   <div id="selfHandicapMsg" class="status" style="margin-top:9px"></div>
 </div>
@@ -324,7 +325,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 
 <div id="adminPlayers" class="card admin-card">
   <div class="section-toolbar">
-    <div class="admin-section-title"><span class="step">4</span><div><h2>Players & Assignments</h2><div class="section-sub">Edit names, bands and handicaps, move golfers between teams, or remove them.</div></div></div>
+    <div class="admin-section-title"><span class="step">4</span><div><h2>Players & Assignments</h2><div class="section-sub">Edit names, bands and handicaps, move golfers between teams, issue secure activation codes, or remove them.</div></div></div>
     <button id="savePlayers" class="primary save-wide">Save Player Changes</button>
   </div>
   <div class="player-admin-row" style="font-size:12px;font-weight:800;color:var(--muted);margin-top:10px"><div>PLAYER</div><div>BAND</div><div>HCP</div><div class="player-team">TEAM</div><div></div></div>
@@ -930,7 +931,7 @@ async function removeCaptainLogin(i){
 }
 function renderPlayerEditor(){
  ensureDraftShape();
- $("playerEditor").innerHTML=draftState.golfers.map((g,i)=>`<div class="player-admin-row" data-player-row="${i}"><input data-player-name="${i}" value="${esc(g.name||"")}" placeholder="Golfer name"><select data-player-band="${i}">${["A","B","C","D"].map(b=>`<option ${String(g.band||"A").toUpperCase()===b?"selected":""}>${b}</option>`).join("")}</select><input data-player-hcp="${i}" value="${esc(g.hcp??"")}" placeholder="HCP"><select class="player-team" data-player-team="${i}">${teamOptions(g.team==null?"":g.team)}</select><div class="row" style="gap:5px;flex-wrap:nowrap"><button class="secondary" style="padding:8px 9px;font-size:11px" data-reset-player-pin="${i}" type="button">Reset PIN</button><button class="danger" style="padding:8px 9px;font-size:11px" data-remove-player="${i}" type="button">Remove</button></div></div>`).join("")||'<div class="note" style="padding:12px 0">No golfers yet.</div>';
+ $("playerEditor").innerHTML=draftState.golfers.map((g,i)=>`<div class="player-admin-row" data-player-row="${i}"><input data-player-name="${i}" value="${esc(g.name||"")}" placeholder="Golfer name"><select data-player-band="${i}">${["A","B","C","D"].map(b=>`<option ${String(g.band||"A").toUpperCase()===b?"selected":""}>${b}</option>`).join("")}</select><input data-player-hcp="${i}" value="${esc(g.hcp??"")}" placeholder="HCP"><select class="player-team" data-player-team="${i}">${teamOptions(g.team==null?"":g.team)}</select><div class="row" style="gap:5px;flex-wrap:nowrap"><button class="secondary" style="padding:8px 9px;font-size:11px" data-reset-player-pin="${i}" type="button">Issue / Reset Code</button><button class="danger" style="padding:8px 9px;font-size:11px" data-remove-player="${i}" type="button">Remove</button></div></div>`).join("")||'<div class="note" style="padding:12px 0">No golfers yet.</div>';
  document.querySelectorAll("[data-remove-player]").forEach(b=>b.addEventListener("click",()=>removePlayer(Number(b.dataset.removePlayer))));
  document.querySelectorAll("[data-reset-player-pin]").forEach(b=>b.addEventListener("click",()=>resetGolferPin(Number(b.dataset.resetPlayerPin))));
 }
@@ -994,13 +995,15 @@ async function saveSelfHandicap(){
  const band=$("selfBandSelect").value;
  const handicap=$("selfHandicapInput").value.trim();
  const pin=$("selfPinInput").value.trim();
+ const activation=$("selfActivationInput")?.value.trim()||"";
  if(idx==null){msg.textContent="Select your name first.";return}
  if(!/^\d{4,6}$/.test(pin)){msg.textContent="Enter a 4–6 digit personal PIN.";return}
  btn.disabled=true;btn.textContent="Saving…";msg.textContent="";
  try{
-   const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"update_handicap",draft_id:DRAFT_ID,golfer_index:idx,band,handicap,pin}});
+   const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"update_handicap",draft_id:DRAFT_ID,golfer_index:idx,band,handicap,pin,activation_code:activation}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
    $("selfPinInput").value="";
+   if($("selfActivationInput"))$("selfActivationInput").value="";
    await loadBase();renderAll();
    msg.textContent=`Saved. ${data.golfer_name}: ${data.band} (${data.band==="A"?"0–9":data.band==="B"?"10–17":data.band==="C"?"18–25":"26+"})${data.handicap!==""?` • Handicap ${data.handicap}`:""}.`;
  }catch(e){msg.textContent=e?.message||"Unable to update handicap."}
@@ -1031,12 +1034,14 @@ async function saveSelfScore(clear=false){
 async function resetGolferPin(i){
  if(!isCommissioner)return;
  const g=draftState?.golfers?.[i]; if(!g?.name)return;
- if(!confirm(`Reset the personal PIN for ${g.name}? They will create a new PIN the next time they update their handicap.`))return;
+ if(!confirm(`Issue a new one-time activation code for ${g.name}? This will invalidate any existing personal PIN immediately.`))return;
  try{
-   const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"reset_pin",draft_id:DRAFT_ID,golfer_index:i}});
+   const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"issue_activation",draft_id:DRAFT_ID,golfer_index:i}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
-   $("playerEditMsg").textContent=`PIN reset for ${g.name}.`;
- }catch(e){$("playerEditMsg").textContent=e?.message||"Unable to reset PIN."}
+   const code=data.activation_code;
+   $("playerEditMsg").innerHTML=`<strong>${esc(g.name)} activation code: ${esc(code)}</strong> — give this 6-digit code only to ${esc(g.name)}. It works once; then they create their own personal PIN.`;
+   alert(`${g.name} activation code: ${code}\n\nGive this code only to ${g.name}. It works once.`);
+ }catch(e){$("playerEditMsg").textContent=e?.message||"Unable to issue activation code."}
 }
 function renderAdmin(){
  if(!isCommissioner){$("adminTab").classList.add("hidden");return;}
