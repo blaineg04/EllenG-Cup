@@ -23,6 +23,13 @@ input,select{min-height:44px;border:1px solid #bdc8ce;border-radius:9px;padding:
 .badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800;background:#edf1f3}.gator-badge{background:#fff3c8;color:#6c5200}
 .note{font-size:13px;line-height:1.45;color:var(--muted)}.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
 label small{display:block;color:var(--muted);margin-bottom:5px}
+.special-control{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fafbfc}
+.special-control h3{margin:0 0 5px;font-size:16px}
+.special-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.reveal-btn{background:var(--gold);color:#10263d}
+.clear-btn{background:#e9eef1;color:var(--ink)}
+.reveal-banner{border:2px solid var(--gold);background:#fff8df;border-radius:12px;padding:14px;text-align:center;font-weight:900;margin-top:12px}
+.cargo-banner{border:2px solid var(--green);background:#f3faf5;border-radius:12px;padding:14px;text-align:center;font-weight:900;margin-top:12px}
 @media(max-width:560px){
 .brand img{width:58px;height:58px}.brand h1{font-size:21px}.wrap{padding:10px}.card{padding:12px}
 .tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;overflow:visible;padding-bottom:0}
@@ -105,10 +112,32 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div class="admin-grid">
 <label><small>Tournament status</small><select id="statusSelect"><option value="setup">Setup</option><option value="live">Live</option><option value="complete">Complete</option><option value="archived">Archived</option></select></label>
 <label><small>Secret Gator Hole (back-nine par 3)</small><select id="gatorHole"><option value="">Not selected</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option></select></label>
-<label><small>Gator Hole visibility</small><select id="gatorReveal"><option value="false">Keep Secret</option><option value="true">Reveal Gator Hole</option></select></label>
-<label><small>Final Cargo winner</small><select id="cargoTeam"><option value="">Not awarded</option></select></label>
 </div>
-<div class="row" style="margin-top:12px"><button id="saveAdmin" class="primary">Save Tournament Controls</button></div>
+
+<div class="special-control" style="margin-top:12px">
+<h3>🐊 Gator Hole Reveal</h3>
+<div class="status">Choose the secret hole above. Keep it hidden until you are ready to announce it.</div>
+<div class="special-actions">
+<button id="revealGatorBtn" class="reveal-btn">Reveal Gator Hole</button>
+<button id="hideGatorBtn" class="clear-btn">Hide Gator Hole</button>
+</div>
+<div id="gatorRevealState" class="status" style="margin-top:8px"></div>
+<div id="gatorRevealBanner" class="reveal-banner hidden"></div>
+</div>
+
+<div class="special-control" style="margin-top:12px">
+<h3>🚢 Final Cargo</h3>
+<div class="status">After Hole 18, select the closest-to-pin winning team. The winner receives +6 Cup points.</div>
+<label style="display:block;margin-top:10px"><small>Winning team</small><select id="cargoTeam"><option value="">Select winner</option></select></label>
+<div class="special-actions">
+<button id="awardCargoBtn" class="primary">Award +6 Final Cargo</button>
+<button id="clearCargoBtn" class="clear-btn">Clear Final Cargo</button>
+</div>
+<div id="cargoState" class="status" style="margin-top:8px"></div>
+<div id="cargoBanner" class="cargo-banner hidden"></div>
+</div>
+
+<div class="row" style="margin-top:12px"><button id="saveAdmin" class="secondary">Save Status / Gator Selection</button></div>
 <div id="adminMsg" class="status" style="margin-top:9px"></div>
 </div>
 </section>
@@ -229,7 +258,29 @@ async function loadBase(){
 }
 async function loadScores(){const {data,error}=await db.from("elleng_team_scores").select("*").eq("tournament_id",TOURNAMENT_ID);if(error)throw error;scores=data||[]}
 function renderAdmin(){
- if(!isCommissioner)return;$("adminTab").classList.remove("hidden");$("statusSelect").value=tournament.status;$("gatorHole").value=tournament.gator_hole??"";$("gatorReveal").value=String(!!tournament.gator_revealed);$("cargoTeam").innerHTML='<option value="">Not awarded</option>'+teams.map((t,i)=>`<option value="${i}">${esc(t.name)} — +6 points</option>`).join("");$("cargoTeam").value=tournament.final_cargo_team??"";
+ if(!isCommissioner)return;
+ $("adminTab").classList.remove("hidden");
+ $("statusSelect").value=tournament.status;
+ $("gatorHole").value=tournament.gator_hole??"";
+ $("cargoTeam").innerHTML='<option value="">Select winner</option>'+teams.map((t,i)=>`<option value="${i}">${esc(t.name)} — +6 points</option>`).join("");
+ $("cargoTeam").value=tournament.final_cargo_team??"";
+
+ const gatorSelected=tournament.gator_hole!=null&&tournament.gator_hole!=="";
+ $("gatorRevealState").textContent=!gatorSelected
+   ?"No Gator Hole selected."
+   :tournament.gator_revealed
+     ?`REVEALED — Hole ${tournament.gator_hole}`
+     :`SECRET — Hole ${tournament.gator_hole} is selected but hidden from players.`;
+ $("revealGatorBtn").disabled=!gatorSelected||!!tournament.gator_revealed;
+ $("hideGatorBtn").disabled=!gatorSelected||!tournament.gator_revealed;
+ $("gatorRevealBanner").classList.toggle("hidden",!tournament.gator_revealed);
+ $("gatorRevealBanner").textContent=tournament.gator_revealed?`🐊 GATOR HOLE: HOLE ${tournament.gator_hole}`:"";
+
+ const cargoAwarded=tournament.final_cargo_team!=null&&tournament.final_cargo_team!=="";
+ const cargoIndex=cargoAwarded?Number(tournament.final_cargo_team):null;
+ $("cargoState").textContent=cargoAwarded?`${teams[cargoIndex]?.name||`Team ${cargoIndex+1}`} currently has the +6 Final Cargo bonus.`:"Final Cargo has not been awarded.";
+ $("cargoBanner").classList.toggle("hidden",!cargoAwarded);
+ $("cargoBanner").textContent=cargoAwarded?`🚢 FINAL CARGO WINNER: ${teams[cargoIndex]?.name||`Team ${cargoIndex+1}`} • +6 POINTS`:"";
 }
 function renderAll(){
  $("liveBadge").textContent=(tournament?.status||"setup").toUpperCase();$("roleLabel").textContent=isCommissioner?"Commissioner":captainTeam!=null?`${teams[captainTeam].name} Captain`:"Viewer";renderLeaderboard();renderTeams();renderProgress();renderScoring();renderAdmin();
@@ -295,7 +346,37 @@ $("loginBtn").addEventListener("click",async()=>{
 });
 $("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();location.reload()});
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));$(b.dataset.view+"View").classList.remove("hidden")}));
-$("saveAdmin").addEventListener("click",async()=>{if(!isCommissioner)return; $("adminMsg").textContent="Saving…";const patch={status:$("statusSelect").value,gator_hole:$("gatorHole").value?Number($("gatorHole").value):null,gator_revealed:$("gatorReveal").value==="true",final_cargo_team:$("cargoTeam").value!==""?Number($("cargoTeam").value):null,updated_at:new Date().toISOString()};const {data,error}=await db.from("elleng_tournaments").update(patch).eq("id",TOURNAMENT_ID).select().single();if(error){$("adminMsg").textContent=error.message;return}tournament=data;$("adminMsg").textContent="Tournament controls saved.";renderAll()});
+async function updateTournament(patch,msg){
+ if(!isCommissioner)return;
+ $("adminMsg").textContent="Saving…";
+ patch.updated_at=new Date().toISOString();
+ const {data,error}=await db.from("elleng_tournaments").update(patch).eq("id",TOURNAMENT_ID).select().single();
+ if(error){$("adminMsg").textContent=error.message;return false}
+ tournament=data;$("adminMsg").textContent=msg;renderAll();return true;
+}
+$("saveAdmin").addEventListener("click",async()=>{
+ await updateTournament({
+  status:$("statusSelect").value,
+  gator_hole:$("gatorHole").value?Number($("gatorHole").value):null
+ },"Status / Gator selection saved.");
+});
+$("revealGatorBtn").addEventListener("click",async()=>{
+ const selected=$("gatorHole").value?Number($("gatorHole").value):null;
+ if(!selected){$("adminMsg").textContent="Select the Gator Hole first.";return}
+ await updateTournament({gator_hole:selected,gator_revealed:true},`Gator Hole revealed: Hole ${selected}.`);
+});
+$("hideGatorBtn").addEventListener("click",async()=>{
+ await updateTournament({gator_revealed:false},"Gator Hole hidden again.");
+});
+$("awardCargoBtn").addEventListener("click",async()=>{
+ const v=$("cargoTeam").value;
+ if(v===""){$("adminMsg").textContent="Select the Final Cargo winning team first.";return}
+ const idx=Number(v);
+ await updateTournament({final_cargo_team:idx,final_cargo_points:6},`${teams[idx].name} awarded +6 Final Cargo points.`);
+});
+$("clearCargoBtn").addEventListener("click",async()=>{
+ await updateTournament({final_cargo_team:null},"Final Cargo cleared.");
+});
 (async()=>{try{const {data:{session},error}=await db.auth.getSession();if(error)throw error;if(session){user=session.user;await enterApp()}}catch(e){console.error("Session restore error:",e);if(!$("loginMsg").textContent)$("loginMsg").textContent=e?.message||"Unable to restore session."}})();
 })();
 </script>
