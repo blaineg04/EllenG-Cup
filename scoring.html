@@ -54,6 +54,8 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .admin-section-title{display:flex;align-items:center;gap:10px}.admin-section-title .step{display:inline-flex;width:30px;height:30px;border-radius:50%;align-items:center;justify-content:center;background:var(--navy);color:#fff;font-weight:900;flex:0 0 auto}.admin-section-title h2{margin:0}.section-sub{margin-top:3px;color:var(--muted);font-size:13px}.section-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:10px}.admin-card{scroll-margin-top:12px}.save-wide{min-width:150px}.team-editor .editor-card{box-shadow:0 1px 0 rgba(8,37,59,.03)}
 @media(max-width:700px){.admin-stats{grid-template-columns:1fr 1fr}.admin-jumps{grid-template-columns:1fr 1fr}.admin-section-title h2{font-size:24px}.section-toolbar{align-items:flex-start}.section-toolbar>button{width:100%}.team-editor{grid-template-columns:1fr}.editor-card{padding:14px}.editor-card .row button{flex:1}.tabs{margin-left:-2px;margin-right:-2px}.tab{padding-left:16px;padding-right:16px}}
 
+
+.course-hero{position:relative;border-radius:14px;overflow:hidden;min-height:220px;background:#0d2b3f}.course-hero img{width:100%;height:260px;object-fit:cover;display:block}.course-overlay{position:absolute;left:0;right:0;bottom:0;padding:18px;background:linear-gradient(transparent,rgba(0,0,0,.78));color:#fff}.course-overlay h2{margin:0 0 4px}.course-summary{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.course-summary .badge{background:rgba(255,255,255,.92);color:#10202c}.course-table-wrap{overflow:auto}.course-table{width:100%;border-collapse:collapse;min-width:760px;margin-top:12px}.course-table th,.course-table td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:center}.course-table th:first-child,.course-table td:first-child{text-align:left;position:sticky;left:0;background:#fff}.course-table thead th{font-size:12px;color:var(--muted)}.yardage-chip{display:inline-block;padding:3px 7px;border-radius:999px;background:#edf1f3;font-size:11px;font-weight:800;margin-left:5px}@media(max-width:560px){.course-hero{min-height:180px}.course-hero img{height:210px}.course-overlay{padding:13px}.course-overlay h2{font-size:21px}}
 </style>
 </head>
 <body>
@@ -80,6 +82,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div class="card"><div class="tabs">
 <button class="tab active" data-view="leaderboard">Leaderboard</button>
 <button class="tab" data-view="teams">Teams</button>
+<button class="tab" data-view="course">Course</button>
 <button class="tab" data-view="progress">Hole Progress</button>
 <button class="tab" data-view="handicap">My Handicap</button>
 <button class="tab" data-view="trash">Trash Talk</button>
@@ -104,6 +107,24 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div class="row between"><div><h2 style="margin:0">Teams & Rosters</h2><div class="status">Use the dropdown to quickly check who is on each team.</div></div><span class="badge">LIVE DRAFT SYNC</span></div>
 <div style="margin-top:12px"><label><small>View team</small><select id="teamRosterSelect" style="max-width:360px"><option value="all">All Teams</option></select></label></div>
 <div id="teamCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:14px"></div>
+</div>
+</section>
+
+
+<section id="courseView" class="view hidden">
+<div class="card" style="padding:0;overflow:hidden">
+  <div class="course-hero">
+    <img src="bayou-din.jpg" alt="Bayou Din Golf Club course">
+    <div class="course-overlay">
+      <h2 id="courseNameDisplay">Bayou Din Golf Club</h2>
+      <div id="courseRouteDisplay" class="status" style="color:rgba(255,255,255,.9)">Front → Back</div>
+      <div id="courseSummaryBadges" class="course-summary"></div>
+    </div>
+  </div>
+</div>
+<div class="card">
+  <div class="row between"><div><h2 style="margin:0">Course Scorecard</h2><div class="status">Blue and White tee yardages for the selected tournament routing.</div></div><span class="badge">COURSE LIBRARY</span></div>
+  <div id="courseScorecard" class="course-table-wrap"></div>
 </div>
 </section>
 
@@ -198,15 +219,18 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
     <div class="admin-stat"><strong id="commissionerAssignedCount">0</strong><span>ASSIGNED</span></div>
   </div>
   <div class="admin-jumps">
-    <a href="#adminTournament">Tournament</a><a href="#adminTeams">Teams & Captains</a><a href="#adminAddGolfer">Add Golfer</a><a href="#adminPlayers">Players</a><a href="#adminTrashTalk">Trash Talk</a><a href="#adminNewTournament">New Tournament</a>
+    <a href="#adminTournament">Tournament & Course</a><a href="#adminTeams">Teams & Captains</a><a href="#adminAddGolfer">Add Golfer</a><a href="#adminPlayers">Players</a><a href="#adminTrashTalk">Trash Talk</a><a href="#adminNewTournament">New Tournament</a>
   </div>
 </div>
 
 <div id="adminTournament" class="card admin-card">
   <div class="section-toolbar">
-    <div class="admin-section-title"><span class="step">1</span><div><h2>Tournament Controls</h2><div class="section-sub">Status, team size, golfer count, automatic team count, hole pars, Gator Hole and Final Cargo.</div></div></div>
+    <div class="admin-section-title"><span class="step">1</span><div><h2>Tournament Controls</h2><div class="section-sub">Course, routing, status, team size, golfer count, hole pars, Gator Hole and Final Cargo.</div></div></div>
   </div>
   <div class="admin-grid">
+
+    <label><small>Golf course</small><select id="courseSelect"><option value="bayou-din">Bayou Din Golf Club — Beaumont, TX</option></select></label>
+    <label><small>Course routing</small><select id="courseRouteSelect"><option value="front-back">Front → Back</option><option value="links-front">Links → Front</option><option value="links-back">Links → Back</option></select></label>
     <label><small>Tournament status</small><select id="statusSelect"><option value="setup">Setup</option><option value="live">Live</option><option value="complete">Complete</option><option value="archived">Archived</option></select></label>
     <label><small>Playing format</small><select id="playFormatSelect"><option value="standard">Standard EllenG — Front 9 Scramble / Back 9 Shamble</option><option value="split_pair">Split-Pair Scramble — two 2-man pairs per 4-man team</option></select></label>
     <label><small>Players per team</small><select id="teamSizeSelect"><option value="2">2-man team</option><option value="3">3-man team</option><option value="4">4-man team</option></select></label>
@@ -303,6 +327,40 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 const DEFAULT_PARS=[4,4,3,4,5,4,3,4,5,4,4,3,5,4,4,3,5,4];
+const COURSE_LIBRARY={
+ "bayou-din":{
+   name:"Bayou Din Golf Club",location:"Beaumont, TX",image:"bayou-din.jpg",
+   routes:{
+    "front-back":{label:"Front → Back",par:[5,3,4,4,4,4,3,5,4,4,3,4,5,4,4,4,3,4],blue:[510,167,378,440,371,448,176,500,415,400,150,322,454,420,374,287,175,298],white:[484,156,358,420,351,373,153,495,341,369,147,311,426,402,366,274,146,283]},
+    "links-front":{label:"Links → Front",par:[4,4,3,4,5,4,5,3,4,5,3,4,4,4,4,3,5,4],blue:[398,415,197,407,517,479,587,191,427,510,167,378,440,371,448,176,500,415],white:[392,377,173,382,498,448,556,174,394,484,156,358,420,351,373,153,495,341]},
+    "links-back":{label:"Links → Back",par:[4,4,3,4,5,4,5,3,4,4,3,4,5,4,4,4,3,4],blue:[398,415,197,407,517,479,587,191,427,400,150,322,454,420,374,287,175,298],white:[392,377,173,382,498,448,556,174,394,369,147,311,426,402,366,274,146,283]}
+   }
+ }
+};
+function activeCourseId(){return draftState?.courseId&&COURSE_LIBRARY[draftState.courseId]?draftState.courseId:"bayou-din"}
+function activeCourse(){return COURSE_LIBRARY[activeCourseId()]}
+function activeCourseRouteId(){const c=activeCourse();return draftState?.courseRoute&&c.routes[draftState.courseRoute]?draftState.courseRoute:"front-back"}
+function activeCourseRoute(){return activeCourse().routes[activeCourseRouteId()]}
+function courseYardage(h,tee){const r=activeCourseRoute();return Number(r?.[tee]?.[h-1]||0)}
+function courseTotal(tee){return activeCourseRoute()[tee].reduce((a,b)=>a+Number(b||0),0)}
+function renderCourse(){
+ const c=activeCourse(),r=activeCourseRoute();
+ if($("courseNameDisplay"))$("courseNameDisplay").textContent=c.name;
+ if($("courseRouteDisplay"))$("courseRouteDisplay").textContent=`${c.location} • ${r.label}`;
+ if($("courseSummaryBadges"))$("courseSummaryBadges").innerHTML=`<span class="badge">Par ${r.par.reduce((a,b)=>a+b,0)}</span><span class="badge">Blue ${courseTotal("blue").toLocaleString()} yds</span><span class="badge">White ${courseTotal("white").toLocaleString()} yds</span>`;
+ if($("courseScorecard")){
+   const holes=Array.from({length:18},(_,i)=>i+1);
+   const row=(label,vals,suffix="")=>`<tr><td><strong>${label}</strong></td>${vals.map(v=>`<td>${v}${suffix}</td>`).join("")}<td><strong>${vals.reduce((a,b)=>a+Number(b||0),0)}${suffix}</strong></td></tr>`;
+   $("courseScorecard").innerHTML=`<table class="course-table"><thead><tr><th>Tee / Hole</th>${holes.map(h=>`<th>${h}</th>`).join("")}<th>Total</th></tr></thead><tbody>${row("Par",r.par)}${row("Blue",r.blue)}${row("White",r.white)}</tbody></table>`;
+ }
+}
+function applySelectedCourseToPars(){
+ const id=$("courseSelect")?.value||"bayou-din", c=COURSE_LIBRARY[id]; if(!c)return;
+ const rid=$("courseRouteSelect")?.value||"front-back", r=c.routes[rid]; if(!r)return;
+ document.querySelectorAll("[data-hole-par]").forEach(sel=>{const i=Number(sel.dataset.holePar); if(r.par[i])sel.value=String(r.par[i])});
+ if($("teamBuildSummary"))$("teamBuildSummary").insertAdjacentHTML("beforeend",`<div style="margin-top:6px"><strong>${c.name}</strong> • ${r.label} • Par ${r.par.reduce((a,b)=>a+b,0)} • Blue ${r.blue.reduce((a,b)=>a+b,0).toLocaleString()} yds • White ${r.white.reduce((a,b)=>a+b,0).toLocaleString()} yds</div>`);
+}
+
 function activeTeamCount(){
  const n=Number(tournament?.team_count||6);
  return Math.max(2,Math.min(9,Number.isInteger(n)?n:6));
@@ -589,13 +647,13 @@ function renderScoring(){
  const parView=$("captainParView");
  if(parView){
   const pars=currentPars();
-  parView.innerHTML=pars.map((p,i)=>`<div style="border:1px solid var(--line);border-radius:9px;padding:8px;text-align:center;background:#fff"><div class="status">Hole ${i+1}</div><strong>Par ${p}</strong></div>`).join("");
+  parView.innerHTML=pars.map((p,i)=>`<div style="border:1px solid var(--line);border-radius:9px;padding:8px;text-align:center;background:#fff"><div class="status">Hole ${i+1}</div><strong>Par ${p}</strong><div class="status">B ${courseYardage(i+1,"blue")} • W ${courseYardage(i+1,"white")}</div></div>`).join("");
  }
  const par=parForHole(hole);
  if(isSplitPair()){
-   $("holeFormat").textContent=`SPLIT-PAIR SCRAMBLE • HOLE ${hole} • PAR ${par}`;
+   $("holeFormat").textContent=`SPLIT-PAIR SCRAMBLE • HOLE ${hole} • PAR ${par} • BLUE ${courseYardage(hole,"blue")} • WHITE ${courseYardage(hole,"white")}`;
  }else{
-   $("holeFormat").textContent=`${draftTeamSize()}-MAN ${hole<=9?"SCRAMBLE":"SHAMBLE"} • HOLE ${hole} • PAR ${par}`;
+   $("holeFormat").textContent=`${draftTeamSize()}-MAN ${hole<=9?"SCRAMBLE":"SHAMBLE"} • HOLE ${hole} • PAR ${par} • BLUE ${courseYardage(hole,"blue")} • WHITE ${courseYardage(hole,"white")}`;
  }
  const mobileGuide=$("mobileHoleGuide");
  if(mobileGuide){
@@ -607,7 +665,7 @@ function renderScoring(){
     guide.push(`<div class="guide-item"><strong>${esc(rg.rel)} • ${esc(rg.label||"")}</strong>${st} stroke${st===1?"":"s"}</div>`);
    }
   }
-  mobileGuide.innerHTML=`<div class="guide-title">Hole ${hole} • Par ${par} scoring</div><div class="guide-grid">${guide.join("")}</div>`;
+  mobileGuide.innerHTML=`<div class="guide-title">Hole ${hole} • Par ${par} • Blue ${courseYardage(hole,"blue")} yds • White ${courseYardage(hole,"white")} yds</div><div class="guide-grid">${guide.join("")}</div>`;
  }
  $("entryHint").textContent=isCommissioner?`Commissioner: edit scores for any team. Mobile uses golf score vs par; desktop uses actual strokes.`:captainTeam!=null?`You can edit ${teams[captainTeam]?.name||"your team"}. On mobile use − / 0 / +; the app converts it to strokes automatically.`:"Scores are view-only.";
  const pts=pointsForHole(hole);
@@ -854,6 +912,7 @@ async function resetGolferPin(i){
 function renderAdmin(){
  if(!isCommissioner){$("adminTab").classList.add("hidden");return;}
  $("adminTab").classList.remove("hidden"); ensureDraftShape();
+ if($("courseSelect"))$("courseSelect").value=activeCourseId(); if($("courseRouteSelect"))$("courseRouteSelect").value=activeCourseRouteId();
  $("statusSelect").value=tournament.status; if($("playFormatSelect"))$("playFormatSelect").value=playFormat(); if($("teamSizeSelect"))$("teamSizeSelect").value=String(draftTeamSize()); if($("golferCountSelect"))$("golferCountSelect").value=String(draftGolferCount()); if($("teamCountSelect"))$("teamCountSelect").value=String(Math.min(9,Math.max(2,calculatedTeamCount())));
  const gh=Number(tournament.gator_hole)||0; $("gatorSide").value=gh&&gh<=9?"front":"back";
  renderHoleParEditor(); populateGatorHoles();
@@ -939,7 +998,7 @@ function renderAll(){
  $("logoutBtn").classList.toggle("hidden",!user);
  $("scoringTab").classList.toggle("hidden",!user);
  if(!user){$("adminTab").classList.add("hidden"); if(document.querySelector('.tab.active')?.dataset.view==='scoring'||document.querySelector('.tab.active')?.dataset.view==='admin'){showView('leaderboard')}}
- renderLeaderboard();renderTeams();renderProgress();renderSelfHandicap();renderScoring();renderTrashTalk();renderAdmin();
+ renderLeaderboard();renderTeams();renderCourse();renderProgress();renderSelfHandicap();renderScoring();renderTrashTalk();renderAdmin();
 }
 let syncBusy=false;
 async function syncLive(){
@@ -1053,6 +1112,15 @@ function previewTeamBuild(){
    $("teamBuildSummary").innerHTML=extra===0?`<strong>${gc} golfers → ${tc} teams of ${size}.</strong>`:`<strong>${gc} golfers → ${tc} teams using a ${size}-man format.</strong> ${extra} team${extra===1?"":"s"} will have ${base+1} golfers and the other ${tc-extra} will have ${base}.`;
  }
 }
+
+$("courseSelect").addEventListener("change",()=>{
+ const c=COURSE_LIBRARY[$("courseSelect").value];
+ if(!c)return;
+ $("courseRouteSelect").innerHTML=Object.entries(c.routes).map(([id,r])=>`<option value="${id}">${r.label}</option>`).join("");
+ $("courseRouteSelect").value=Object.keys(c.routes)[0];
+ applySelectedCourseToPars();
+});
+$("courseRouteSelect").addEventListener("change",applySelectedCourseToPars);
 $("teamSizeSelect").addEventListener("change",previewTeamBuild);
 $("golferCountSelect").addEventListener("change",previewTeamBuild);
 $("playFormatSelect").addEventListener("change",previewTeamBuild);
@@ -1081,6 +1149,8 @@ $("saveAdmin").addEventListener("click",async()=>{
   draftState.golferCount=desiredGolfers;
   draftState.teamSize=selectedTeamSize;
   draftState.playFormat=selectedPlayFormat;
+  draftState.courseId=$("courseSelect")?.value||"bayou-din";
+  draftState.courseRoute=$("courseRouteSelect")?.value||"front-back";
   if(newCount<oldCount){
    const affected=(draftState.golfers||[]).filter(g=>g.team!=null&&Number(g.team)>=newCount).length;
    if(affected&&!confirm(`${affected} golfer(s) are assigned to teams being removed. They will become unassigned. Continue?`)){ $("adminMsg").textContent="Team count change canceled.";return }
@@ -1088,7 +1158,9 @@ $("saveAdmin").addEventListener("click",async()=>{
    (draftState.golfers||[]).forEach(g=>{if(g.team!=null&&Number(g.team)>=newCount)g.team=null});
   }
   while(draftState.teams.length<newCount)draftState.teams.push({name:`Team ${draftState.teams.length+1}`,captain:"",captainEmail:"",roster:[]});
-  const pars=Array.from(document.querySelectorAll("[data-hole-par]")).sort((a,b)=>Number(a.dataset.holePar)-Number(b.dataset.holePar)).map(x=>Number(x.value));
+  const selectedCourse=COURSE_LIBRARY[draftState.courseId];
+  const selectedRoute=selectedCourse?.routes?.[draftState.courseRoute];
+  const pars=selectedRoute?selectedRoute.par.slice():Array.from(document.querySelectorAll("[data-hole-par]")).sort((a,b)=>Number(a.dataset.holePar)-Number(b.dataset.holePar)).map(x=>Number(x.value));
   const patch={status:$("statusSelect").value,team_count:newCount,hole_pars:pars,gator_hole:$("gatorHole").value?Number($("gatorHole").value):null,gator_revealed:$("gatorReveal").value==="true",final_cargo_team:$("cargoTeam").value!==""?Number($("cargoTeam").value):null,updated_at:new Date().toISOString()};
   const {data,error}=await db.from("elleng_tournaments").update(patch).eq("id",TOURNAMENT_ID).select().single();if(error)throw error;
   tournament=data;
