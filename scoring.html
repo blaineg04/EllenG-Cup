@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>EllenG Cup — Live Scoring</title>
+<style>
+:root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.top{background:var(--navy);color:white;padding:18px 16px;border-bottom:4px solid var(--gold)}
+.brand{max-width:1100px;margin:auto;display:flex;align-items:center;gap:14px}.brand img{width:68px;height:68px;object-fit:cover;border-radius:50%;border:2px solid var(--gold)}
+.brand h1{margin:0;font-size:24px}.brand p{margin:4px 0 0;opacity:.82;font-size:13px}
+.wrap{max-width:1100px;margin:auto;padding:16px}.card{background:white;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}
+button,input,select{font:inherit}button{border:0;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer}.primary{background:var(--green);color:white}.secondary{background:#e9eef1;color:var(--ink)}.danger{background:#8b1e2d;color:white}
+input,select{min-height:44px;border:1px solid #bdc8ce;border-radius:9px;padding:8px 10px;background:white}
+.login input{width:min(100%,310px)}.status{font-size:13px;color:var(--muted)}.hidden{display:none!important}
+.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:3px}.tab{white-space:nowrap;background:#e8edef}.tab.active{background:var(--navy);color:white}
+.leader{display:grid;gap:8px}.leader-row{display:grid;grid-template-columns:42px minmax(100px,1fr) 90px 82px;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:10px}
+.place{font-weight:900;font-size:20px}.pts{font-weight:900;color:var(--green);text-align:right}.thru{text-align:right;color:var(--muted);font-size:13px}
+.holebar{display:grid;grid-template-columns:repeat(9,minmax(48px,1fr));gap:6px;overflow:auto}.holebtn{padding:10px 6px;background:#edf1f3}.holebtn.active{background:var(--green);color:white}.holebtn.gator{outline:2px solid var(--gold)}
+.score-grid{display:grid;grid-template-columns:minmax(105px,1fr) 92px 92px;gap:8px;align-items:center}.score-grid .head{font-size:12px;color:var(--muted);font-weight:700}.score-input{width:86px;text-align:center}.point{font-weight:800;text-align:center}
+.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800;background:#edf1f3}.gator-badge{background:#fff3c8;color:#6c5200}
+.note{font-size:13px;line-height:1.45;color:var(--muted)}.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+label small{display:block;color:var(--muted);margin-bottom:5px}
+@media(max-width:560px){.brand img{width:58px;height:58px}.brand h1{font-size:21px}.wrap{padding:10px}.card{padding:12px}.leader-row{grid-template-columns:36px minmax(80px,1fr) 72px 62px}.score-grid{grid-template-columns:minmax(90px,1fr) 80px 70px}.score-input{width:74px}}
+
+.team-editor{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px;margin-top:12px}
+.editor-card{border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff}
+.editor-card h3{margin:0 0 10px}
+.editor-card input,.editor-card select{width:100%;margin-top:5px}
+.player-admin-row{display:grid;grid-template-columns:minmax(120px,1fr) 70px 80px minmax(110px,1fr) auto;gap:7px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.player-admin-row input,.player-admin-row select{width:100%;min-width:0}
+@media(max-width:650px){.player-admin-row{grid-template-columns:1fr 72px 82px}.player-admin-row .player-team{grid-column:1/3}.player-admin-row .danger{grid-column:3}.commissioner-actions{display:grid!important;grid-template-columns:1fr 1fr}.commissioner-actions button{width:100%}}
+
+/* Commissioner dashboard */
+.commissioner-hero{background:linear-gradient(135deg,#08253b,#103c59);color:#fff;border:0}.commissioner-hero .note{color:rgba(255,255,255,.82)}
+.admin-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:14px}.admin-stat{background:#fff;border-radius:12px;padding:12px;color:var(--ink);border:1px solid rgba(255,255,255,.2)}.admin-stat strong{display:block;font-size:22px;color:var(--green)}.admin-stat span{font-size:12px;color:var(--muted);font-weight:700}
+.admin-jumps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.admin-jumps a{display:block;text-decoration:none;text-align:center;padding:11px 8px;border-radius:10px;background:#e9eef1;color:var(--ink);font-weight:800;font-size:13px}.admin-jumps a:hover{background:#dde5e9}
+.admin-section-title{display:flex;align-items:center;gap:10px}.admin-section-title .step{display:inline-flex;width:30px;height:30px;border-radius:50%;align-items:center;justify-content:center;background:var(--navy);color:#fff;font-weight:900;flex:0 0 auto}.admin-section-title h2{margin:0}.section-sub{margin-top:3px;color:var(--muted);font-size:13px}.section-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:10px}.admin-card{scroll-margin-top:12px}.save-wide{min-width:150px}.team-editor .editor-card{box-shadow:0 1px 0 rgba(8,37,59,.03)}
+@media(max-width:700px){.admin-stats{grid-template-columns:1fr 1fr}.admin-jumps{grid-template-columns:1fr 1fr}.admin-section-title h2{font-size:24px}.section-toolbar{align-items:flex-start}.section-toolbar>button{width:100%}.team-editor{grid-template-columns:1fr}.editor-card{padding:14px}.editor-card .row button{flex:1}.tabs{margin-left:-2px;margin-right:-2px}.tab{padding-left:16px;padding-right:16px}}
+
+</style>
+</head>
+<body>
+<header class="top"><div class="brand">
+<img src="gator.jpeg" alt="EllenG Cup gator logo">
+<div><h1>EllenG Cup</h1><p>LIVE TOURNAMENT SCORING • 6 TEAMS • 18 HOLES</p></div>
+</div></header>
+
+<main class="wrap">
+<section id="loginCard" class="card login hidden">
+<h2 style="margin-top:0">Sign in</h2>
+<p class="note">Captains sign in with the same account used for the draft. The commissioner can edit every team.</p>
+<div class="row"><input id="email" type="email" autocomplete="email" placeholder="Email"><input id="password" type="password" autocomplete="current-password" placeholder="Password"><button id="loginBtn" class="primary">Sign In</button><button id="cancelLoginBtn" class="secondary" type="button">Cancel</button></div>
+<div id="loginMsg" class="status" style="margin-top:9px"></div>
+<div id="connectionStatus" class="status" style="margin-top:7px;font-weight:700">Checking app connection…</div>
+</section>
+
+<section id="app">
+<div class="card row between">
+<div><strong id="roleLabel">Live scoring</strong><div id="userLabel" class="status"></div></div>
+<div class="row"><span id="liveBadge" class="badge">SETUP</span><button id="authBtn" class="secondary">Captain / Commissioner Login</button><button id="logoutBtn" class="secondary hidden">Sign Out</button></div>
+</div>
+
+<div class="card"><div class="tabs">
+<button class="tab active" data-view="leaderboard">Leaderboard</button>
+<button class="tab" data-view="teams">Teams</button>
+<button class="tab" data-view="progress">Hole Progress</button>
+<button id="scoringTab" class="tab hidden" data-view="scoring">Enter Scores</button>
+<button id="adminTab" class="tab hidden" data-view="admin">Commissioner</button>
+</div></div>
+
+<section id="leaderboardView" class="view">
+<div class="card">
+<div class="row between"><div><h2 style="margin:0">Live Leaderboard</h2><div class="status">Cup points update automatically as scores are entered.</div></div><span class="badge">6–5–4–3–2–1</span></div>
+<div id="leaderboard" class="leader" style="margin-top:14px"></div>
+</div>
+<div class="card">
+<div class="row between"><div><h2 style="margin:0">Live Hole Scores</h2><div class="status">Scores appear as soon as each team enters them. Official Cup points post when all 6 teams finish the hole.</div></div><span class="badge">LIVE</span></div>
+<div id="liveHoleScores" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:14px"></div>
+</div>
+<div class="card note"><strong>Special scoring:</strong> The Gator Hole awards 12 points to the lowest team, split equally only if the low score is tied. Final Cargo adds 6 points to the winning team.</div>
+</section>
+
+<section id="teamsView" class="view hidden">
+<div class="card">
+<div class="row between"><div><h2 style="margin:0">Teams & Rosters</h2><div class="status">Automatically synced from the EllenG Cup draft.</div></div><span class="badge">LIVE DRAFT SYNC</span></div>
+<div id="teamCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:14px"></div>
+</div>
+</section>
+
+<section id="progressView" class="view hidden">
+<div class="card">
+<div class="row between"><div><h2 style="margin:0">Live Hole Progress</h2><div class="status">See which holes are complete and which teams still need to enter a score.</div></div><span class="badge">AUTO-SYNC</span></div>
+<div id="progressSummary" class="row" style="margin-top:14px"></div>
+<div id="progressGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-top:12px"></div>
+</div>
+</section>
+
+<section id="scoringView" class="view hidden">
+<div class="card">
+<div class="row between"><div><h2 style="margin:0">Score Entry</h2><div id="entryHint" class="status"></div></div><span id="holeFormat" class="badge"></span></div>
+<div id="holebar" class="holebar" style="margin-top:14px"></div>
+</div>
+<div class="card">
+<div class="score-grid">
+<div class="head">TEAM</div><div class="head" style="text-align:center">SCORE</div><div class="head" style="text-align:center">CUP PTS</div>
+<div id="scoreRows" style="display:contents"></div>
+</div>
+<div id="saveMsg" class="status" style="margin-top:12px"></div>
+</div>
+</section>
+
+<section id="adminView" class="view hidden">
+<div class="card commissioner-hero">
+  <div class="row between">
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div></div>
+    <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
+  </div>
+  <div class="admin-stats">
+    <div class="admin-stat"><strong id="commissionerTeamCount">6</strong><span>TEAMS</span></div>
+    <div class="admin-stat"><strong id="commissionerCaptainCount">0</strong><span>CAPTAINS SET</span></div>
+    <div class="admin-stat"><strong id="commissionerGolferCount">0</strong><span>GOLFERS</span></div>
+    <div class="admin-stat"><strong id="commissionerAssignedCount">0</strong><span>ASSIGNED</span></div>
+  </div>
+  <div class="admin-jumps">
+    <a href="#adminTournament">Tournament</a><a href="#adminTeams">Teams & Captains</a><a href="#adminAddGolfer">Add Golfer</a><a href="#adminPlayers">Players</a><a href="#adminNewTournament">New Tournament</a>
+  </div>
+</div>
+
+<div id="adminTournament" class="card admin-card">
+  <div class="section-toolbar">
+    <div class="admin-section-title"><span class="step">1</span><div><h2>Tournament Controls</h2><div class="section-sub">Status, Gator Hole and Final Cargo.</div></div></div>
+  </div>
+  <div class="admin-grid">
+    <label><small>Tournament status</small><select id="statusSelect"><option value="setup">Setup</option><option value="live">Live</option><option value="complete">Complete</option><option value="archived">Archived</option></select></label>
+    <label><small>Secret Gator Hole (back-nine par 3)</small><select id="gatorHole"><option value="">Not selected</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option></select></label>
+    <label><small>Gator Hole visibility</small><select id="gatorReveal"><option value="false">Keep Secret</option><option value="true">Reveal Gator Hole</option></select></label>
+    <label><small>Final Cargo winner</small><select id="cargoTeam"><option value="">Not awarded</option></select></label>
+  </div>
+  <div class="row commissioner-actions" style="margin-top:12px"><button id="saveAdmin" class="primary save-wide">Save Tournament Controls</button><button id="reloadAdmin" class="secondary">Reload Current Data</button></div>
+  <div id="adminMsg" class="status" style="margin-top:9px"></div>
+</div>
+
+<div id="adminTeams" class="card admin-card">
+  <div class="section-toolbar">
+    <div class="admin-section-title"><span class="step">2</span><div><h2>Teams & Captain Logins</h2><div class="section-sub">Rename teams, assign captains, and create or update captain email/password access.</div></div></div>
+    <button id="saveTeams" class="primary save-wide">Save Team Changes</button>
+  </div>
+  <div id="teamEditor" class="team-editor"></div>
+  <div id="teamEditMsg" class="status" style="margin-top:9px"></div>
+</div>
+
+<div id="adminAddGolfer" class="card admin-card">
+  <div class="admin-section-title"><span class="step">3</span><div><h2>Add Golfer</h2><div class="section-sub">Create a golfer and optionally place them directly on a team.</div></div></div>
+  <div class="admin-grid" style="margin-top:12px">
+    <label><small>Golfer name</small><input id="newGolferName" placeholder="Name"></label>
+    <label><small>Band</small><select id="newGolferBand"><option>A</option><option>B</option><option>C</option><option>D</option></select></label>
+    <label><small>Handicap</small><input id="newGolferHcp" placeholder="HCP"></label>
+    <label><small>Team</small><select id="newGolferTeam"><option value="">Available / Unassigned</option></select></label>
+  </div>
+  <div class="row" style="margin-top:12px"><button id="addGolferBtn" class="primary save-wide">Add Golfer</button></div>
+  <div id="addGolferMsg" class="status" style="margin-top:9px"></div>
+</div>
+
+<div id="adminPlayers" class="card admin-card">
+  <div class="section-toolbar">
+    <div class="admin-section-title"><span class="step">4</span><div><h2>Players & Assignments</h2><div class="section-sub">Edit names, bands and handicaps, move golfers between teams, or remove them.</div></div></div>
+    <button id="savePlayers" class="primary save-wide">Save Player Changes</button>
+  </div>
+  <div class="player-admin-row" style="font-size:12px;font-weight:800;color:var(--muted);margin-top:10px"><div>PLAYER</div><div>BAND</div><div>HCP</div><div class="player-team">TEAM</div><div></div></div>
+  <div id="playerEditor"></div>
+  <div id="playerEditMsg" class="status" style="margin-top:9px"></div>
+</div>
+
+<div id="adminNewTournament" class="card admin-card" style="border:2px solid #d8b14a">
+  <div class="admin-section-title"><span class="step">5</span><div><h2>Quarterly Tournament Reset</h2><div class="section-sub">Archive the current event, clear live scoring, and prepare the app for the next EllenG Cup.</div></div></div>
+  <div class="note" style="margin-top:12px"><strong>Archive & Start New</strong> keeps your golfer list and handicaps, but clears scores, team assignments, draft picks, captains, captain login assignments, Gator Hole and Final Cargo. Team names stay in place and can be renamed afterward.</div>
+  <div class="admin-grid" style="margin-top:12px">
+    <label><small>New tournament name</small><input id="newTournamentName" value="EllenG Cup" placeholder="EllenG Cup"></label>
+    <label><small>New tournament date</small><input id="newTournamentDate" type="date"></label>
+  </div>
+  <div class="row commissioner-actions" style="margin-top:12px">
+    <button id="archiveStartNew" class="danger save-wide" type="button">Archive Current & Start New Tournament</button>
+    <button id="resetScoringOnly" class="secondary" type="button">Clear Scores Only</button>
+  </div>
+  <div id="newTournamentMsg" class="status" style="margin-top:9px"></div>
+</div>
+</section>
+</section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+(()=>{
+const connectionStatus=document.getElementById("connectionStatus");
+function connection(text,ok=false){if(connectionStatus){connectionStatus.textContent=text;connectionStatus.style.color=ok?"#087c42":"#8b1e2d"}}
+window.addEventListener("error",e=>connection("App error: "+(e.message||"JavaScript failed to load.")));
+window.addEventListener("unhandledrejection",e=>connection("Connection error: "+(e.reason?.message||String(e.reason||"Unknown error"))));
+if(!window.supabase){connection("Supabase library did not load. Refresh the page.");return}
+const cfg=window.ELLENG_CONFIG;
+const supabaseKey=cfg?.supabasePublishableKey||cfg?.supabaseAnonKey;
+if(!cfg?.supabaseUrl||!supabaseKey){connection("EllenG configuration did not load.");return}
+const db=window.supabase.createClient(cfg.supabaseUrl,supabaseKey);
+connection("✓ App connected — live scoring ready.",true);
+const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
+let tournament=null, scores=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, user=null, captainTeam=null, isCommissioner=false, hole=1;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function normalPoints(values){
+ const out=Array(6).fill(null); const entered=values.map((v,i)=>({v,i})).filter(x=>Number.isFinite(x.v)).sort((a,b)=>a.v-b.v);
+ let p=0; while(p<entered.length){let q=p+1;while(q<entered.length&&entered[q].v===entered[p].v)q++;let sum=0;for(let k=p;k<q;k++)sum+=6-k;let each=sum/(q-p);for(let k=p;k<q;k++)out[entered[k].i]=each;p=q} return out;
+}
+function pointsForHole(h){
+ const vals=teams.map((_,i)=>{const r=scores.find(x=>x.team_index===i&&x.hole===h);return r&&r.score!=null?Number(r.score):NaN});
+ if(vals.filter(Number.isFinite).length<6)return Array(6).fill(null);
+ if(tournament&&Number(tournament.gator_hole)===h){
+   const out=Array(6).fill(null), valid=vals.filter(Number.isFinite); if(!valid.length)return out; const low=Math.min(...valid), winners=[];vals.forEach((v,i)=>{if(v===low)winners.push(i)});winners.forEach(i=>out[i]=12/winners.length);vals.forEach((v,i)=>{if(Number.isFinite(v)&&out[i]===null)out[i]=0});return out;
+ }
+ return normalPoints(vals);
+}
+function totals(){
+ return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>x.team_index===i&&x.hole===h&&x.score!=null);if(r)thru=Math.max(thru,h)}if(tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===i)pts+=Number(tournament.final_cargo_points||6);return{team:i,pts,thru}})
+}
+function renderLiveHoleScores(){
+ const activeHoles=Array.from({length:18},(_,i)=>i+1).filter(h=>scores.some(x=>x.hole===h&&x.score!=null));
+ if(!activeHoles.length){$("liveHoleScores").innerHTML='<div class="note">No scores entered yet.</div>';return}
+ $("liveHoleScores").innerHTML=activeHoles.map(h=>{
+  const vals=teams.map((t,i)=>{const r=scores.find(x=>x.team_index===i&&x.hole===h&&x.score!=null);return {name:t.name,score:r?.score??null}});
+  const count=vals.filter(v=>v.score!=null).length, official=count===6;
+  const rows=vals.map(v=>`<div class="row between" style="padding:5px 0;border-top:1px solid var(--line)"><span>${esc(v.name)}</span><strong>${v.score==null?'—':esc(v.score)}</strong></div>`).join('');
+  const g=tournament&&tournament.gator_revealed&&Number(tournament.gator_hole)===h;
+  return `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff"><div class="row between"><strong>Hole ${h}${g?' 🐊':''}</strong><span class="badge" style="${official?'background:#2f7d4a;color:#fff':count>0?'background:#d4af37;color:#10263d':''}">${official?'OFFICIAL':count+'/6 ENTERED'}</span></div><div style="margin-top:8px">${rows}</div><div class="status" style="margin-top:7px">${official?'Cup points posted.':'Scores are live; Cup points pending remaining teams.'}</div></div>`
+ }).join('');
+}
+function renderLeaderboard(){
+ const arr=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
+ $("leaderboard").innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===x.team?` <span class="badge">+6 Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
+ renderLiveHoleScores();
+}
+function renderHolebar(){
+ $("holebar").innerHTML=Array.from({length:18},(_,i)=>{let h=i+1;let g=tournament&&tournament.gator_revealed&&Number(tournament.gator_hole)===h;return `<button class="holebtn ${h===hole?"active":""} ${g?"gator":""}" data-hole="${h}">${h}${g?" 🐊":""}</button>`}).join("");
+ document.querySelectorAll("[data-hole]").forEach(b=>b.addEventListener("click",()=>{hole=Number(b.dataset.hole);renderScoring()}));
+}
+function canEditTeam(i){return isCommissioner||captainTeam===i}
+function renderTeams(){
+ $("teamCards").innerHTML=teams.map((t,i)=>{
+  const roster=Array.isArray(t.roster)?t.roster:[];
+  const captain=t.captain||"Captain not assigned";
+  const players=roster.length?roster.map((n,j)=>`<div style="padding:7px 0;border-top:1px solid var(--line)"><strong>${j+1}.</strong> ${esc(n)}</div>`).join(""):`<div class="note" style="padding-top:9px;border-top:1px solid var(--line)">Roster will appear automatically as golfers are drafted.</div>`;
+  return `<div style="border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff"><div class="row between"><strong style="font-size:17px">${esc(t.name)}</strong><span class="badge">Team ${i+1}</span></div><div class="status" style="margin:5px 0 10px">Captain: ${esc(captain)}</div>${players}</div>`;
+ }).join("");
+}
+function renderProgress(){
+ let complete=0;
+ const cards=Array.from({length:18},(_,i)=>{
+  const h=i+1;
+  const entered=teams.map((_,ti)=>scores.some(x=>x.team_index===ti&&x.hole===h&&x.score!=null));
+  const count=entered.filter(Boolean).length;
+  const done=count===6;if(done)complete++;
+  const missing=entered.map((ok,ti)=>ok?null:teams[ti].name).filter(Boolean);
+  const g=tournament&&tournament.gator_revealed&&Number(tournament.gator_hole)===h;
+  return `<div style="border:2px solid ${done?"#2f7d4a":count>0?"#d4af37":"var(--line)"};border-radius:11px;padding:11px;background:${done?"#f3faf5":count>0?"#fffaf0":"#fff"}">
+   <div class="row between"><strong>Hole ${h}${g?" 🐊":""}</strong><span class="badge" style="${done?"background:#2f7d4a;color:#fff":count>0?"background:#d4af37;color:#10263d":""}">${done?"✓ COMPLETE":count+"/6"}</span></div>
+   <div class="status" style="margin-top:6px;${done?"color:#2f7d4a;font-weight:700":count>0?"color:#8a6813;font-weight:700":""}">${done?"All 6 teams entered":count===0?"Waiting on all teams":"Missing: "+missing.map(esc).join(", ")}</div>
+  </div>`;
+ }).join("");
+ $("progressSummary").innerHTML=`<span class="badge">${complete}/18 holes complete</span><span class="badge">${18-complete} pending</span>`;
+ $("progressGrid").innerHTML=cards;
+}
+function renderScoring(){
+ renderHolebar(); $("holeFormat").textContent=hole<=9?"4-MAN SCRAMBLE":"4-MAN SHAMBLE";
+ $("entryHint").textContent=isCommissioner?"Commissioner: you can edit all six teams.":captainTeam!=null?`You can edit ${teams[captainTeam].name}. Other teams are view-only.`:"Scores are view-only.";
+ const pts=pointsForHole(hole);
+ $("scoreRows").innerHTML=teams.map((t,i)=>{const r=scores.find(x=>x.team_index===i&&x.hole===hole),v=r?.score??"";return `<div><strong>${esc(t.name)}</strong></div><div style="text-align:center"><input class="score-input" inputmode="numeric" type="number" min="1" max="20" data-team="${i}" value="${v}" ${canEditTeam(i)?"":"disabled"}></div><div class="point">${pts[i]==null?"—":pts[i].toFixed(pts[i]%1?1:0)}</div>`}).join("");
+ document.querySelectorAll(".score-input:not([disabled])").forEach(inp=>inp.addEventListener("change",()=>saveScore(Number(inp.dataset.team),inp.value)));
+}
+async function saveScore(teamIndex,val){
+ $("saveMsg").textContent="Saving…"; const score=val===""?null:Number(val);
+ if(score===null){const {error}=await db.from("elleng_team_scores").delete().eq("tournament_id",TOURNAMENT_ID).eq("team_index",teamIndex).eq("hole",hole);if(error){$("saveMsg").textContent=error.message;return}}
+ else {if(!Number.isInteger(score)||score<1||score>20){$("saveMsg").textContent="Enter a score from 1 to 20.";return}
+ const {error}=await db.from("elleng_team_scores").upsert({tournament_id:TOURNAMENT_ID,team_index:teamIndex,hole,score,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:"tournament_id,team_index,hole"});if(error){$("saveMsg").textContent=error.message;return}}
+ await loadScores();$("saveMsg").textContent="Saved.";renderAll();
+}
+async function loadBase(){
+ const tournamentSource=user?"elleng_tournaments":"elleng_public_tournaments";
+ const [{data:t,error:te},{data:d,error:de}]=await Promise.all([
+  db.from(tournamentSource).select("*").eq("id",TOURNAMENT_ID).single(),
+  db.from("elleng_drafts").select("owner_id,state").eq("id",DRAFT_ID).single()
+ ]);
+ if(te)throw te;if(de)throw de;tournament=t; draftState=structuredClone(d.state||{});
+ if(Array.isArray(d.state?.teams))teams=d.state.teams.map((x,i)=>{
+  const roster=Array.isArray(x.roster)?x.roster:[];
+  const golfers=Array.isArray(d.state?.golfers)?d.state.golfers:[];
+  const rosterNames=roster.map(r=>{
+   if(typeof r==="string")return r;
+   if(typeof r==="number")return golfers[r]?.name||"";
+   return r?.name||golfers[r?.golferIndex]?.name||"";
+  }).filter(Boolean);
+  return {name:x.name||`Team ${i+1}`,captain:x.captain||"",roster:rosterNames};
+ });
+ isCommissioner=!!user&&d.owner_id===user.id; captainTeam=null;
+ if(user){
+  const {data:c,error:ce}=await db.from("elleng_captains").select("team_index,user_id").eq("draft_id",DRAFT_ID);
+  if(ce)throw ce; const mine=(c||[]).find(x=>x.user_id===user.id); captainTeam=mine?mine.team_index:null;
+ }
+}
+async function loadScores(){const {data,error}=await db.from("elleng_team_scores").select("*").eq("tournament_id",TOURNAMENT_ID);if(error)throw error;scores=data||[]}
+function teamOptions(selected=""){return '<option value="">Available / Unassigned</option>'+teams.map((t,i)=>`<option value="${i}" ${String(selected)===String(i)?"selected":""}>${esc(t.name)}</option>`).join("")}
+function ensureDraftShape(){
+ if(!draftState)draftState={};
+ if(!Array.isArray(draftState.teams))draftState.teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`,captain:"",captainEmail:"",roster:[]}));
+ while(draftState.teams.length<6)draftState.teams.push({name:`Team ${draftState.teams.length+1}`,captain:"",captainEmail:"",roster:[]});
+ if(!Array.isArray(draftState.golfers))draftState.golfers=[];
+ if(!Array.isArray(draftState.picks))draftState.picks=[];
+ draftState.teams.forEach(t=>{if(!Array.isArray(t.roster))t.roster=[]});
+}
+function rebuildTeamRosters(){
+ ensureDraftShape(); draftState.teams.forEach(t=>t.roster=[]);
+ draftState.golfers.forEach((g,i)=>{let ti=(g.team==null||g.team==="")?null:Number(g.team);if(Number.isInteger(ti)&&ti>=0&&ti<draftState.teams.length){g.team=ti;draftState.teams[ti].roster.push(i)}else g.team=null});
+}
+function renderTeamEditor(){
+ ensureDraftShape();
+ $("teamEditor").innerHTML=draftState.teams.slice(0,6).map((t,i)=>`<div class="editor-card"><h3>Team ${i+1}</h3><label><small>Team name</small><input data-team-name="${i}" value="${esc(t.name||`Team ${i+1}`)}"></label><label><small>Captain name</small><input data-team-captain="${i}" value="${esc(t.captain||"")}" placeholder="Captain"></label><label><small>Captain email / login</small><input data-team-email="${i}" type="email" value="${esc(t.captainEmail||"")}" placeholder="captain@email.com"></label><label><small>Captain password</small><input data-team-password="${i}" type="password" minlength="6" placeholder="At least 6 characters"></label><div class="row" style="margin-top:8px"><button class="primary" type="button" data-create-captain="${i}">Create / Update Login</button><button class="secondary" type="button" data-remove-captain="${i}">Remove Login</button></div><div class="status" data-captain-msg="${i}" style="margin-top:7px"></div></div>`).join("");
+ document.querySelectorAll("[data-create-captain]").forEach(b=>b.addEventListener("click",()=>saveCaptainLogin(Number(b.dataset.createCaptain))));
+ document.querySelectorAll("[data-remove-captain]").forEach(b=>b.addEventListener("click",()=>removeCaptainLogin(Number(b.dataset.removeCaptain))));
+}
+async function saveCaptainLogin(i){
+ if(!isCommissioner)return;
+ const email=document.querySelector(`[data-team-email="${i}"]`)?.value.trim()||"";
+ const password=document.querySelector(`[data-team-password="${i}"]`)?.value||"";
+ const captainName=document.querySelector(`[data-team-captain="${i}"]`)?.value.trim()||"";
+ const msg=document.querySelector(`[data-captain-msg="${i}"]`);
+ if(!email){if(msg)msg.textContent="Enter the captain email first.";return}
+ if(password.length<6){if(msg)msg.textContent="Password must be at least 6 characters.";return}
+ if(msg)msg.textContent="Creating captain login…";
+ try{
+  const {data,error}=await db.functions.invoke("captain-admin",{body:{action:"create_or_update",draft_id:DRAFT_ID,team_index:i,email,password,captain_name:captainName}});
+  if(error)throw error; if(data?.error)throw new Error(data.error);
+  ensureDraftShape(); draftState.teams[i].captain=captainName; draftState.teams[i].captainEmail=email;
+  await saveDraftState();
+  const pw=document.querySelector(`[data-team-password="${i}"]`); if(pw)pw.value="";
+  if(msg)msg.textContent="Captain login is ready. They can sign in with this email and password.";
+ }catch(e){if(msg)msg.textContent=e?.message||"Unable to create captain login."}
+}
+async function removeCaptainLogin(i){
+ if(!isCommissioner)return;
+ const msg=document.querySelector(`[data-captain-msg="${i}"]`);
+ if(!confirm(`Remove the login assignment for ${draftState.teams[i]?.name||`Team ${i+1}`}?`))return;
+ if(msg)msg.textContent="Removing login assignment…";
+ try{
+  const {data,error}=await db.functions.invoke("captain-admin",{body:{action:"remove_assignment",draft_id:DRAFT_ID,team_index:i}});
+  if(error)throw error; if(data?.error)throw new Error(data.error);
+  if(msg)msg.textContent="Login assignment removed. The user account itself was not deleted.";
+ }catch(e){if(msg)msg.textContent=e?.message||"Unable to remove captain login."}
+}
+function renderPlayerEditor(){
+ ensureDraftShape();
+ $("playerEditor").innerHTML=draftState.golfers.map((g,i)=>`<div class="player-admin-row" data-player-row="${i}"><input data-player-name="${i}" value="${esc(g.name||"")}" placeholder="Golfer name"><select data-player-band="${i}">${["A","B","C","D"].map(b=>`<option ${String(g.band||"A").toUpperCase()===b?"selected":""}>${b}</option>`).join("")}</select><input data-player-hcp="${i}" value="${esc(g.hcp??"")}" placeholder="HCP"><select class="player-team" data-player-team="${i}">${teamOptions(g.team==null?"":g.team)}</select><button class="danger" data-remove-player="${i}" type="button">Remove</button></div>`).join("")||'<div class="note" style="padding:12px 0">No golfers yet.</div>';
+ document.querySelectorAll("[data-remove-player]").forEach(b=>b.addEventListener("click",()=>removePlayer(Number(b.dataset.removePlayer))));
+}
+function renderAdmin(){
+ if(!isCommissioner){$("adminTab").classList.add("hidden");return;}
+ $("adminTab").classList.remove("hidden"); ensureDraftShape();
+ $("statusSelect").value=tournament.status; $("gatorHole").value=tournament.gator_hole??""; $("gatorReveal").value=String(!!tournament.gator_revealed);
+ $("cargoTeam").innerHTML='<option value="">Not awarded</option>'+teams.map((t,i)=>`<option value="${i}">${esc(t.name)} — +6 points</option>`).join(""); $("cargoTeam").value=tournament.final_cargo_team??""; $("newGolferTeam").innerHTML=teamOptions("");
+ const activeTeams=draftState.teams.slice(0,6); const golfers=draftState.golfers||[];
+ const captainCount=activeTeams.filter(t=>(t.captain||"").trim()).length; const assignedCount=golfers.filter(g=>g.team!==null&&g.team!==undefined&&g.team!=="").length;
+ if($("commissionerTeamCount"))$("commissionerTeamCount").textContent=activeTeams.length;
+ if($("commissionerCaptainCount"))$("commissionerCaptainCount").textContent=captainCount;
+ if($("commissionerGolferCount"))$("commissionerGolferCount").textContent=golfers.length;
+ if($("commissionerAssignedCount"))$("commissionerAssignedCount").textContent=assignedCount;
+ if($("newTournamentName")&&!$("newTournamentName").dataset.touched){$("newTournamentName").value=tournament?.name||draftState?.tournamentName||"EllenG Cup";$("newTournamentName").dataset.touched="1"}
+ renderTeamEditor(); renderPlayerEditor();
+}
+async function saveDraftState(messageEl){
+ ensureDraftShape(); rebuildTeamRosters();
+ const {data,error}=await db.from("elleng_drafts").update({state:draftState,updated_at:new Date().toISOString()}).eq("id",DRAFT_ID).select("state").single();
+ if(error){if(messageEl)messageEl.textContent=error.message;throw error}
+ draftState=structuredClone(data.state||draftState);
+ await loadBase(); renderAll(); if(messageEl)messageEl.textContent="Saved — changes are live everywhere.";
+}
+async function removePlayer(idx){
+ if(!isCommissioner)return; ensureDraftShape(); const g=draftState.golfers[idx]; if(!g)return; if(!confirm(`Remove ${g.name||"this golfer"}?`))return;
+ draftState.golfers.splice(idx,1);
+ draftState.teams.forEach(t=>{t.roster=(t.roster||[]).filter(x=>Number(x)!==idx).map(x=>Number(x)>idx?Number(x)-1:Number(x))});
+ draftState.picks=(draftState.picks||[]).filter(p=>Number(p.golfer)!==idx).map(p=>({...p,golfer:Number(p.golfer)>idx?Number(p.golfer)-1:Number(p.golfer)}));
+ draftState.golfers.forEach((x,i)=>{if(x.team!=null)x.team=Number(x.team)});
+ $("playerEditMsg").textContent="Saving…"; try{await saveDraftState($("playerEditMsg"))}catch(e){}
+}
+async function resetCaptainAssignments(){
+ for(let i=0;i<6;i++){
+  try{await db.functions.invoke("captain-admin",{body:{action:"remove_assignment",draft_id:DRAFT_ID,team_index:i}})}catch(e){console.warn("Captain assignment reset failed for team",i,e)}
+ }
+}
+async function clearScoresOnly(){
+ if(!isCommissioner)return;
+ if(!confirm("Clear ALL live scores for the current tournament? This cannot be undone from the live scoreboard."))return;
+ const msg=$("newTournamentMsg"); if(msg)msg.textContent="Clearing scores…";
+ try{
+  const {error}=await db.from("elleng_team_scores").delete().eq("tournament_id",TOURNAMENT_ID);
+  if(error)throw error;
+  scores=[]; renderAll(); if(msg)msg.textContent="All live scores were cleared. Teams and golfers were left unchanged.";
+ }catch(e){if(msg)msg.textContent=e?.message||"Unable to clear scores."}
+}
+async function archiveAndStartNew(){
+ if(!isCommissioner)return;
+ const name=($("newTournamentName")?.value||"EllenG Cup").trim()||"EllenG Cup";
+ const date=$("newTournamentDate")?.value||null;
+ const first=confirm("Archive the current tournament and start a new quarterly event? Current scores and rosters will be saved in the archive first. Captain logins will be kept for the next event.");
+ if(!first)return;
+ const second=confirm("This will clear live scores, draft picks, golfer-to-team assignments, the Gator Hole and Final Cargo. Captain names, emails and login assignments will be kept. Continue?");
+ if(!second)return;
+ const msg=$("newTournamentMsg"); if(msg)msg.textContent="Archiving current tournament…";
+ try{
+  const {data:drow,error:de}=await db.from("elleng_drafts").select("*").eq("id",DRAFT_ID).single(); if(de)throw de;
+  const archivePayload={owner_id:user.id,tournament_id:TOURNAMENT_ID,draft_id:DRAFT_ID,name:tournament?.name||drow?.tournament_name||"EllenG Cup",tournament_date:drow?.tournament_date||null,tournament:tournament||{},draft_state:drow?.state||draftState||{},scores:scores||[]};
+  const {error:ae}=await db.from("elleng_tournament_archives").insert(archivePayload); if(ae)throw ae;
+  if(msg)msg.textContent="Archive saved. Resetting tournament…";
+  const {error:se}=await db.from("elleng_team_scores").delete().eq("tournament_id",TOURNAMENT_ID); if(se)throw se;
+  ensureDraftShape();
+  draftState.picks=[];
+  draftState.golfers.forEach(g=>{g.team=null});
+  draftState.teams.slice(0,6).forEach((t,i)=>{t.roster=[];if(!t.name)t.name=`Team ${i+1}`});
+  draftState.tournamentName=name; draftState.tournamentDate=date;
+  if("timerPaused" in draftState)draftState.timerPaused=true;
+  const {error:du}=await db.from("elleng_drafts").update({state:draftState,tournament_name:name,tournament_date:date,status:"setup",updated_at:new Date().toISOString()}).eq("id",DRAFT_ID); if(du)throw du;
+  const {error:tu}=await db.from("elleng_tournaments").update({name,status:"setup",gator_hole:null,gator_revealed:false,final_cargo_team:null,updated_at:new Date().toISOString()}).eq("id",TOURNAMENT_ID); if(tu)throw tu;
+  await loadBase(); await loadScores(); renderAll();
+  if(msg)msg.textContent="New tournament is ready. Scores, picks, golfer team assignments, Gator Hole and Final Cargo were reset. Captain names, emails and login assignments were kept.";
+ }catch(e){console.error(e);if(msg)msg.textContent=e?.message||"Unable to start the new tournament."}
+}
+function renderAll(){
+ $("liveBadge").textContent=(tournament?.status||"setup").toUpperCase();
+ $("roleLabel").textContent=isCommissioner?"Commissioner":captainTeam!=null?`${teams[captainTeam].name} Captain`:"Public Viewer";
+ $("userLabel").textContent=user?(user.email||""):"No login required — live results are view-only.";
+ $("authBtn").classList.toggle("hidden",!!user);
+ $("logoutBtn").classList.toggle("hidden",!user);
+ $("scoringTab").classList.toggle("hidden",!user);
+ if(!user){$("adminTab").classList.add("hidden"); if(document.querySelector('.tab.active')?.dataset.view==='scoring'||document.querySelector('.tab.active')?.dataset.view==='admin'){showView('leaderboard')}}
+ renderLeaderboard();renderTeams();renderProgress();renderScoring();renderAdmin();
+}
+let syncBusy=false;
+async function syncLive(){
+ if(syncBusy)return;
+ syncBusy=true;
+ try{
+  const tournamentSource=user?"elleng_tournaments":"elleng_public_tournaments";
+  const {data:t,error:te}=await db.from(tournamentSource).select("*").eq("id",TOURNAMENT_ID).single();
+  if(te)throw te;
+  tournament=t;
+  const {data:d}=await db.from("elleng_drafts").select("state").eq("id",DRAFT_ID).single();
+  if(d?.state)draftState=structuredClone(d.state);
+  if(Array.isArray(d?.state?.teams))teams=d.state.teams.map((x,i)=>{
+   const roster=Array.isArray(x.roster)?x.roster:[];
+   const golfers=Array.isArray(d.state?.golfers)?d.state.golfers:[];
+   const rosterNames=roster.map(r=>typeof r==="string"?r:typeof r==="number"?(golfers[r]?.name||""):(r?.name||golfers[r?.golferIndex]?.name||"")).filter(Boolean);
+   return {name:x.name||`Team ${i+1}`,captain:x.captain||"",roster:rosterNames};
+  });
+  await loadScores();
+  const adminOpen=isCommissioner&&document.querySelector('.tab.active')?.dataset.view==='admin';
+  if(!adminOpen)renderAll();
+ }catch(e){console.error("Live sync failed:",e)}
+ finally{syncBusy=false}
+}
+setInterval(syncLive,5000);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")syncLive()});
+window.addEventListener("focus",syncLive);
+let liveChannel=null;
+function subscribeLive(){
+ if(liveChannel)db.removeChannel(liveChannel);
+ liveChannel=db.channel("elleng-live-scoring")
+  .on("postgres_changes",{event:"*",schema:"public",table:"elleng_team_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e)}});
+ if(user)liveChannel=liveChannel.on("postgres_changes",{event:"UPDATE",schema:"public",table:"elleng_tournaments",filter:`id=eq.${TOURNAMENT_ID}`},async p=>{tournament=p.new;renderAll()});
+ liveChannel.subscribe();
+}
+async function enterViewer(){
+ try{
+  await loadBase();
+  await loadScores();
+  $("loginCard").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  renderAll();
+  subscribeLive();
+ }catch(e){
+  console.error("Public tournament load failed:",e);
+  $("app").classList.add("hidden");
+  $("loginCard").classList.remove("hidden");
+  $("loginMsg").textContent="Live scoring could not load: "+(e?.message||String(e));
+ }
+}
+async function enterApp(){
+ $("loginMsg").textContent="Signed in — loading tournament…";
+ try{
+  await loadBase();
+  await loadScores();
+  $("loginCard").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  renderAll();
+  subscribeLive();
+ }catch(e){
+  console.error("Tournament load failed:",e);
+  $("loginMsg").textContent="Signed in, but tournament data could not load: "+(e?.message||String(e));
+  throw e;
+ }
+}
+function showView(name){
+ document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.view===name));
+ document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));
+ $(name+"View").classList.remove("hidden");
+}
+$("loginBtn").addEventListener("click",async()=>{
+ const btn=$("loginBtn"), email=$("email").value.trim(), password=$("password").value;
+ if(!email||!password){$("loginMsg").textContent="Enter your email and password.";return}
+ btn.disabled=true;btn.textContent="Signing In…";$("loginMsg").textContent="Signing in…";
+ try{
+  const {data,error}=await db.auth.signInWithPassword({email,password});
+  if(error)throw error;
+  if(!data?.user)throw new Error("Sign-in succeeded but no user session was returned.");
+  user=data.user;
+  await enterApp();
+ }catch(e){
+  console.error("Sign-in/load error:",e);
+  if(!$("loginMsg").textContent.startsWith("Signed in, but"))$("loginMsg").textContent=e?.message||"Unable to sign in.";
+ }finally{btn.disabled=false;btn.textContent="Sign In"}
+});
+$("authBtn").addEventListener("click",()=>{$("loginCard").classList.remove("hidden");$("loginMsg").textContent="";$("loginCard").scrollIntoView({behavior:"smooth",block:"start"})});
+$("cancelLoginBtn").addEventListener("click",()=>{$("loginCard").classList.add("hidden")});
+$("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;showView("leaderboard");await enterViewer()});
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
+$("saveAdmin").addEventListener("click",async()=>{if(!isCommissioner)return; $("adminMsg").textContent="Saving…";const patch={status:$("statusSelect").value,gator_hole:$("gatorHole").value?Number($("gatorHole").value):null,gator_revealed:$("gatorReveal").value==="true",final_cargo_team:$("cargoTeam").value!==""?Number($("cargoTeam").value):null,updated_at:new Date().toISOString()};const {data,error}=await db.from("elleng_tournaments").update(patch).eq("id",TOURNAMENT_ID).select().single();if(error){$("adminMsg").textContent=error.message;return}tournament=data;$("adminMsg").textContent="Tournament controls saved.";renderAll()});
+$("reloadAdmin").addEventListener("click",async()=>{if(!isCommissioner)return;$("adminMsg").textContent="Reloading…";try{await loadBase();await loadScores();renderAll();$("adminMsg").textContent="Current data reloaded."}catch(e){$("adminMsg").textContent=e.message}});
+$("saveTeams").addEventListener("click",async()=>{if(!isCommissioner)return;ensureDraftShape();$("teamEditMsg").textContent="Saving…";document.querySelectorAll("[data-team-name]").forEach(x=>{let i=Number(x.dataset.teamName);draftState.teams[i].name=x.value.trim()||`Team ${i+1}`});document.querySelectorAll("[data-team-captain]").forEach(x=>draftState.teams[Number(x.dataset.teamCaptain)].captain=x.value.trim());document.querySelectorAll("[data-team-email]").forEach(x=>draftState.teams[Number(x.dataset.teamEmail)].captainEmail=x.value.trim());try{await saveDraftState($("teamEditMsg"))}catch(e){}});
+$("addGolferBtn").addEventListener("click",async()=>{if(!isCommissioner)return;ensureDraftShape();const name=$("newGolferName").value.trim();if(!name){$("addGolferMsg").textContent="Enter the golfer's name.";return}const teamVal=$("newGolferTeam").value;const g={name,hcp:$("newGolferHcp").value.trim(),band:$("newGolferBand").value,team:teamVal===""?null:Number(teamVal)};draftState.golfers.push(g);$("addGolferMsg").textContent="Saving…";try{await saveDraftState($("addGolferMsg"));$("newGolferName").value="";$("newGolferHcp").value="";$("newGolferTeam").value=""}catch(e){}});
+$("savePlayers").addEventListener("click",async()=>{if(!isCommissioner)return;ensureDraftShape();$("playerEditMsg").textContent="Saving…";draftState.golfers.forEach((g,i)=>{const n=document.querySelector(`[data-player-name="${i}"]`),b=document.querySelector(`[data-player-band="${i}"]`),h=document.querySelector(`[data-player-hcp="${i}"]`),t=document.querySelector(`[data-player-team="${i}"]`);if(n)g.name=n.value.trim();if(b)g.band=b.value;if(h)g.hcp=h.value.trim();if(t)g.team=t.value===""?null:Number(t.value)});try{await saveDraftState($("playerEditMsg"))}catch(e){}});
+$("archiveStartNew").addEventListener("click",archiveAndStartNew);
+$("resetScoringOnly").addEventListener("click",clearScoresOnly);
+(async()=>{try{const {data:{session},error}=await db.auth.getSession();if(error)throw error;if(session){user=session.user;await enterApp()}else{await enterViewer()}}catch(e){console.error("Session restore error:",e);user=null;await enterViewer()}})();
+})();
+</script>
+</body>
+</html>
