@@ -19,11 +19,12 @@ input,select{min-height:44px;border:1px solid #bdc8ce;border-radius:9px;padding:
 .leader{display:grid;gap:8px}.leader-row{display:grid;grid-template-columns:42px minmax(100px,1fr) 90px 82px;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:10px}
 .place{font-weight:900;font-size:20px}.pts{font-weight:900;color:var(--green);text-align:right}.thru{text-align:right;color:var(--muted);font-size:13px}
 .holebar{display:grid;grid-template-columns:repeat(9,minmax(48px,1fr));gap:6px;overflow:auto}.holebtn{padding:10px 6px;background:#edf1f3}.holebtn.active{background:var(--green);color:white}.holebtn.gator{outline:2px solid var(--gold)}
-.score-grid{display:grid;grid-template-columns:minmax(105px,1fr) 92px 92px;gap:8px;align-items:center}.score-grid .head{font-size:12px;color:var(--muted);font-weight:700}.score-input{width:86px;text-align:center}.point{font-weight:800;text-align:center}
+.score-grid{display:grid;grid-template-columns:minmax(105px,1fr) 110px 92px;gap:8px;align-items:center}.score-grid .head{font-size:12px;color:var(--muted);font-weight:700}.score-input{width:92px;text-align:center;font-size:20px;font-weight:800}.golf-result{display:inline-block;margin-top:5px;padding:3px 7px;border-radius:999px;background:#edf1f3;font-size:12px;font-weight:800;white-space:nowrap}.point{font-weight:800;text-align:center}
+.mobile-stepper{display:none}.mobile-stepper button{min-width:34px;height:34px;padding:0;border-radius:8px;font-size:22px;font-weight:900;line-height:1}.mobile-stepper .step-down,.mobile-stepper .step-up,.mobile-stepper .step-zero{background:#e9eef1;color:var(--ink)}.mobile-score-input{display:none}.mobile-only{display:none}.mobile-strokes{display:none}
 .badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800;background:#edf1f3}.gator-badge{background:#fff3c8;color:#6c5200}
 .note{font-size:13px;line-height:1.45;color:var(--muted)}.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
 label small{display:block;color:var(--muted);margin-bottom:5px}
-@media(max-width:560px){.brand img{width:58px;height:58px}.brand h1{font-size:21px}.wrap{padding:10px}.card{padding:12px}.leader-row{grid-template-columns:36px minmax(80px,1fr) 72px 62px}.score-grid{grid-template-columns:minmax(90px,1fr) 80px 70px}.score-input{width:74px}}
+@media(max-width:560px){.brand img{width:58px;height:58px}.brand h1{font-size:21px}.wrap{padding:10px}.card{padding:12px}.leader-row{grid-template-columns:36px minmax(80px,1fr) 72px 62px}.score-grid{grid-template-columns:minmax(90px,1fr) 118px 70px}.score-input{display:none!important}.mobile-score-input{display:inline-block!important;width:92px;text-align:center;font-size:22px;font-weight:900}.mobile-only{display:inline!important}.desktop-only{display:none!important}.mobile-strokes{display:block;margin-top:4px;font-size:11px;color:var(--muted)}.mobile-stepper{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:5px}.mobile-stepper button:disabled{opacity:.35}}
 
 .team-editor{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px;margin-top:12px}
 .editor-card{border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff}
@@ -110,7 +111,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </div>
 <div class="card">
 <div class="score-grid">
-<div class="head">TEAM</div><div class="head" style="text-align:center">GOLF SCORE</div><div class="head" style="text-align:center">CUP PTS</div>
+<div class="head">TEAM</div><div class="head" style="text-align:center"><span class="desktop-only">STROKES</span><span class="mobile-only">GOLF SCORE</span></div><div class="head" style="text-align:center">CUP PTS</div>
 <div id="scoreRows" style="display:contents"></div>
 </div>
 <div id="saveMsg" class="status" style="margin-top:12px"></div>
@@ -236,7 +237,7 @@ function parForHole(h){return currentPars()[h-1]||4}
 function relativeGolf(score,par){
  if(score==null||!Number.isFinite(Number(score)))return {rel:"—",label:""};
  score=Number(score); par=Number(par);
- const d=score-par, rel=d===0?"E":d>0?`+${d}`:`−${Math.abs(d)}`;
+ const d=score-par, rel=d===0?"0":d>0?`+${d}`:`−${Math.abs(d)}`;
  if(score===1)return {rel,label:"Hole in One"};
  const label=d<=-3?"Albatross":d===-2?"Eagle":d===-1?"Birdie":d===0?"Par":d===1?"Bogey":d===2?"Double Bogey":`+${d}`;
  return {rel,label};
@@ -298,7 +299,7 @@ function renderHolebar(){
  }).join("");
  document.querySelectorAll("[data-hole]").forEach(b=>b.addEventListener("click",()=>{hole=Number(b.dataset.hole);renderScoring()}));
 }
-function canEditTeam(i){return isCommissioner||captainTeam===i}
+function canEditTeam(i){return isCommissioner||(captainTeam!=null&&Number(captainTeam)===Number(i))}
 function renderTeams(){
  const sel=$("teamRosterSelect");
  if(sel){
@@ -346,9 +347,25 @@ function renderScoring(){
  const pts=pointsForHole(hole);
  $("scoreRows").innerHTML=teams.map((t,i)=>{
   const r=scores.find(x=>x.team_index===i&&x.hole===hole),v=r?.score??"", g=relativeGolf(v===""?null:Number(v),par);
-  return `<div><strong>${esc(t.name)}</strong></div><div style="text-align:center"><input class="score-input" inputmode="numeric" type="number" min="1" max="20" data-team="${i}" value="${v}" ${canEditTeam(i)?"":"disabled"} style="max-width:110px"><div class="status" style="margin-top:4px;font-weight:800">${v===""?"—":`${esc(g.rel)} • ${esc(g.label)}`}</div></div><div class="point">${pts[i]==null?"—":pts[i].toFixed(pts[i]%1?1:0)}</div>`
+  const relValue=v===""?"":Number(v)-par;
+  const relDisplay=relValue===""?"":relValue>0?`+${relValue}`:String(relValue);
+  return `<div><strong>${esc(t.name)}</strong></div><div style="text-align:center"><input class="score-input" inputmode="numeric" type="number" min="1" max="20" step="1" data-team="${i}" value="${v}" ${canEditTeam(i)?"":"disabled"} style="max-width:110px"><input class="mobile-score-input" inputmode="text" type="text" data-team="${i}" value="${relDisplay}" ${canEditTeam(i)?"":"disabled"}><div class="mobile-stepper"><button type="button" class="step-down" data-team="${i}" ${canEditTeam(i)?"":"disabled"} aria-label="Lower golf score">−</button><button type="button" class="step-zero" data-team="${i}" ${canEditTeam(i)?"":"disabled"} aria-label="Set par">0</button><button type="button" class="step-up" data-team="${i}" ${canEditTeam(i)?"":"disabled"} aria-label="Raise golf score">+</button></div><div class="mobile-strokes">${v===""?"No score entered":`${esc(v)} strokes`}</div><div class="golf-result">${v===""?"—":`${esc(g.rel)} • ${esc(g.label)}`}</div></div><div class="point">${pts[i]==null?"—":pts[i].toFixed(pts[i]%1?1:0)}</div>`
  }).join("");
  document.querySelectorAll(".score-input:not([disabled])").forEach(inp=>inp.addEventListener("change",()=>saveScore(Number(inp.dataset.team),inp.value)));
+ document.querySelectorAll(".mobile-score-input:not([disabled])").forEach(inp=>inp.addEventListener("change",async()=>{
+  const rel=Number(inp.value); if(!Number.isInteger(rel)){inp.value="";return}
+  const strokes=par+rel; if(strokes<1||strokes>20){$("saveMsg").textContent=`Score must equal 1–20 strokes on this Par ${par} hole.`;return}
+  await saveScore(Number(inp.dataset.team),String(strokes));
+ }));
+ document.querySelectorAll(".mobile-stepper button:not([disabled])").forEach(btn=>btn.addEventListener("click",async()=>{
+  const team=Number(btn.dataset.team), inp=document.querySelector(`.mobile-score-input[data-team="${team}"]`);
+  if(!inp)return;
+  let rel=inp.value===""?0:Number(inp.value); if(!Number.isFinite(rel))rel=0;
+  if(btn.classList.contains("step-zero"))rel=0; else rel+=btn.classList.contains("step-up")?1:-1;
+  const strokes=par+rel; if(strokes<1||strokes>20)return;
+  inp.value=rel>0?`+${rel}`:String(rel);
+  await saveScore(team,String(strokes));
+ }));
 }
 async function saveScore(teamIndex,val){
  $("saveMsg").textContent="Saving…"; const score=val===""?null:Number(val);
@@ -378,7 +395,7 @@ async function loadBase(){
  isCommissioner=!!user&&d.owner_id===user.id; captainTeam=null;
  if(user){
   const {data:c,error:ce}=await db.from("elleng_captains").select("team_index,user_id").eq("draft_id",DRAFT_ID);
-  if(ce)throw ce; const mine=(c||[]).find(x=>x.user_id===user.id); captainTeam=mine?mine.team_index:null;
+  if(ce)throw ce; const mine=(c||[]).find(x=>x.user_id===user.id); captainTeam=mine?Number(mine.team_index):null;
  }
 }
 async function loadScores(){const {data,error}=await db.from("elleng_team_scores").select("*").eq("tournament_id",TOURNAMENT_ID);if(error)throw error;scores=data||[]}
