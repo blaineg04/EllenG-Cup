@@ -128,6 +128,17 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   <div class="row" style="margin-top:12px"><button id="saveSelfHandicap" class="primary" type="button">Save My Handicap</button></div>
   <div id="selfHandicapMsg" class="status" style="margin-top:9px"></div>
 </div>
+<div class="card">
+  <div class="row between"><div><h2 style="margin:0">My Score Entry</h2><div class="status">Once you are drafted, use your same personal PIN to help score your team. Your permissions follow the format automatically.</div></div><span class="badge">PLAYER SCORING</span></div>
+  <div id="selfScoreContext" class="note" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb">Select your name above, choose a hole, and enter your PIN.</div>
+  <div class="admin-grid" style="margin-top:12px">
+    <label><small>Hole</small><select id="selfScoreHole"><option value="1">Hole 1</option><option value="2">Hole 2</option><option value="3">Hole 3</option><option value="4">Hole 4</option><option value="5">Hole 5</option><option value="6">Hole 6</option><option value="7">Hole 7</option><option value="8">Hole 8</option><option value="9">Hole 9</option><option value="10">Hole 10</option><option value="11">Hole 11</option><option value="12">Hole 12</option><option value="13">Hole 13</option><option value="14">Hole 14</option><option value="15">Hole 15</option><option value="16">Hole 16</option><option value="17">Hole 17</option><option value="18">Hole 18</option></select></label>
+    <label><small>Score</small><input id="selfScoreInput" type="number" min="1" max="20" step="1" inputmode="numeric" placeholder="1–20 strokes"></label>
+  </div>
+  <div class="note" style="margin-top:10px">Standard EllenG: any golfer on the team can update the Front 9 scramble team score. On the Back 9 shamble, each golfer can update only their own individual score. Split-Pair: each golfer can update only their own 2-man pair score.</div>
+  <div class="row" style="margin-top:12px"><button id="saveSelfScore" class="primary" type="button">Save My Score</button><button id="clearSelfScore" class="secondary" type="button">Clear This Score</button></div>
+  <div id="selfScoreMsg" class="status" style="margin-top:9px"></div>
+</div>
 </section>
 
 <section id="trashView" class="view hidden">
@@ -747,6 +758,35 @@ function renderHoleParEditor(){
  const pars=currentPars();
  $("holeParEditor").innerHTML=pars.map((par,i)=>`<label style="border:1px solid var(--line);border-radius:9px;padding:7px;background:#fff"><small>Hole ${i+1}</small><select data-hole-par="${i}"><option value="3" ${par===3?"selected":""}>Par 3</option><option value="4" ${par===4?"selected":""}>Par 4</option><option value="5" ${par===5?"selected":""}>Par 5</option></select></label>`).join("");
 }
+function selfGolferTeamIndex(idx){
+ const g=draftState?.golfers?.[idx];
+ if(!g)return null;
+ if(g.team!==null&&g.team!==undefined&&g.team!==""&&Number.isInteger(Number(g.team)))return Number(g.team);
+ const ts=Array.isArray(draftState?.teams)?draftState.teams:[];
+ const found=ts.findIndex(t=>(Array.isArray(t?.roster)?t.roster:[]).some(r=>Number(typeof r==="object"?r?.golferIndex:r)===Number(idx)));
+ return found>=0?found:null;
+}
+function renderSelfScoreContext(){
+ const box=$("selfScoreContext");if(!box||!draftState)return;
+ const idx=$("selfGolferSelect")?.value===""?null:Number($("selfGolferSelect")?.value);
+ const h=Number($("selfScoreHole")?.value||1);
+ if(idx==null){box.textContent="Select your name above, choose a hole, and enter your PIN.";return}
+ const g=draftState?.golfers?.[idx];
+ const ti=selfGolferTeamIndex(idx);
+ if(ti==null){box.textContent=`${g?.name||"Golfer"}, you have not been drafted to a team yet. Score entry will unlock automatically after the draft.`;return}
+ const teamName=draftState?.teams?.[ti]?.name||`Team ${ti+1}`;
+ if(isSplitPair()){
+   const roster=Array.isArray(draftState?.teams?.[ti]?.roster)?draftState.teams[ti].roster:[];
+   const pos=roster.findIndex(r=>Number(typeof r==="object"?r?.golferIndex:r)===idx);
+   const pair=pos>=0&&pos<2?1:pos>=2&&pos<4?2:null;
+   box.textContent=pair?`${g.name} • ${teamName} • Pair ${pair}. You can update your own 2-man pair score for Hole ${h}.`:`${g.name} • ${teamName}. Your split-pair assignment is not finalized yet.`;
+ }else if(h<=9){
+   const row=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null);
+   box.textContent=`${g.name} • ${teamName} • Front 9 Scramble. You can update your team's score for Hole ${h}${row?` (current team score: ${row.score})`:""}.`;
+ }else{
+   box.textContent=`${g.name} • ${teamName} • Back 9 Shamble. You can update only your own individual score for Hole ${h}. The app will calculate the team low score after everyone enters theirs.`;
+ }
+}
 function renderSelfHandicap(){
  const sel=$("selfGolferSelect"); if(!sel||!draftState)return;
  const golfers=Array.isArray(draftState.golfers)?draftState.golfers:[];
@@ -759,6 +799,7 @@ function renderSelfHandicap(){
    $("selfBandSelect").value=["A","B","C","D"].includes(String(g.band||"").toUpperCase())?String(g.band).toUpperCase():"A";
    $("selfHandicapInput").value=g.hcp??"";
  }
+ renderSelfScoreContext();
 }
 async function saveSelfHandicap(){
  const msg=$("selfHandicapMsg"),btn=$("saveSelfHandicap");
@@ -777,6 +818,28 @@ async function saveSelfHandicap(){
    msg.textContent=`Saved. ${data.golfer_name}: ${data.band} (${data.band==="A"?"0–9":data.band==="B"?"10–17":data.band==="C"?"18–25":"26+"})${data.handicap!==""?` • Handicap ${data.handicap}`:""}.`;
  }catch(e){msg.textContent=e?.message||"Unable to update handicap."}
  finally{btn.disabled=false;btn.textContent="Save My Handicap"}
+}
+async function saveSelfScore(clear=false){
+ const msg=$("selfScoreMsg"),btn=$("saveSelfScore");
+ const idx=$("selfGolferSelect").value===""?null:Number($("selfGolferSelect").value);
+ const pin=$("selfPinInput").value.trim();
+ const h=Number($("selfScoreHole").value);
+ const raw=$("selfScoreInput").value.trim();
+ if(idx==null){msg.textContent="Select your name first.";return}
+ if(!/^\d{4,6}$/.test(pin)){msg.textContent="Enter your 4–6 digit personal PIN above.";return}
+ if(!clear&&raw===""){msg.textContent="Enter your score first.";return}
+ const score=clear?"":raw;
+ btn.disabled=true;msg.textContent=clear?"Clearing…":"Saving…";
+ try{
+   const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"update_score",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,golfer_index:idx,hole:h,score,pin}});
+   if(error)throw error;if(data?.error)throw new Error(data.error);
+   await loadBase();await loadScores();renderAll();
+   if(clear){$("selfScoreInput").value="";msg.textContent=`Score cleared for Hole ${h}.`;}
+   else if(data.mode==="player_shamble")msg.textContent=`Saved your personal shamble score for Hole ${h}.`;
+   else if(data.mode==="split_pair")msg.textContent=`Saved your Pair ${Number(data.pair_index)+1} score for Hole ${h}.`;
+   else msg.textContent=`Saved ${draftState?.teams?.[data.team_index]?.name||"your team"} score for Hole ${h}.`;
+ }catch(e){msg.textContent=e?.message||"Unable to save score."}
+ finally{btn.disabled=false}
 }
 async function resetGolferPin(i){
  if(!isCommissioner)return;
@@ -977,6 +1040,9 @@ $("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=n
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
 $("selfGolferSelect").addEventListener("change",renderSelfHandicap);
 $("saveSelfHandicap").addEventListener("click",saveSelfHandicap);
+$("selfScoreHole").addEventListener("change",renderSelfScoreContext);
+$("saveSelfScore").addEventListener("click",()=>saveSelfScore(false));
+$("clearSelfScore").addEventListener("click",()=>saveSelfScore(true));
 $("selfHandicapInput").addEventListener("input",()=>{const v=$("selfHandicapInput").value.trim();if(v==="")return;const n=Number(v);if(!Number.isFinite(n))return;$("selfBandSelect").value=n<10?"A":n<18?"B":n<26?"C":"D"});
 $("gatorSide").addEventListener("change",populateGatorHoles);
 function previewTeamBuild(){
