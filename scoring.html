@@ -66,6 +66,22 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   #courseView .admin-grid label{width:100%;}
   #courseView .admin-grid select{display:block;width:100%;max-width:100%;}
 }
+
+
+/* Public Players directory */
+.players-toolbar{display:grid;grid-template-columns:minmax(180px,260px) minmax(180px,1fr);gap:10px;margin-top:12px}
+.player-list{display:grid;gap:10px;margin-top:14px}
+.player-team-card{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
+.player-team-head{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px 14px;background:#f8fafb;border-bottom:1px solid var(--line)}
+.player-team-head h3{margin:0;font-size:18px}
+.player-row-public{display:grid;grid-template-columns:minmax(140px,1fr) 90px 74px 110px;gap:8px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.player-row-public:first-child{border-top:0}
+.player-name-public{font-weight:800}
+.player-hcp-public,.player-band-public,.player-team-public{font-size:13px}
+.player-hcp-public strong{font-size:15px}
+.player-band-chip{display:inline-block;border-radius:999px;padding:4px 8px;background:#edf1f3;font-weight:900;min-width:34px;text-align:center}
+.player-section-title{margin:18px 0 8px;font-size:18px}
+@media(max-width:650px){.players-toolbar{grid-template-columns:1fr}.player-row-public{grid-template-columns:minmax(120px,1fr) 74px 58px}.player-team-public{grid-column:1/4;color:var(--muted);font-size:12px}.player-team-head{align-items:flex-start}.player-team-head .status{text-align:right}}
 </style>
 </head>
 <body>
@@ -92,6 +108,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div class="card"><div class="tabs">
 <button class="tab active" data-view="leaderboard">Leaderboard</button>
 <button class="tab" data-view="teams">Teams</button>
+<button class="tab" data-view="players">Players</button>
 <button class="tab" data-view="course">Course</button>
 <button class="tab" data-view="progress">Hole Progress</button>
 <button class="tab" data-view="handicap">My Handicap</button>
@@ -120,6 +137,20 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </div>
 </section>
 
+<section id="playersView" class="view hidden">
+<div class="card">
+  <div class="row between">
+    <div><h2 style="margin:0">Players & Handicaps</h2><div class="status">Public tournament directory with teams, handicap bands and exact handicaps.</div></div>
+    <span class="badge">LIVE DRAFT SYNC</span>
+  </div>
+  <div class="players-toolbar">
+    <label><small>Organize players</small><select id="playerDirectoryMode"><option value="team">By Team</option><option value="all">All Players A–Z</option><option value="band">By A/B/C/D Band</option></select></label>
+    <label><small>Find player</small><input id="playerDirectorySearch" placeholder="Search by player or team"></label>
+  </div>
+  <div class="note" style="margin-top:10px">Handicaps update automatically when players or the Commissioner change them. Players who have not been drafted yet are shown as Available / Unassigned.</div>
+  <div id="playerDirectory" class="player-list"></div>
+</div>
+</section>
 
 <section id="courseView" class="view hidden">
 <div class="card">
@@ -566,6 +597,45 @@ function renderTeams(){
   return `<div style="border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff"><div class="row between"><strong style="font-size:17px">${esc(t.name)}</strong><span class="badge">Team ${i+1}</span></div><div class="status" style="margin:5px 0 10px">Captain: ${esc(captain)}</div>${players}</div>`;
  }).join("");
 }
+
+function playerBandLabel(g){
+ const b=String(g?.band||"").toUpperCase();
+ if(["A","B","C","D"].includes(b))return b;
+ const n=Number(g?.hcp);
+ if(Number.isFinite(n))return n<10?"A":n<18?"B":n<26?"C":"D";
+ return "—";
+}
+function playerHandicapLabel(g){
+ const raw=g?.hcp;
+ if(raw===null||raw===undefined||String(raw).trim()==="")return "Not set";
+ const n=Number(raw);
+ return Number.isFinite(n)?(Number.isInteger(n)?String(n):n.toFixed(1)):String(raw);
+}
+function golferTeamIndex(golferIndex){
+ const g=draftState?.golfers?.[golferIndex];
+ if(g&&g.team!==null&&g.team!==undefined&&g.team!==""&&Number.isInteger(Number(g.team)))return Number(g.team);
+ const ts=Array.isArray(draftState?.teams)?draftState.teams:[];
+ const found=ts.findIndex(t=>(Array.isArray(t?.roster)?t.roster:[]).some(r=>Number(typeof r==="object"?r?.golferIndex:r)===Number(golferIndex)));
+ return found>=0?found:null;
+}
+function renderPlayersDirectory(){
+ const root=$("playerDirectory"); if(!root||!draftState)return;
+ const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>({...(g||{}),index:i,name:(g?.name||"").trim()})).filter(g=>g.name);
+ const mode=$("playerDirectoryMode")?.value||"team";
+ const q=($("playerDirectorySearch")?.value||"").trim().toLowerCase();
+ const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Available / Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`),band:playerBandLabel(g),hcpLabel:playerHandicapLabel(g)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q)||g.band.toLowerCase().includes(q)||g.hcpLabel.toLowerCase().includes(q));
+ const rowHtml=g=>`<div class="player-row-public"><div class="player-name-public">${esc(g.name)}</div><div class="player-hcp-public"><span class="status">HCP</span><br><strong>${esc(g.hcpLabel)}</strong></div><div class="player-band-public"><span class="player-band-chip">${esc(g.band)}</span></div><div class="player-team-public">${esc(g.teamName)}</div></div>`;
+ if(!rows.length){root.innerHTML='<div class="note">No matching players found.</div>';return}
+ if(mode==="all"){root.innerHTML=`<div class="player-team-card"><div class="player-team-head"><h3>All Players</h3><div class="status">${rows.length} golfer${rows.length===1?"":"s"}</div></div>${rows.sort((a,b)=>a.name.localeCompare(b.name)).map(rowHtml).join("")}</div>`;return}
+ if(mode==="band"){
+   const order=["A","B","C","D","—"];
+   root.innerHTML=order.map(b=>{const list=rows.filter(g=>g.band===b).sort((a,c)=>{const ah=Number(a.hcp),ch=Number(c.hcp);if(Number.isFinite(ah)&&Number.isFinite(ch)&&ah!==ch)return ah-ch;return a.name.localeCompare(c.name)});if(!list.length)return "";return `<div class="player-team-card"><div class="player-team-head"><h3>${b==="—"?"Band Not Set":`Band ${b}`}</h3><div class="status">${list.length} golfer${list.length===1?"":"s"}</div></div>${list.map(rowHtml).join("")}</div>`}).join("");return
+ }
+ const teamGroups=Array.from({length:activeTeamCount()},(_,i)=>({name:draftState?.teams?.[i]?.name||`Team ${i+1}`,captain:draftState?.teams?.[i]?.captain||"",rows:rows.filter(g=>g.teamIndex===i).sort((a,b)=>a.name.localeCompare(b.name))}));
+ const unassigned=rows.filter(g=>g.teamIndex==null).sort((a,b)=>a.name.localeCompare(b.name));
+ root.innerHTML=teamGroups.map((grp,i)=>`<div class="player-team-card"><div class="player-team-head"><div><h3>${esc(grp.name)}</h3><div class="status">${grp.captain?`Captain: ${esc(grp.captain)}`:"Captain not assigned"}</div></div><div class="status">${grp.rows.length} player${grp.rows.length===1?"":"s"}</div></div>${grp.rows.length?grp.rows.map(rowHtml).join(""):'<div class="note" style="padding:12px 14px">No golfers assigned.</div>'}</div>`).join("")+(unassigned.length?`<div class="player-team-card"><div class="player-team-head"><h3>Available / Unassigned</h3><div class="status">${unassigned.length} player${unassigned.length===1?"":"s"}</div></div>${unassigned.map(rowHtml).join("")}</div>`:"");
+}
+
 function renderProgress(){
  let complete=0;
  const cards=Array.from({length:18},(_,i)=>{
@@ -1057,7 +1127,7 @@ function renderAll(){
  $("logoutBtn").classList.toggle("hidden",!user);
  $("scoringTab").classList.toggle("hidden",!user);
  if(!user){$("adminTab").classList.add("hidden"); if(document.querySelector('.tab.active')?.dataset.view==='scoring'||document.querySelector('.tab.active')?.dataset.view==='admin'){showView('leaderboard')}}
- renderLeaderboard();renderTeams();renderCourse();renderProgress();renderSelfHandicap();renderScoring();renderTrashTalk();renderAdmin();
+ renderLeaderboard();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderScoring();renderTrashTalk();renderAdmin();
 }
 let syncBusy=false;
 async function syncLive(){
@@ -1156,6 +1226,8 @@ $("authBtn").addEventListener("click",()=>{$("loginCard").classList.remove("hidd
 $("cancelLoginBtn").addEventListener("click",()=>{$("loginCard").classList.add("hidden")});
 $("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;showView("leaderboard");await enterViewer()});
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
+if($("playerDirectoryMode"))$("playerDirectoryMode").addEventListener("change",renderPlayersDirectory);
+if($("playerDirectorySearch"))$("playerDirectorySearch").addEventListener("input",renderPlayersDirectory);
 if($("courseBrowseSelect"))$("courseBrowseSelect").addEventListener("change",()=>{
  const c=COURSE_LIBRARY[$("courseBrowseSelect").value];
  if(!c)return;
