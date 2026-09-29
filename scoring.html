@@ -45,7 +45,14 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .editor-card input,.editor-card select{width:100%;margin-top:5px}
 .player-admin-row{display:grid;grid-template-columns:minmax(120px,1fr) 70px 80px minmax(110px,1fr) auto;gap:7px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
 .player-admin-row input,.player-admin-row select{width:100%;min-width:0}
-@media(max-width:650px){.player-admin-row{grid-template-columns:1fr 72px 82px}.player-admin-row .player-team{grid-column:1/3}.player-admin-row .danger{grid-column:3}.commissioner-actions{display:grid!important;grid-template-columns:1fr 1fr}.commissioner-actions button{width:100%}}
+@media(max-width:650px){
+  .player-admin-row{grid-template-columns:minmax(0,1fr) 72px 82px;align-items:start}
+  .player-admin-row .player-team{grid-column:1/4}
+  .player-admin-row .player-actions{grid-column:1/4;display:grid!important;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+  .player-admin-row .player-actions button{width:100%;min-height:42px;padding:9px 8px;font-size:12px}
+  .commissioner-actions{display:grid!important;grid-template-columns:1fr 1fr}
+  .commissioner-actions button{width:100%}
+}
 
 /* Commissioner dashboard */
 .commissioner-hero{background:linear-gradient(135deg,#08253b,#103c59);color:#fff;border:0}.commissioner-hero .note{color:rgba(255,255,255,.82)}
@@ -931,7 +938,7 @@ async function removeCaptainLogin(i){
 }
 function renderPlayerEditor(){
  ensureDraftShape();
- $("playerEditor").innerHTML=draftState.golfers.map((g,i)=>`<div class="player-admin-row" data-player-row="${i}"><input data-player-name="${i}" value="${esc(g.name||"")}" placeholder="Golfer name"><select data-player-band="${i}">${["A","B","C","D"].map(b=>`<option ${String(g.band||"A").toUpperCase()===b?"selected":""}>${b}</option>`).join("")}</select><input data-player-hcp="${i}" value="${esc(g.hcp??"")}" placeholder="HCP"><select class="player-team" data-player-team="${i}">${teamOptions(g.team==null?"":g.team)}</select><div class="row" style="gap:5px;flex-wrap:nowrap"><button class="secondary" style="padding:8px 9px;font-size:11px" data-reset-player-pin="${i}" type="button">Issue / Reset Code</button><button class="danger" style="padding:8px 9px;font-size:11px" data-remove-player="${i}" type="button">Remove</button></div></div>`).join("")||'<div class="note" style="padding:12px 0">No golfers yet.</div>';
+ $("playerEditor").innerHTML=draftState.golfers.map((g,i)=>`<div class="player-admin-row" data-player-row="${i}"><input data-player-name="${i}" value="${esc(g.name||"")}" placeholder="Golfer name"><select data-player-band="${i}">${["A","B","C","D"].map(b=>`<option ${String(g.band||"A").toUpperCase()===b?"selected":""}>${b}</option>`).join("")}</select><input data-player-hcp="${i}" value="${esc(g.hcp??"")}" placeholder="HCP"><select class="player-team" data-player-team="${i}">${teamOptions(g.team==null?"":g.team)}</select><div class="row player-actions" style="gap:5px;flex-wrap:nowrap"><button class="secondary" style="padding:8px 9px;font-size:11px" data-reset-player-pin="${i}" type="button">Issue Code</button><button class="danger" style="padding:8px 9px;font-size:11px" data-remove-player="${i}" type="button">Remove</button></div></div>`).join("")||'<div class="note" style="padding:12px 0">No golfers yet.</div>';
  document.querySelectorAll("[data-remove-player]").forEach(b=>b.addEventListener("click",()=>removePlayer(Number(b.dataset.removePlayer))));
  document.querySelectorAll("[data-reset-player-pin]").forEach(b=>b.addEventListener("click",()=>resetGolferPin(Number(b.dataset.resetPlayerPin))));
 }
