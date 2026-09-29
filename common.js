@@ -15,11 +15,18 @@ function order(n){let tc=Math.max(1,S.teams.length),r=Math.floor(n/tc),p=n%tc;re
 function teamCapacity(t){let n=0;for(let p=0;p<totalPicks();p++)if(order(p)===t)n++;return n}
 function bandCounts(){let c={A:0,B:0,C:0,D:0};S.golfers.forEach(g=>{if(g.name&&bands.includes(g.band))c[g.band]++});return c}
 function tbc(t,b){return S.teams[t].roster.reduce((n,i)=>n+(S.golfers[i]?.band===b),0)}
+function tabc(t){return S.teams[t].roster.reduce((n,i)=>n+((S.golfers[i]?.band==="A"||S.golfers[i]?.band==="B")?1:0),0)}
 function canBand(t,b){
  if(!bands.includes(b))return false;
  const myCount=tbc(t,b);
  const lowest=Math.min(...S.teams.map((_,i)=>tbc(i,b)));
- return myCount===lowest;
+ if(myCount!==lowest)return false;
+ if(b==="A"||b==="B"){
+   const myAB=tabc(t);
+   const lowestAB=Math.min(...S.teams.map((_,i)=>tabc(i)));
+   if(myAB!==lowestAB)return false;
+ }
+ return true;
 }
 async function load(){let {data,error}=await db.from("elleng_drafts").select("state").eq("id",cfg.draftId).single();if(error)throw error;S={...fresh(),...data.state};if(!Array.isArray(S.teams)||!S.teams.length)S.teams=fresh().teams;if(!Array.isArray(S.golfers))S.golfers=[];if(!Array.isArray(S.picks))S.picks=[];S.golferCount=Math.max(8,Math.min(36,Number(S.golferCount||S.golfers.length||24)));while(S.golfers.length<S.golferCount)S.golfers.push({name:"",hcp:"",band:"",team:null});return S}
 async function save(){let {data,error}=await db.from("elleng_drafts").update({state:S,updated_at:new Date().toISOString()}).eq("id",cfg.draftId).select("id").single();if(error)throw error;if(!data)throw new Error("Draft could not be saved.")}
