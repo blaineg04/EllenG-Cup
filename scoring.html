@@ -153,7 +153,16 @@ async function loadBase(){
   db.from("elleng_captains").select("team_index,user_id").eq("draft_id",DRAFT_ID)
  ]);
  if(te)throw te;if(de)throw de;if(ce)throw ce;tournament=t;
- if(Array.isArray(d.state?.teams))teams=d.state.teams.map((x,i)=>({name:x.name||`Team ${i+1}`}));
+ if(Array.isArray(d.state?.teams))teams=d.state.teams.map((x,i)=>{
+  const roster=Array.isArray(x.roster)?x.roster:[];
+  const golfers=Array.isArray(d.state?.golfers)?d.state.golfers:[];
+  const rosterNames=roster.map(r=>{
+   if(typeof r==="string")return r;
+   if(typeof r==="number")return golfers[r]?.name||"";
+   return r?.name||golfers[r?.golferIndex]?.name||"";
+  }).filter(Boolean);
+  return {name:x.name||`Team ${i+1}`,captain:x.captain||"",roster:rosterNames};
+ });
  isCommissioner=d.owner_id===user.id; const mine=(c||[]).find(x=>x.user_id===user.id);captainTeam=mine?mine.team_index:null;
 }
 async function loadScores(){const {data,error}=await db.from("elleng_team_scores").select("*").eq("tournament_id",TOURNAMENT_ID);if(error)throw error;scores=data||[]}
@@ -171,6 +180,13 @@ async function syncLive(){
   const {data:t,error:te}=await db.from("elleng_tournaments").select("*").eq("id",TOURNAMENT_ID).single();
   if(te)throw te;
   tournament=t;
+  const {data:d}=await db.from("elleng_drafts").select("state").eq("id",DRAFT_ID).single();
+  if(Array.isArray(d?.state?.teams))teams=d.state.teams.map((x,i)=>{
+   const roster=Array.isArray(x.roster)?x.roster:[];
+   const golfers=Array.isArray(d.state?.golfers)?d.state.golfers:[];
+   const rosterNames=roster.map(r=>typeof r==="string"?r:typeof r==="number"?(golfers[r]?.name||""):(r?.name||golfers[r?.golferIndex]?.name||"")).filter(Boolean);
+   return {name:x.name||`Team ${i+1}`,captain:x.captain||"",roster:rosterNames};
+  });
   await loadScores();
   renderAll();
  }catch(e){console.error("Live sync failed:",e)}
