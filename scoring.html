@@ -154,14 +154,45 @@ function renderAll(){
  $("liveBadge").textContent=(tournament?.status||"setup").toUpperCase();$("roleLabel").textContent=isCommissioner?"Commissioner":captainTeam!=null?`${teams[captainTeam].name} Captain`:"Viewer";renderLeaderboard();renderScoring();renderAdmin();
 }
 async function enterApp(){
- $("loginCard").classList.add("hidden");$("app").classList.remove("hidden");$("userLabel").textContent=user.email||"";await loadBase();await loadScores();renderAll();
- db.channel("elleng-live-scoring").on("postgres_changes",{event:"*",schema:"public",table:"elleng_team_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{await loadScores();renderAll()}).on("postgres_changes",{event:"UPDATE",schema:"public",table:"elleng_tournaments",filter:`id=eq.${TOURNAMENT_ID}`},async p=>{tournament=p.new;renderAll()}).subscribe();
+ $("loginMsg").textContent="Signed in — loading tournament…";
+ try{
+  await loadBase();
+  await loadScores();
+  $("loginCard").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("userLabel").textContent=user.email||"";
+  renderAll();
+  db.channel("elleng-live-scoring")
+   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_team_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e)}})
+   .on("postgres_changes",{event:"UPDATE",schema:"public",table:"elleng_tournaments",filter:`id=eq.${TOURNAMENT_ID}`},async p=>{tournament=p.new;renderAll()})
+   .subscribe();
+ }catch(e){
+  console.error("Tournament load failed:",e);
+  $("app").classList.add("hidden");
+  $("loginCard").classList.remove("hidden");
+  $("loginMsg").textContent="Signed in, but tournament data could not load: "+(e?.message||String(e));
+  throw e;
+ }
 }
-$("loginBtn").addEventListener("click",async()=>{ $("loginMsg").textContent="Signing in…";const {data,error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error){$("loginMsg").textContent=error.message;return}user=data.user;$("loginMsg").textContent="";await enterApp().catch(e=>$("loginMsg").textContent=e.message)});
+$("loginBtn").addEventListener("click",async()=>{
+ const btn=$("loginBtn"), email=$("email").value.trim(), password=$("password").value;
+ if(!email||!password){$("loginMsg").textContent="Enter your email and password.";return}
+ btn.disabled=true;btn.textContent="Signing In…";$("loginMsg").textContent="Signing in…";
+ try{
+  const {data,error}=await db.auth.signInWithPassword({email,password});
+  if(error)throw error;
+  if(!data?.user)throw new Error("Sign-in succeeded but no user session was returned.");
+  user=data.user;
+  await enterApp();
+ }catch(e){
+  console.error("Sign-in/load error:",e);
+  if(!$("loginMsg").textContent.startsWith("Signed in, but"))$("loginMsg").textContent=e?.message||"Unable to sign in.";
+ }finally{btn.disabled=false;btn.textContent="Sign In"}
+});
 $("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();location.reload()});
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));$(b.dataset.view+"View").classList.remove("hidden")}));
 $("saveAdmin").addEventListener("click",async()=>{if(!isCommissioner)return; $("adminMsg").textContent="Saving…";const patch={status:$("statusSelect").value,gator_hole:$("gatorHole").value?Number($("gatorHole").value):null,gator_revealed:$("gatorReveal").value==="true",final_cargo_team:$("cargoTeam").value!==""?Number($("cargoTeam").value):null,updated_at:new Date().toISOString()};const {data,error}=await db.from("elleng_tournaments").update(patch).eq("id",TOURNAMENT_ID).select().single();if(error){$("adminMsg").textContent=error.message;return}tournament=data;$("adminMsg").textContent="Tournament controls saved.";renderAll()});
-(async()=>{const {data:{session}}=await db.auth.getSession();if(session){user=session.user;await enterApp().catch(e=>{$("app").classList.add("hidden");$("loginCard").classList.remove("hidden");$("loginMsg").textContent=e.message})}})();
+(async()=>{try{const {data:{session},error}=await db.auth.getSession();if(error)throw error;if(session){user=session.user;await enterApp()}}catch(e){console.error("Session restore error:",e);if(!$("loginMsg").textContent)$("loginMsg").textContent=e?.message||"Unable to restore session."}})();
 })();
 </script>
 </body>
