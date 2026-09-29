@@ -173,11 +173,12 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 
 <div id="adminTournament" class="card admin-card">
   <div class="section-toolbar">
-    <div class="admin-section-title"><span class="step">1</span><div><h2>Tournament Controls</h2><div class="section-sub">Status, team count, hole pars, Gator Hole and Final Cargo.</div></div></div>
+    <div class="admin-section-title"><span class="step">1</span><div><h2>Tournament Controls</h2><div class="section-sub">Status, team size, golfer count, automatic team count, hole pars, Gator Hole and Final Cargo.</div></div></div>
   </div>
   <div class="admin-grid">
     <label><small>Tournament status</small><select id="statusSelect"><option value="setup">Setup</option><option value="live">Live</option><option value="complete">Complete</option><option value="archived">Archived</option></select></label>
-    <label><small>Number of teams</small><select id="teamCountSelect"><option value="2">2 teams</option><option value="3">3 teams</option><option value="4">4 teams</option><option value="5">5 teams</option><option value="6">6 teams</option><option value="7">7 teams</option><option value="8">8 teams</option><option value="9">9 teams</option></select></label>
+    <label><small>Players per team</small><select id="teamSizeSelect"><option value="2">2-man team</option><option value="3">3-man team</option><option value="4">4-man team</option></select></label>
+    <label><small>Number of teams (automatic)</small><select id="teamCountSelect" disabled><option value="2">2 teams</option><option value="3">3 teams</option><option value="4">4 teams</option><option value="5">5 teams</option><option value="6">6 teams</option><option value="7">7 teams</option><option value="8">8 teams</option><option value="9">9 teams</option></select></label>
     <label><small>Number of golfers</small><select id="golferCountSelect"><option value="8">8 golfers</option><option value="9">9 golfers</option><option value="10">10 golfers</option><option value="11">11 golfers</option><option value="12">12 golfers</option><option value="13">13 golfers</option><option value="14">14 golfers</option><option value="15">15 golfers</option><option value="16">16 golfers</option><option value="17">17 golfers</option><option value="18">18 golfers</option><option value="19">19 golfers</option><option value="20">20 golfers</option><option value="21">21 golfers</option><option value="22">22 golfers</option><option value="23">23 golfers</option><option value="24">24 golfers</option><option value="25">25 golfers</option><option value="26">26 golfers</option><option value="27">27 golfers</option><option value="28">28 golfers</option><option value="29">29 golfers</option><option value="30">30 golfers</option><option value="31">31 golfers</option><option value="32">32 golfers</option><option value="33">33 golfers</option><option value="34">34 golfers</option><option value="35">35 golfers</option><option value="36">36 golfers</option></select></label>
     <label><small>Gator Hole side</small><select id="gatorSide"><option value="front">Front 9</option><option value="back">Back 9</option></select></label>
     <label><small>Secret Gator Hole</small><select id="gatorHole"><option value="">Not selected</option></select></label>
@@ -510,7 +511,7 @@ function renderScoring(){
   parView.innerHTML=pars.map((p,i)=>`<div style="border:1px solid var(--line);border-radius:9px;padding:8px;text-align:center;background:#fff"><div class="status">Hole ${i+1}</div><strong>Par ${p}</strong></div>`).join("");
  }
  const par=parForHole(hole);
- $("holeFormat").textContent=`${hole<=9?"4-MAN SCRAMBLE":"4-MAN SHAMBLE"} • HOLE ${hole} • PAR ${par}`;
+ $("holeFormat").textContent=`${draftTeamSize()}-MAN ${hole<=9?"SCRAMBLE":"SHAMBLE"} • HOLE ${hole} • PAR ${par}`;
  const mobileGuide=$("mobileHoleGuide");
  if(mobileGuide){
   const maxStroke=Math.min(20,par+2);
@@ -594,6 +595,8 @@ async function loadScores(){
 }
 function teamOptions(selected=""){return '<option value="">Available / Unassigned</option>'+teams.map((t,i)=>`<option value="${i}" ${String(selected)===String(i)?"selected":""}>${esc(t.name)}</option>`).join("")}
 function draftGolferCount(){let n=Number(draftState?.golferCount||draftState?.golfers?.length||24);return Math.max(8,Math.min(36,Number.isInteger(n)?n:24))}
+function draftTeamSize(){let n=Number(draftState?.teamSize||4);return [2,3,4].includes(n)?n:4}
+function calculatedTeamCount(golfers=draftGolferCount(),size=draftTeamSize()){return Math.ceil(Number(golfers)/Number(size))}
 function ensureDraftShape(){
  if(!draftState)draftState={};
  const count=activeTeamCount();
@@ -661,7 +664,7 @@ function renderHoleParEditor(){
 function renderAdmin(){
  if(!isCommissioner){$("adminTab").classList.add("hidden");return;}
  $("adminTab").classList.remove("hidden"); ensureDraftShape();
- $("statusSelect").value=tournament.status; $("teamCountSelect").value=String(activeTeamCount()); if($("golferCountSelect"))$("golferCountSelect").value=String(draftGolferCount());
+ $("statusSelect").value=tournament.status; if($("teamSizeSelect"))$("teamSizeSelect").value=String(draftTeamSize()); if($("golferCountSelect"))$("golferCountSelect").value=String(draftGolferCount()); if($("teamCountSelect"))$("teamCountSelect").value=String(Math.min(9,Math.max(2,calculatedTeamCount())));
  const gh=Number(tournament.gator_hole)||0; $("gatorSide").value=gh&&gh<=9?"front":"back";
  renderHoleParEditor(); populateGatorHoles();
  $("gatorReveal").value=String(!!tournament.gator_revealed);
@@ -672,8 +675,8 @@ function renderAdmin(){
  if($("commissionerCaptainCount"))$("commissionerCaptainCount").textContent=captainCount;
  if($("commissionerGolferCount"))$("commissionerGolferCount").textContent=golfers.length;
  if($("commissionerAssignedCount"))$("commissionerAssignedCount").textContent=assignedCount;
- const gc=draftGolferCount(),tc=activeTeamCount(),base=Math.floor(gc/tc),extra=gc%tc;
- if($("teamBuildSummary"))$("teamBuildSummary").innerHTML=extra===0?`<strong>${gc} golfers ÷ ${tc} teams = ${base} golfers per team.</strong>`:`<strong>${gc} golfers across ${tc} teams.</strong> ${extra} team${extra===1?"":"s"} will receive ${base+1} golfer${base+1===1?"":"s"}; the other ${tc-extra} will receive ${base}.`;
+ const gc=draftGolferCount(),tc=activeTeamCount(),size=draftTeamSize(),base=Math.floor(gc/tc),extra=gc%tc;
+ if($("teamBuildSummary"))$("teamBuildSummary").innerHTML=extra===0?`<strong>${gc} golfers → ${tc} teams of ${size}.</strong>`:`<strong>${gc} golfers → ${tc} teams using a ${size}-man format.</strong> ${extra} team${extra===1?"":"s"} will have ${base+1} golfers; the other ${tc-extra} will have ${base}.`;
  if($("newTournamentName")&&!$("newTournamentName").dataset.touched){$("newTournamentName").value=tournament?.name||draftState?.tournamentName||"EllenG Cup";$("newTournamentName").dataset.touched="1"}
  renderTeamEditor(); renderPlayerEditor();
 }
@@ -842,19 +845,27 @@ $("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=n
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
 $("gatorSide").addEventListener("change",populateGatorHoles);
 function previewTeamBuild(){
- const tc=Number($("teamCountSelect")?.value||activeTeamCount()),gc=Number($("golferCountSelect")?.value||draftGolferCount()),base=Math.floor(gc/tc),extra=gc%tc;
- if($("teamBuildSummary"))$("teamBuildSummary").innerHTML=extra===0?`<strong>${gc} golfers ÷ ${tc} teams = ${base} golfers per team.</strong>`:`<strong>${gc} golfers across ${tc} teams.</strong> ${extra} team${extra===1?"":"s"} will receive ${base+1}; the other ${tc-extra} will receive ${base}.`;
+ const gc=Number($("golferCountSelect")?.value||draftGolferCount()),size=Number($("teamSizeSelect")?.value||draftTeamSize()),tc=Math.ceil(gc/size),base=Math.floor(gc/tc),extra=gc%tc;
+ if($("teamCountSelect")&&tc>=2&&tc<=9)$("teamCountSelect").value=String(tc);
+ if($("teamBuildSummary")){
+   if(tc>9){$("teamBuildSummary").innerHTML=`<strong>${gc} golfers with ${size}-man teams would require ${tc} teams.</strong> The current EllenG Cup app supports up to 9 teams, so ${size}-man teams support a maximum of ${size*9} golfers.`;return}
+   $("teamBuildSummary").innerHTML=extra===0?`<strong>${gc} golfers → ${tc} teams of ${size}.</strong>`:`<strong>${gc} golfers → ${tc} teams using a ${size}-man format.</strong> ${extra} team${extra===1?"":"s"} will have ${base+1} golfers and the other ${tc-extra} will have ${base}.`;
+ }
 }
-$("teamCountSelect").addEventListener("change",previewTeamBuild);
+$("teamSizeSelect").addEventListener("change",previewTeamBuild);
 $("golferCountSelect").addEventListener("change",previewTeamBuild);
 
 $("saveAdmin").addEventListener("click",async()=>{
  if(!isCommissioner)return;
  $("adminMsg").textContent="Saving…";
  try{
-  const oldCount=activeTeamCount(), newCount=Number($("teamCountSelect").value||oldCount);
+  const oldCount=activeTeamCount();
   ensureDraftShape();
   const desiredGolfers=Math.max(8,Math.min(36,Number($("golferCountSelect")?.value||draftGolferCount())));
+  const selectedTeamSize=Number($("teamSizeSelect")?.value||draftTeamSize());
+  const newCount=Math.ceil(desiredGolfers/selectedTeamSize);
+  if(newCount>9){$("adminMsg").textContent=`${desiredGolfers} golfers with ${selectedTeamSize}-man teams requires ${newCount} teams. The app currently supports a maximum of 9 teams. Reduce golfers or choose a larger team size.`;return}
+  $("teamCountSelect").value=String(newCount);
   const namedGolfers=(draftState.golfers||[]).filter(g=>(g?.name||"").trim()).length;
   if(desiredGolfers<namedGolfers){$("adminMsg").textContent=`You already have ${namedGolfers} named golfers. Remove golfers first before lowering the setup to ${desiredGolfers}.`;return}
   while(draftState.golfers.length<desiredGolfers)draftState.golfers.push({name:"",hcp:"",band:"",team:null});
@@ -864,6 +875,7 @@ $("saveAdmin").addEventListener("click",async()=>{
     removable.sort((a,b)=>b-a).forEach(i=>draftState.golfers.splice(i,1));
   }
   draftState.golferCount=desiredGolfers;
+  draftState.teamSize=selectedTeamSize;
   if(newCount<oldCount){
    const affected=(draftState.golfers||[]).filter(g=>g.team!=null&&Number(g.team)>=newCount).length;
    if(affected&&!confirm(`${affected} golfer(s) are assigned to teams being removed. They will become unassigned. Continue?`)){ $("adminMsg").textContent="Team count change canceled.";return }
@@ -878,7 +890,7 @@ $("saveAdmin").addEventListener("click",async()=>{
   rebuildTeamRosters();
   const {error:de}=await db.from("elleng_drafts").update({state:draftState,updated_at:new Date().toISOString()}).eq("id",DRAFT_ID);if(de)throw de;
   await loadBase(); await loadScores(); renderAll();
-  $("adminMsg").textContent=`Tournament controls saved. ${teams.length} teams and ${draftGolferCount()} golfer slots active.`;
+  $("adminMsg").textContent=`Tournament controls saved. ${draftTeamSize()}-man format, ${teams.length} teams and ${draftGolferCount()} golfer slots active.`;
  }catch(e){$("adminMsg").textContent=e?.message||"Unable to save tournament controls."}
 });
 $("reloadAdmin").addEventListener("click",async()=>{if(!isCommissioner)return;$("adminMsg").textContent="Reloading…";try{await loadBase();await loadScores();renderAll();$("adminMsg").textContent="Current data reloaded."}catch(e){$("adminMsg").textContent=e.message}});
