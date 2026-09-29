@@ -114,7 +114,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <section id="courseView" class="view hidden">
 <div class="card" style="padding:0;overflow:hidden">
   <div class="course-hero">
-    <img src="bayou-din.jpg" alt="Bayou Din Golf Club course">
+    <img id="courseHeroImage" src="bayou-din.jpg" alt="Selected golf course">
     <div class="course-overlay">
       <h2 id="courseNameDisplay">Bayou Din Golf Club</h2>
       <div id="courseRouteDisplay" class="status" style="color:rgba(255,255,255,.9)">Front → Back</div>
@@ -229,7 +229,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   </div>
   <div class="admin-grid">
 
-    <label><small>Golf course</small><select id="courseSelect"><option value="bayou-din">Bayou Din Golf Club — Beaumont, TX</option></select></label>
+    <label><small>Golf course</small><select id="courseSelect"><option value="bayou-din">Bayou Din Golf Club — Beaumont, TX</option><option value="brentwood">Brentwood Country Club — Beaumont, TX</option></select></label>
     <label><small>Course routing</small><select id="courseRouteSelect"><option value="front-back">Front → Back</option><option value="links-front">Links → Front</option><option value="links-back">Links → Back</option></select></label>
     <label><small>Tournament status</small><select id="statusSelect"><option value="setup">Setup</option><option value="live">Live</option><option value="complete">Complete</option><option value="archived">Archived</option></select></label>
     <label><small>Playing format</small><select id="playFormatSelect"><option value="standard">Standard EllenG — Front 9 Scramble / Back 9 Shamble</option><option value="split_pair">Split-Pair Scramble — two 2-man pairs per 4-man team</option></select></label>
@@ -330,35 +330,47 @@ const DEFAULT_PARS=[4,4,3,4,5,4,3,4,5,4,4,3,5,4,4,3,5,4];
 const COURSE_LIBRARY={
  "bayou-din":{
    name:"Bayou Din Golf Club",location:"Beaumont, TX",image:"bayou-din.jpg",
+   tees:[{key:"blue",label:"Blue"},{key:"white",label:"White"}],
    routes:{
     "front-back":{label:"Front → Back",par:[5,3,4,4,4,4,3,5,4,4,3,4,5,4,4,4,3,4],blue:[510,167,378,440,371,448,176,500,415,400,150,322,454,420,374,287,175,298],white:[484,156,358,420,351,373,153,495,341,369,147,311,426,402,366,274,146,283]},
     "links-front":{label:"Links → Front",par:[4,4,3,4,5,4,5,3,4,5,3,4,4,4,4,3,5,4],blue:[398,415,197,407,517,479,587,191,427,510,167,378,440,371,448,176,500,415],white:[392,377,173,382,498,448,556,174,394,484,156,358,420,351,373,153,495,341]},
     "links-back":{label:"Links → Back",par:[4,4,3,4,5,4,5,3,4,4,3,4,5,4,4,4,3,4],blue:[398,415,197,407,517,479,587,191,427,400,150,322,454,420,374,287,175,298],white:[392,377,173,382,498,448,556,174,394,369,147,311,426,402,366,274,146,283]}
    }
+ },
+ "brentwood":{
+   name:"Brentwood Country Club",location:"Beaumont, TX",image:"brentwood-country-club.jpg",
+   tees:[{key:"gold",label:"Gold"},{key:"blue",label:"Blue"},{key:"green",label:"Green"},{key:"red",label:"Red"}],
+   routes:{
+    "championship-18":{label:"Championship 18",par:[4,3,4,5,4,4,4,3,4,5,3,4,5,4,5,3,4,4],handicap:[13,17,3,1,9,7,5,15,11,4,16,10,6,12,2,18,14,8],gold:[409,175,390,524,360,300,409,179,395,532,185,401,520,393,538,174,356,449],blue:[379,165,370,504,318,275,325,169,371,519,165,385,451,255,522,164,348,431],green:[335,155,370,474,310,260,316,162,354,473,137,375,420,250,445,150,334,375],red:[278,148,361,448,302,250,310,142,305,448,110,367,410,245,439,135,293,365]}
+   }
  }
 };
 function activeCourseId(){return draftState?.courseId&&COURSE_LIBRARY[draftState.courseId]?draftState.courseId:"bayou-din"}
 function activeCourse(){return COURSE_LIBRARY[activeCourseId()]}
-function activeCourseRouteId(){const c=activeCourse();return draftState?.courseRoute&&c.routes[draftState.courseRoute]?draftState.courseRoute:"front-back"}
+function activeCourseRouteId(){const c=activeCourse(),keys=Object.keys(c.routes);return draftState?.courseRoute&&c.routes[draftState.courseRoute]?draftState.courseRoute:keys[0]}
 function activeCourseRoute(){return activeCourse().routes[activeCourseRouteId()]}
 function courseYardage(h,tee){const r=activeCourseRoute();return Number(r?.[tee]?.[h-1]||0)}
-function courseTotal(tee){return activeCourseRoute()[tee].reduce((a,b)=>a+Number(b||0),0)}
+function courseTotal(tee){const vals=activeCourseRoute()?.[tee];return Array.isArray(vals)?vals.reduce((a,b)=>a+Number(b||0),0):0}
+function activeTeeLine(h,compact=false){const c=activeCourse();return (c.tees||[]).map(t=>`${compact?t.label.charAt(0):t.label} ${courseYardage(h,t.key)}`).join(" • ")}
 function renderCourse(){
  const c=activeCourse(),r=activeCourseRoute();
+ if($("courseHeroImage")){ $("courseHeroImage").src=c.image; $("courseHeroImage").alt=`${c.name} course`; }
  if($("courseNameDisplay"))$("courseNameDisplay").textContent=c.name;
  if($("courseRouteDisplay"))$("courseRouteDisplay").textContent=`${c.location} • ${r.label}`;
- if($("courseSummaryBadges"))$("courseSummaryBadges").innerHTML=`<span class="badge">Par ${r.par.reduce((a,b)=>a+b,0)}</span><span class="badge">Blue ${courseTotal("blue").toLocaleString()} yds</span><span class="badge">White ${courseTotal("white").toLocaleString()} yds</span>`;
+ if($("courseSummaryBadges"))$("courseSummaryBadges").innerHTML=`<span class="badge">Par ${r.par.reduce((a,b)=>a+b,0)}</span>`+(c.tees||[]).map(t=>`<span class="badge">${t.label} ${courseTotal(t.key).toLocaleString()} yds</span>`).join("");
  if($("courseScorecard")){
    const holes=Array.from({length:18},(_,i)=>i+1);
-   const row=(label,vals,suffix="")=>`<tr><td><strong>${label}</strong></td>${vals.map(v=>`<td>${v}${suffix}</td>`).join("")}<td><strong>${vals.reduce((a,b)=>a+Number(b||0),0)}${suffix}</strong></td></tr>`;
-   $("courseScorecard").innerHTML=`<table class="course-table"><thead><tr><th>Tee / Hole</th>${holes.map(h=>`<th>${h}</th>`).join("")}<th>Total</th></tr></thead><tbody>${row("Par",r.par)}${row("Blue",r.blue)}${row("White",r.white)}</tbody></table>`;
+   const row=(label,vals)=>`<tr><td><strong>${label}</strong></td>${vals.map(v=>`<td>${v}</td>`).join("")}<td><strong>${vals.reduce((a,b)=>a+Number(b||0),0)}</strong></td></tr>`;
+   const teeRows=(c.tees||[]).map(t=>row(t.label,r[t.key]||[])).join("");
+   const handicapRow=Array.isArray(r.handicap)?`<tr><td><strong>Handicap</strong></td>${r.handicap.map(v=>`<td>${v}</td>`).join("")}<td>—</td></tr>`:"";
+   $("courseScorecard").innerHTML=`<table class="course-table"><thead><tr><th>Tee / Hole</th>${holes.map(h=>`<th>${h}</th>`).join("")}<th>Total</th></tr></thead><tbody>${row("Par",r.par)}${teeRows}${handicapRow}</tbody></table>`;
  }
 }
 function applySelectedCourseToPars(){
  const id=$("courseSelect")?.value||"bayou-din", c=COURSE_LIBRARY[id]; if(!c)return;
- const rid=$("courseRouteSelect")?.value||"front-back", r=c.routes[rid]; if(!r)return;
+ const rid=$("courseRouteSelect")?.value||Object.keys(c.routes)[0], r=c.routes[rid]; if(!r)return;
  document.querySelectorAll("[data-hole-par]").forEach(sel=>{const i=Number(sel.dataset.holePar); if(r.par[i])sel.value=String(r.par[i])});
- if($("teamBuildSummary"))$("teamBuildSummary").insertAdjacentHTML("beforeend",`<div style="margin-top:6px"><strong>${c.name}</strong> • ${r.label} • Par ${r.par.reduce((a,b)=>a+b,0)} • Blue ${r.blue.reduce((a,b)=>a+b,0).toLocaleString()} yds • White ${r.white.reduce((a,b)=>a+b,0).toLocaleString()} yds</div>`);
+ if($("teamBuildSummary"))$("teamBuildSummary").insertAdjacentHTML("beforeend",`<div style="margin-top:6px"><strong>${c.name}</strong> • ${r.label} • Par ${r.par.reduce((a,b)=>a+b,0)} • ${(c.tees||[]).map(t=>`${t.label} ${r[t.key].reduce((a,b)=>a+b,0).toLocaleString()} yds`).join(" • ")}</div>`);
 }
 
 function activeTeamCount(){
@@ -647,13 +659,13 @@ function renderScoring(){
  const parView=$("captainParView");
  if(parView){
   const pars=currentPars();
-  parView.innerHTML=pars.map((p,i)=>`<div style="border:1px solid var(--line);border-radius:9px;padding:8px;text-align:center;background:#fff"><div class="status">Hole ${i+1}</div><strong>Par ${p}</strong><div class="status">B ${courseYardage(i+1,"blue")} • W ${courseYardage(i+1,"white")}</div></div>`).join("");
+  parView.innerHTML=pars.map((p,i)=>`<div style="border:1px solid var(--line);border-radius:9px;padding:8px;text-align:center;background:#fff"><div class="status">Hole ${i+1}</div><strong>Par ${p}</strong><div class="status">${activeTeeLine(i+1,true)}</div></div>`).join("");
  }
  const par=parForHole(hole);
  if(isSplitPair()){
-   $("holeFormat").textContent=`SPLIT-PAIR SCRAMBLE • HOLE ${hole} • PAR ${par} • BLUE ${courseYardage(hole,"blue")} • WHITE ${courseYardage(hole,"white")}`;
+   $("holeFormat").textContent=`SPLIT-PAIR SCRAMBLE • HOLE ${hole} • PAR ${par} • ${activeTeeLine(hole)}`;
  }else{
-   $("holeFormat").textContent=`${draftTeamSize()}-MAN ${hole<=9?"SCRAMBLE":"SHAMBLE"} • HOLE ${hole} • PAR ${par} • BLUE ${courseYardage(hole,"blue")} • WHITE ${courseYardage(hole,"white")}`;
+   $("holeFormat").textContent=`${draftTeamSize()}-MAN ${hole<=9?"SCRAMBLE":"SHAMBLE"} • HOLE ${hole} • PAR ${par} • ${activeTeeLine(hole)}`;
  }
  const mobileGuide=$("mobileHoleGuide");
  if(mobileGuide){
@@ -665,7 +677,7 @@ function renderScoring(){
     guide.push(`<div class="guide-item"><strong>${esc(rg.rel)} • ${esc(rg.label||"")}</strong>${st} stroke${st===1?"":"s"}</div>`);
    }
   }
-  mobileGuide.innerHTML=`<div class="guide-title">Hole ${hole} • Par ${par} • Blue ${courseYardage(hole,"blue")} yds • White ${courseYardage(hole,"white")} yds</div><div class="guide-grid">${guide.join("")}</div>`;
+  mobileGuide.innerHTML=`<div class="guide-title">Hole ${hole} • Par ${par} • ${activeTeeLine(hole)} yds</div><div class="guide-grid">${guide.join("")}</div>`;
  }
  $("entryHint").textContent=isCommissioner?`Commissioner: edit scores for any team. Mobile uses golf score vs par; desktop uses actual strokes.`:captainTeam!=null?`You can edit ${teams[captainTeam]?.name||"your team"}. On mobile use − / 0 / +; the app converts it to strokes automatically.`:"Scores are view-only.";
  const pts=pointsForHole(hole);
@@ -912,7 +924,7 @@ async function resetGolferPin(i){
 function renderAdmin(){
  if(!isCommissioner){$("adminTab").classList.add("hidden");return;}
  $("adminTab").classList.remove("hidden"); ensureDraftShape();
- if($("courseSelect"))$("courseSelect").value=activeCourseId(); if($("courseRouteSelect"))$("courseRouteSelect").value=activeCourseRouteId();
+ if($("courseSelect"))$("courseSelect").value=activeCourseId(); if($("courseRouteSelect")){const c=activeCourse();$("courseRouteSelect").innerHTML=Object.entries(c.routes).map(([id,r])=>`<option value="${id}">${r.label}</option>`).join("");$("courseRouteSelect").value=activeCourseRouteId();}
  $("statusSelect").value=tournament.status; if($("playFormatSelect"))$("playFormatSelect").value=playFormat(); if($("teamSizeSelect"))$("teamSizeSelect").value=String(draftTeamSize()); if($("golferCountSelect"))$("golferCountSelect").value=String(draftGolferCount()); if($("teamCountSelect"))$("teamCountSelect").value=String(Math.min(9,Math.max(2,calculatedTeamCount())));
  const gh=Number(tournament.gator_hole)||0; $("gatorSide").value=gh&&gh<=9?"front":"back";
  renderHoleParEditor(); populateGatorHoles();
@@ -1150,7 +1162,7 @@ $("saveAdmin").addEventListener("click",async()=>{
   draftState.teamSize=selectedTeamSize;
   draftState.playFormat=selectedPlayFormat;
   draftState.courseId=$("courseSelect")?.value||"bayou-din";
-  draftState.courseRoute=$("courseRouteSelect")?.value||"front-back";
+  draftState.courseRoute=$("courseRouteSelect")?.value||Object.keys(COURSE_LIBRARY[draftState.courseId].routes)[0];
   if(newCount<oldCount){
    const affected=(draftState.golfers||[]).filter(g=>g.team!=null&&Number(g.team)>=newCount).length;
    if(affected&&!confirm(`${affected} golfer(s) are assigned to teams being removed. They will become unassigned. Continue?`)){ $("adminMsg").textContent="Team count change canceled.";return }
