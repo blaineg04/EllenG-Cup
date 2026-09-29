@@ -1,0 +1,372 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EllenG Cup Live Draft</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.comm-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.comm-panel{border:2px solid #d5a72c}
+.comm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+.comm-stat{border:1px solid #dce3e7;border-radius:12px;padding:12px;background:#fff}
+.comm-stat strong{display:block;font-size:22px}
+.comm-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.comm-actions button{min-height:44px}
+.comm-login input{min-height:44px}
+.comm-login{display:flex;gap:8px;flex-wrap:wrap}
+.comm-login input{flex:1 1 190px}
+.hidden{display:none!important}
+.danger{background:#8b1e2d!important;color:#fff!important}
+.primary{background:#087c42!important;color:#fff!important}
+.secondary{background:#e9eef1!important;color:#10202c!important}
+#commissionerBadge{font-weight:800}
+@media(max-width:560px){
+  .comm-actions{display:grid;grid-template-columns:1fr 1fr}
+  .comm-actions button{width:100%}
+  .comm-login{display:grid;grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <img src="gator.jpeg" style="width:118px;height:82px;object-fit:contain;object-position:center;background:#fff;padding:6px;border-radius:16px;border:3px solid #d5a72c;box-shadow:0 5px 16px rgba(0,0,0,.16)">
+  <div><h1>EllenG Cup — Live Draft</h1><div>Official Live Draft Board • supports 2–9 teams • 8–36 golfers</div></div>
+  <div style="margin-left:auto" id="connection">CONNECTING</div>
+</div>
+
+<div class="wrap">
+
+  <div class="card comm-panel">
+    <div class="bar">
+      <div>
+        <strong>Commissioner Controls</strong>
+        <div id="commStatus" class="muted">Sign in as Commissioner to start and manage the draft.</div>
+      </div>
+      <div id="commissionerBadge" class="muted">VIEW ONLY</div>
+    </div>
+
+    <div id="commLogin" class="comm-login" style="margin-top:12px">
+      <input id="commEmail" type="email" placeholder="Commissioner email" autocomplete="email">
+      <input id="commPw" type="password" placeholder="Password" autocomplete="current-password">
+      <button id="commSignIn" class="gold">Commissioner Sign In</button>
+    </div>
+
+    <div id="commControls" class="hidden">
+      <div class="comm-grid">
+        <div class="comm-stat"><span class="muted">DRAFT STATUS</span><strong id="adminDraftStatus">READY</strong></div>
+        <div class="comm-stat"><span class="muted">CURRENT PICK</span><strong id="adminPick">1</strong></div>
+        <div class="comm-stat"><span class="muted">ON THE CLOCK</span><strong id="adminTeam">Team 1</strong></div>
+        <div class="comm-stat">
+          <label class="muted" for="adminTimer">PICK TIMER</label>
+          <select id="adminTimer" style="width:100%;min-height:44px;margin-top:5px">
+            <option value="30">30 seconds</option>
+            <option value="45">45 seconds</option>
+            <option value="60">60 seconds</option>
+            <option value="90">90 seconds</option>
+            <option value="120">2 minutes</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="comm-actions">
+        <button id="startDraft" class="primary">▶ Start Draft</button>
+        <button id="pauseDraft" class="secondary">⏸ Pause</button>
+        <button id="resumeDraft" class="secondary">▶ Resume</button>
+        <button id="resetClock" class="secondary">↻ Reset Pick Clock</button>
+        <button id="undoPick" class="secondary">↶ Undo Last Pick</button>
+        <button id="resetDraft" class="danger">Reset Entire Draft</button>
+        <button id="commSignOut" class="secondary">Sign Out</button>
+      </div>
+      <div id="adminMsg" class="muted" style="margin-top:9px"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <button id="soundToggle" class="gold">🔊 Enable Draft Sounds</button>
+    <span id="soundStatus" class="muted" style="margin-left:10px">Sound off</span>
+  </div>
+
+  <div class="card">
+    <div class="bar">
+      <div>
+        <strong id="onclock">Loading draft…</strong>
+        <div id="meta" class="muted"></div>
+      </div>
+      <div style="text-align:center">
+        <div id="clock">1:00</div>
+        <div class="muted">LIVE PICK CLOCK</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="teams" class="teams"></div>
+
+  <div class="card" style="margin-top:12px">
+    <h3>Available Golfers</h3>
+    <div style="overflow:auto">
+      <table>
+        <thead><tr><th>Golfer</th><th>Rank</th><th>Handicap Range</th><th>Status</th></tr></thead>
+        <tbody id="publicPool"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <h3>Draft Log</h3>
+    <div id="log" class="muted"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+let draftSoundEnabled=false,lastSoundPickCount=null,audioCtx=null;
+let commUser=null,isCommissioner=false;
+
+async function enableDraftSound(){
+  try{
+    audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==="suspended")await audioCtx.resume();
+    draftSoundEnabled=!draftSoundEnabled;
+    document.getElementById("soundToggle").textContent=draftSoundEnabled?"🔇 Mute Draft Sounds":"🔊 Enable Draft Sounds";
+    document.getElementById("soundStatus").textContent=draftSoundEnabled?"Sound ON — test growl played":"Sound off";
+    if(draftSoundEnabled){
+      gatorGrowl(true);
+      setTimeout(()=>{if(draftSoundEnabled)document.getElementById("soundStatus").textContent="Gator sound ON"},1400)
+    }
+  }catch(e){
+    draftSoundEnabled=false;
+    document.getElementById("soundStatus").textContent="Audio blocked — tap again"
+  }
+}
+function gatorGrowl(force=false){
+  if(!draftSoundEnabled && !force) return;
+  const growl = new Audio("gator-growl-no-water.wav");
+  growl.volume = 1.0;
+  growl.currentTime = 0;
+  growl.play().catch(e => console.log("Growl sound error:", e));
+}
+function checkDraftSound(){
+  let n=S.picks.length;
+  if(lastSoundPickCount===null){lastSoundPickCount=n;return}
+  if(n>lastSoundPickCount)gatorGrowl();
+  lastSoundPickCount=n
+}
+
+function draftComplete(){
+  const total=totalPicks();
+  return S.picks.length>=total;
+}
+
+function renderCommissioner(){
+  const total=totalPicks();
+  const done=draftComplete();
+  const current=done?null:order(S.picks.length);
+  let status=done?"COMPLETE":(!S.timerPaused&&S.timerEndsAt?"LIVE":"READY / PAUSED");
+  document.getElementById("adminDraftStatus").textContent=status;
+  document.getElementById("adminPick").textContent=done?total:String(Math.min(total,S.picks.length+1));
+  document.getElementById("adminTeam").textContent=done?"—":(S.teams[current]?.name||("Team "+(current+1)));
+  document.getElementById("adminTimer").value=String([30,45,60,90,120].includes(Number(S.timerLength))?Number(S.timerLength):60);
+
+  document.getElementById("startDraft").disabled=done||(!S.timerPaused&&S.timerEndsAt);
+  document.getElementById("pauseDraft").disabled=done||S.timerPaused||!S.timerEndsAt;
+  document.getElementById("resumeDraft").disabled=done||!S.timerPaused;
+  document.getElementById("undoPick").disabled=!S.picks.length;
+}
+
+function render(){
+  checkDraftSound();
+  let tc=S.teams.length,total=totalPicks(),done=draftComplete(),t=done?0:order(S.picks.length);
+  document.getElementById("onclock").textContent=done?"DRAFT COMPLETE":"ON THE CLOCK: "+(S.teams[t]?.name||"Team");
+  document.getElementById("meta").textContent=done?`All ${total} golfers drafted`:`${tc} teams • ${total} golfers • Round ${Math.floor(S.picks.length/tc)+1} • Pick ${S.picks.length+1} of ${total}`;
+  document.getElementById("teams").innerHTML=S.teams.map((tm,i)=>`
+    <div class="team">
+      <div class="teamhead">
+        <strong>${esc(tm.name)}</strong>
+        <div class="muted" style="color:#ddd">${tm.captain?"Captain: "+esc(tm.captain):""}</div>
+        <div style="font-size:11px">${bands.map(b=>b+" "+tbc(i,b)).join(" • ")}</div>
+      </div>
+      <div class="roster">
+        ${Array.from({length:teamCapacity(i)},(_,j)=>{
+          let g=S.golfers[tm.roster[j]];
+          return g?`<div class="slot"><strong>${esc(g.name)}</strong> <span class="badge">${g.band}</span><div class="muted">${bandRange(g.band)}</div></div>`:`<div class="slot muted">Open roster spot</div>`
+        }).join("")}
+      </div>
+    </div>`).join("");
+
+  document.getElementById("publicPool").innerHTML=S.golfers.filter(g=>g.name && g.team==null).map(g=>`
+    <tr><td><strong>${esc(g.name)}</strong></td><td><span class="badge">${g.band}</span></td><td>${bandRange(g.band)}</td><td>AVAILABLE</td></tr>`).join("");
+
+  document.getElementById("log").innerHTML=S.picks.length?S.picks.map((p,i)=>{
+    const golfer=(p.golfer===null||p.golfer===undefined)?null:S.golfers[p.golfer];
+    return `${i+1}. ${esc(S.teams[p.team]?.name||("Team "+(p.team+1)))} — ${esc(golfer?.name||"Unknown")} ${golfer?`(${golfer.band||""})`:""}`
+  }).join("<br>"):"Waiting for the first pick.";
+
+  draw();
+  if(isCommissioner)renderCommissioner();
+}
+
+function draw(){
+  let x=remaining();
+  document.getElementById("clock").textContent=Math.floor(x/60)+":"+String(x%60).padStart(2,"0");
+  document.getElementById("clock").style.color=x<=10?"#9b2f2f":""
+}
+
+async function checkCommissioner(user){
+  if(!user)return false;
+  const {data,error}=await db.from("elleng_drafts").select("owner_id").eq("id",cfg.draftId).single();
+  if(error)throw error;
+  return data?.owner_id===user.id;
+}
+
+function showCommissionerUI(){
+  document.getElementById("commLogin").classList.add("hidden");
+  document.getElementById("commControls").classList.remove("hidden");
+  document.getElementById("commissionerBadge").textContent="COMMISSIONER";
+  document.getElementById("commStatus").textContent="You can start, pause, resume and monitor the live draft here.";
+  renderCommissioner();
+}
+
+async function commissionerSignIn(){
+  const btn=document.getElementById("commSignIn");
+  const msg=document.getElementById("commStatus");
+  const email=document.getElementById("commEmail").value.trim();
+  const password=document.getElementById("commPw").value;
+  if(!email||!password){msg.textContent="Enter your Commissioner email and password.";return}
+  btn.disabled=true;btn.textContent="Signing In…";msg.textContent="Signing in…";
+  try{
+    const {data,error}=await db.auth.signInWithPassword({email,password});
+    if(error)throw error;
+    commUser=data.user;
+    isCommissioner=await checkCommissioner(commUser);
+    if(!isCommissioner){
+      await db.auth.signOut();
+      commUser=null;
+      throw new Error("This account is not the Commissioner account for this draft.");
+    }
+    await load();
+    showCommissionerUI();
+    render();
+  }catch(e){
+    msg.textContent=e?.message||"Unable to sign in.";
+  }finally{
+    btn.disabled=false;btn.textContent="Commissioner Sign In";
+  }
+}
+
+async function adminSave(text){
+  const msg=document.getElementById("adminMsg");
+  msg.textContent=text||"Saving…";
+  try{
+    await save();
+    render();
+    msg.textContent="Saved — live draft updated.";
+  }catch(e){
+    msg.textContent=e?.message||"Unable to save draft controls.";
+  }
+}
+
+async function startDraft(){
+  if(!isCommissioner)return;
+  const seconds=Number(document.getElementById("adminTimer").value||60);
+  S.timerLength=seconds;
+  S.timerPaused=false;
+  S.timerEndsAt=new Date(Date.now()+seconds*1000).toISOString();
+  await adminSave("Starting draft…");
+}
+async function pauseDraft(){
+  if(!isCommissioner)return;
+  const left=remaining();
+  S.timerLength=Math.max(1,left);
+  S.timerPaused=true;
+  S.timerEndsAt=null;
+  await adminSave("Pausing draft…");
+}
+async function resumeDraft(){
+  if(!isCommissioner)return;
+  const seconds=Number(S.timerLength||document.getElementById("adminTimer").value||60);
+  S.timerPaused=false;
+  S.timerEndsAt=new Date(Date.now()+seconds*1000).toISOString();
+  await adminSave("Resuming draft…");
+}
+async function resetPickClock(){
+  if(!isCommissioner)return;
+  const seconds=Number(document.getElementById("adminTimer").value||60);
+  S.timerLength=seconds;
+  if(S.timerPaused){
+    S.timerEndsAt=null;
+  }else{
+    S.timerEndsAt=new Date(Date.now()+seconds*1000).toISOString();
+  }
+  await adminSave("Resetting pick clock…");
+}
+async function undoLastPick(){
+  if(!isCommissioner||!S.picks.length)return;
+  const p=S.picks[S.picks.length-1];
+  const golfer=S.golfers[p.golfer];
+  const team=S.teams[p.team];
+  if(!confirm(`Undo the last pick${golfer?.name?" ("+golfer.name+")":""}?`))return;
+  S.picks.pop();
+  if(golfer)golfer.team=null;
+  if(team&&Array.isArray(team.roster))team.roster=team.roster.filter(i=>Number(i)!==Number(p.golfer));
+  const seconds=Number(document.getElementById("adminTimer").value||60);
+  S.timerLength=seconds;
+  S.timerPaused=true;
+  S.timerEndsAt=null;
+  await adminSave("Undoing last pick…");
+}
+async function resetEntireDraft(){
+  if(!isCommissioner)return;
+  if(!confirm("Reset the ENTIRE draft? This clears every pick and every team roster."))return;
+  if(!confirm("Are you sure? Golfers will remain in the player pool, but all draft selections will be removed."))return;
+  S.picks=[];
+  S.teams.forEach(t=>t.roster=[]);
+  S.golfers.forEach(g=>g.team=null);
+  S.timerPaused=true;
+  S.timerEndsAt=null;
+  S.timerLength=Number(document.getElementById("adminTimer").value||60);
+  lastSoundPickCount=0;
+  await adminSave("Resetting entire draft…");
+}
+async function commissionerSignOut(){
+  await db.auth.signOut();
+  commUser=null;isCommissioner=false;
+  document.getElementById("commControls").classList.add("hidden");
+  document.getElementById("commLogin").classList.remove("hidden");
+  document.getElementById("commissionerBadge").textContent="VIEW ONLY";
+  document.getElementById("commStatus").textContent="Sign in as Commissioner to start and manage the draft.";
+}
+
+document.getElementById("soundToggle").onclick=enableDraftSound;
+document.getElementById("commSignIn").onclick=commissionerSignIn;
+document.getElementById("commSignOut").onclick=commissionerSignOut;
+document.getElementById("startDraft").onclick=startDraft;
+document.getElementById("pauseDraft").onclick=pauseDraft;
+document.getElementById("resumeDraft").onclick=resumeDraft;
+document.getElementById("resetClock").onclick=resetPickClock;
+document.getElementById("undoPick").onclick=undoLastPick;
+document.getElementById("resetDraft").onclick=resetEntireDraft;
+document.getElementById("adminTimer").onchange=()=>{if(isCommissioner&&S.timerPaused){S.timerLength=Number(document.getElementById("adminTimer").value||60);draw()}};
+
+(async()=>{
+  try{
+    await load();
+    render();
+    subscribe(render);
+    setInterval(draw,500);
+    const {data:{session}}=await db.auth.getSession();
+    if(session?.user){
+      commUser=session.user;
+      isCommissioner=await checkCommissioner(commUser);
+      if(isCommissioner)showCommissionerUI();
+    }
+  }catch(e){
+    document.getElementById("onclock").textContent="Supabase is not connected yet.";
+    document.getElementById("commStatus").textContent=e?.message||"Unable to load draft.";
+  }
+})();
+</script>
+</body>
+</html>
