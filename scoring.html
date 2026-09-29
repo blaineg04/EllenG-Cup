@@ -125,7 +125,7 @@ function totals(){
 }
 function renderLeaderboard(){
  const arr=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
- $("leaderboard").innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${tournament&&Number(tournament.final_cargo_team)===x.team?` <span class="badge">+6 Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
+ $("leaderboard").innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===x.team?` <span class="badge">+6 Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
 }
 function renderHolebar(){
  $("holebar").innerHTML=Array.from({length:18},(_,i)=>{let h=i+1;let g=tournament&&tournament.gator_revealed&&Number(tournament.gator_hole)===h;return `<button class="holebtn ${h===hole?"active":""} ${g?"gator":""}" data-hole="${h}">${h}${g?" 🐊":""}</button>`}).join("");
