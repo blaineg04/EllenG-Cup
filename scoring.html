@@ -112,6 +112,16 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 
 
 <section id="courseView" class="view hidden">
+<div class="card">
+  <div class="row between">
+    <div><h2 style="margin:0">Browse Course Library</h2><div class="status">Browse any saved course without changing the course selected for the tournament.</div></div>
+    <span id="activeCourseBadge" class="badge">TOURNAMENT COURSE</span>
+  </div>
+  <div class="admin-grid" style="margin-top:12px">
+    <label><small>Course</small><select id="courseBrowseSelect"></select></label>
+    <label><small>Routing</small><select id="courseBrowseRouteSelect"></select></label>
+  </div>
+</div>
 <div class="card" style="padding:0;overflow:hidden">
   <div class="course-hero">
     <img id="courseHeroImage" src="bayou-din.jpg" alt="Selected golf course">
@@ -353,11 +363,29 @@ function courseYardage(h,tee){const r=activeCourseRoute();return Number(r?.[tee]
 function courseTotal(tee){const vals=activeCourseRoute()?.[tee];return Array.isArray(vals)?vals.reduce((a,b)=>a+Number(b||0),0):0}
 function activeTeeLine(h,compact=false){const c=activeCourse();return (c.tees||[]).map(t=>`${compact?t.label.charAt(0):t.label} ${courseYardage(h,t.key)}`).join(" • ")}
 function renderCourse(){
- const c=activeCourse(),r=activeCourseRoute();
+ const courseSel=$("courseBrowseSelect"), routeSel=$("courseBrowseRouteSelect");
+ const activeId=activeCourseId(), activeRouteId=activeCourseRouteId();
+ let browseId=courseSel?.value&&COURSE_LIBRARY[courseSel.value]?courseSel.value:activeId;
+ if(courseSel){
+   const prior=browseId;
+   courseSel.innerHTML=Object.entries(COURSE_LIBRARY).map(([id,c])=>`<option value="${id}">${esc(c.name)} — ${esc(c.location)}</option>`).join("");
+   courseSel.value=COURSE_LIBRARY[prior]?prior:activeId;
+   browseId=courseSel.value;
+ }
+ const c=COURSE_LIBRARY[browseId]||activeCourse();
+ let browseRoute=routeSel?.value&&c.routes[routeSel.value]?routeSel.value:(browseId===activeId&&c.routes[activeRouteId]?activeRouteId:Object.keys(c.routes)[0]);
+ if(routeSel){
+   routeSel.innerHTML=Object.entries(c.routes).map(([id,r])=>`<option value="${id}">${esc(r.label)}</option>`).join("");
+   routeSel.value=c.routes[browseRoute]?browseRoute:Object.keys(c.routes)[0];
+   browseRoute=routeSel.value;
+ }
+ const r=c.routes[browseRoute];
+ const browsingActive=browseId===activeId&&browseRoute===activeRouteId;
+ if($("activeCourseBadge"))$("activeCourseBadge").textContent=browsingActive?"TOURNAMENT COURSE":"BROWSING ONLY";
  if($("courseHeroImage")){ $("courseHeroImage").src=c.image; $("courseHeroImage").alt=`${c.name} course`; }
  if($("courseNameDisplay"))$("courseNameDisplay").textContent=c.name;
- if($("courseRouteDisplay"))$("courseRouteDisplay").textContent=`${c.location} • ${r.label}`;
- if($("courseSummaryBadges"))$("courseSummaryBadges").innerHTML=`<span class="badge">Par ${r.par.reduce((a,b)=>a+b,0)}</span>`+(c.tees||[]).map(t=>`<span class="badge">${t.label} ${courseTotal(t.key).toLocaleString()} yds</span>`).join("");
+ if($("courseRouteDisplay"))$("courseRouteDisplay").textContent=`${c.location} • ${r.label}${browsingActive?" • Active tournament course":" • Course library preview"}`;
+ if($("courseSummaryBadges"))$("courseSummaryBadges").innerHTML=`<span class="badge">Par ${r.par.reduce((a,b)=>a+b,0)}</span>`+(c.tees||[]).map(t=>`<span class="badge">${t.label} ${(r[t.key]||[]).reduce((a,b)=>a+Number(b||0),0).toLocaleString()} yds</span>`).join("");
  if($("courseScorecard")){
    const holes=Array.from({length:18},(_,i)=>i+1);
    const row=(label,vals)=>`<tr><td><strong>${label}</strong></td>${vals.map(v=>`<td>${v}</td>`).join("")}<td><strong>${vals.reduce((a,b)=>a+Number(b||0),0)}</strong></td></tr>`;
@@ -366,6 +394,7 @@ function renderCourse(){
    $("courseScorecard").innerHTML=`<table class="course-table"><thead><tr><th>Tee / Hole</th>${holes.map(h=>`<th>${h}</th>`).join("")}<th>Total</th></tr></thead><tbody>${row("Par",r.par)}${teeRows}${handicapRow}</tbody></table>`;
  }
 }
+
 function applySelectedCourseToPars(){
  const id=$("courseSelect")?.value||"bayou-din", c=COURSE_LIBRARY[id]; if(!c)return;
  const rid=$("courseRouteSelect")?.value||Object.keys(c.routes)[0], r=c.routes[rid]; if(!r)return;
@@ -1109,6 +1138,14 @@ $("authBtn").addEventListener("click",()=>{$("loginCard").classList.remove("hidd
 $("cancelLoginBtn").addEventListener("click",()=>{$("loginCard").classList.add("hidden")});
 $("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;showView("leaderboard");await enterViewer()});
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
+if($("courseBrowseSelect"))$("courseBrowseSelect").addEventListener("change",()=>{
+ const c=COURSE_LIBRARY[$("courseBrowseSelect").value];
+ if(!c)return;
+ $("courseBrowseRouteSelect").innerHTML=Object.entries(c.routes).map(([id,r])=>`<option value="${id}">${esc(r.label)}</option>`).join("");
+ $("courseBrowseRouteSelect").value=Object.keys(c.routes)[0];
+ renderCourse();
+});
+if($("courseBrowseRouteSelect"))$("courseBrowseRouteSelect").addEventListener("change",renderCourse);
 $("selfGolferSelect").addEventListener("change",renderSelfHandicap);
 $("saveSelfHandicap").addEventListener("click",saveSelfHandicap);
 $("selfScoreHole").addEventListener("change",renderSelfScoreContext);
