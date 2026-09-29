@@ -146,7 +146,19 @@ function pointsForHole(h){
  return normalPoints(vals);
 }
 function totals(){
- return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null){pts+=p;thru=Math.max(thru,h)}}if(tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===i)pts+=Number(tournament.final_cargo_points||6);return{team:i,pts,thru}})
+ return teams.map((_,i)=>{
+  let pts=0,thru=0;
+  for(let h=1;h<=18;h++){
+   const p=pointsForHole(h)[i];
+   if(p!=null)pts+=p;
+  }
+  for(let h=1;h<=18;h++){
+   const holeComplete=teams.every((_,ti)=>scores.some(x=>x.team_index===ti&&x.hole===h&&x.score!=null));
+   if(holeComplete)thru=h; else break;
+  }
+  if(tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===i)pts+=Number(tournament.final_cargo_points||6);
+  return{team:i,pts,thru}
+ })
 }
 function renderLeaderboard(){
  const arr=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
