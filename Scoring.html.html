@@ -20,11 +20,11 @@ input,select{min-height:44px;border:1px solid #bdc8ce;border-radius:9px;padding:
 .place{font-weight:900;font-size:20px}.pts{font-weight:900;color:var(--green);text-align:right}.thru{text-align:right;color:var(--muted);font-size:13px}
 .holebar{display:grid;grid-template-columns:repeat(9,minmax(48px,1fr));gap:6px;overflow:auto}.holebtn{padding:10px 6px;background:#edf1f3}.holebtn.active{background:var(--green);color:white}.holebtn.gator{outline:2px solid var(--gold)}
 .score-grid{display:grid;grid-template-columns:minmax(105px,1fr) 110px 92px;gap:8px;align-items:center}.score-grid .head{font-size:12px;color:var(--muted);font-weight:700}.score-input{width:92px;text-align:center;font-size:20px;font-weight:800}.golf-result{display:inline-block;margin-top:5px;padding:3px 7px;border-radius:999px;background:#edf1f3;font-size:12px;font-weight:800;white-space:nowrap}.point{font-weight:800;text-align:center}
-.mobile-stepper{display:none}.mobile-stepper button{min-width:34px;height:34px;padding:0;border-radius:8px;font-size:22px;font-weight:900;line-height:1}.mobile-stepper .step-down,.mobile-stepper .step-up,.mobile-stepper .step-zero{background:#e9eef1;color:var(--ink)}.mobile-score-input{display:none}.mobile-only{display:none}.mobile-strokes{display:none}
+.mobile-stepper{display:none}.mobile-stepper button{min-width:34px;height:34px;padding:0;border-radius:8px;font-size:22px;font-weight:900;line-height:1}.mobile-stepper .step-down,.mobile-stepper .step-up,.mobile-stepper .step-zero{background:#e9eef1;color:var(--ink)}.mobile-score-input{display:none}.mobile-only{display:none}.mobile-strokes{display:none}.mobile-hole-guide{display:none}
 .badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800;background:#edf1f3}.gator-badge{background:#fff3c8;color:#6c5200}
 .note{font-size:13px;line-height:1.45;color:var(--muted)}.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
 label small{display:block;color:var(--muted);margin-bottom:5px}
-@media(max-width:560px){.brand img{width:58px;height:58px}.brand h1{font-size:21px}.wrap{padding:10px}.card{padding:12px}.leader-row{grid-template-columns:36px minmax(80px,1fr) 72px 62px}.score-grid{grid-template-columns:minmax(90px,1fr) 118px 70px}.score-input{display:none!important}.mobile-score-input{display:inline-block!important;width:92px;text-align:center;font-size:22px;font-weight:900}.mobile-only{display:inline!important}.desktop-only{display:none!important}.mobile-strokes{display:block;margin-top:4px;font-size:11px;color:var(--muted)}.mobile-stepper{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:5px}.mobile-stepper button:disabled{opacity:.35}}
+@media(max-width:560px){.brand img{width:58px;height:58px}.brand h1{font-size:21px}.wrap{padding:10px}.card{padding:12px}.leader-row{grid-template-columns:36px minmax(80px,1fr) 72px 62px}.score-grid{grid-template-columns:minmax(90px,1fr) 118px 70px}.score-input{display:none!important}.mobile-score-input{display:inline-block!important;width:92px;text-align:center;font-size:22px;font-weight:900}.mobile-only{display:inline!important}.desktop-only{display:none!important}.mobile-strokes{display:block;margin-top:4px;font-size:11px;color:var(--muted)}.mobile-stepper{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:5px}.mobile-stepper button:disabled{opacity:.35}.golf-result{display:block;margin:6px auto 0;font-size:13px;max-width:115px}.mobile-hole-guide{display:block;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#f8fafb}.mobile-hole-guide .guide-title{font-weight:900;font-size:15px;margin-bottom:8px}.mobile-hole-guide .guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.mobile-hole-guide .guide-item{border:1px solid var(--line);border-radius:9px;padding:7px 8px;background:#fff;text-align:center;font-size:12px}.mobile-hole-guide .guide-item strong{display:block;font-size:13px}}
 
 .team-editor{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px;margin-top:12px}
 .editor-card{border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff}
@@ -104,6 +104,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div class="card">
 <div class="row between"><div><h2 style="margin:0">Score Entry</h2><div id="entryHint" class="status"></div></div><span id="holeFormat" class="badge"></span></div>
 <div id="holebar" class="holebar" style="margin-top:14px"></div>
+<div id="mobileHoleGuide" class="mobile-hole-guide"></div>
 <div style="margin-top:16px">
   <div class="row between"><div><strong>Course Pars</strong><div class="status">View-only for captains. The Commissioner controls these settings.</div></div><span class="badge">READ ONLY</span></div>
   <div id="captainParView" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(72px,1fr));gap:7px;margin-top:10px"></div>
@@ -343,7 +344,19 @@ function renderScoring(){
  }
  const par=parForHole(hole);
  $("holeFormat").textContent=`${hole<=9?"4-MAN SCRAMBLE":"4-MAN SHAMBLE"} • HOLE ${hole} • PAR ${par}`;
- $("entryHint").textContent=isCommissioner?`Commissioner: you can edit all ${teams.length} teams. Enter actual strokes; the app calculates the golf score automatically.`:captainTeam!=null?`You can edit ${teams[captainTeam]?.name||"your team"}. Enter actual strokes; the app calculates − / + automatically.`:"Scores are view-only.";
+ const mobileGuide=$("mobileHoleGuide");
+ if(mobileGuide){
+  const maxStroke=Math.min(20,par+2);
+  const guide=[];
+  for(let st=1;st<=maxStroke;st++){
+   const rg=relativeGolf(st,par);
+   if(st===1||["Albatross","Eagle","Birdie","Par","Bogey","Double Bogey"].includes(rg.label)){
+    guide.push(`<div class="guide-item"><strong>${esc(rg.rel)} • ${esc(rg.label||"")}</strong>${st} stroke${st===1?"":"s"}</div>`);
+   }
+  }
+  mobileGuide.innerHTML=`<div class="guide-title">Hole ${hole} • Par ${par} scoring</div><div class="guide-grid">${guide.join("")}</div>`;
+ }
+ $("entryHint").textContent=isCommissioner?`Commissioner: edit scores for any team. Mobile uses golf score vs par; desktop uses actual strokes.`:captainTeam!=null?`You can edit ${teams[captainTeam]?.name||"your team"}. On mobile use − / 0 / +; the app converts it to strokes automatically.`:"Scores are view-only.";
  const pts=pointsForHole(hole);
  $("scoreRows").innerHTML=teams.map((t,i)=>{
   const r=scores.find(x=>x.team_index===i&&x.hole===hole),v=r?.score??"", g=relativeGolf(v===""?null:Number(v),par);
