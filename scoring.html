@@ -100,8 +100,9 @@ window.addEventListener("error",e=>connection("App error: "+(e.message||"JavaScr
 window.addEventListener("unhandledrejection",e=>connection("Connection error: "+(e.reason?.message||String(e.reason||"Unknown error"))));
 if(!window.supabase){connection("Supabase library did not load. Refresh the page.");return}
 const cfg=window.ELLENG_CONFIG;
-if(!cfg?.supabaseUrl||!cfg?.supabaseAnonKey){connection("EllenG configuration did not load.");return}
-const db=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey);
+const supabaseKey=cfg?.supabasePublishableKey||cfg?.supabaseAnonKey;
+if(!cfg?.supabaseUrl||!supabaseKey){connection("EllenG configuration did not load.");return}
+const db=window.supabase.createClient(cfg.supabaseUrl,supabaseKey);
 connection("✓ App connected — ready to sign in.",true);
 const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
 let tournament=null, scores=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), user=null, captainTeam=null, isCommissioner=false, hole=1;
