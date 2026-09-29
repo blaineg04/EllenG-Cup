@@ -38,6 +38,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <p class="note">Captains sign in with the same account used for the draft. The commissioner can edit every team.</p>
 <div class="row"><input id="email" type="email" autocomplete="email" placeholder="Email"><input id="password" type="password" autocomplete="current-password" placeholder="Password"><button id="loginBtn" class="primary">Sign In</button></div>
 <div id="loginMsg" class="status" style="margin-top:9px"></div>
+<div id="connectionStatus" class="status" style="margin-top:7px;font-weight:700">Checking app connection…</div>
 </section>
 
 <section id="app" class="hidden">
@@ -93,8 +94,15 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <script src="config.js"></script>
 <script>
 (()=>{
+const connectionStatus=document.getElementById("connectionStatus");
+function connection(text,ok=false){if(connectionStatus){connectionStatus.textContent=text;connectionStatus.style.color=ok?"#087c42":"#8b1e2d"}}
+window.addEventListener("error",e=>connection("App error: "+(e.message||"JavaScript failed to load.")));
+window.addEventListener("unhandledrejection",e=>connection("Connection error: "+(e.reason?.message||String(e.reason||"Unknown error"))));
+if(!window.supabase){connection("Supabase library did not load. Refresh the page.");return}
 const cfg=window.ELLENG_CONFIG;
+if(!cfg?.supabaseUrl||!cfg?.supabaseAnonKey){connection("EllenG configuration did not load.");return}
 const db=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey);
+connection("✓ App connected — ready to sign in.",true);
 const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
 let tournament=null, scores=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), user=null, captainTeam=null, isCommissioner=false, hole=1;
 const $=id=>document.getElementById(id);
