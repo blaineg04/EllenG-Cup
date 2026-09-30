@@ -191,6 +191,17 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div id="connectionStatus" class="status" style="margin-top:7px;font-weight:700">Checking app connection…</div>
 </section>
 
+<section id="passwordChangeCard" class="card login hidden">
+<h2 style="margin-top:0">Choose Your Password</h2>
+<p class="note">This is your first sign-in. Create a password you will use for your EllenG Cup account from now on.</p>
+<div class="admin-grid" style="margin-top:12px">
+<label><small>New password</small><input id="newAccountPassword" type="password" minlength="6" autocomplete="new-password" placeholder="At least 6 characters"></label>
+<label><small>Confirm password</small><input id="confirmAccountPassword" type="password" minlength="6" autocomplete="new-password" placeholder="Enter it again"></label>
+</div>
+<div class="row" style="margin-top:12px"><button id="changeAccountPasswordBtn" class="primary" type="button">Save My Password</button></div>
+<div id="changeAccountPasswordMsg" class="status" style="margin-top:9px"></div>
+</section>
+
 <section id="app">
 <div class="card row between">
 <div><strong id="roleLabel">Live scoring</strong><div id="userLabel" class="status"></div></div>
@@ -447,7 +458,8 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </div>
 
 <div id="adminPlayers" class="card admin-card">
-  <div class="admin-section-title"><span class="step">4</span><div><h2>Players & Assignments</h2><div class="section-sub">Edit names, bands and handicaps, move golfers between teams, create username/password player logins, or remove golfers.</div></div></div>
+  <div class="admin-section-title"><span class="step">4</span><div><h2>Players & Assignments</h2><div class="section-sub">Edit players and teams. Player logins are created automatically using first initial + last name.</div></div></div>
+  <div class="note" style="margin:12px 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb"><strong>Automatic player accounts:</strong> Username = first initial + last name. Duplicate usernames get 2, 3, etc. The temporary password is <strong>golf01</strong>. On first sign-in, each player must choose a new password.</div>
   <div style="margin:14px 0;padding:12px;border:2px solid var(--gold);border-radius:12px;background:#fffaf0">
     <div class="row between"><strong style="font-size:16px">Player Band Guide</strong><span class="badge" style="background:#fff3c8;color:#6c5200">HANDICAP RANGES</span></div>
     <div class="band-guide" style="margin-bottom:0"><div class="band-guide-item"><strong>A</strong><span>0–9 HCP</span></div><div class="band-guide-item"><strong>B</strong><span>10–17 HCP</span></div><div class="band-guide-item"><strong>C</strong><span>18–25 HCP</span></div><div class="band-guide-item"><strong>D</strong><span>26+ HCP</span></div></div>
@@ -549,12 +561,33 @@ if(!cfg?.supabaseUrl||!supabaseKey){connection("EllenG configuration did not loa
 const db=window.supabase.createClient(cfg.supabaseUrl,supabaseKey);
 connection("✓ App connected — live scoring ready.",true);
 const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
-let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", hole=1;
+let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", mustChangePassword=false, hole=1;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const PLAYER_LOGIN_DOMAIN="@players.ellengcup.app";
 const usernameToAuthEmail=u=>`${String(u||"").trim().toLowerCase()}${PLAYER_LOGIN_DOMAIN}`;
 const visibleLogin=()=>currentUsername||(String(user?.email||"").endsWith(PLAYER_LOGIN_DOMAIN)?String(user.email).slice(0,-PLAYER_LOGIN_DOMAIN.length):String(user?.email||""));
+const TEMP_PLAYER_PASSWORD="golf01";
+const cleanUsername=v=>String(v||"").trim().toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+function baseUsernameForName(name){const parts=String(name||"").trim().split(/\s+/).filter(Boolean);if(!parts.length)return "player";if(parts.length===1)return cleanUsername(parts[0])||"player";return cleanUsername((parts[0][0]||"")+parts[parts.length-1])||"player"}
+function nextUniqueUsername(name,used){const base=baseUsernameForName(name);let u=base,n=2;while(used.has(u))u=`${base}${n++}`;used.add(u);return u}
+async function ensureAutomaticPlayerAccounts(){
+ if(!isCommissioner)return;
+ const golfers=Array.isArray(draftState?.golfers)?draftState.golfers:[];
+ const byIndex=new Map((playerAccounts||[]).map(a=>[Number(a.golfer_index),a]));
+ const used=new Set((playerAccounts||[]).map(a=>cleanUsername(a.username)).filter(Boolean));
+ let created=0;
+ for(let i=0;i<golfers.length;i++){
+   const g=golfers[i];if(!String(g?.name||"").trim()||byIndex.get(i)?.user_id)continue;
+   const username=nextUniqueUsername(g.name,used);
+   const {data,error}=await db.functions.invoke("player-admin",{body:{action:"create_or_update",draft_id:DRAFT_ID,golfer_index:i,username,password:TEMP_PLAYER_PASSWORD}});
+   if(error)throw error;if(data?.error)throw new Error(data.error);created++;
+ }
+ if(created){
+   const {data:listData,error:listError}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});
+   if(listError)throw listError;if(listData?.error)throw new Error(listData.error);playerAccounts=listData?.accounts||[];
+ }
+}
 
 const DEFAULT_PARS=[4,4,3,4,5,4,3,4,5,4,4,3,5,4,4,3,5,4];
 const COURSE_LIBRARY={
@@ -1043,12 +1076,13 @@ async function loadBase(){
   const mine=(c||[]).find(x=>x.user_id===user.id); captainTeam=mine?Number(mine.team_index):null;
   const {data:profile,error:profileError}=await db.functions.invoke("player-profile",{body:{draft_id:DRAFT_ID}});
   if(profileError)throw profileError;if(profile?.error)throw new Error(profile.error);
-  currentGolferIndex=profile?.linked?Number(profile.golfer_index):null;currentUsername=profile?.linked?String(profile.username||""):"";
+  currentGolferIndex=profile?.linked?Number(profile.golfer_index):null;currentUsername=profile?.linked?String(profile.username||""):"";mustChangePassword=!!profile?.must_change_password;
   if(isCommissioner){
     const {data:listData,error:listError}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});
     if(listError)throw listError;if(listData?.error)throw new Error(listData.error);playerAccounts=listData?.accounts||[];
+    await ensureAutomaticPlayerAccounts();
   }else playerAccounts=[];
- }else {currentGolferIndex=null;currentUsername="";playerAccounts=[];}
+ }else {currentGolferIndex=null;currentUsername="";mustChangePassword=false;playerAccounts=[];}
 }
 async function loadScores(){
  const {data,error}=await db.from("elleng_team_scores").select("*").eq("tournament_id",TOURNAMENT_ID);
@@ -1123,7 +1157,7 @@ function renderPlayerEditor(){
    const acct=playerAccounts.find(a=>Number(a.golfer_index)===i);
    const loginUsername=String(acct?.username||"");
    const linked=!!acct?.user_id;
-   return `<div data-player-block="${i}"><div class="player-admin-row" data-player-row="${i}"><input data-player-name="${i}" value="${esc(g.name||"")}" placeholder="Golfer name"><select data-player-band="${i}" ${rawHcp!==""?"disabled":""}>${["A","B","C","D"].map(b=>`<option ${shownBand===b?"selected":""}>${b}</option>`).join("")}</select><input data-player-hcp="${i}" type="number" min="0" max="54" step="0.1" inputmode="decimal" value="${esc(g.hcp??"")}" placeholder="HCP" oninput="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onchange="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onblur="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)"><select class="player-team" data-player-team="${i}">${teamOptions(g.team==null?"":g.team)}</select><div class="row player-actions" style="gap:5px;flex-wrap:nowrap"><button class="danger" style="padding:8px 9px;font-size:11px" data-remove-player="${i}" type="button">Remove</button></div></div><div class="player-login-row"><label><small>Player username</small><input data-player-login-username="${i}" type="text" autocapitalize="none" autocomplete="off" value="${esc(loginUsername)}" placeholder="Example: ${esc(String(g.name||"player").toLowerCase().replace(/[^a-z0-9]+/g,""))}"></label><label><small>${linked?"New password (changes current)":"Temporary password"}</small><input data-player-login-password="${i}" type="password" minlength="6" placeholder="At least 6 characters"></label><button class="primary" type="button" data-save-player-login="${i}">${linked?"Update Login":"Create Login"}</button><button class="secondary" type="button" data-unlink-player-login="${i}" ${linked||loginUsername?"":"disabled"}>Unlink</button><div class="player-login-status" data-player-login-msg="${i}">${linked?`✓ Username: ${esc(loginUsername||"linked account")}`:"No player login linked yet."}</div></div></div>`;
+   return `<div data-player-block="${i}"><div class="player-admin-row" data-player-row="${i}"><input data-player-name="${i}" value="${esc(g.name||"")}" placeholder="Golfer name"><select data-player-band="${i}" ${rawHcp!==""?"disabled":""}>${["A","B","C","D"].map(b=>`<option ${shownBand===b?"selected":""}>${b}</option>`).join("")}</select><input data-player-hcp="${i}" type="number" min="0" max="54" step="0.1" inputmode="decimal" value="${esc(g.hcp??"")}" placeholder="HCP" oninput="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onchange="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onblur="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)"><select class="player-team" data-player-team="${i}">${teamOptions(g.team==null?"":g.team)}</select><div class="row player-actions" style="gap:5px;flex-wrap:nowrap"><button class="danger" style="padding:8px 9px;font-size:11px" data-remove-player="${i}" type="button">Remove</button></div></div><div class="player-login-row"><label><small>Player username</small><input data-player-login-username="${i}" type="text" autocapitalize="none" autocomplete="off" value="${esc(loginUsername)}" placeholder="Example: ${esc(String(g.name||"player").toLowerCase().replace(/[^a-z0-9]+/g,""))}"></label><label><small>${linked?"Reset password (optional)":"Temporary password"}</small><input data-player-login-password="${i}" type="password" minlength="6" placeholder="${linked?"Enter only to reset":"Automatic: golf01"}"></label><button class="primary" type="button" data-save-player-login="${i}">${linked?"Update / Reset":"Create Login"}</button><button class="secondary" type="button" data-unlink-player-login="${i}" ${linked||loginUsername?"":"disabled"}>Unlink</button><div class="player-login-status" data-player-login-msg="${i}">${linked?`✓ Username: ${esc(loginUsername||"linked account")}${acct?.must_change_password?" • temporary password still active":""}`:"Login will be created automatically."}</div></div></div>`;
  }).join("")||'<div class="note" style="padding:12px 0">No golfers yet.</div>';
  document.querySelectorAll("[data-remove-player]").forEach(b=>b.addEventListener("click",()=>removePlayer(Number(b.dataset.removePlayer))));
  document.querySelectorAll("[data-save-player-login]").forEach(b=>b.addEventListener("click",()=>savePlayerLogin(Number(b.dataset.savePlayerLogin))));
@@ -1429,9 +1463,9 @@ async function syncLive(){
   if(d?.state)draftState=structuredClone(d.state);
   if(user){
    const {data:profile}=await db.functions.invoke("player-profile",{body:{draft_id:DRAFT_ID}});
-   currentGolferIndex=profile?.linked?Number(profile.golfer_index):null;currentUsername=profile?.linked?String(profile.username||""):"";
+   currentGolferIndex=profile?.linked?Number(profile.golfer_index):null;currentUsername=profile?.linked?String(profile.username||""):"";mustChangePassword=!!profile?.must_change_password;
    if(isCommissioner){const {data:listData}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});playerAccounts=listData?.accounts||[];}else playerAccounts=[];
-  }else {playerAccounts=[];currentGolferIndex=null;currentUsername="";}
+  }else {playerAccounts=[];currentGolferIndex=null;currentUsername="";mustChangePassword=false;}
   if(Array.isArray(d?.state?.teams)){
    const golfers=Array.isArray(d.state?.golfers)?d.state.golfers:[];
    teams=Array.from({length:activeTeamCount()},(_,i)=>{
@@ -1485,9 +1519,16 @@ async function enterApp(){
   await loadScores();
   await loadTrashTalk();
   $("loginCard").classList.add("hidden");
-  $("app").classList.remove("hidden");
-  renderAll();
-  subscribeLive();
+  if(mustChangePassword&&!isCommissioner){
+    $("app").classList.add("hidden");
+    $("passwordChangeCard").classList.remove("hidden");
+    $("changeAccountPasswordMsg").textContent=`Signed in as ${visibleLogin()}. Choose your new password to continue.`;
+  }else{
+    $("passwordChangeCard").classList.add("hidden");
+    $("app").classList.remove("hidden");
+    renderAll();
+    subscribeLive();
+  }
  }catch(e){
   console.error("Tournament load failed:",e);
   $("loginMsg").textContent="Signed in, but tournament data could not load: "+(e?.message||String(e));
@@ -1521,9 +1562,22 @@ $("loginBtn").addEventListener("click",async()=>{
   if(!$("loginMsg").textContent.startsWith("Signed in, but"))$("loginMsg").textContent=e?.message||"Unable to sign in.";
  }finally{btn.disabled=false;btn.textContent="Sign In"}
 });
+$("changeAccountPasswordBtn").addEventListener("click",async()=>{
+ const btn=$("changeAccountPasswordBtn"),p1=$("newAccountPassword").value,p2=$("confirmAccountPassword").value,msg=$("changeAccountPasswordMsg");
+ if(p1.length<6){msg.textContent="Choose a password with at least 6 characters.";return}
+ if(p1===TEMP_PLAYER_PASSWORD){msg.textContent="Choose a different password than the temporary password.";return}
+ if(p1!==p2){msg.textContent="The two passwords do not match.";return}
+ btn.disabled=true;msg.textContent="Saving your new password…";
+ try{
+   const {error}=await db.auth.updateUser({password:p1});if(error)throw error;
+   const {data,error:profileError}=await db.functions.invoke("player-profile",{body:{action:"password_changed",draft_id:DRAFT_ID}});if(profileError)throw profileError;if(data?.error)throw new Error(data.error);
+   mustChangePassword=false;$("newAccountPassword").value="";$("confirmAccountPassword").value="";$("passwordChangeCard").classList.add("hidden");$("app").classList.remove("hidden");renderAll();subscribeLive();
+ }catch(e){msg.textContent=e?.message||"Unable to change password."}
+ finally{btn.disabled=false}
+});
 $("authBtn").addEventListener("click",()=>{$("loginCard").classList.remove("hidden");$("loginMsg").textContent="";$("loginCard").scrollIntoView({behavior:"smooth",block:"start"})});
 $("cancelLoginBtn").addEventListener("click",()=>{$("loginCard").classList.add("hidden")});
-$("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";showView("home");await enterViewer()});
+$("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;$("passwordChangeCard").classList.add("hidden");showView("home");await enterViewer()});
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
 document.querySelectorAll("[data-home-go]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.homeGo)));
 document.querySelectorAll("[data-mobile-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.mobileView)));
