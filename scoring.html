@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.0.2">
+<meta name="elleng-app-version" content="1.0.3">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -54,6 +54,9 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   .commissioner-actions{display:grid!important;grid-template-columns:1fr 1fr}
   .commissioner-actions button{width:100%}
 }
+
+
+.band-guide{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0 14px}.band-guide-item{border:1px solid var(--line);border-radius:11px;background:#f8fafb;padding:10px;text-align:center}.band-guide-item strong{display:block;font-size:18px;color:var(--navy)}.band-guide-item span{display:block;margin-top:3px;font-size:12px;color:var(--muted);font-weight:800}@media(max-width:560px){.band-guide{grid-template-columns:1fr 1fr}.band-guide-item{padding:11px 8px}}
 
 /* Commissioner dashboard */
 .commissioner-hero{background:linear-gradient(135deg,#08253b,#103c59);color:#fff;border:0}.commissioner-hero .note{color:rgba(255,255,255,.82)}
@@ -445,6 +448,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
     <div class="admin-section-title"><span class="step">4</span><div><h2>Players & Assignments</h2><div class="section-sub">Edit names, bands and handicaps, move golfers between teams, issue secure activation codes, or remove them.</div></div></div>
     <button id="savePlayers" class="primary save-wide">Save Player Changes</button>
   </div>
+  <div style="margin-top:12px"><div class="row between"><strong>Player Band Guide</strong><span class="badge">HANDICAP RANGES</span></div><div class="band-guide"><div class="band-guide-item"><strong>A</strong><span>0–9 HCP</span></div><div class="band-guide-item"><strong>B</strong><span>10–17 HCP</span></div><div class="band-guide-item"><strong>C</strong><span>18–25 HCP</span></div><div class="band-guide-item"><strong>D</strong><span>26+ HCP</span></div></div></div>
   <div class="player-admin-row" style="font-size:12px;font-weight:800;color:var(--muted);margin-top:10px"><div>PLAYER</div><div>BAND</div><div>HCP</div><div class="player-team">TEAM</div><div></div></div>
   <div id="playerEditor"></div>
   <div id="playerEditMsg" class="status" style="margin-top:9px"></div>
