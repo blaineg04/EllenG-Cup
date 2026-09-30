@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.8.2">
+<meta name="elleng-app-version" content="1.9.0">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -297,6 +297,15 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
  .top-account-wrap{grid-template-columns:46px minmax(0,1fr)}
  .top-account-avatar{width:46px;height:46px;border-radius:13px}
 }
+
+.player-row-public[data-player-profile]{cursor:pointer;transition:transform .12s ease,background .12s ease}
+.player-row-public[data-player-profile]:hover{background:#f7fafb}
+.player-row-public[data-player-profile]:active{transform:scale(.995)}
+.profile-settings{border:1px solid var(--line);border-radius:12px;background:#f8fafb;padding:0 12px}
+.profile-settings summary{cursor:pointer;padding:12px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none}
+.profile-settings summary::-webkit-details-marker{display:none}
+.profile-settings[open]{padding-bottom:12px}
+#playerProfileCardsSection .player-profile-card{max-width:760px;margin:0 auto}
 </style>
 </head>
 <body>
@@ -418,11 +427,6 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div class="row between"><div><h2 style="margin:0">Live Leaderboard</h2><div class="status">Cup points update automatically as scores are entered.</div></div><span id="pointScaleBadge" class="badge">6–5–4–3–2–1</span></div>
 <div id="leaderboard" class="leader" style="margin-top:14px"></div>
 </div>
-<div class="card" id="projectedStandingsCard">
-  <div class="row between"><div><div class="premium-label">IF PLAY STOPPED RIGHT NOW</div><h2 style="margin:3px 0 0">Projected Standings</h2><div class="status">Incomplete holes stay pending. Cup points appear only after every active team posts that hole.</div></div><span class="badge" style="background:#fff3c8;color:#6c5200">UNOFFICIAL</span></div>
-  <div id="projectedStandings" class="projected-grid"></div>
-  <div class="projected-note">No provisional Cup points are awarded on an incomplete hole.</div>
-</div>
 <div class="card">
 <div class="row between"><div><h2 style="margin:0">Live Hole Scores</h2><div class="status">Scores appear as soon as each team enters them. Official Cup points post when all teams finish the hole.</div></div><span class="badge">LIVE</span></div>
 <div id="liveHoleScores" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:14px"></div>
@@ -459,19 +463,19 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
     <label><small>Organize players</small><select id="playerDirectoryMode"><option value="team">By Team</option><option value="all">All Players A–Z</option><option value="band">By A/B/C/D Band</option></select></label>
     <label><small>Find player</small><input id="playerDirectorySearch" placeholder="Search by player or team"></label>
   </div>
-  <div class="note" style="margin-top:10px">Handicaps update automatically when players or the Commissioner change them. Players who have not been drafted yet are shown as Available / Unassigned.</div>
+  <div class="note" style="margin-top:10px">Tap a player to open their profile. Handicaps update automatically, and undrafted golfers are shown as Available / Unassigned.</div>
   <div id="playerDirectory" class="player-list"></div>
 </div>
 
-<div class="card" id="playerProfileCardsSection">
+<div class="card hidden" id="playerProfileCardsSection">
   <div class="row between">
     <div>
-      <h2 style="margin:0">Player Profile Cards</h2>
-      <div class="status">Tournament player profiles, team identity and live scoring stats.</div>
+      <h2 style="margin:0">Player Profile</h2>
+      <div class="status">Tap any golfer above to view their tournament profile and live stats.</div>
     </div>
-    <span class="badge">LIVE STATS</span>
+    <button id="closePlayerProfile" class="secondary" type="button">Close</button>
   </div>
-  <div id="playerProfileCards" class="player-profile-grid"></div>
+  <div id="playerProfileCards" style="margin-top:12px"></div>
 </div>
 </section>
 
@@ -523,24 +527,23 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   <div class="row" style="margin-top:12px"><button id="saveSelfHandicap" class="primary" type="button">Save My Handicap</button></div>
   <div id="selfHandicapMsg" class="status" style="margin-top:9px"></div>
 </div>
-<div class="card" id="myProfilePhotoCard">
-  <div class="row between">
-    <div><h2 style="margin:0">My Profile Photo</h2><div class="status">Choose a photo from your phone. You can update only your own player profile.</div></div>
-    <span class="badge">MY PROFILE</span>
-  </div>
-  <div class="self-photo-wrap">
-    <div id="selfPhotoPreview" class="self-photo-preview">—</div>
-    <div>
-      <div id="selfPhotoPlayerName" style="font-weight:900;margin-bottom:8px">Loading player…</div>
-      <div class="self-photo-actions">
-        <input id="selfPhotoFile" class="self-photo-file" type="file" accept="image/*">
-        <label for="selfPhotoFile" class="self-photo-choose">Choose Photo</label>
-        <span id="selfPhotoFileName" class="self-photo-filename">No photo selected</span>
-        <button id="uploadSelfPhoto" class="primary" type="button">Upload My Photo</button>
+
+  <details id="myProfilePhotoCard" class="profile-settings" style="margin-top:14px">
+    <summary><strong>Profile Settings</strong><span class="status">Change my photo</span></summary>
+    <div class="self-photo-wrap" style="margin-top:12px">
+      <div id="selfPhotoPreview" class="self-photo-preview">—</div>
+      <div>
+        <div id="selfPhotoPlayerName" style="font-weight:900;margin-bottom:8px">Loading player…</div>
+        <div class="self-photo-actions">
+          <input id="selfPhotoFile" class="self-photo-file" type="file" accept="image/*">
+          <label for="selfPhotoFile" class="self-photo-choose">Choose Photo</label>
+          <span id="selfPhotoFileName" class="self-photo-filename">No photo selected</span>
+          <button id="uploadSelfPhoto" class="primary" type="button">Upload My Photo</button>
+        </div>
+        <div id="selfPhotoMsg" class="status" style="margin-top:8px"></div>
       </div>
-      <div id="selfPhotoMsg" class="status" style="margin-top:8px"></div>
     </div>
-  </div>
+  </details>
 </div>
 <div class="card">
   <div class="row between"><div><h2 style="margin:0">My Score Entry</h2><div class="status">Once you are drafted, your login automatically gives you the score-entry permissions for your own player/team role.</div></div><span class="badge">PLAYER SCORING</span></div>
@@ -797,6 +800,7 @@ connection("✓ App connected — live scoring ready.",true);
 const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
 let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, draftUpdatedAt=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", mustChangePassword=false, hole=1;
 let scoreSaveBusy=false, lastSuccessfulSyncAt=null;
+let selectedPlayerProfileIndex=null;
 const $=id=>document.getElementById(id);
 function setSyncStatus(kind="saved",label="Synced"){
  const el=$("syncStatusChip");if(!el)return;
@@ -997,11 +1001,7 @@ function projectedTotals(){
  }
  return out.sort((a,b)=>b.projected-a.projected||b.thru-a.thru||a.team-b.team);
 }
-function renderProjectedStandings(){
- const root=$("projectedStandings");if(!root)return;const arr=projectedTotals();
- const any=(scores||[]).some(x=>x.score!=null);if(!any){root.innerHTML='<div class="note">Projected standings will appear after the first score is entered.</div>';return}
- root.innerHTML=arr.map((x,n)=>{const delta=x.projected-x.official;return `<div class="projected-row"><div class="rank">${n+1}</div><div><strong><span class="mini-team-dot" style="background:${teamAccent(x.team)}"></span>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div class="status">${x.provisionalHoles?`${x.provisionalHoles} pending hole${x.provisionalHoles===1?'':'s'} • waiting on remaining teams`:'All posted points official'}</div></div><div class="projected-points">${x.projected.toFixed(x.projected%1?1:0)} proj.</div><div class="official-points">${x.official.toFixed(x.official%1?1:0)} official${delta>0?` • +${delta.toFixed(delta%1?1:0)}`:''}</div></div>`}).join('');
-}
+
 function latestTournamentMoment(){
  const ev=(scores||[]).filter(x=>x.score!=null).map(x=>{const h=Number(x.hole),ti=Number(x.team_index),g=relativeGolf(Number(x.score),parForHole(h));return {h,ti,score:Number(x.score),g}}).sort((a,b)=>b.h-a.h||b.ti-a.ti)[0];
  if(!ev)return 'Waiting for the first score to be posted.';
@@ -1258,7 +1258,7 @@ function renderPlayersDirectory(){
  const mode=$("playerDirectoryMode")?.value||"team";
  const q=($("playerDirectorySearch")?.value||"").trim().toLowerCase();
  const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Available / Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`),band:playerBandLabel(g),hcpLabel:playerHandicapLabel(g)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q)||g.band.toLowerCase().includes(q)||g.hcpLabel.toLowerCase().includes(q));
- const rowHtml=g=>`<div class="player-row-public">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}</div><div class="player-hcp-public"><span class="status">HCP</span><br><strong>${esc(g.hcpLabel)}</strong></div><div class="player-band-public"><span class="player-band-chip">${esc(g.band)}</span></div><div class="player-team-public">${esc(g.teamName)}</div></div>`;
+ const rowHtml=g=>`<div class="player-row-public" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}</div><div class="player-hcp-public"><span class="status">HCP</span><br><strong>${esc(g.hcpLabel)}</strong></div><div class="player-band-public"><span class="player-band-chip">${esc(g.band)}</span></div><div class="player-team-public">${esc(g.teamName)}</div></div>`;
  if(!rows.length){root.innerHTML='<div class="note">No matching players found.</div>';return}
  if(mode==="all"){root.innerHTML=`<div class="player-team-card"><div class="player-team-head"><h3>All Players</h3><div class="status">${rows.length} golfer${rows.length===1?"":"s"}</div></div>${rows.sort((a,b)=>a.name.localeCompare(b.name)).map(rowHtml).join("")}</div>`;return}
  if(mode==="band"){
@@ -2052,49 +2052,32 @@ function renderHoleMatchup(){
 }
 
 function renderPlayerProfileCards(){
- const root=$("playerProfileCards");if(!root)return;
+ const root=$("playerProfileCards"),section=$("playerProfileCardsSection");if(!root||!section)return;
  const golfers=draftState?.golfers||[];
+ const gi=Number(selectedPlayerProfileIndex);
+ if(!Number.isInteger(gi)||gi<0||!golfers[gi]){section.classList.add("hidden");root.innerHTML="";return}
+ section.classList.remove("hidden");
+ const g=golfers[gi];
  const official=totals();
- root.innerHTML=golfers.map((g,gi)=>{
-   let ti=g.team==null||g.team===""?null:Number(g.team);
-   if(!Number.isInteger(ti)){ti=(draftState?.teams||[]).findIndex(t=>(t.roster||[]).map(Number).includes(gi));if(ti<0)ti=null}
-   const own=(playerScores||[]).filter(x=>Number(x.golfer_index)===gi&&x.score!=null);
-   let birdies=0,eagles=0;
-   own.forEach(x=>{const h=Number(x.hole),par=Number((tournament?.pars||draftState?.holePars||[])[h-1]||4),d=Number(x.score)-par;if(d===-1)birdies++;if(d<=-2)eagles++;});
-   const teamName=ti==null?"Unassigned":(teams?.[ti]?.name||`Team ${ti+1}`);
-   const accent=ti==null?"#d5a72c":teamAccent(ti);
-   const teamPts=ti==null?0:Number(official?.[ti]?.pts||0);
-   const initials=String(g.name||"?").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();
-   const photo=String(g.photo_url||g.photo||"").trim();
-   const avatar=photo?`<img src="${esc(photo)}" alt="${esc(g.name||"Player")}" onerror="this.style.display=\'none\';this.parentElement.textContent=\'${esc(initials||"?")}\'">`:esc(initials||"?");
-   const gatorWins=Number(g.gator_wins||0);
-   const careerWins=Number(g.career_wins||0);
-   const bestFinish=g.best_finish?String(g.best_finish):"—";
-   return `<div class="player-profile-card" style="--team-accent:${accent};border-left:5px solid ${accent}">
-     <div class="player-avatar">${avatar}</div>
-     <div>
-       <div class="player-profile-head">
-         <div>
-           <div class="player-profile-name">${esc(g.name||`Golfer ${gi+1}`)}</div>
-           <div class="player-profile-meta">${esc(String(g.band||"—"))} Player • HCP ${esc(String(g.hcp??"—"))}</div>
-         </div>
-         <div class="player-profile-team" style="border:1px solid ${accent}">${esc(teamName)}</div>
-       </div>
-     </div>
-     <div class="player-stat-row">
-       <div class="player-stat"><strong>${own.length}</strong><span>HOLES</span></div>
-       <div class="player-stat"><strong>${birdies}</strong><span>BIRDIES</span></div>
-       <div class="player-stat"><strong>${eagles}</strong><span>EAGLES+</span></div>
-       <div class="player-stat"><strong>${fmt(teamPts)}</strong><span>TEAM CUP PTS</span></div>
-     </div>
-     <div class="player-profile-career">
-       <div class="player-career-stat"><strong>${careerWins}</strong><span>CAREER WINS</span></div>
-       <div class="player-career-stat"><strong>${gatorWins}</strong><span>GATOR WINS</span></div>
-       <div class="player-career-stat"><strong>${esc(bestFinish)}</strong><span>BEST FINISH</span></div>
-     </div>
-     <div class="player-profile-note">Career totals will become automatic once tournament history is connected.</div>
-   </div>`;
- }).join("");
+ let ti=g.team==null||g.team===""?null:Number(g.team);
+ if(!Number.isInteger(ti)){ti=(draftState?.teams||[]).findIndex(t=>(t.roster||[]).map(Number).includes(gi));if(ti<0)ti=null}
+ const own=(playerScores||[]).filter(x=>Number(x.golfer_index)===gi&&x.score!=null);
+ let birdies=0,eagles=0;
+ own.forEach(x=>{const h=Number(x.hole),par=Number((tournament?.pars||draftState?.holePars||[])[h-1]||4),d=Number(x.score)-par;if(d===-1)birdies++;if(d<=-2)eagles++;});
+ const teamName=ti==null?"Unassigned":(teams?.[ti]?.name||`Team ${ti+1}`);
+ const accent=ti==null?"#d5a72c":teamAccent(ti);
+ const teamPts=ti==null?0:Number(official?.[ti]?.pts||0);
+ const initials=playerInitials(g.name||"?");
+ const photo=String(g.photo_url||g.photo||"").trim();
+ const avatar=photo?`<img src="${esc(photo)}" alt="${esc(g.name||"Player")}" onerror="this.style.display='none';this.parentElement.textContent='${esc(initials)}'">`:esc(initials);
+ const gatorWins=Number(g.gator_wins||0),careerWins=Number(g.career_wins||0),bestFinish=g.best_finish?String(g.best_finish):"—";
+ root.innerHTML=`<div class="player-profile-card" style="--team-accent:${accent};border-left:5px solid ${accent}">
+   <div class="player-avatar">${avatar}</div>
+   <div><div class="player-profile-head"><div><div class="player-profile-name">${esc(g.name||`Golfer ${gi+1}`)}</div><div class="player-profile-meta">${esc(String(g.band||"—"))} Player • HCP ${esc(String(g.hcp??"—"))}</div></div><div class="player-profile-team" style="border:1px solid ${accent}">${esc(teamName)}</div></div></div>
+   <div class="player-stat-row"><div class="player-stat"><strong>${own.length}</strong><span>HOLES</span></div><div class="player-stat"><strong>${birdies}</strong><span>BIRDIES</span></div><div class="player-stat"><strong>${eagles}</strong><span>EAGLES+</span></div><div class="player-stat"><strong>${fmt(teamPts)}</strong><span>TEAM CUP PTS</span></div></div>
+   <div class="player-profile-career"><div class="player-career-stat"><strong>${careerWins}</strong><span>CAREER WINS</span></div><div class="player-career-stat"><strong>${gatorWins}</strong><span>GATOR WINS</span></div><div class="player-career-stat"><strong>${esc(bestFinish)}</strong><span>BEST FINISH</span></div></div>
+   <div class="player-profile-note">Career totals will become automatic once tournament history is connected.</div>
+ </div>`;
 }
 
 function renderDraftHistory(){
@@ -2152,7 +2135,7 @@ function renderAll(){
    const active=document.querySelector('.tab.active')?.dataset.view;
    if(["players","handicap","trash","scoring","admin"].includes(active||""))showView("home");
  }
- renderHome();renderLeadChangeAlert();renderMomentumTracker();renderTournamentPulse();renderTournamentRecap();renderTournamentAwards();renderLeaderboard();renderProjectedStandings();renderDigitalScorecard();renderBroadcast();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderSelfProfilePhoto();renderScoring();renderTrashTalk();renderAdmin();renderTournamentHealth();renderCommissionerControlRoom();
+ renderHome();renderLeadChangeAlert();renderMomentumTracker();renderTournamentPulse();renderTournamentRecap();renderTournamentAwards();renderLeaderboard();renderDigitalScorecard();renderBroadcast();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderSelfProfilePhoto();renderScoring();renderTrashTalk();renderAdmin();renderTournamentHealth();renderCommissionerControlRoom();
  try{renderHoleMatchup()}catch(e){console.warn("Hole Matchup render skipped",e)}
  try{renderDraftHistory()}catch(e){console.warn("Draft History render skipped",e)}
  try{renderPlayerProfileCards()}catch(e){console.warn("Player Profile Cards render skipped",e)}
@@ -2291,6 +2274,19 @@ if(moreBtn)moreBtn.addEventListener("click",openMoreMenu);
 if($("moreMenuClose"))$("moreMenuClose").addEventListener("click",closeMoreMenu);
 if(moreBackdrop)moreBackdrop.addEventListener("click",e=>{if(e.target===moreBackdrop)closeMoreMenu()});
 document.querySelectorAll("[data-more-view]").forEach(b=>b.addEventListener("click",()=>{closeMoreMenu();showView(b.dataset.moreView)}));
+if($("playerDirectory"))$("playerDirectory").addEventListener("click",e=>{
+ const row=e.target.closest("[data-player-profile]");if(!row)return;
+ selectedPlayerProfileIndex=Number(row.dataset.playerProfile);renderPlayerProfileCards();
+ $("playerProfileCardsSection")?.scrollIntoView({behavior:"smooth",block:"start"});
+});
+if($("playerDirectory"))$("playerDirectory").addEventListener("keydown",e=>{
+ if(e.key!=="Enter"&&e.key!==" ")return;const row=e.target.closest("[data-player-profile]");if(!row)return;
+ e.preventDefault();selectedPlayerProfileIndex=Number(row.dataset.playerProfile);renderPlayerProfileCards();
+ $("playerProfileCardsSection")?.scrollIntoView({behavior:"smooth",block:"start"});
+});
+if($("closePlayerProfile"))$("closePlayerProfile").addEventListener("click",()=>{
+ selectedPlayerProfileIndex=null;renderPlayerProfileCards();
+});
 if($("playerDirectoryMode"))$("playerDirectoryMode").addEventListener("change",renderPlayersDirectory);
 if($("playerDirectorySearch"))$("playerDirectorySearch").addEventListener("input",renderPlayersDirectory);
 if($("courseBrowseSelect"))$("courseBrowseSelect").addEventListener("change",()=>{
