@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.1.6">
+<meta name="elleng-app-version" content="1.1.8">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
 .top{background:linear-gradient(90deg,#08253b 0%,#08253b 68%,#0b304b 100%);color:white;padding:14px 16px;border-bottom:4px solid var(--gold);overflow:hidden}
 .brand{max-width:1100px;margin:auto;display:flex;align-items:center;gap:18px;min-height:92px;position:relative}.brand img{width:150px;height:92px;object-fit:contain;object-position:left center;border:0;border-radius:0;background:transparent;filter:drop-shadow(0 6px 10px rgba(0,0,0,.22));flex:0 0 auto}
-.brand h1{margin:0;font-size:27px;line-height:1.05}.brand p{margin:6px 0 0;opacity:.86;font-size:13px;letter-spacing:.02em}
+.brand h1{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:42px;line-height:.95;font-weight:900;letter-spacing:.03em;color:#09192d;background:linear-gradient(180deg,#163a63 0%,#0a2440 38%,#071a2d 62%,#020c14 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;-webkit-text-stroke:1.35px #d5a72c;text-shadow:0 1px 0 rgba(255,231,170,.8),0 2px 0 rgba(0,0,0,.18),0 4px 10px rgba(0,0,0,.28)}.brand p{margin:6px 0 0;opacity:.86;font-size:13px;letter-spacing:.02em}
 .wrap{max-width:1100px;margin:auto;padding:16px}.card{background:white;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}
 button,input,select{font:inherit}button{border:0;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer}.primary{background:var(--green);color:white}.secondary{background:#e9eef1;color:var(--ink)}.danger{background:#8b1e2d;color:white}
@@ -28,7 +28,7 @@ input,select{min-height:44px;border:1px solid #bdc8ce;border-radius:9px;padding:
 .badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:800;background:#edf1f3}.gator-badge{background:#fff3c8;color:#6c5200}
 .note{font-size:13px;line-height:1.45;color:var(--muted)}.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
 label small{display:block;color:var(--muted);margin-bottom:5px}
-@media(max-width:560px){.top{padding:10px 10px 11px}.brand{gap:10px;min-height:76px}.brand img{width:112px;height:76px}.brand h1{font-size:22px}.wrap{padding:10px}.card{padding:12px}.leader-row{grid-template-columns:36px minmax(80px,1fr) 72px 62px}.score-grid{grid-template-columns:minmax(90px,1fr) 118px 70px}.score-input{display:none!important}.mobile-score-input{display:inline-block!important;width:92px;text-align:center;font-size:22px;font-weight:900}.mobile-only{display:inline!important}.desktop-only{display:none!important}.mobile-strokes{display:block;margin-top:4px;font-size:11px;color:var(--muted)}.mobile-stepper{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:5px}.mobile-stepper button:disabled{opacity:.35}.golf-result{display:block;margin:6px auto 0;font-size:13px;max-width:115px}.mobile-hole-guide{display:block;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#f8fafb}.mobile-hole-guide .guide-title{font-weight:900;font-size:15px;margin-bottom:8px}.mobile-hole-guide .guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.mobile-hole-guide .guide-item{border:1px solid var(--line);border-radius:9px;padding:7px 8px;background:#fff;text-align:center;font-size:12px}.mobile-hole-guide .guide-item strong{display:block;font-size:13px}}
+@media(max-width:560px){.top{padding:10px 10px 11px}.brand{gap:10px;min-height:76px}.brand img{width:112px;height:76px}.brand h1{font-size:31px;-webkit-text-stroke:1px #d5a72c;letter-spacing:.02em}.wrap{padding:10px}.card{padding:12px}.leader-row{grid-template-columns:36px minmax(80px,1fr) 72px 62px}.score-grid{grid-template-columns:minmax(90px,1fr) 118px 70px}.score-input{display:none!important}.mobile-score-input{display:inline-block!important;width:92px;text-align:center;font-size:22px;font-weight:900}.mobile-only{display:inline!important}.desktop-only{display:none!important}.mobile-strokes{display:block;margin-top:4px;font-size:11px;color:var(--muted)}.mobile-stepper{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:5px}.mobile-stepper button:disabled{opacity:.35}.golf-result{display:block;margin:6px auto 0;font-size:13px;max-width:115px}.mobile-hole-guide{display:block;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#f8fafb}.mobile-hole-guide .guide-title{font-weight:900;font-size:15px;margin-bottom:8px}.mobile-hole-guide .guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.mobile-hole-guide .guide-item{border:1px solid var(--line);border-radius:9px;padding:7px 8px;background:#fff;text-align:center;font-size:12px}.mobile-hole-guide .guide-item strong{display:block;font-size:13px}}
 
 .shamble-area{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
 .shamble-team{border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff}
@@ -177,7 +177,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <body>
 <header class="top"><div class="brand">
 <img src="gator.png" alt="EllenG Cup gator logo">
-<div><h1>EllenG Cup</h1><p id="tournamentSubtitle">LIVE TOURNAMENT SCORING • 6 TEAMS • 18 HOLES</p></div>
+<div><h1>EllenG Cup</h1><p id="tournamentSubtitle">LIVE TOURNAMENT SCORING • 18 HOLES</p></div>
 </div></header>
 <div class="app-version-bar"><span id="appVersionChip" class="app-version-chip">EllenG Live v1.1.5</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
@@ -726,7 +726,7 @@ function renderLiveHoleScores(){
 }
 function renderLeaderboard(){
  if($("pointScaleBadge"))$("pointScaleBadge").textContent=pointScaleText();
- if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • ${teams.length} TEAMS • 18 HOLES`;
+ if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • 18 HOLES`;
  const arr=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
  $("leaderboard").innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===x.team?` <span class="badge">+6 Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
  renderLiveHoleScores();
@@ -1421,7 +1421,7 @@ function renderHome(){
 }
 
 function renderAll(){
- if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • ${teams.length} TEAMS • 18 HOLES`;
+ if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • 18 HOLES`;
  $("liveBadge").textContent=(tournament?.status||"setup").toUpperCase();
  const playerName=currentGolferIndex!=null?String(draftState?.golfers?.[currentGolferIndex]?.name||""):"";
  $("roleLabel").textContent=isCommissioner?"Commissioner":captainTeam!=null?`${teams[captainTeam].name} Captain`:(playerName||"Player");
