@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.1.0">
+<meta name="elleng-app-version" content="2.2.0">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -369,6 +369,56 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .player-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.achievement-badge{font-size:11px;font-weight:900;border-radius:999px;padding:5px 8px;background:#fff5ce;border:1px solid #ead28a}
 .offline-banner{position:fixed;left:50%;transform:translateX(-50%);bottom:78px;z-index:4500;background:#8b2c20;color:#fff;border-radius:999px;padding:8px 12px;font-weight:900;box-shadow:0 6px 18px rgba(0,0,0,.18)}
 @media(max-width:760px){.captain-grid{grid-template-columns:repeat(2,1fr)}.group-row{grid-template-columns:1fr 1fr}.group-row .group-name-cell{grid-column:1/-1}.alert-stack{top:92px}.rsvp-summary{grid-template-columns:repeat(3,1fr)}}
+
+.leader-spotlight-card{
+  position:relative;overflow:hidden;border:1px solid rgba(200,159,58,.45);
+  background:linear-gradient(135deg,#fffdf5 0%,#ffffff 55%,#f3f7f8 100%);
+}
+.leader-spotlight-card:before{
+  content:"";position:absolute;right:-40px;top:-55px;width:170px;height:170px;
+  border-radius:50%;background:rgba(200,159,58,.08)
+}
+.leader-rank{
+  min-width:54px;height:54px;border-radius:50%;display:grid;place-items:center;
+  background:#0b2b42;color:#fff;font-weight:1000;font-size:22px;border:3px solid var(--gold)
+}
+.leader-spotlight-body{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:13px}
+.leader-metric{border:1px solid var(--line);border-radius:10px;padding:10px;background:rgba(255,255,255,.9)}
+.leader-metric strong{display:block;font-size:20px}.leader-metric span{font-size:10px;color:var(--muted);font-weight:900}
+.momentum-meter{display:grid;gap:10px;margin-top:13px}
+.momentum-row{display:grid;grid-template-columns:minmax(110px,1fr) 2fr 78px;gap:10px;align-items:center}
+.momentum-name{font-weight:950}
+.momentum-track{height:12px;background:#e8eef0;border-radius:999px;overflow:hidden;border:1px solid #d9e2e5}
+.momentum-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#b5c0c5,#0b6b50)}
+.momentum-hot{font-size:11px;font-weight:950;text-align:right}
+.mvp-card{display:flex;gap:14px;align-items:center;margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:13px;background:#fbfcfc}
+.mvp-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:#0b2b42;color:white;display:grid;place-items:center;font-weight:1000;font-size:22px;flex:0 0 64px}
+.mvp-name{font-size:22px;font-weight:1000}.mvp-stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}.mvp-pill{font-size:11px;font-weight:900;border-radius:999px;padding:5px 8px;background:#edf3f5}
+.recap-grid{display:grid;gap:10px;margin-top:12px}.recap-team{border:1px solid var(--line);border-radius:11px;padding:11px}
+.recap-team-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.recap-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.recap-hole{border-radius:9px;padding:9px;background:#f7fafb}.recap-hole.best{border-left:4px solid #168763}.recap-hole.worst{border-left:4px solid #a23d31}.recap-hole strong{display:block}
+.big-moment-overlay{
+  position:fixed;inset:0;z-index:10000;display:grid;place-items:center;
+  background:rgba(5,19,30,.64);backdrop-filter:blur(3px);padding:20px
+}
+.big-moment-overlay.hidden{display:none}
+.big-moment-card{
+  width:min(520px,94vw);text-align:center;background:linear-gradient(145deg,#08253b,#0d3b59);
+  color:#fff;border:2px solid #d4af52;border-radius:22px;padding:30px 22px;
+  box-shadow:0 22px 60px rgba(0,0,0,.35);animation:bigMomentPop .42s cubic-bezier(.2,.8,.2,1)
+}
+.big-moment-icon{font-size:64px;animation:bigMomentPulse 1s ease-in-out infinite alternate}
+.big-moment-kicker{font-size:11px;letter-spacing:.18em;font-weight:1000;color:#e9c86b;margin-top:8px}
+.big-moment-title{font-size:30px;line-height:1.02;font-weight:1000;margin-top:7px}
+.big-moment-sub{opacity:.86;font-weight:800;margin-top:8px}
+@keyframes bigMomentPop{from{transform:scale(.72);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bigMomentPulse{from{transform:scale(.95)}to{transform:scale(1.09)}}
+@media(max-width:760px){
+ .leader-spotlight-body{grid-template-columns:repeat(2,1fr)}
+ .momentum-row{grid-template-columns:1fr 1.6fr 62px}
+ .recap-pair{grid-template-columns:1fr}
+ .big-moment-title{font-size:25px}
+}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -446,6 +496,22 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </div>
 
 <div id="inAppAlertStack" class="alert-stack"></div>
+<div id="leaderSpotlightCard" class="card leader-spotlight-card">
+  <div class="row between">
+    <div><div class="premium-label">LEADER SPOTLIGHT</div><h2 id="leaderSpotlightName" style="margin:3px 0 0">Waiting for scoring</h2><div id="leaderSpotlightSub" class="status">The current leader will appear once official Cup points are awarded.</div></div>
+    <div id="leaderSpotlightRank" class="leader-rank">#1</div>
+  </div>
+  <div id="leaderSpotlightBody" class="leader-spotlight-body"></div>
+</div>
+
+<div class="card">
+  <div class="row between">
+    <div><div class="premium-label">TEAM MOMENTUM</div><h2 style="margin:3px 0 0">Who’s Heating Up?</h2><div class="status">Based on each team’s most recent completed holes.</div></div>
+    <span class="badge">LIVE</span>
+  </div>
+  <div id="teamMomentumMeter" class="momentum-meter"></div>
+</div>
+
 
 <div class="home-grid">
   <div class="home-tile"><div class="status">CURRENT LEADER</div><strong id="homeLeader" class="big">—</strong><div id="homeLeaderPts" class="status" style="margin-top:5px">No official points yet</div></div>
@@ -709,6 +775,22 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div class="card">
   <div class="row between"><div><div class="premium-label">TEE SHEET</div><h2 style="margin:3px 0 0">Groups & Starting Assignments</h2><div class="status">Your tee time, group and starting hole when assigned.</div></div><span class="badge">TOURNAMENT DAY</span></div>
   <div id="groupAssignments" class="group-assignment-list"></div>
+</div>
+
+<div class="card">
+  <div class="row between">
+    <div><div class="premium-label">PLAYER OF THE ROUND</div><h2 style="margin:3px 0 0">Tournament MVP</h2><div class="status">Automatically calculated from individual scoring data.</div></div>
+    <span class="badge">MVP</span>
+  </div>
+  <div id="tournamentMvpCard"></div>
+</div>
+
+<div class="card">
+  <div class="row between">
+    <div><div class="premium-label">ROUND RECAP</div><h2 style="margin:3px 0 0">Best Hole / Worst Hole</h2><div class="status">Where each team gained the most — and where the round hurt most.</div></div>
+    <span class="badge">18 HOLES</span>
+  </div>
+  <div id="bestWorstHoleRecap"></div>
 </div>
 
 <div class="card">
@@ -979,6 +1061,7 @@ let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[]
 let scoreSaveBusy=false, lastSuccessfulSyncAt=null;
 let tournamentArchives=[], trashReactions=[];
 let rsvps=[], groupAssignments=[], lastAlertLeader=null, lastAlertGatorComplete=false, lastAlertCargo=null;
+let lastBigMomentLeader=null,lastBigMomentGator=false,lastBigMomentCargo=null,bigMomentTimer=null;
 let selectedPlayerProfileIndex=null;
 const $=id=>document.getElementById(id);
 function setSyncStatus(kind="saved",label="Synced"){
@@ -2489,6 +2572,93 @@ function checkLiveAlerts(){
  const cargo=tournament?.final_cargo_team;
  if(cargo!==null&&cargo!==undefined&&cargo!==""&&String(cargo)!==String(lastAlertCargo)){pushInAppAlert("🚢 Final Cargo awarded",`${teams[Number(cargo)]?.name||`Team ${Number(cargo)+1}`} +${Number(tournament?.final_cargo_points||6)} points`);lastAlertCargo=cargo}
 }
+
+function renderLeaderSpotlight(){
+ const name=$("leaderSpotlightName"),sub=$("leaderSpotlightSub"),body=$("leaderSpotlightBody"),rank=$("leaderSpotlightRank");
+ if(!name||!sub||!body||!rank)return;
+ const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
+ const lead=ranking[0];
+ if(!lead||!(lead.pts>0)){name.textContent="Waiting for scoring";sub.textContent="The current leader will appear once official Cup points are awarded.";body.innerHTML="";rank.textContent="#1";return}
+ const team=teams[lead.team]||{},second=ranking[1],margin=second?lead.pts-second.pts:lead.pts;
+ name.textContent=team.name||`Team ${lead.team+1}`;
+ sub.textContent=margin>0?`${fmt(margin)} point${Math.abs(margin)===1?"":"s"} clear of second place`:"Tied for the lead";
+ rank.textContent="#1";
+ const recent=scores.filter(x=>Number(x.team_index)===lead.team&&x.score!=null).sort((a,b)=>Number(b.hole)-Number(a.hole))[0];
+ body.innerHTML=`<div class="leader-metric"><strong>${fmt(lead.pts)}</strong><span>CUP POINTS</span></div><div class="leader-metric"><strong>${lead.thru||0}</strong><span>THRU</span></div><div class="leader-metric"><strong>${margin>0?"+"+fmt(margin):"TIED"}</strong><span>LEAD</span></div><div class="leader-metric"><strong>${recent?`H${recent.hole}`:"—"}</strong><span>LATEST POST</span></div>`;
+}
+function teamRecentMomentum(ti){
+ const teamRows=(scores||[]).filter(x=>Number(x.team_index)===ti&&x.score!=null).sort((a,b)=>Number(a.hole)-Number(b.hole));
+ if(!teamRows.length)return {score:0,label:"Waiting"};
+ const holes=[...new Set(teamRows.map(x=>Number(x.hole)))].sort((a,b)=>b-a).slice(0,3);
+ let score=0,events=0;
+ holes.forEach(h=>{
+   const holePts=pointsForHole(h)||[];
+   const p=Number(holePts[ti]||0);score+=p;events++;
+ });
+ const avg=events?score/events:0;
+ const label=avg>=4?"🔥 HOT":avg>=2.5?"↗ RISING":avg>0?"STEADY":"WAITING";
+ return {score:avg,label};
+}
+function renderTeamMomentumMeter(){
+ const root=$("teamMomentumMeter");if(!root)return;
+ const rows=(teams||[]).map((t,ti)=>({ti,name:t?.name||`Team ${ti+1}`,...teamRecentMomentum(ti)})).sort((a,b)=>b.score-a.score||a.ti-b.ti);
+ const max=Math.max(1,...rows.map(x=>x.score));
+ root.innerHTML=rows.map(x=>`<div class="momentum-row"><div class="momentum-name">${esc(x.name)}</div><div class="momentum-track"><div class="momentum-fill" style="width:${Math.max(4,Math.round((x.score/max)*100))}%"></div></div><div class="momentum-hot">${esc(x.label)}</div></div>`).join("")||'<div class="note">Momentum appears once team scores are posted.</div>';
+}
+function playerRoundStats(gi){
+ const rows=(playerScores||[]).filter(x=>Number(x.golfer_index)===gi&&x.score!=null);
+ let totalToPar=0,birds=0,eagles=0,pars=0,holes=0;
+ rows.forEach(x=>{const h=Number(x.hole),s=Number(x.score),p=parForHole(h);if(!Number.isFinite(s)||!Number.isFinite(p))return;const d=s-p;totalToPar+=d;holes++;if(d<=-2)eagles++;else if(d===-1)birds++;else if(d===0)pars++});
+ return {totalToPar,birds,eagles,pars,holes};
+}
+function renderTournamentMvp(){
+ const root=$("tournamentMvpCard");if(!root)return;
+ const golfers=draftState?.golfers||[];
+ const ranked=golfers.map((g,gi)=>({g,gi,...playerRoundStats(gi)})).filter(x=>x.holes>0).sort((a,b)=>a.totalToPar-b.totalToPar||b.eagles-a.eagles||b.birds-a.birds||b.holes-a.holes);
+ if(!ranked.length){root.innerHTML='<div class="note" style="margin-top:12px">Player of the Round will appear once individual scoring data is available.</div>';return}
+ const x=ranked[0],photo=x.g?.photo_url||x.g?.photo||"",initials=(x.g?.name||"?").split(/\s+/).map(n=>n[0]).join("").slice(0,2).toUpperCase();
+ root.innerHTML=`<div class="mvp-card">${photo?`<img class="mvp-avatar" src="${esc(photo)}" alt="">`:`<div class="mvp-avatar">${esc(initials)}</div>`}<div><div class="premium-label">PLAYER OF THE ROUND</div><div class="mvp-name">${esc(x.g?.name||"Player")}</div><div class="status">${x.totalToPar>0?"+":""}${x.totalToPar} to par through ${x.holes} individual hole${x.holes===1?"":"s"}</div><div class="mvp-stats"><span class="mvp-pill">🦅 ${x.eagles} Eagle${x.eagles===1?"":"s"}</span><span class="mvp-pill">🐦 ${x.birds} Birdie${x.birds===1?"":"s"}</span><span class="mvp-pill">⛳ ${x.pars} Par${x.pars===1?"":"s"}</span></div></div></div>`;
+}
+function teamHolePerformance(ti,h){
+ const row=(scores||[]).find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null);
+ if(!row)return null;
+ const par=parForHole(h),score=Number(row.score);if(!Number.isFinite(score)||!Number.isFinite(par))return null;
+ const rel=score-par,pts=Number((pointsForHole(h)||[])[ti]||0);
+ return {h,score,par,rel,pts};
+}
+function renderBestWorstHoleRecap(){
+ const root=$("bestWorstHoleRecap");if(!root)return;
+ const cards=(teams||[]).map((t,ti)=>{
+  const perf=[];for(let h=1;h<=18;h++){const p=teamHolePerformance(ti,h);if(p)perf.push(p)}
+  if(!perf.length)return "";
+  const best=[...perf].sort((a,b)=>b.pts-a.pts||a.rel-b.rel||a.h-b.h)[0];
+  const worst=[...perf].sort((a,b)=>a.pts-b.pts||b.rel-a.rel||a.h-b.h)[0];
+  const fmtRel=v=>v===0?"E":v>0?`+${v}`:`${v}`;
+  return `<div class="recap-team"><div class="recap-team-head"><strong>${esc(t?.name||`Team ${ti+1}`)}</strong><span class="status">${perf.length} hole${perf.length===1?"":"s"} scored</span></div><div class="recap-pair"><div class="recap-hole best"><strong>🔥 Best — Hole ${best.h}</strong><span>${fmtRel(best.rel)} • ${fmt(best.pts)} Cup pts</span></div><div class="recap-hole worst"><strong>🧊 Worst — Hole ${worst.h}</strong><span>${fmtRel(worst.rel)} • ${fmt(worst.pts)} Cup pts</span></div></div></div>`;
+ }).filter(Boolean);
+ root.innerHTML=cards.length?`<div class="recap-grid">${cards.join("")}</div>`:'<div class="note" style="margin-top:12px">Best/worst hole recap will appear as official hole scores are completed.</div>';
+}
+function showBigMoment(icon,kicker,title,sub=""){
+ const overlay=$("bigMomentOverlay");if(!overlay)return;
+ $("bigMomentIcon").textContent=icon;$("bigMomentKicker").textContent=kicker;$("bigMomentTitle").textContent=title;$("bigMomentSub").textContent=sub||"";
+ overlay.classList.remove("hidden");
+ clearTimeout(bigMomentTimer);bigMomentTimer=setTimeout(()=>overlay.classList.add("hidden"),3200);
+ overlay.onclick=()=>overlay.classList.add("hidden");
+}
+function checkBigMoments(){
+ const ranking=totals().sort((a,b)=>b.pts-a.pts||a.team-b.team),leader=ranking[0],leaderKey=leader&&leader.pts>0?`${leader.team}:${leader.pts}`:null;
+ if(lastBigMomentLeader&&leaderKey&&leaderKey!==lastBigMomentLeader){
+   const t=teams[leader.team]?.name||`Team ${leader.team+1}`;
+   showBigMoment("🏆","NEW LEADER",`${t} TAKES THE LEAD`,`${fmt(leader.pts)} Cup points`);
+ }
+ lastBigMomentLeader=leaderKey||lastBigMomentLeader;
+ const gh=Number(tournament?.gator_hole)||0;
+ const gComplete=!!(tournament?.gator_revealed&&gh&&teams.length&&teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===gh&&x.score!=null)));
+ if(gComplete&&!lastBigMomentGator){const hp=pointsForHole(gh)||[],mx=Math.max(...hp),wins=teams.map((t,i)=>({t,i,p:Number(hp[i]||0)})).filter(x=>x.p===mx&&mx>0).map(x=>x.t?.name||`Team ${x.i+1}`);showBigMoment("🐊","GATOR HOLE",wins.length?`${wins.join(" & ")} STRIKE`:"GATOR HOLE COMPLETE",`Hole ${gh} • ${wins.length>1?"points split":"12-point showdown"}`)}
+ lastBigMomentGator=gComplete;
+ const cargo=tournament?.final_cargo_team;
+ if(cargo!==null&&cargo!==undefined&&cargo!==""&&String(cargo)!==String(lastBigMomentCargo)){const ti=Number(cargo);showBigMoment("🚢","FINAL CARGO",`${teams[ti]?.name||`Team ${ti+1}`} GETS THE CARGO`,`+${Number(tournament?.final_cargo_points||6)} Cup points`);lastBigMomentCargo=cargo}
+}
 function renderHome(){
  if(!draftState||!tournament)return;
  const status=String(tournament?.status||"setup").toUpperCase();
@@ -2630,6 +2800,8 @@ function renderAll(){
  // CORE APP: these must always render before optional experience features.
  renderHome();
  renderNextEvent();
+ renderLeaderSpotlight();
+ renderTeamMomentumMeter();
  renderLeaderboard();
  renderDigitalScorecard();
  renderBroadcast();
@@ -2660,12 +2832,12 @@ function renderAll(){
  safeFeatureRender("Tournament Recap",renderTournamentRecap);
  safeFeatureRender("Tournament Awards",renderTournamentAwards);
  safeFeatureRender("Hole Battle",renderHoleBattleTimeline);
- safeFeatureRender("Clubhouse",renderClubhouse);safeFeatureRender("Groups",renderGroupAssignments);
+ safeFeatureRender("Clubhouse",renderClubhouse);safeFeatureRender("Groups",renderGroupAssignments);safeFeatureRender("Tournament MVP",renderTournamentMvp);safeFeatureRender("Best Worst Recap",renderBestWorstHoleRecap);
  safeFeatureRender("Course Hole Card",renderCourseHoleCard);
  safeFeatureRender("Hole Matchup",renderHoleMatchup);
  safeFeatureRender("Draft History",renderDraftHistory);
  safeFeatureRender("Player Profile Cards",renderPlayerProfileCards);
- safeFeatureRender("Live Alerts",checkLiveAlerts);
+ safeFeatureRender("Live Alerts",checkLiveAlerts);safeFeatureRender("Big Moments",checkBigMoments);
  renderOfflineState();
 }
 let syncBusy=false;
@@ -3080,5 +3252,13 @@ $("resetScoringOnly").addEventListener("click",clearScoresOnly);
 
 </script>
 <div id="offlineBanner" class="offline-banner hidden">Offline • scores will send when connection returns</div>
+<div id="bigMomentOverlay" class="big-moment-overlay hidden" aria-live="polite">
+  <div class="big-moment-card">
+    <div id="bigMomentIcon" class="big-moment-icon">🏆</div>
+    <div id="bigMomentKicker" class="big-moment-kicker">BIG MOMENT</div>
+    <div id="bigMomentTitle" class="big-moment-title"></div>
+    <div id="bigMomentSub" class="big-moment-sub"></div>
+  </div>
+</div>
 </body>
 </html>
