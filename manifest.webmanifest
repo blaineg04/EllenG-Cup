@@ -3,7 +3,7 @@
   "name": "EllenG Cup",
   "short_name": "EllenG Cup",
   "description": "EllenG Cup live tournament scoring, teams, standings, player profiles and clubhouse.",
-  "start_url": "./scoring.html",
+  "start_url": "./scoring.html#hub",
   "scope": "./",
   "display": "standalone",
   "display_override": [
@@ -32,19 +32,19 @@
   ],
   "shortcuts": [
     {
-      "name": "Scores",
+      "name": "Draft",
+      "short_name": "Draft",
+      "url": "./scoring.html#draft"
+    },
+    {
+      "name": "Live Scoring",
       "short_name": "Scores",
       "url": "./scoring.html#scores"
     },
     {
-      "name": "Teams",
-      "short_name": "Teams",
-      "url": "./scoring.html#teams"
-    },
-    {
-      "name": "Players",
-      "short_name": "Players",
-      "url": "./scoring.html#players"
+      "name": "Clubhouse",
+      "short_name": "Clubhouse",
+      "url": "./scoring.html#clubhouse"
     }
   ]
 }

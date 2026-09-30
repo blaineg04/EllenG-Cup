@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.2.1">
+<meta name="elleng-app-version" content="2.3.0">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -419,6 +419,15 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
  .recap-pair{grid-template-columns:1fr}
  .big-moment-title{font-size:25px}
 }
+
+.app-hub{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;padding:18px;background:radial-gradient(circle at 20% 10%,rgba(208,170,76,.14),transparent 26%),linear-gradient(160deg,#061b2b,#0b2f49 58%,#08253b)}
+.app-hub.hidden{display:none}.app-hub-card{width:min(640px,96vw);max-height:94vh;overflow:auto;background:#f8fafb;border-radius:24px;padding:24px;box-shadow:0 26px 70px rgba(0,0,0,.38)}
+.app-hub-logo-wrap{display:flex;justify-content:center;margin-bottom:8px}.app-hub-logo{width:86px;height:86px;object-fit:contain}
+.app-hub-card h1{margin:5px 0 5px;text-align:center;font-size:28px;color:#0a2c43}.app-hub-card>.premium-label{text-align:center}.app-hub-sub{text-align:center;color:var(--muted);font-weight:700;margin:0 0 18px}
+.app-hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.app-hub-btn{min-height:112px;border:1px solid #d8e1e5;border-radius:16px;background:#fff;padding:15px;display:flex;gap:12px;text-align:left;align-items:center;cursor:pointer;box-shadow:0 5px 14px rgba(8,37,59,.06)}
+.app-hub-btn strong{display:block;font-size:18px;color:#0a2c43;margin-bottom:4px}.app-hub-btn small{display:block;color:#61727c;font-weight:700;line-height:1.25}.app-hub-primary{border:2px solid #c9a13a;background:#fffaf0}.hub-icon{font-size:31px}
+.hub-skip-btn{display:block;margin:16px auto 0;border:0;background:transparent;color:#667985;font-weight:800;text-decoration:underline}
+@media(max-width:620px){.app-hub-grid{grid-template-columns:1fr}.app-hub-btn{min-height:88px}.app-hub-card{padding:18px}.app-hub-card h1{font-size:24px}}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -433,6 +442,24 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </head>
 <body>
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
+<div id="appHub" class="app-hub">
+  <div class="app-hub-card">
+    <div class="app-hub-logo-wrap">
+      <img src="gator.png" alt="EllenG Cup" class="app-hub-logo">
+    </div>
+    <div class="premium-label">ELLENG CUP</div>
+    <h1>Choose Where You Want to Go</h1>
+    <p class="app-hub-sub">Draft night, captain access, live scoring, or the Clubhouse.</p>
+    <div class="app-hub-grid">
+      <button type="button" class="app-hub-btn" id="hubDraft"><span class="hub-icon">📝</span><span><strong>Draft</strong><small>Watch the draft and team selections</small></span></button>
+      <button type="button" class="app-hub-btn" id="hubCaptain"><span class="hub-icon">🧢</span><span><strong>Captain Login</strong><small>Captain-only draft and team controls</small></span></button>
+      <button type="button" class="app-hub-btn app-hub-primary" id="hubScoring"><span class="hub-icon">🏆</span><span><strong>Live Scoring</strong><small>Scores, leaderboard and live tournament action</small></span></button>
+      <button type="button" class="app-hub-btn" id="hubClubhouse"><span class="hub-icon">⛳</span><span><strong>Clubhouse</strong><small>RSVP, tee times, profiles, course and recaps</small></span></button>
+    </div>
+    <button type="button" class="hub-skip-btn" id="hubContinue">Continue to App</button>
+  </div>
+</div>
+
 <header class="top"><div class="brand">
 <img src="gator.png" alt="EllenG Cup gator logo">
 <div><h1>EllenG Cup</h1><p id="tournamentSubtitle">LIVE TOURNAMENT SCORING • 18 HOLES</p></div>
@@ -2925,6 +2952,23 @@ async function enterApp(){
   throw e;
  }
 }
+
+function closeAppHub(){const h=$("appHub");if(h)h.classList.add("hidden")}
+function openHubView(view){
+ closeAppHub();
+ if(view==="clubhouse"){showView("clubhouse");return}
+ if(view==="scoring"){showView("leaderboard");return}
+ if(view==="draft"){
+   if(document.querySelector('[data-view="draft"]')) showView("draft");
+   else if(document.querySelector('[data-view="home"]')) showView("home");
+   return;
+ }
+ if(view==="captain"){
+   if(!user){showView("home");setTimeout(()=>{const e=document.querySelector('input[type="email"],input[name="email"]');if(e)e.focus()},100);return}
+   if(document.querySelector('[data-view="admin"]') && (captainTeam!=null||isCommissioner)) showView("admin");
+   else showView("teams");
+ }
+}
 function showView(name){
  if(!user){enterViewer();return}
  if(name==="scoring"&&!(isCommissioner||captainTeam!=null))name="handicap";
@@ -3012,6 +3056,12 @@ if($("loadWeatherBtn"))$("loadWeatherBtn").addEventListener("click",loadWeather)
 if($("shareTeamScorecard"))$("shareTeamScorecard").addEventListener("click",shareDigitalScorecard);
 if($("saveGroupAssignments"))$("saveGroupAssignments").addEventListener("click",saveGroupAssignments);
 if($("sharePostRoundRecap"))$("sharePostRoundRecap").addEventListener("click",sharePostRoundRecap);
+if($("hubDraft"))$("hubDraft").addEventListener("click",()=>openHubView("draft"));
+if($("hubCaptain"))$("hubCaptain").addEventListener("click",()=>openHubView("captain"));
+if($("hubScoring"))$("hubScoring").addEventListener("click",()=>openHubView("scoring"));
+if($("hubClubhouse"))$("hubClubhouse").addEventListener("click",()=>openHubView("clubhouse"));
+if($("hubContinue"))$("hubContinue").addEventListener("click",closeAppHub);
+
 window.addEventListener("online",()=>{renderOfflineState();flushOfflineScores()});
 window.addEventListener("offline",renderOfflineState);
 if("serviceWorker" in navigator){window.addEventListener("load",async()=>{try{const reg=await navigator.serviceWorker.register("./service-worker.js",{scope:"./"});reg.update().catch(()=>{})}catch(e){console.warn("Service worker registration skipped",e)}})}
