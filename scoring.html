@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.0.1">
+<meta name="elleng-app-version" content="2.0.2">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -338,6 +338,8 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .reaction-btn.mine{background:#fff2bf;border-color:#d5a72c}
 .reaction-count{font-weight:850;margin-left:3px}
 @media(max-width:760px){.experience-grid{grid-template-columns:1fr}.weather-grid{grid-template-columns:repeat(3,1fr)}}
+
+.section-break{margin:20px 4px 8px;padding-top:4px}
 </style>
 </head>
 <body>
@@ -385,7 +387,6 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <button class="tab" data-view="course">Course</button>
 <button class="tab" data-view="progress">Hole Progress</button>
 <button class="tab" data-view="clubhouse">Clubhouse</button>
-<button id="handicapTab" class="tab hidden" data-view="handicap">My Golf</button>
 <button id="trashTab" class="tab hidden" data-view="trash">Trash Talk</button>
 <button id="scoringTab" class="tab hidden" data-view="scoring">Enter Scores</button>
 <button id="adminTab" class="tab hidden" data-view="admin">Commissioner</button>
@@ -483,6 +484,53 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </section>
 
 <section id="leaderboardView" class="view hidden">
+<div class="card">
+  <div class="row between"><div><h2 style="margin:0">My Golf</h2><div class="status">Your account is linked to your player profile. No PIN or name selection is required.</div></div><span class="badge">PLAYER ACCOUNT</span></div>
+  <div id="selfPlayerIdentity" class="note" style="margin-top:12px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb">Loading your player profile…</div>
+  <select id="selfGolferSelect" class="hidden"><option value="">Player</option></select>
+  <div class="admin-grid" style="margin-top:14px">
+    <label><small>Handicap range</small><select id="selfBandSelect"><option value="A">A • 0–9</option><option value="B">B • 10–17</option><option value="C">C • 18–25</option><option value="D">D • 26+</option></select></label>
+    <label><small>Exact handicap (optional)</small><input id="selfHandicapInput" type="number" min="0" max="54" step="0.1" inputmode="decimal" autocomplete="off" placeholder="Enter exact handicap"></label>
+  </div>
+  <div class="note" style="margin-top:10px">Your login protects this profile. You can update only the golfer account linked to your username.</div>
+  <div class="row" style="margin-top:12px"><button id="saveSelfHandicap" class="primary" type="button">Save My Handicap</button></div>
+  <div id="selfHandicapMsg" class="status" style="margin-top:9px"></div>
+</div>
+
+  <details id="myProfilePhotoCard" class="profile-settings" style="margin-top:14px">
+    <summary><strong>Profile Settings</strong><span class="status">Change my photo</span></summary>
+    <div class="self-photo-wrap" style="margin-top:12px">
+      <div id="selfPhotoPreview" class="self-photo-preview">—</div>
+      <div>
+        <div id="selfPhotoPlayerName" style="font-weight:900;margin-bottom:8px">Loading player…</div>
+        <div class="self-photo-actions">
+          <input id="selfPhotoFile" class="self-photo-file" type="file" accept="image/*">
+          <label for="selfPhotoFile" class="self-photo-choose">Choose Photo</label>
+          <span id="selfPhotoFileName" class="self-photo-filename">No photo selected</span>
+          <button id="uploadSelfPhoto" class="primary" type="button">Upload My Photo</button>
+        </div>
+        <div id="selfPhotoMsg" class="status" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </details>
+</div>
+<div class="card">
+  <div class="row between"><div><h2 style="margin:0">My Score Entry</h2><div class="status">Once you are drafted, your login automatically gives you the score-entry permissions for your own player/team role.</div></div><span class="badge">PLAYER SCORING</span></div>
+  <div id="selfScoreContext" class="note" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb">Your player account is loading. Choose a hole after your profile is linked.</div>
+  <div class="admin-grid" style="margin-top:12px">
+    <label><small>Hole</small><select id="selfScoreHole"><option value="1">Hole 1</option><option value="2">Hole 2</option><option value="3">Hole 3</option><option value="4">Hole 4</option><option value="5">Hole 5</option><option value="6">Hole 6</option><option value="7">Hole 7</option><option value="8">Hole 8</option><option value="9">Hole 9</option><option value="10">Hole 10</option><option value="11">Hole 11</option><option value="12">Hole 12</option><option value="13">Hole 13</option><option value="14">Hole 14</option><option value="15">Hole 15</option><option value="16">Hole 16</option><option value="17">Hole 17</option><option value="18">Hole 18</option></select></label>
+    <label><small>Par</small><select id="selfScoreParSelect"><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option></select></label>
+    <label><small>Strokes</small><input id="selfScoreInput" type="number" min="1" max="20" step="1" inputmode="numeric" placeholder="Enter strokes"></label>
+  </div>
+  <div class="self-score-summary">
+    <div class="self-score-box"><small>Golf Score</small><strong id="selfScoreRelative">—</strong><div id="selfScoreTerm" class="term">Enter strokes</div></div>
+  </div>
+  <div class="note" style="margin-top:10px">Standard EllenG: any golfer on the team can update the Front 9 scramble team score. On the Back 9 shamble, each golfer can update only their own individual score. Split-Pair: each golfer can update only their own 2-man pair score.</div>
+  <div class="row" style="margin-top:12px"><button id="saveSelfScore" class="primary" type="button">Save My Score</button><button id="clearSelfScore" class="secondary" type="button">Clear This Score</button></div>
+  <div id="selfScoreMsg" class="status" style="margin-top:9px"></div>
+</div>
+
+
 <div class="card">
 <div class="row between"><div><h2 style="margin:0">Live Leaderboard</h2><div class="status">Cup points update automatically as scores are entered.</div></div><span id="pointScaleBadge" class="badge">6–5–4–3–2–1</span></div>
 <div id="leaderboard" class="leader" style="margin-top:14px"></div>
@@ -622,51 +670,6 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </section>
 
 <section id="handicapView" class="view hidden">
-<div class="card">
-  <div class="row between"><div><h2 style="margin:0">My Golf</h2><div class="status">Your account is linked to your player profile. No PIN or name selection is required.</div></div><span class="badge">PLAYER ACCOUNT</span></div>
-  <div id="selfPlayerIdentity" class="note" style="margin-top:12px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb">Loading your player profile…</div>
-  <select id="selfGolferSelect" class="hidden"><option value="">Player</option></select>
-  <div class="admin-grid" style="margin-top:14px">
-    <label><small>Handicap range</small><select id="selfBandSelect"><option value="A">A • 0–9</option><option value="B">B • 10–17</option><option value="C">C • 18–25</option><option value="D">D • 26+</option></select></label>
-    <label><small>Exact handicap (optional)</small><input id="selfHandicapInput" type="number" min="0" max="54" step="0.1" inputmode="decimal" autocomplete="off" placeholder="Enter exact handicap"></label>
-  </div>
-  <div class="note" style="margin-top:10px">Your login protects this profile. You can update only the golfer account linked to your username.</div>
-  <div class="row" style="margin-top:12px"><button id="saveSelfHandicap" class="primary" type="button">Save My Handicap</button></div>
-  <div id="selfHandicapMsg" class="status" style="margin-top:9px"></div>
-</div>
-
-  <details id="myProfilePhotoCard" class="profile-settings" style="margin-top:14px">
-    <summary><strong>Profile Settings</strong><span class="status">Change my photo</span></summary>
-    <div class="self-photo-wrap" style="margin-top:12px">
-      <div id="selfPhotoPreview" class="self-photo-preview">—</div>
-      <div>
-        <div id="selfPhotoPlayerName" style="font-weight:900;margin-bottom:8px">Loading player…</div>
-        <div class="self-photo-actions">
-          <input id="selfPhotoFile" class="self-photo-file" type="file" accept="image/*">
-          <label for="selfPhotoFile" class="self-photo-choose">Choose Photo</label>
-          <span id="selfPhotoFileName" class="self-photo-filename">No photo selected</span>
-          <button id="uploadSelfPhoto" class="primary" type="button">Upload My Photo</button>
-        </div>
-        <div id="selfPhotoMsg" class="status" style="margin-top:8px"></div>
-      </div>
-    </div>
-  </details>
-</div>
-<div class="card">
-  <div class="row between"><div><h2 style="margin:0">My Score Entry</h2><div class="status">Once you are drafted, your login automatically gives you the score-entry permissions for your own player/team role.</div></div><span class="badge">PLAYER SCORING</span></div>
-  <div id="selfScoreContext" class="note" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb">Your player account is loading. Choose a hole after your profile is linked.</div>
-  <div class="admin-grid" style="margin-top:12px">
-    <label><small>Hole</small><select id="selfScoreHole"><option value="1">Hole 1</option><option value="2">Hole 2</option><option value="3">Hole 3</option><option value="4">Hole 4</option><option value="5">Hole 5</option><option value="6">Hole 6</option><option value="7">Hole 7</option><option value="8">Hole 8</option><option value="9">Hole 9</option><option value="10">Hole 10</option><option value="11">Hole 11</option><option value="12">Hole 12</option><option value="13">Hole 13</option><option value="14">Hole 14</option><option value="15">Hole 15</option><option value="16">Hole 16</option><option value="17">Hole 17</option><option value="18">Hole 18</option></select></label>
-    <label><small>Par</small><select id="selfScoreParSelect"><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option></select></label>
-    <label><small>Strokes</small><input id="selfScoreInput" type="number" min="1" max="20" step="1" inputmode="numeric" placeholder="Enter strokes"></label>
-  </div>
-  <div class="self-score-summary">
-    <div class="self-score-box"><small>Golf Score</small><strong id="selfScoreRelative">—</strong><div id="selfScoreTerm" class="term">Enter strokes</div></div>
-  </div>
-  <div class="note" style="margin-top:10px">Standard EllenG: any golfer on the team can update the Front 9 scramble team score. On the Back 9 shamble, each golfer can update only their own individual score. Split-Pair: each golfer can update only their own 2-man pair score.</div>
-  <div class="row" style="margin-top:12px"><button id="saveSelfScore" class="primary" type="button">Save My Score</button><button id="clearSelfScore" class="secondary" type="button">Clear This Score</button></div>
-  <div id="selfScoreMsg" class="status" style="margin-top:9px"></div>
-</div>
 </section>
 
 <section id="trashView" class="view hidden">
@@ -843,7 +846,6 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
       <button class="more-menu-btn" type="button" data-more-view="course"><span>🗺️</span>Course</button>
       <button class="more-menu-btn" type="button" data-more-view="progress"><span>✅</span>Hole Progress</button>
       <button class="more-menu-btn" type="button" data-more-view="clubhouse"><span>🏛️</span>Clubhouse</button>
-      <button class="more-menu-btn" type="button" data-more-view="handicap"><span>🏌️</span>My Handicap / Score</button>
       <button class="more-menu-btn" type="button" data-more-view="trash"><span>💬</span>Trash Talk</button>
       <button id="moreScoringBtn" class="more-menu-btn hidden" type="button" data-more-view="scoring"><span>✏️</span>Enter Scores</button>
       <button id="moreAdminBtn" class="more-menu-btn admin-link hidden" type="button" data-more-view="admin"><span>⚙️</span>Commissioner</button>
@@ -2414,16 +2416,16 @@ function renderAll(){
  $("authBtn").classList.toggle("hidden",!!user);
  $("logoutBtn").classList.toggle("hidden",!user);
  if($("playersTab"))$("playersTab").classList.toggle("hidden",!user);
- if($("handicapTab"))$("handicapTab").classList.toggle("hidden",!user);
+ 
  if($("trashTab"))$("trashTab").classList.toggle("hidden",!user);
  $("scoringTab").classList.toggle("hidden",!(isCommissioner||captainTeam!=null));
  const mobilePlayers=document.querySelector('[data-mobile-view="players"]');if(mobilePlayers)mobilePlayers.classList.toggle("hidden",!user);
- const moreHandicap=document.querySelector('[data-more-view="handicap"]');if(moreHandicap)moreHandicap.classList.toggle("hidden",!user);
+ 
  const moreTrash=document.querySelector('[data-more-view="trash"]');if(moreTrash)moreTrash.classList.toggle("hidden",!user);
  if(!user){
    $("adminTab").classList.add("hidden");
    const active=document.querySelector('.tab.active')?.dataset.view;
-   if(["players","handicap","trash","scoring","admin"].includes(active||""))showView("home");
+   if(["players","trash","scoring","admin"].includes(active||""))showView("home");
  }
 
  // CORE APP: these must always render before optional experience features.
