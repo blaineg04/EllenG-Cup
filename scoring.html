@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.8.0">
+<meta name="elleng-app-version" content="1.8.1">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -272,6 +272,20 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .sync-status-chip.saving{background:#fff3c8;border-color:#e1bd46;color:#695000}
 .sync-status-chip.error{background:#fde9e7;border-color:#e6b5af;color:#8d2519}
 .sync-status-chip.saved{background:#e7f5ec;border-color:#b9ddc7;color:#116338}
+
+.player-photo-thumb{width:46px;height:46px;border-radius:50%;background:#edf1f3;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:900;overflow:hidden;flex:0 0 auto}
+.player-photo-thumb img{width:100%;height:100%;object-fit:cover}
+.player-row-public{grid-template-columns:46px minmax(0,1.6fr) .55fr .5fr minmax(0,1.2fr)}
+.self-login-profile{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:center}
+.self-login-photo{width:72px;height:72px;border-radius:18px;background:#edf1f3;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;overflow:hidden}
+.self-login-photo img{width:100%;height:100%;object-fit:cover}
+@media(max-width:640px){
+ .player-row-public{grid-template-columns:42px minmax(0,1fr) auto;gap:8px}
+ .player-photo-thumb{width:42px;height:42px}
+ .player-hcp-public,.player-band-public,.player-team-public{grid-column:2/4}
+ .self-login-profile{grid-template-columns:62px minmax(0,1fr)}
+ .self-login-photo{width:62px;height:62px;border-radius:15px}
+}
 </style>
 </head>
 <body>
@@ -1214,13 +1228,23 @@ function golferTeamIndex(golferIndex){
  const found=ts.findIndex(t=>(Array.isArray(t?.roster)?t.roster:[]).some(r=>Number(typeof r==="object"?r?.golferIndex:r)===Number(golferIndex)));
  return found>=0?found:null;
 }
+
+function playerInitials(name){
+ return String(name||"?").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase()||"?";
+}
+function publicPlayerAvatar(g,cls="player-photo-thumb"){
+ const name=String(g?.name||"Player");
+ const photo=String(g?.photo_url||g?.photo||"").trim();
+ const fallback=esc(playerInitials(name));
+ return `<div class="${cls}">${photo?`<img src="${esc(photo)}" alt="${esc(name)}" onerror="this.style.display='none';this.parentElement.textContent='${fallback}'">`:fallback}</div>`;
+}
 function renderPlayersDirectory(){
  const root=$("playerDirectory"); if(!root||!draftState)return;
  const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>({...(g||{}),index:i,name:(g?.name||"").trim()})).filter(g=>g.name);
  const mode=$("playerDirectoryMode")?.value||"team";
  const q=($("playerDirectorySearch")?.value||"").trim().toLowerCase();
  const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Available / Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`),band:playerBandLabel(g),hcpLabel:playerHandicapLabel(g)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q)||g.band.toLowerCase().includes(q)||g.hcpLabel.toLowerCase().includes(q));
- const rowHtml=g=>`<div class="player-row-public"><div class="player-name-public">${esc(g.name)}</div><div class="player-hcp-public"><span class="status">HCP</span><br><strong>${esc(g.hcpLabel)}</strong></div><div class="player-band-public"><span class="player-band-chip">${esc(g.band)}</span></div><div class="player-team-public">${esc(g.teamName)}</div></div>`;
+ const rowHtml=g=>`<div class="player-row-public">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}</div><div class="player-hcp-public"><span class="status">HCP</span><br><strong>${esc(g.hcpLabel)}</strong></div><div class="player-band-public"><span class="player-band-chip">${esc(g.band)}</span></div><div class="player-team-public">${esc(g.teamName)}</div></div>`;
  if(!rows.length){root.innerHTML='<div class="note">No matching players found.</div>';return}
  if(mode==="all"){root.innerHTML=`<div class="player-team-card"><div class="player-team-head"><h3>All Players</h3><div class="status">${rows.length} golfer${rows.length===1?"":"s"}</div></div>${rows.sort((a,b)=>a.name.localeCompare(b.name)).map(rowHtml).join("")}</div>`;return}
  if(mode==="band"){
@@ -1797,7 +1821,7 @@ function renderSelfHandicap(){
  const identity=$("selfPlayerIdentity"), bandSel=$("selfBandSelect"), hcpInput=$("selfHandicapInput"), saveBtn=$("saveSelfHandicap"), scoreBtn=$("saveSelfScore"), clearBtn=$("clearSelfScore");
  if(g){
    const ti=selfGolferTeamIndex(idx);const teamName=ti==null?"Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`);
-   if(identity)identity.innerHTML=`<strong>${esc(g.name)}</strong> • ${esc(teamName)}<br><span class="status">Signed in as ${esc(visibleLogin())}</span>`;
+   if(identity)identity.innerHTML=`<div class="self-login-profile">${publicPlayerAvatar(g,"self-login-photo")}<div><strong style="font-size:18px">${esc(g.name)}</strong><div class="status">${esc(teamName)}</div><div class="status">Signed in as ${esc(visibleLogin())}</div><div class="status">HCP ${esc(String(g.hcp??"—"))} • Band ${esc(String(g.band||"—"))}</div></div></div>`;
    const rawHcp=g.hcp==null?"":String(g.hcp).trim();
    if(!selfHandicapEditing) hcpInput.value=rawHcp;
    const effectiveHcp=selfHandicapEditing?selfHandicapDraftValue:rawHcp;
@@ -2028,7 +2052,7 @@ function renderPlayerProfileCards(){
    const teamPts=ti==null?0:Number(official?.[ti]?.pts||0);
    const initials=String(g.name||"?").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();
    const photo=String(g.photo_url||g.photo||"").trim();
-   const avatar=photo?`<img src="${esc(photo)}" alt="${esc(g.name||"Player")}">`:esc(initials||"?");
+   const avatar=photo?`<img src="${esc(photo)}" alt="${esc(g.name||"Player")}" onerror="this.style.display=\'none\';this.parentElement.textContent=\'${esc(initials||"?")}\'">`:esc(initials||"?");
    const gatorWins=Number(g.gator_wins||0);
    const careerWins=Number(g.career_wins||0);
    const bestFinish=g.best_finish?String(g.best_finish):"—";
