@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.7.0">
+<meta name="elleng-app-version" content="1.7.1">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -246,6 +246,13 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .player-photo-preview{display:flex;align-items:center;gap:9px;margin-top:7px;font-size:12px;color:var(--muted)}
 .player-photo-preview img{width:46px;height:46px;border-radius:10px;object-fit:cover;border:1px solid var(--line);background:#fff}
 @media(max-width:560px){.player-photo-tools{grid-template-columns:1fr}.player-photo-tools button{width:100%}}
+
+.self-photo-wrap{display:grid;grid-template-columns:82px 1fr;gap:14px;align-items:center;margin-top:12px}
+.self-photo-preview{width:82px;height:82px;border-radius:16px;border:1px solid var(--line);background:#eef2f4;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;overflow:hidden}
+.self-photo-preview img{width:100%;height:100%;object-fit:cover}
+.self-photo-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.self-photo-actions input[type="file"]{max-width:100%}
+@media(max-width:560px){.self-photo-wrap{grid-template-columns:68px 1fr}.self-photo-preview{width:68px;height:68px;border-radius:14px}}
 </style>
 </head>
 <body>
@@ -468,6 +475,23 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   <div class="note" style="margin-top:10px">Your login protects this profile. You can update only the golfer account linked to your username.</div>
   <div class="row" style="margin-top:12px"><button id="saveSelfHandicap" class="primary" type="button">Save My Handicap</button></div>
   <div id="selfHandicapMsg" class="status" style="margin-top:9px"></div>
+</div>
+<div class="card" id="myProfilePhotoCard">
+  <div class="row between">
+    <div><h2 style="margin:0">My Profile Photo</h2><div class="status">Choose a photo from your phone. You can update only your own player profile.</div></div>
+    <span class="badge">MY PROFILE</span>
+  </div>
+  <div class="self-photo-wrap">
+    <div id="selfPhotoPreview" class="self-photo-preview">—</div>
+    <div>
+      <div id="selfPhotoPlayerName" style="font-weight:900;margin-bottom:8px">Loading player…</div>
+      <div class="self-photo-actions">
+        <input id="selfPhotoFile" type="file" accept="image/*">
+        <button id="uploadSelfPhoto" class="primary" type="button">Upload My Photo</button>
+      </div>
+      <div id="selfPhotoMsg" class="status" style="margin-top:8px"></div>
+    </div>
+  </div>
 </div>
 <div class="card">
   <div class="row between"><div><h2 style="margin:0">My Score Entry</h2><div class="status">Once you are drafted, your login automatically gives you the score-entry permissions for your own player/team role.</div></div><span class="badge">PLAYER SCORING</span></div>
@@ -1492,6 +1516,60 @@ async function removeCaptainLogin(i){
   if(msg)msg.textContent="Login assignment removed. The user account itself was not deleted.";
  }catch(e){if(msg)msg.textContent=e?.message||"Unable to remove captain login."}
 }
+
+function renderSelfProfilePhoto(){
+ const preview=$("selfPhotoPreview"),nameEl=$("selfPhotoPlayerName"),btn=$("uploadSelfPhoto"),input=$("selfPhotoFile"),msg=$("selfPhotoMsg");
+ if(!preview||!nameEl)return;
+ const g=Number.isInteger(currentGolferIndex)?draftState?.golfers?.[currentGolferIndex]:null;
+ if(!user||!g){
+   preview.textContent="—";
+   nameEl.textContent="No linked player profile";
+   if(btn)btn.disabled=true;
+   if(input)input.disabled=true;
+   return;
+ }
+ if(btn)btn.disabled=false;
+ if(input)input.disabled=false;
+ nameEl.textContent=g.name||"My Player Profile";
+ const photo=String(g.photo_url||g.photo||"").trim();
+ if(photo){
+   preview.innerHTML=`<img src="${esc(photo)}" alt="${esc(g.name||"Player")}">`;
+ }else{
+   const initials=String(g.name||"?").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();
+   preview.textContent=initials||"?";
+ }
+ if(msg&&!msg.dataset.busy)msg.textContent=photo?"Current profile photo":"No profile photo yet — your initials are being used.";
+}
+async function uploadMyProfilePhoto(){
+ const input=$("selfPhotoFile"),btn=$("uploadSelfPhoto"),msg=$("selfPhotoMsg");
+ if(!user||!Number.isInteger(currentGolferIndex)){if(msg)msg.textContent="Your login is not linked to a player profile.";return}
+ const file=input?.files?.[0];
+ if(!file){if(msg)msg.textContent="Choose a photo first.";return}
+ if(!file.type||!file.type.startsWith("image/")){if(msg)msg.textContent="Please choose an image file.";return}
+ if(file.size>5*1024*1024){if(msg)msg.textContent="Photo must be 5 MB or smaller.";return}
+ if(btn)btn.disabled=true;if(msg){msg.dataset.busy="1";msg.textContent="Uploading your photo…"}
+ try{
+   const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+   const path=`players/${user.id}/${Date.now()}-profile.${ext}`;
+   const {error:uploadError}=await db.storage.from("player-photos").upload(path,file,{cacheControl:"3600",upsert:false,contentType:file.type});
+   if(uploadError)throw uploadError;
+   const {data:urlData}=db.storage.from("player-photos").getPublicUrl(path);
+   const photoUrl=String(urlData?.publicUrl||"");
+   if(!photoUrl)throw new Error("Photo uploaded, but the image URL could not be created.");
+   const {data,error}=await db.functions.invoke("player-profile",{body:{action:"update_photo",draft_id:DRAFT_ID,photo_url:photoUrl}});
+   if(error)throw error;if(data?.error)throw new Error(data.error);
+   if(draftState?.golfers?.[currentGolferIndex])draftState.golfers[currentGolferIndex].photo_url=photoUrl;
+   if(input)input.value="";
+   if(msg)msg.textContent="✓ Your profile photo has been updated.";
+   renderSelfProfilePhoto();
+   try{await syncLive()}catch(e){console.warn("Photo refresh skipped",e)}
+ }catch(e){
+   if(msg)msg.textContent=e?.message||"Unable to upload your photo.";
+ }finally{
+   if(btn)btn.disabled=false;
+   if(msg)delete msg.dataset.busy;
+ }
+}
 async function uploadPlayerPhotoFile(file,golferIndex,golferName){
  if(!file)throw new Error("Choose a photo first.");
  if(!file.type||!file.type.startsWith("image/"))throw new Error("Please choose an image file.");
@@ -1949,7 +2027,7 @@ function renderAll(){
    const active=document.querySelector('.tab.active')?.dataset.view;
    if(["players","handicap","trash","scoring","admin"].includes(active||""))showView("home");
  }
- renderHome();renderLeadChangeAlert();renderMomentumTracker();renderTournamentPulse();renderTournamentRecap();renderTournamentAwards();renderLeaderboard();renderProjectedStandings();renderDigitalScorecard();renderBroadcast();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderScoring();renderTrashTalk();renderAdmin();renderTournamentHealth();renderCommissionerControlRoom();
+ renderHome();renderLeadChangeAlert();renderMomentumTracker();renderTournamentPulse();renderTournamentRecap();renderTournamentAwards();renderLeaderboard();renderProjectedStandings();renderDigitalScorecard();renderBroadcast();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderSelfProfilePhoto();renderScoring();renderTrashTalk();renderAdmin();renderTournamentHealth();renderCommissionerControlRoom();
  try{renderHoleMatchup()}catch(e){console.warn("Hole Matchup render skipped",e)}
  try{renderDraftHistory()}catch(e){console.warn("Draft History render skipped",e)}
  try{renderPlayerProfileCards()}catch(e){console.warn("Player Profile Cards render skipped",e)}
@@ -2099,6 +2177,7 @@ if($("courseBrowseSelect"))$("courseBrowseSelect").addEventListener("change",()=
 });
 if($("courseBrowseRouteSelect"))$("courseBrowseRouteSelect").addEventListener("change",renderCourse);
 $("selfGolferSelect").addEventListener("change",renderSelfHandicap);
+if($("uploadSelfPhoto"))$("uploadSelfPhoto").addEventListener("click",uploadMyProfilePhoto);
 $("saveSelfHandicap").addEventListener("click",saveSelfHandicap);
 $("selfScoreHole").addEventListener("change",()=>{syncSelfScoreParToHole();renderSelfScoreContext();renderSelfGolfScore()});
 $("selfScoreParSelect").addEventListener("change",renderSelfGolfScore);
