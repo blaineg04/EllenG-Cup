@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.9.0">
+<meta name="elleng-app-version" content="2.0.0">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -306,6 +306,38 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .profile-settings summary::-webkit-details-marker{display:none}
 .profile-settings[open]{padding-bottom:12px}
 #playerProfileCardsSection .player-profile-card{max-width:760px;margin:0 auto}
+
+.experience-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.wow-card{position:relative;overflow:hidden}
+.wow-card:after{content:"";position:absolute;inset:auto -30px -45px auto;width:120px;height:120px;border-radius:50%;background:rgba(213,167,44,.08)}
+.wow-body{margin-top:12px;min-height:72px}
+.wow-main{font-size:20px;font-weight:950}
+.wow-sub{font-size:13px;color:var(--muted);margin-top:4px}
+.event-feed{display:grid;gap:8px;margin-top:12px}
+.event-item{display:grid;grid-template-columns:34px minmax(0,1fr);gap:9px;align-items:start;padding:10px;border:1px solid var(--line);border-radius:11px;background:#fbfcfd}
+.event-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#eef3f5}
+.event-item strong{display:block}.event-item small{color:var(--muted)}
+.pace-list{display:grid;gap:7px;margin-top:10px}
+.pace-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:8px 0;border-bottom:1px solid #edf1f3}
+.pace-row:last-child{border-bottom:0}
+.hole-battle{display:grid;grid-template-columns:repeat(18,minmax(52px,1fr));gap:6px;overflow-x:auto;padding-bottom:6px;margin-top:12px}
+.hole-battle-cell{min-width:52px;border:1px solid var(--line);border-radius:10px;padding:8px 5px;text-align:center;background:#fafcfd}
+.hole-battle-cell strong{display:block;font-size:12px}.hole-battle-cell span{font-size:10px;color:var(--muted)}
+.hole-card-feature{margin-top:12px;border-radius:14px;background:linear-gradient(135deg,#09283e,#0b5b4c);color:#fff;padding:16px}
+.hole-card-feature .hole-big{font-size:34px;font-weight:950}
+.hole-card-feature .hole-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.hole-card-feature .hole-pill{background:rgba(255,255,255,.13);padding:6px 8px;border-radius:999px;font-size:12px}
+.weather-panel{margin-top:12px}.weather-main{font-size:30px;font-weight:950}.weather-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.weather-stat{background:#f6f9fa;border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+.clubhouse-hero{background:linear-gradient(135deg,#071f34,#0a5d4e);color:#fff}
+.qr-wrap{display:flex;justify-content:center;align-items:center;min-height:220px;margin-top:10px}.qr-wrap img{width:200px;height:200px;border-radius:12px;border:10px solid white;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.trophy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:12px}
+.trophy-card{border:1px solid #e6d28e;background:linear-gradient(180deg,#fffdf4,#fff);border-radius:14px;padding:14px}
+.trophy-card .cup{font-size:28px}.trophy-card h3{margin:5px 0 3px}
+.reaction-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.reaction-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 8px;font-size:12px}
+.reaction-btn.mine{background:#fff2bf;border-color:#d5a72c}
+.reaction-count{font-weight:850;margin-left:3px}
+@media(max-width:760px){.experience-grid{grid-template-columns:1fr}.weather-grid{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
 <body>
@@ -352,6 +384,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <button id="playersTab" class="tab hidden" data-view="players">Players</button>
 <button class="tab" data-view="course">Course</button>
 <button class="tab" data-view="progress">Hole Progress</button>
+<button class="tab" data-view="clubhouse">Clubhouse</button>
 <button id="handicapTab" class="tab hidden" data-view="handicap">My Golf</button>
 <button id="trashTab" class="tab hidden" data-view="trash">Trash Talk</button>
 <button id="scoringTab" class="tab hidden" data-view="scoring">Enter Scores</button>
@@ -389,6 +422,33 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   <div id="homeSpecialText" class="note" style="margin-top:8px">The Gator Hole is secret until the Commissioner reveals it. Final Cargo adds 6 points to the selected winner.</div>
 </div>
 
+
+<div class="experience-grid">
+  <div class="card wow-card">
+    <div class="row between"><div><div class="premium-label">FEATURED MATCHUP</div><h2 style="margin:3px 0 0">Closest Battle</h2></div><span class="badge">LIVE</span></div>
+    <div id="featuredMatchup" class="wow-body"></div>
+  </div>
+  <div class="card wow-card">
+    <div class="row between"><div><div class="premium-label">PLAYER SPOTLIGHT</div><h2 style="margin:3px 0 0">Who's Making Noise</h2></div><span class="badge">🔥</span></div>
+    <div id="playerSpotlight" class="wow-body"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="row between"><div><div class="premium-label">WHAT CHANGED?</div><h2 style="margin:3px 0 0">Live Tournament Feed</h2><div class="status">Lead changes, winning holes and big moments as they happen.</div></div><span class="badge">LIVE</span></div>
+  <div id="whatChangedFeed" class="event-feed"></div>
+</div>
+
+<div class="experience-grid">
+  <div class="card">
+    <div class="row between"><div><div class="premium-label">ON THE CLOCK</div><h2 style="margin:3px 0 0">Next Big Moment</h2></div><span class="badge">PRESSURE</span></div>
+    <div id="onTheClock" class="wow-body"></div>
+  </div>
+  <div class="card">
+    <div class="row between"><div><div class="premium-label">PACE OF PLAY</div><h2 style="margin:3px 0 0">Group Tracker</h2></div><span class="badge">LIVE</span></div>
+    <div id="paceTracker" class="pace-list"></div>
+  </div>
+</div>
 <div id="leadChangeAlert" class="lead-alert"><div class="lead-title">LEAD CHANGE</div><div id="leadChangeMain" class="lead-main">—</div><div id="leadChangeSub" class="lead-sub"></div></div>
 <div class="card" id="momentumCard">
   <div class="row between"><div><div class="premium-label">WHO'S HOT</div><h2 style="margin:3px 0 0">Momentum Tracker</h2><div class="status">Best teams over the most recent completed holes.</div></div><span class="badge">LAST 3</span></div>
@@ -432,10 +492,15 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div id="liveHoleScores" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:14px"></div>
 </div>
 
+
+<div class="card">
+  <div class="row between"><div><div class="premium-label">HOLE-BY-HOLE BATTLE</div><h2 style="margin:3px 0 0">Who Won Each Hole?</h2><div class="status">A visual timeline of the teams owning each completed hole.</div></div><span class="badge">18 HOLES</span></div>
+  <div id="holeBattleTimeline" class="hole-battle"></div>
+</div>
 <div class="card">
   <div class="row between"><div><div class="premium-label">DIGITAL SCORECARD</div><h2 style="margin:3px 0 0">Team Scorecard</h2><div class="status">Every hole, par, golf score and Cup points in one view.</div></div><span class="badge">18 HOLES</span></div>
   <div style="margin-top:12px"><label><small>Choose team</small><select id="digitalScorecardTeam" style="max-width:360px"></select></label></div>
-  <div id="digitalScorecard" class="scorecard-wrap"></div>
+  <div id="digitalScorecard" class="scorecard-wrap"></div><div class="row" style="margin-top:12px"><button id="shareTeamScorecard" class="secondary" type="button">📤 Share Team Scorecard</button><span id="shareScorecardMsg" class="status"></span></div>
 </div>
 <div class="card note"><strong>Special scoring:</strong> The Gator Hole awards 12 points to the lowest team, split equally only if the low score is tied. Final Cargo adds 6 points to the winning team.</div>
 </section>
@@ -500,9 +565,51 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
     </div>
   </div>
 </div>
+
+<div class="experience-grid">
+  <div class="card">
+    <div class="row between"><div><div class="premium-label">HOLE CARD</div><h2 style="margin:3px 0 0">Know the Hole</h2></div><label><small>Hole</small><select id="courseHoleCardSelect"></select></label></div>
+    <div id="courseHoleCard" class="hole-card-feature"></div>
+  </div>
+  <div class="card">
+    <div class="row between"><div><div class="premium-label">COURSE CONDITIONS</div><h2 style="margin:3px 0 0">Weather & Wind</h2><div class="status">Uses the golfer's current location when requested.</div></div><span class="badge">LIVE</span></div>
+    <div id="weatherPanel" class="weather-panel"><div class="note">Tap below to load live conditions.</div></div>
+    <button id="loadWeatherBtn" class="secondary" type="button" style="margin-top:10px">🌤️ Load Weather</button>
+  </div>
+</div>
 <div class="card">
   <div class="row between"><div><h2 style="margin:0">Course Scorecard</h2><div class="status">Tee yardages, par and handicap information for the selected course.</div></div><span class="badge">COURSE LIBRARY</span></div>
   <div id="courseScorecard" class="course-table-wrap"></div>
+</div>
+</section>
+
+
+<section id="clubhouseView" class="view hidden">
+<div class="card clubhouse-hero">
+  <div class="home-kicker">ELLENG CUP • CLUBHOUSE</div>
+  <h2 style="margin:5px 0">Tournament Legacy & Extras</h2>
+  <div class="status" style="color:rgba(255,255,255,.88)">History, season standings, rivalries, check-in and bragging rights.</div>
+</div>
+
+<div class="experience-grid">
+  <div class="card">
+    <div class="row between"><div><div class="premium-label">CHECK-IN</div><h2 style="margin:3px 0 0">Tournament QR</h2><div class="status">Scan to open this EllenG Cup app.</div></div><span class="badge">QUICK ACCESS</span></div>
+    <div id="checkinQr" class="qr-wrap"></div>
+  </div>
+  <div class="card">
+    <div class="row between"><div><div class="premium-label">RIVALRY WATCH</div><h2 style="margin:3px 0 0">Closest Rivals</h2></div><span class="badge">HEAD-TO-HEAD</span></div>
+    <div id="rivalryWatch" class="wow-body"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="row between"><div><div class="premium-label">SEASON BOARD</div><h2 style="margin:3px 0 0">Season Standings</h2><div class="status">Current Cup performance plus completed archived tournaments as history builds.</div></div><span class="badge">2026</span></div>
+  <div id="seasonStandings" class="leader" style="margin-top:12px"></div>
+</div>
+
+<div class="card">
+  <div class="row between"><div><div class="premium-label">LEGACY</div><h2 style="margin:3px 0 0">EllenG Trophy Room</h2><div class="status">Past champions and completed tournaments live here.</div></div><span class="badge">HISTORY</span></div>
+  <div id="trophyRoom" class="trophy-grid"></div>
 </div>
 </section>
 
@@ -735,6 +842,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
     <div class="more-menu-grid">
       <button class="more-menu-btn" type="button" data-more-view="course"><span>🗺️</span>Course</button>
       <button class="more-menu-btn" type="button" data-more-view="progress"><span>✅</span>Hole Progress</button>
+      <button class="more-menu-btn" type="button" data-more-view="clubhouse"><span>🏛️</span>Clubhouse</button>
       <button class="more-menu-btn" type="button" data-more-view="handicap"><span>🏌️</span>My Handicap / Score</button>
       <button class="more-menu-btn" type="button" data-more-view="trash"><span>💬</span>Trash Talk</button>
       <button id="moreScoringBtn" class="more-menu-btn hidden" type="button" data-more-view="scoring"><span>✏️</span>Enter Scores</button>
@@ -800,6 +908,7 @@ connection("✓ App connected — live scoring ready.",true);
 const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
 let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, draftUpdatedAt=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", mustChangePassword=false, hole=1;
 let scoreSaveBusy=false, lastSuccessfulSyncAt=null;
+let tournamentArchives=[], trashReactions=[];
 let selectedPlayerProfileIndex=null;
 const $=id=>document.getElementById(id);
 function setSyncStatus(kind="saved",label="Synced"){
@@ -1061,6 +1170,128 @@ function renderMomentumTracker(){
 }
 function teamRoundStats(ti,start=1,end=18){let strokes=0,par=0,count=0,birdies=0,eagles=0;for(let h=start;h<=end;h++){const r=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null);if(!r)continue;const s=Number(r.score),p=parForHole(h),d=s-p;strokes+=s;par+=p;count++;if(d===-1)birdies++;if(d<=-2)eagles++}return{rel:strokes-par,count,birdies,eagles}}
 function bestByRel(start,end){let best=null;teams.forEach((_,ti)=>{const s=teamRoundStats(ti,start,end);if(!s.count)return;if(!best||s.rel<best.rel||(s.rel===best.rel&&s.count>best.count))best={ti,...s}});return best}
+
+function closestTeams(){
+ const arr=totals().sort((a,b)=>b.pts-a.pts||a.team-b.team);
+ if(arr.length<2)return null;
+ let best=null;
+ for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++){
+   const d=Math.abs(arr[i].pts-arr[j].pts);
+   if(!best||d<best.diff)best={a:arr[i],b:arr[j],diff:d};
+ }
+ return best;
+}
+function renderFeaturedMatchup(){
+ const el=$("featuredMatchup");if(!el)return;const c=closestTeams();
+ if(!c||(!c.a.pts&&!c.b.pts)){el.innerHTML='<div class="note">The closest team battle will appear when official Cup points begin posting.</div>';return}
+ el.innerHTML=`<div class="wow-main">${esc(teams[c.a.team]?.name||`Team ${c.a.team+1}`)} <span style="color:var(--gold)">vs</span> ${esc(teams[c.b.team]?.name||`Team ${c.b.team+1}`)}</div><div class="wow-sub">${fmt(c.a.pts)}–${fmt(c.b.pts)} Cup points • ${c.diff===0?"Dead even":`${fmt(c.diff)} point${c.diff===1?"":"s"} apart`}</div>`;
+}
+function renderPlayerSpotlight(){
+ const el=$("playerSpotlight");if(!el)return;
+ const golfers=draftState?.golfers||[];let best=null;
+ golfers.forEach((g,gi)=>{
+   const own=(playerScores||[]).filter(x=>Number(x.golfer_index)===gi&&x.score!=null);
+   let birds=0,eagles=0,rel=0;
+   own.forEach(x=>{const d=Number(x.score)-parForHole(Number(x.hole));rel+=d;if(d===-1)birds++;if(d<=-2)eagles++});
+   const heat=eagles*5+birds*2-own.length?Math.max(0,-rel):0;
+   if(own.length&&(!best||eagles*5+birds*2-rel>best.rank))best={g,gi,birds,eagles,rel,rank:eagles*5+birds*2-rel};
+ });
+ if(!best){el.innerHTML='<div class="note">Player Spotlight will activate as individual back-nine scores come in.</div>';return}
+ const label=best.eagles?`${best.eagles} eagle${best.eagles===1?"":"s"}+`:best.birds?`${best.birds} birdie${best.birds===1?"":"s"}`:`${best.rel>0?"+":""}${best.rel} vs par`;
+ el.innerHTML=`<div class="wow-main">${publicPlayerAvatar(best.g,"player-photo-thumb")} <span style="vertical-align:middle">${esc(best.g.name)}</span></div><div class="wow-sub">🔥 Hot Hand • ${esc(label)}</div>`;
+}
+function latestScoreEvents(){
+ return (scores||[]).filter(x=>x.score!=null).slice().sort((a,b)=>new Date(b.updated_at||0)-new Date(a.updated_at||0)).slice(0,8);
+}
+function renderWhatChangedFeed(){
+ const root=$("whatChangedFeed");if(!root)return;
+ const rows=latestScoreEvents();
+ if(!rows.length){root.innerHTML='<div class="note">Live tournament moments will appear here as scores are posted.</div>';return}
+ root.innerHTML=rows.map(r=>{
+   const h=Number(r.hole),ti=Number(r.team_index),p=parForHole(h),s=Number(r.score),d=s-p;
+   const golf=d<=-2?"Eagle+":d===-1?"Birdie":d===0?"Par":d===1?"Bogey":`+${d}`;
+   const pts=pointsForHole(h)[ti];
+   return `<div class="event-item"><div class="event-icon">${d<0?"🔥":pts?"🏆":"⛳"}</div><div><strong>${esc(teams[ti]?.name||`Team ${ti+1}`)} posted ${s} on Hole ${h}</strong><small>${golf}${pts?` • ${fmt(pts)} Cup pts`:" • Waiting for hole to complete"}</small></div></div>`;
+ }).join("");
+}
+function renderOnTheClock(){
+ const el=$("onTheClock");if(!el)return;const c=closestTeams();
+ if(!c){el.innerHTML='<div class="note">Pressure moments will appear after scoring begins.</div>';return}
+ let h=1;
+ for(let x=1;x<=18;x++){const count=scores.filter(r=>Number(r.hole)===x&&r.score!=null).length;if(count<teams.length){h=x;break}}
+ const leader=c.a.pts>=c.b.pts?c.a:c.b, chaser=leader===c.a?c.b:c.a;
+ el.innerHTML=`<div class="wow-main">${esc(teams[chaser.team]?.name||`Team ${chaser.team+1}`)} can close the gap</div><div class="wow-sub">${fmt(Math.abs(leader.pts-chaser.pts))} pts behind ${esc(teams[leader.team]?.name||`Team ${leader.team+1}`)} • Hole ${h} is the next pressure point.</div>`;
+}
+function renderPaceTracker(){
+ const root=$("paceTracker");if(!root)return;
+ const maxes=teams.map((_,ti)=>{const hs=scores.filter(x=>Number(x.team_index)===ti&&x.score!=null).map(x=>Number(x.hole));return hs.length?Math.max(...hs):0});
+ const lead=Math.max(0,...maxes);
+ root.innerHTML=teams.map((t,ti)=>{const h=maxes[ti],gap=lead-h;return `<div class="pace-row"><div><strong>${esc(t.name)}</strong><div class="status">${h?`Through Hole ${h}`:"Not started"}</div></div><span class="badge">${gap===0&&h?"ON PACE":gap<=1&&h?"CLOSE":h?`${gap} HOLE${gap===1?"":"S"} BACK`:"WAITING"}</span></div>`}).join("");
+}
+function renderHoleBattleTimeline(){
+ const root=$("holeBattleTimeline");if(!root)return;
+ root.innerHTML=Array.from({length:18},(_,i)=>i+1).map(h=>{
+   const rows=scores.filter(x=>Number(x.hole)===h&&x.score!=null);
+   if(rows.length<teams.length)return `<div class="hole-battle-cell"><strong>H${h}</strong><span>Pending</span></div>`;
+   const low=Math.min(...rows.map(x=>Number(x.score)));
+   const winners=rows.filter(x=>Number(x.score)===low).map(x=>teams[Number(x.team_index)]?.name||`T${Number(x.team_index)+1}`);
+   return `<div class="hole-battle-cell" style="border-color:#d5a72c;background:#fffaf0"><strong>H${h}</strong><span>${esc(winners.join(" / "))}</span></div>`;
+ }).join("");
+}
+function renderCourseHoleCard(){
+ const sel=$("courseHoleCardSelect"),root=$("courseHoleCard");if(!sel||!root)return;
+ if(!sel.options.length)sel.innerHTML=Array.from({length:18},(_,i)=>`<option value="${i+1}">Hole ${i+1}</option>`).join("");
+ const h=Number(sel.value||1),p=parForHole(h),yards=activeTeeLine(h,false);
+ const isG=!!(tournament?.gator_revealed&&Number(tournament?.gator_hole)===h);
+ const cargo=(h===18);
+ root.innerHTML=`<div class="hole-big">Hole ${h} • Par ${p}</div><div style="margin-top:5px;opacity:.88">${esc(yards||"Yardage unavailable")}</div><div class="hole-meta"><span class="hole-pill">${isG?"🐊 GATOR HOLE":"⛳ Standard Hole"}</span>${cargo?'<span class="hole-pill">🚢 FINAL CARGO FINISH</span>':""}<span class="hole-pill">HCP ${h}</span></div><div style="margin-top:12px;font-size:13px;opacity:.86">${p===3?"Accuracy hole — center of the green is your friend.":p===5?"Risk/reward — position the tee shot for the best scoring angle.":"Commit to the target and keep the ball in play."}</div>`;
+}
+async function loadWeather(){
+ const panel=$("weatherPanel"),btn=$("loadWeatherBtn");if(!panel)return;
+ if(!navigator.geolocation){panel.innerHTML='<div class="note">Location is not available in this browser.</div>';return}
+ btn.disabled=true;btn.textContent="Loading…";panel.innerHTML='<div class="note">Getting current location and conditions…</div>';
+ navigator.geolocation.getCurrentPosition(async pos=>{
+   try{
+    const lat=pos.coords.latitude,lon=pos.coords.longitude;
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lon)}&current=temperature_2m,apparent_temperature,wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph`;
+    const r=await fetch(url);if(!r.ok)throw new Error("Weather service unavailable");const j=await r.json(),c=j.current||{};
+    panel.innerHTML=`<div class="weather-main">${Math.round(c.temperature_2m)}°F</div><div class="status">Feels like ${Math.round(c.apparent_temperature)}°F</div><div class="weather-grid"><div class="weather-stat"><strong>${Math.round(c.wind_speed_10m||0)} mph</strong><div class="status">Wind</div></div><div class="weather-stat"><strong>${Math.round(c.wind_gusts_10m||0)} mph</strong><div class="status">Gusts</div></div><div class="weather-stat"><strong>${Math.round(c.wind_direction_10m||0)}°</strong><div class="status">Direction</div></div></div>`;
+   }catch(e){panel.innerHTML=`<div class="note">${esc(e?.message||"Unable to load weather.")}</div>`}
+   finally{btn.disabled=false;btn.textContent="🌤️ Refresh Weather"}
+ },err=>{panel.innerHTML='<div class="note">Location permission is required to load local weather.</div>';btn.disabled=false;btn.textContent="🌤️ Load Weather"});
+}
+function completedArchiveRows(){
+ return (tournamentArchives||[]).filter(a=>["complete","archived"].includes(String(a?.tournament?.status||"").toLowerCase()));
+}
+function archivedWinner(a){
+ const ds=a?.draft_state||{},t=a?.tournament||{};
+ const idx=Number(t.winner_team??t.final_winner_team??ds.winnerTeam);
+ if(Number.isInteger(idx)&&idx>=0)return {idx,name:ds?.teams?.[idx]?.name||`Team ${idx+1}`};
+ return null;
+}
+function renderTrophyRoom(){
+ const root=$("trophyRoom");if(!root)return;const rows=completedArchiveRows();
+ if(!rows.length){root.innerHTML='<div class="note">No completed archived EllenG Cup tournaments yet. The first champion will start the Trophy Room.</div>';return}
+ root.innerHTML=rows.map(a=>{const w=archivedWinner(a);return `<div class="trophy-card"><div class="cup">🏆</div><h3>${esc(a.name||"EllenG Cup")}</h3><div class="status">${esc(a.tournament_date||String(a.archived_at||"").slice(0,10))}</div><div style="margin-top:10px;font-weight:900">${w?esc(w.name):"Completed Tournament"}</div></div>`}).join("");
+}
+function renderSeasonStandings(){
+ const root=$("seasonStandings");if(!root)return;
+ const live=totals().sort((a,b)=>b.pts-a.pts||a.team-b.team);
+ root.innerHTML=live.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div class="status">Current tournament</div></div><div class="pts">${fmt(x.pts)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("")||'<div class="note">Season standings begin with the current tournament.</div>';
+}
+function renderRivalryWatch(){
+ const el=$("rivalryWatch");if(!el)return;const c=closestTeams();
+ if(!c){el.innerHTML='<div class="note">Rivalry Watch activates after Cup points begin posting.</div>';return}
+ el.innerHTML=`<div class="wow-main">${esc(teams[c.a.team]?.name||`Team ${c.a.team+1}`)} vs ${esc(teams[c.b.team]?.name||`Team ${c.b.team+1}`)}</div><div class="wow-sub">${c.diff===0?"Dead even":`${fmt(c.diff)} points apart`} • The closest rivalry on the board right now.</div>`;
+}
+function renderCheckinQr(){
+ const el=$("checkinQr");if(!el)return;
+ const url=location.href.split("#")[0],src=`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+ el.innerHTML=`<img src="${src}" alt="EllenG Cup check-in QR code"><div class="status" style="text-align:center;margin-top:8px">Scan to open the tournament app</div>`;
+}
+function renderClubhouse(){
+ renderCheckinQr();renderRivalryWatch();renderSeasonStandings();renderTrophyRoom();
+}
 function renderTournamentAwards(){
  const root=$("tournamentAwards");if(!root)return;const front=bestByRel(1,9),back=bestByRel(10,18);let birds=null,eagles=null;teams.forEach((_,ti)=>{const s=teamRoundStats(ti);if(!birds||s.birdies>birds.value)birds={ti,value:s.birdies};if(!eagles||s.eagles>eagles.value)eagles={ti,value:s.eagles}});
  const gatorHole=Number(tournament?.gator_hole)||0;let gatorWinner=null;if(tournament?.gator_revealed&&gatorHole&&teams.length&&teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===gatorHole&&x.score!=null))){const vals=teams.map((_,ti)=>Number(scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===gatorHole)?.score));const low=Math.min(...vals),w=vals.map((v,i)=>v===low?i:null).filter(x=>x!=null);gatorWinner={names:w.map(i=>teams[i]?.name||`Team ${i+1}`).join(' / '),score:low}}
@@ -1102,6 +1333,26 @@ function renderTournamentPulse(){
  if(lead&&lead.pts>0)html+=`<div class="pulse-item"><div class="pulse-icon">🏆</div><div class="pulse-main"><strong>${esc(teams[lead.team]?.name||`Team ${lead.team+1}`)} leads the EllenG Cup</strong><div class="status">Through ${lead.thru||0} hole${lead.thru===1?"":"s"}</div></div><div class="pulse-score">${lead.pts.toFixed(lead.pts%1?1:0)} Cup Points</div></div>`;
  html+=events.map(e=>{const special=tournament?.gator_revealed&&Number(tournament?.gator_hole)===e.h;const icon=special?"🐊":e.g.label==="Eagle"||e.g.label==="Albatross"?"🦅":e.g.label==="Birdie"?"🐦":e.g.label==="Par"?"⛳":"🏌️";return `<div class="pulse-item"><div class="pulse-icon">${icon}</div><div class="pulse-main"><strong><span class="mini-team-dot" style="background:${teamAccent(e.ti)}"></span>${esc(teams[e.ti]?.name||`Team ${e.ti+1}`)} • Hole ${e.h}</strong><div class="status">${special?"Gator Hole • ":""}${esc(e.g.label||"Score posted")} • ${e.score} stroke${e.score===1?"":"s"}</div></div><div class="pulse-score ${scoreClass(e.g.rel)}">${esc(e.g.rel)}</div></div>`}).join("");
  root.innerHTML=html||'<div class="note">Tournament Pulse will come alive as soon as scores start posting.</div>';
+}
+
+async function shareDigitalScorecard(){
+ const msg=$("shareScorecardMsg"),sel=$("digitalScorecardTeam");const ti=Number(sel?.value);
+ if(!Number.isInteger(ti)||ti<0||ti>=teams.length){if(msg)msg.textContent="Choose a team first.";return}
+ const canvas=document.createElement("canvas");canvas.width=1200;canvas.height=630;const ctx=canvas.getContext("2d");
+ ctx.fillStyle="#08253b";ctx.fillRect(0,0,1200,630);ctx.fillStyle="#d5a72c";ctx.font="bold 34px Georgia";ctx.fillText("ELLENG CUP",70,70);
+ ctx.fillStyle="#fff";ctx.font="bold 54px Arial";ctx.fillText(teams[ti]?.name||`Team ${ti+1}`,70,145);
+ const st=totals().find(x=>x.team===ti)||{pts:0,thru:0};ctx.font="28px Arial";ctx.fillText(`${fmt(st.pts)} Cup Points • ${st.thru?`Thru ${st.thru}`:"Not started"}`,70,195);
+ ctx.font="18px Arial";let x=70,y=250;
+ for(let h=1;h<=18;h++){const r=scores.find(s=>Number(s.team_index)===ti&&Number(s.hole)===h);ctx.fillStyle="rgba(255,255,255,.12)";ctx.fillRect(x,y,110,100);ctx.fillStyle="#fff";ctx.font="bold 16px Arial";ctx.fillText(`H${h} P${parForHole(h)}`,x+10,y+25);ctx.font="bold 30px Arial";ctx.fillText(r?String(r.score):"—",x+10,y+62);x+=120;if(h===9){x=70;y=370}}
+ ctx.fillStyle="rgba(255,255,255,.7)";ctx.font="20px Arial";ctx.fillText("PLAY BAD. LOOK GOOD. • ELLENG CUP",70,590);
+ const dataUrl=canvas.toDataURL("image/png");
+ try{
+  const blob=await (await fetch(dataUrl)).blob(),file=new File([blob],`${(teams[ti]?.name||"Team").replace(/\s+/g,"-")}-Scorecard.png`,{type:"image/png"});
+  if(navigator.canShare?.({files:[file]}))await navigator.share({files:[file],title:"EllenG Cup Team Scorecard"});
+  else if(navigator.share)await navigator.share({title:"EllenG Cup Team Scorecard",text:`${teams[ti]?.name||"Team"} — ${fmt(st.pts)} Cup points`});
+  else{const a=document.createElement("a");a.href=dataUrl;a.download=file.name;a.click()}
+  if(msg)msg.textContent="Scorecard ready to share.";
+ }catch(e){if(e?.name!=="AbortError"&&msg)msg.textContent="Unable to share scorecard."}
 }
 function renderDigitalScorecard(){
  const sel=$("digitalScorecardTeam"),root=$("digitalScorecard");if(!sel||!root)return;
@@ -1154,21 +1405,55 @@ function renderLeaderboard(){
 function trashTime(ts){
  try{return new Date(ts).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}catch(e){return ""}
 }
+
+async function loadTournamentArchives(){
+ if(!user){tournamentArchives=[];return}
+ const {data,error}=await db.from("elleng_tournament_archives").select("id,name,tournament_date,archived_at,tournament,draft_state,scores").eq("draft_id",DRAFT_ID).order("archived_at",{ascending:false}).limit(30);
+ if(error){console.warn("Archive load failed",error);tournamentArchives=[];return}
+ tournamentArchives=data||[];
+}
+async function loadTrashReactions(){
+ if(!user){trashReactions=[];return}
+ const ids=(trashMessages||[]).map(m=>Number(m.id)).filter(Number.isFinite);
+ if(!ids.length){trashReactions=[];return}
+ const {data,error}=await db.from("elleng_trash_reactions").select("message_id,user_id,reaction").in("message_id",ids);
+ if(error){console.warn("Reaction load failed",error);trashReactions=[];return}
+ trashReactions=data||[];
+}
 async function loadTrashTalk(){
  if(!user){trashMessages=[];return}
  const {data,error}=await db.from("elleng_trash_talk").select("id,tournament_id,display_name,team_index,message,created_at").eq("tournament_id",TOURNAMENT_ID).order("created_at",{ascending:true}).limit(100);
  if(error){console.error("Trash Talk load failed",error);return}
- trashMessages=data||[];
+ trashMessages=data||[];await loadTrashReactions();
 }
 function renderTrashTalk(){
  const feed=$("trashFeed"); if(!feed)return;
  if(!trashMessages.length){feed.innerHTML='<div class="note">No trash talk yet. Somebody has to start it.</div>';return}
+ const choices=["🔥","😂","🐊","🍺","👏"];
  feed.innerHTML=trashMessages.map(m=>{
   const ti=m.team_index==null?null:Number(m.team_index), team=ti==null?"":(teams[ti]?.name||`Team ${ti+1}`);
-  return `<div class="trash-msg"><div class="trash-meta"><div><span class="trash-who">${esc(m.display_name)}</span>${team?` <span class="trash-team">${esc(team)}</span>`:""} <span class="trash-time">${esc(trashTime(m.created_at))}</span></div>${isCommissioner?`<button type="button" class="trash-delete" data-trash-delete="${m.id}">Delete</button>`:""}</div><div class="trash-text">${esc(m.message)}</div></div>`;
+  const rr=choices.map(r=>{
+   const rows=trashReactions.filter(x=>Number(x.message_id)===Number(m.id)&&x.reaction===r);
+   const mine=!!user&&rows.some(x=>x.user_id===user.id);
+   return `<button type="button" class="reaction-btn ${mine?"mine":""}" data-reaction-msg="${m.id}" data-reaction="${r}">${r}${rows.length?` <span class="reaction-count">${rows.length}</span>`:""}</button>`;
+  }).join("");
+  return `<div class="trash-msg"><div class="trash-meta"><div><span class="trash-who">${esc(m.display_name)}</span>${team?` <span class="trash-team">${esc(team)}</span>`:""} <span class="trash-time">${esc(trashTime(m.created_at))}</span></div>${isCommissioner?`<button type="button" class="trash-delete" data-trash-delete="${m.id}">Delete</button>`:""}</div><div class="trash-text">${esc(m.message)}</div><div class="reaction-row">${rr}</div></div>`;
  }).join("");
  feed.querySelectorAll("[data-trash-delete]").forEach(b=>b.addEventListener("click",()=>deleteTrashTalk(Number(b.dataset.trashDelete))));
+ feed.querySelectorAll("[data-reaction-msg]").forEach(b=>b.addEventListener("click",()=>toggleTrashReaction(Number(b.dataset.reactionMsg),b.dataset.reaction)));
  feed.scrollTop=feed.scrollHeight;
+}
+async function toggleTrashReaction(messageId,reaction){
+ if(!user)return;
+ const existing=trashReactions.find(x=>Number(x.message_id)===messageId&&x.user_id===user.id&&x.reaction===reaction);
+ try{
+  if(existing){
+   const {error}=await db.from("elleng_trash_reactions").delete().eq("message_id",messageId).eq("user_id",user.id).eq("reaction",reaction);if(error)throw error;
+  }else{
+   const {error}=await db.from("elleng_trash_reactions").insert({message_id:messageId,user_id:user.id,reaction});if(error)throw error;
+  }
+  await loadTrashReactions();renderTrashTalk();
+ }catch(e){console.warn("Reaction failed",e)}
 }
 async function postTrashTalk(){
  const btn=$("trashPostBtn"), msgEl=$("trashMsg"), message=$("trashMessage").value.trim();
@@ -2076,7 +2361,7 @@ function renderPlayerProfileCards(){
    <div><div class="player-profile-head"><div><div class="player-profile-name">${esc(g.name||`Golfer ${gi+1}`)}</div><div class="player-profile-meta">${esc(String(g.band||"—"))} Player • HCP ${esc(String(g.hcp??"—"))}</div></div><div class="player-profile-team" style="border:1px solid ${accent}">${esc(teamName)}</div></div></div>
    <div class="player-stat-row"><div class="player-stat"><strong>${own.length}</strong><span>HOLES</span></div><div class="player-stat"><strong>${birdies}</strong><span>BIRDIES</span></div><div class="player-stat"><strong>${eagles}</strong><span>EAGLES+</span></div><div class="player-stat"><strong>${fmt(teamPts)}</strong><span>TEAM CUP PTS</span></div></div>
    <div class="player-profile-career"><div class="player-career-stat"><strong>${careerWins}</strong><span>CAREER WINS</span></div><div class="player-career-stat"><strong>${gatorWins}</strong><span>GATOR WINS</span></div><div class="player-career-stat"><strong>${esc(bestFinish)}</strong><span>BEST FINISH</span></div></div>
-   <div class="player-profile-note">Career totals will become automatic once tournament history is connected.</div>
+   <div class="player-profile-note">${(()=>{const n=completedArchiveRows().filter(a=>(a?.draft_state?.golfers||[]).some(x=>String(x?.name||"").toLowerCase()===String(g.name||"").toLowerCase())).length;return n?`${n} completed EllenG Cup appearance${n===1?"":"s"} in the archive.`:"Career history starts building as completed tournaments are archived."})()}</div>
  </div>`;
 }
 
@@ -2135,7 +2420,7 @@ function renderAll(){
    const active=document.querySelector('.tab.active')?.dataset.view;
    if(["players","handicap","trash","scoring","admin"].includes(active||""))showView("home");
  }
- renderHome();renderLeadChangeAlert();renderMomentumTracker();renderTournamentPulse();renderTournamentRecap();renderTournamentAwards();renderLeaderboard();renderDigitalScorecard();renderBroadcast();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderSelfProfilePhoto();renderScoring();renderTrashTalk();renderAdmin();renderTournamentHealth();renderCommissionerControlRoom();
+ renderHome();renderFeaturedMatchup();renderPlayerSpotlight();renderWhatChangedFeed();renderOnTheClock();renderPaceTracker();renderLeadChangeAlert();renderMomentumTracker();renderTournamentPulse();renderTournamentRecap();renderTournamentAwards();renderLeaderboard();renderHoleBattleTimeline();renderDigitalScorecard();renderClubhouse();renderBroadcast();renderTeams();renderPlayersDirectory();renderCourse();renderCourseHoleCard();renderProgress();renderSelfHandicap();renderSelfProfilePhoto();renderScoring();renderTrashTalk();renderAdmin();renderTournamentHealth();renderCommissionerControlRoom();
  try{renderHoleMatchup()}catch(e){console.warn("Hole Matchup render skipped",e)}
  try{renderDraftHistory()}catch(e){console.warn("Draft History render skipped",e)}
  try{renderPlayerProfileCards()}catch(e){console.warn("Player Profile Cards render skipped",e)}
@@ -2167,6 +2452,7 @@ async function syncLive(){
    });
   }
   await loadScores();setSyncStatus("saved","Synced");
+  if(user&&(!tournamentArchives.length))await loadTournamentArchives();
   const adminOpen=isCommissioner&&document.querySelector('.tab.active')?.dataset.view==='admin';
   if(!adminOpen)renderAll();
  }catch(e){console.error("Live sync failed:",e);setSyncStatus("error","Sync issue")}
@@ -2198,6 +2484,7 @@ async function enterApp(){
  try{
   await loadBase();
   await loadScores();setSyncStatus("saved","Synced");
+  await loadTournamentArchives();
   await loadTrashTalk();
   $("loginCard").classList.add("hidden");
   if(mustChangePassword&&!isCommissioner){
@@ -2297,6 +2584,11 @@ if($("courseBrowseSelect"))$("courseBrowseSelect").addEventListener("change",()=
  renderCourse();
 });
 if($("courseBrowseRouteSelect"))$("courseBrowseRouteSelect").addEventListener("change",renderCourse);
+
+if($("courseHoleCardSelect"))$("courseHoleCardSelect").addEventListener("change",renderCourseHoleCard);
+if($("loadWeatherBtn"))$("loadWeatherBtn").addEventListener("click",loadWeather);
+if($("shareTeamScorecard"))$("shareTeamScorecard").addEventListener("click",shareDigitalScorecard);
+
 $("selfGolferSelect").addEventListener("change",renderSelfHandicap);
 if($("selfPhotoFile"))$("selfPhotoFile").addEventListener("change",updateSelfPhotoFileName);
 if($("uploadSelfPhoto"))$("uploadSelfPhoto").addEventListener("click",uploadMyProfilePhoto);
