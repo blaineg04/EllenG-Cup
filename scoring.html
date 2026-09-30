@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.1.10">
+<meta name="elleng-app-version" content="1.1.11">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -232,7 +232,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div class="home-grid">
   <div class="home-tile"><div class="status">CURRENT LEADER</div><strong id="homeLeader" class="big">—</strong><div id="homeLeaderPts" class="status" style="margin-top:5px">No official points yet</div></div>
   <div class="home-tile"><div class="status">HOLES COMPLETE</div><strong id="homeHolesComplete" class="big">0 / 18</strong><div class="status" style="margin-top:5px">Updates automatically</div></div>
-  <div class="home-tile"><div class="status">TEAMS</div><strong id="homeTeamCount" class="big">6</strong><div id="homePlayerCount" class="status" style="margin-top:5px">Players loaded</div></div>
+  <div class="home-tile"><div class="status">TEAMS</div><strong id="homeTeamCount" class="big">—</strong><div id="homePlayerCount" class="status" style="margin-top:5px">Players loaded</div></div>
   <div class="home-tile"><div class="status">FORMAT</div><strong id="homeFormat" class="big" style="font-size:18px">EllenG</strong><div id="homeFormatSub" class="status" style="margin-top:5px">Front 9 / Back 9</div></div>
 </div>
 
@@ -1410,7 +1410,7 @@ function renderHome(){
  if($("homeLeaderPts"))$("homeLeaderPts").textContent=hasOfficialLeader?`${lead.pts.toFixed(lead.pts%1?1:0)} Cup pts • Thru ${lead.thru||0}`:"No official points yet";
  let complete=0;for(let h=1;h<=18;h++){const count=teams.filter((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null)).length;if(count===teams.length)complete++}
  if($("homeHolesComplete"))$("homeHolesComplete").textContent=`${complete} / 18`;
- if($("homeTeamCount"))$("homeTeamCount").textContent=String(teams.length);
+ if($("homeTeamCount"))$("homeTeamCount").textContent=draftState?.teamCountConfirmed===true?String(teams.length):"—";
  const playerCount=(draftState.golfers||[]).filter(g=>(g?.name||"").trim()).length;
  if($("homePlayerCount"))$("homePlayerCount").textContent=`${playerCount} player${playerCount===1?"":"s"}`;
  if($("homeFormat"))$("homeFormat").textContent=isSplitPair()?"Split-Pair Scramble":`${draftTeamSize()}-Man EllenG`;
@@ -1646,6 +1646,7 @@ $("saveAdmin").addEventListener("click",async()=>{
   const selectedPlayFormat=$("playFormatSelect")?.value||playFormat();
   const teamCountSelection=$("teamCountSelect")?.value||"";
   const newCount=teamCountSelection===""?activeTeamCount():Math.max(2,Math.min(9,Number(teamCountSelection)));
+  if(teamCountSelection!=="")draftState.teamCountConfirmed=true;
   if(selectedPlayFormat==="split_pair"&&(selectedTeamSize!==4||desiredGolfers!==newCount*4)){$("adminMsg").textContent="Split-Pair Scramble requires 4-man teams with exactly 4 golfers on every team. Set golfers to 4 × the number of teams.";return}
   const namedGolfers=(draftState.golfers||[]).filter(g=>(g?.name||"").trim()).length;
   if(desiredGolfers<namedGolfers){$("adminMsg").textContent=`You already have ${namedGolfers} named golfers. Remove golfers first before lowering the setup to ${desiredGolfers}.`;return}
