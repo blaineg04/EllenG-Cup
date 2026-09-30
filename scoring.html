@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.1.15">
+<meta name="elleng-app-version" content="1.2.0">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -172,6 +172,9 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .player-login-row{display:grid;grid-template-columns:minmax(190px,1fr) minmax(150px,.7fr) auto auto;gap:8px;align-items:end;padding:8px 0 14px;margin-bottom:4px;border-bottom:1px solid var(--line)}
 .player-login-row label{min-width:0}.player-login-row input{width:100%;min-width:0}.player-login-status{grid-column:1/-1;font-size:12px;color:var(--muted)}
 @media(max-width:650px){.player-login-row{grid-template-columns:1fr}.player-login-row button{width:100%}.player-login-status{grid-column:1}}
+
+/* Premium tournament experience */
+.pulse-list{display:grid;gap:8px}.pulse-item{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}.pulse-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#edf1f3;font-size:18px}.pulse-main strong{display:block}.pulse-main .status{margin-top:2px}.pulse-score{font-weight:900;color:var(--green);white-space:nowrap}.team-accent{border-top:5px solid var(--team-accent,#d5a72c)!important}.scorecard-wrap{overflow:auto}.digital-scorecard{width:100%;border-collapse:collapse;min-width:760px;margin-top:12px}.digital-scorecard th,.digital-scorecard td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:center}.digital-scorecard th:first-child,.digital-scorecard td:first-child{text-align:left;position:sticky;left:0;background:#fff}.digital-scorecard thead th{font-size:12px;color:var(--muted)}.score-good{color:#087c42;font-weight:900}.score-bad{color:#8b1e2d;font-weight:900}.score-even{font-weight:900;color:var(--navy)}.health-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px}.health-tile{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}.health-tile strong{display:block;font-size:22px;color:var(--navy)}.health-tile span{font-size:12px;color:var(--muted);font-weight:800}.health-alerts{display:grid;gap:7px;margin-top:12px}.health-alert{padding:9px 11px;border-radius:10px;background:#f8fafb;border-left:4px solid var(--gold);font-size:13px}.recap-podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:12px}.recap-place{border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;background:#fff}.recap-place strong{display:block;font-size:18px;color:var(--navy)}.recap-place .medal{font-size:28px;display:block;margin-bottom:4px}.recap-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:10px}.recap-stat{padding:10px;border-radius:10px;background:#f8fafb;text-align:center}.recap-stat strong{display:block;font-size:18px}.mini-team-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:1px}.premium-label{letter-spacing:.08em;font-weight:900;font-size:11px;color:#8b6a00}@media(max-width:650px){.pulse-item{grid-template-columns:36px minmax(0,1fr);}.pulse-score{grid-column:2}.health-grid{grid-template-columns:1fr 1fr}.recap-podium{grid-template-columns:1fr}.recap-stats{grid-template-columns:1fr 1fr}.digital-scorecard{min-width:670px}}
 </style>
 </head>
 <body>
@@ -250,6 +253,15 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   <div class="row between"><strong>🐊 Gator Hole & Final Cargo</strong><span class="badge">SPECIAL SCORING</span></div>
   <div id="homeSpecialText" class="note" style="margin-top:8px">The Gator Hole is secret until the Commissioner reveals it. Final Cargo adds 6 points to the selected winner.</div>
 </div>
+
+<div class="card" id="tournamentPulseCard">
+  <div class="row between"><div><div class="premium-label">LIVE EXPERIENCE</div><h2 style="margin:3px 0 0">Tournament Pulse</h2><div class="status">The latest scoring moments across the EllenG Cup.</div></div><span class="badge" style="background:#edf7f1;color:#087c42">LIVE</span></div>
+  <div id="tournamentPulse" class="pulse-list" style="margin-top:12px"></div>
+</div>
+<div class="card" id="postRoundRecapCard">
+  <div class="row between"><div><div class="premium-label">TOURNAMENT STORY</div><h2 style="margin:3px 0 0">Tournament Recap</h2><div id="recapSub" class="status">Builds automatically as scores are posted.</div></div><span id="recapStatusBadge" class="badge">IN PROGRESS</span></div>
+  <div id="postRoundRecap"></div>
+</div>
 </section>
 
 <section id="leaderboardView" class="view hidden">
@@ -260,6 +272,12 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div class="card">
 <div class="row between"><div><h2 style="margin:0">Live Hole Scores</h2><div class="status">Scores appear as soon as each team enters them. Official Cup points post when all teams finish the hole.</div></div><span class="badge">LIVE</span></div>
 <div id="liveHoleScores" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:14px"></div>
+</div>
+
+<div class="card">
+  <div class="row between"><div><div class="premium-label">DIGITAL SCORECARD</div><h2 style="margin:3px 0 0">Team Scorecard</h2><div class="status">Every hole, par, golf score and Cup points in one view.</div></div><span class="badge">18 HOLES</span></div>
+  <div style="margin-top:12px"><label><small>Choose team</small><select id="digitalScorecardTeam" style="max-width:360px"></select></label></div>
+  <div id="digitalScorecard" class="scorecard-wrap"></div>
 </div>
 <div class="card note"><strong>Special scoring:</strong> The Gator Hole awards 12 points to the lowest team, split equally only if the low score is tied. Final Cargo adds 6 points to the winning team.</div>
 </section>
@@ -408,6 +426,18 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   <div class="admin-jumps">
     <a href="#adminTournament">Tournament & Course</a><a href="#adminTeams">Teams & Captains</a><a href="#adminAddGolfer">Add Golfer</a><a href="#adminPlayers">Players</a><a href="#adminTrashTalk">Trash Talk</a><a href="#adminNewTournament">New Tournament</a>
   </div>
+</div>
+
+
+<div class="card admin-card" id="adminTournamentHealth">
+  <div class="row between"><div><div class="premium-label">TOURNAMENT HEALTH</div><h2 style="margin:3px 0 0">Commissioner Command Center</h2><div class="status">See what still needs attention before or during play.</div></div><span id="healthOverallBadge" class="badge">CHECKING</span></div>
+  <div class="health-grid">
+    <div class="health-tile"><strong id="healthMissingScores">0</strong><span>MISSING TEAM SCORES</span></div>
+    <div class="health-tile"><strong id="healthIncompleteHoles">18</strong><span>INCOMPLETE HOLES</span></div>
+    <div class="health-tile"><strong id="healthUnassignedPlayers">0</strong><span>UNASSIGNED PLAYERS</span></div>
+    <div class="health-tile"><strong id="healthMissingCaptains">0</strong><span>CAPTAINS MISSING</span></div>
+  </div>
+  <div id="healthAlerts" class="health-alerts"></div>
 </div>
 
 <div id="adminTournament" class="card admin-card">
@@ -729,6 +759,43 @@ function renderLiveHoleScores(){
   return `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff"><div class="row between"><strong>Hole ${h} • Par ${par}${gator?' 🐊':''}</strong><span class="badge" style="${official?'background:#2f7d4a;color:#fff':count>0?'background:#d4af37;color:#10263d':''}">${official?'OFFICIAL':count+'/'+teams.length+' ENTERED'}</span></div><div style="margin-top:8px">${rows}</div><div class="status" style="margin-top:7px">${official?'Cup points posted.':'Scores are live; Cup points pending remaining teams.'}</div></div>`
  }).join('');
 }
+
+function teamAccent(i){const colors=["#d5a72c","#087c42","#315b9b","#8b1e2d","#7a4ea3","#d36b2c","#2b7a78","#6d5b4b","#5c6f7b"];return colors[Math.abs(Number(i)||0)%colors.length]}
+function scoreClass(rel){if(!rel||rel==="—")return "";if(rel==="0")return "score-even";return rel.startsWith("−")?"score-good":"score-bad"}
+function renderTournamentPulse(){
+ const root=$("tournamentPulse");if(!root)return;
+ const events=(scores||[]).filter(x=>x&&x.score!=null).map(x=>{const ti=Number(x.team_index),h=Number(x.hole),par=parForHole(h),g=relativeGolf(Number(x.score),par);return{ti,h,score:Number(x.score),g,ts:x.updated_at||x.created_at||""}}).sort((a,b)=>String(b.ts).localeCompare(String(a.ts))||b.h-a.h).slice(0,8);
+ const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team),lead=ranking[0];
+ let html="";
+ if(lead&&lead.pts>0)html+=`<div class="pulse-item"><div class="pulse-icon">🏆</div><div class="pulse-main"><strong>${esc(teams[lead.team]?.name||`Team ${lead.team+1}`)} leads the EllenG Cup</strong><div class="status">Through ${lead.thru||0} hole${lead.thru===1?"":"s"}</div></div><div class="pulse-score">${lead.pts.toFixed(lead.pts%1?1:0)} pts</div></div>`;
+ html+=events.map(e=>{const special=tournament?.gator_revealed&&Number(tournament?.gator_hole)===e.h;const icon=special?"🐊":e.g.label==="Eagle"||e.g.label==="Albatross"?"🦅":e.g.label==="Birdie"?"🐦":e.g.label==="Par"?"⛳":"🏌️";return `<div class="pulse-item"><div class="pulse-icon">${icon}</div><div class="pulse-main"><strong><span class="mini-team-dot" style="background:${teamAccent(e.ti)}"></span>${esc(teams[e.ti]?.name||`Team ${e.ti+1}`)} • Hole ${e.h}</strong><div class="status">${special?"Gator Hole • ":""}${esc(e.g.label||"Score posted")} • ${e.score} stroke${e.score===1?"":"s"}</div></div><div class="pulse-score ${scoreClass(e.g.rel)}">${esc(e.g.rel)}</div></div>`}).join("");
+ root.innerHTML=html||'<div class="note">Tournament Pulse will come alive as soon as scores start posting.</div>';
+}
+function renderDigitalScorecard(){
+ const sel=$("digitalScorecardTeam"),root=$("digitalScorecard");if(!sel||!root)return;
+ const prior=sel.value;sel.innerHTML=teams.map((t,i)=>`<option value="${i}">${esc(t.name)}</option>`).join("");if(prior!==""&&teams[Number(prior)])sel.value=prior;
+ const ti=Number(sel.value||0),team=teams[ti];if(!team){root.innerHTML='<div class="note">No team available.</div>';return}
+ let strokeTotal=0,parTotal=0,entered=0,pointTotal=0;
+ const rows=Array.from({length:18},(_,j)=>{const h=j+1,par=parForHole(h),r=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null),score=r?Number(r.score):null,g=relativeGolf(score,par),pts=pointsForHole(h)[ti];if(score!=null){strokeTotal+=score;parTotal+=par;entered++}if(pts!=null)pointTotal+=pts;return `<tr><td><strong>${h}${tournament?.gator_revealed&&Number(tournament?.gator_hole)===h?' 🐊':''}</strong></td><td>${par}</td><td>${score==null?'—':score}</td><td class="${scoreClass(g.rel)}">${score==null?'—':esc(g.rel)}</td><td>${score==null?'':esc(g.label)}</td><td>${pts==null?'Pending':pts.toFixed(pts%1?1:0)}</td></tr>`}).join("");
+ const totalRel=entered?strokeTotal-parTotal:null,gTotal=totalRel==null?'—':totalRel===0?'E':totalRel>0?`+${totalRel}`:`−${Math.abs(totalRel)}`;
+ root.innerHTML=`<table class="digital-scorecard"><thead><tr><th>Hole</th><th>Par</th><th>Strokes</th><th>To Par</th><th>Result</th><th>Cup Pts</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td><strong>Total</strong></td><td>${entered?parTotal:'—'}</td><td><strong>${entered?strokeTotal:'—'}</strong></td><td class="${totalRel==null?'':totalRel<0?'score-good':totalRel>0?'score-bad':'score-even'}"><strong>${gTotal}</strong></td><td>${entered}/18 entered</td><td><strong>${pointTotal.toFixed(pointTotal%1?1:0)}</strong></td></tr></tfoot></table>`;
+}
+function renderTournamentRecap(){
+ const root=$("postRoundRecap");if(!root)return;const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team),played=(scores||[]).filter(x=>x.score!=null).length,status=String(tournament?.status||"setup").toUpperCase(),done=status==="COMPLETE";
+ if($("recapStatusBadge")){$("recapStatusBadge").textContent=done?"FINAL":"IN PROGRESS";$("recapStatusBadge").style.background=done?"#087c42":"#edf1f3";$("recapStatusBadge").style.color=done?"#fff":"#10202c"}if($("recapSub"))$("recapSub").textContent=done?"The final story of this EllenG Cup.":"Builds automatically as scores are posted.";
+ if(!played){root.innerHTML='<div class="note" style="margin-top:12px">The recap will populate once tournament scoring begins.</div>';return}
+ const medals=["🥇","🥈","🥉"],pod=ranking.slice(0,3).map((x,i)=>`<div class="recap-place team-accent" style="--team-accent:${teamAccent(x.team)}"><span class="medal">${medals[i]}</span><strong>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div class="status" style="margin-top:4px">${x.pts.toFixed(x.pts%1?1:0)} Cup pts • Thru ${x.thru||0}</div></div>`).join("");
+ let best=null;teams.forEach((_,ti)=>{let s=0,p=0,c=0;for(let h=1;h<=18;h++){const r=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null);if(r){s+=Number(r.score);p+=parForHole(h);c++}}if(c&&(!best||((s-p)<best.rel)||((s-p)===best.rel&&c>best.c)))best={ti,rel:s-p,c}});
+ const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Hole ${Number(tournament.gator_hole)}`:"Secret / not revealed";const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""?(teams[Number(tournament.final_cargo_team)]?.name||`Team ${Number(tournament.final_cargo_team)+1}`):"Not awarded";const bestText=best?`${teams[best.ti]?.name||`Team ${best.ti+1}`} ${best.rel===0?'E':best.rel>0?'+'+best.rel:'−'+Math.abs(best.rel)} (${best.c} holes)`:"—";
+ root.innerHTML=`<div class="recap-podium">${pod}</div><div class="recap-stats"><div class="recap-stat"><span class="status">BEST TO PAR</span><strong>${esc(bestText)}</strong></div><div class="recap-stat"><span class="status">GATOR HOLE</span><strong>${esc(gator)}</strong></div><div class="recap-stat"><span class="status">FINAL CARGO</span><strong>${esc(cargo)}</strong></div></div>`;
+}
+function renderTournamentHealth(){
+ if(!isCommissioner||!draftState)return;let incomplete=0,missing=0;const next=[];for(let h=1;h<=18;h++){const miss=teams.map((t,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null)?null:t.name).filter(Boolean);if(miss.length){incomplete++;missing+=miss.length;if(next.length<4)next.push(`Hole ${h}: ${miss.join(', ')}`)}}
+ const golfers=Array.isArray(draftState.golfers)?draftState.golfers:[],unassigned=golfers.filter((g,i)=>(g?.name||'').trim()&&golferTeamIndex(i)==null).length,missingCaptains=teams.filter(t=>!String(t?.captain||'').trim()).length;
+ if($("healthMissingScores"))$("healthMissingScores").textContent=String(missing);if($("healthIncompleteHoles"))$("healthIncompleteHoles").textContent=String(incomplete);if($("healthUnassignedPlayers"))$("healthUnassignedPlayers").textContent=String(unassigned);if($("healthMissingCaptains"))$("healthMissingCaptains").textContent=String(missingCaptains);
+ const issues=missing+unassigned+missingCaptains;if($("healthOverallBadge")){$("healthOverallBadge").textContent=issues===0?"READY":"ATTENTION";$("healthOverallBadge").style.background=issues===0?"#087c42":"#fff3c8";$("healthOverallBadge").style.color=issues===0?"#fff":"#6c5200"}
+ const alerts=[];if(unassigned)alerts.push(`${unassigned} golfer${unassigned===1?' is':'s are'} still unassigned.`);if(missingCaptains)alerts.push(`${missingCaptains} team${missingCaptains===1?' is':'s are'} missing a captain.`);next.forEach(x=>alerts.push(`Missing scores — ${x}`));if(!alerts.length)alerts.push('Everything looks ready. No tournament setup or scoring gaps detected.');if($("healthAlerts"))$("healthAlerts").innerHTML=alerts.map(a=>`<div class="health-alert">${esc(a)}</div>`).join('');
+}
 function renderLeaderboard(){
  if($("pointScaleBadge"))$("pointScaleBadge").textContent=pointScaleText();
  if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • 18 HOLES`;
@@ -803,7 +870,7 @@ function renderTeams(){
   const roster=Array.isArray(t.roster)?t.roster:[];
   const captain=t.captain||"Captain not assigned";
   const players=roster.length?roster.map((n,j)=>`<div style="padding:7px 0;border-top:1px solid var(--line)"><strong>${j+1}.</strong> ${esc(n)}</div>`).join(""):`<div class="note" style="padding-top:9px;border-top:1px solid var(--line)">No golfers assigned yet.</div>`;
-  return `<div style="border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff"><div class="row between"><strong style="font-size:17px">${esc(t.name)}</strong><span class="badge">Team ${i+1}</span></div><div class="status" style="margin:5px 0 10px">Captain: ${esc(captain)}</div>${players}</div>`;
+  return `<div class="team-accent" style="--team-accent:${teamAccent(i)};border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff"><div class="row between"><strong style="font-size:17px"><span class="mini-team-dot" style="background:${teamAccent(i)}"></span>${esc(t.name)}</strong><span class="badge">Team ${i+1}</span></div><div class="status" style="margin:5px 0 10px">Captain: ${esc(captain)}</div>${players}</div>`;
  }).join("");
 }
 
@@ -1487,7 +1554,7 @@ function renderAll(){
    const active=document.querySelector('.tab.active')?.dataset.view;
    if(["players","handicap","trash","scoring","admin"].includes(active||""))showView("home");
  }
- renderHome();renderLeaderboard();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderScoring();renderTrashTalk();renderAdmin();
+ renderHome();renderTournamentPulse();renderTournamentRecap();renderLeaderboard();renderDigitalScorecard();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderScoring();renderTrashTalk();renderAdmin();renderTournamentHealth();
 }
 let syncBusy=false;
 async function syncLive(){
@@ -1606,6 +1673,8 @@ $("changeAccountPasswordBtn").addEventListener("click",async()=>{
  finally{btn.disabled=false}
 });
 $("authBtn").addEventListener("click",()=>{$("loginCard").classList.remove("hidden");$("loginMsg").textContent="";$("loginCard").scrollIntoView({behavior:"smooth",block:"start"})});
+
+if($("digitalScorecardTeam"))$("digitalScorecardTeam").addEventListener("change",renderDigitalScorecard);
 $("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;$("passwordChangeCard").classList.add("hidden");showView("home");await enterViewer()});
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
 document.querySelectorAll("[data-home-go]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.homeGo)));
