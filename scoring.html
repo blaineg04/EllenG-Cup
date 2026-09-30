@@ -121,6 +121,19 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 /* App version / update notice */
 .app-version-bar{max-width:1100px;margin:10px auto 0;padding:0 16px;display:flex;justify-content:flex-end}.app-version-chip{font-size:11px;font-weight:800;color:rgba(255,255,255,.78);letter-spacing:.03em}.update-banner{position:sticky;top:0;z-index:1200;background:#fff3c8;border-bottom:1px solid #e1bd46;padding:10px 14px;box-shadow:0 4px 12px rgba(8,37,59,.12)}.update-banner .update-inner{max-width:1100px;margin:auto;display:flex;gap:10px;align-items:center;justify-content:space-between}.update-banner strong{color:#5d4700}.update-banner button{background:#08253b;color:white;padding:9px 12px}.update-banner.hidden{display:none!important}@media(max-width:560px){.app-version-bar{padding:0 10px}.update-banner .update-inner{align-items:flex-start;flex-direction:column}.update-banner button{width:100%}}
 
+/* Mobile More menu */
+.more-sheet-backdrop{display:none;position:fixed;inset:0;background:rgba(8,37,59,.42);z-index:1200;padding:12px;align-items:flex-end;justify-content:center}
+.more-sheet-backdrop.open{display:flex}
+.more-sheet{width:min(100%,560px);background:#fff;border-radius:18px 18px 12px 12px;padding:14px;box-shadow:0 -12px 40px rgba(8,37,59,.25);max-height:78vh;overflow:auto}
+.more-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.more-sheet-head h3{margin:0;font-size:22px}
+.more-sheet-close{background:#edf1f3;color:var(--ink);padding:8px 11px}
+.more-menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.more-menu-btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:14px 10px;border-radius:12px;text-align:left;font-weight:850;min-height:62px}
+.more-menu-btn span{display:block;font-size:21px;margin-bottom:4px}
+.more-menu-btn.admin-link{background:#fff8df;border-color:#e2bd54}
+@media(max-width:420px){.more-menu-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -128,7 +141,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <img src="gator.png" alt="EllenG Cup gator logo">
 <div><h1>EllenG Cup</h1><p id="tournamentSubtitle">LIVE TOURNAMENT SCORING • 6 TEAMS • 18 HOLES</p></div>
 </div></header>
-<div class="app-version-bar"><span id="appVersionChip" class="app-version-chip">EllenG Live v1.0.0</span></div>
+<div class="app-version-bar"><span id="appVersionChip" class="app-version-chip">EllenG Live v1.0.1</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -436,8 +449,22 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   <button class="mobile-nav-btn" type="button" data-mobile-view="leaderboard"><span class="nav-icon">🏆</span>Scores</button>
   <button class="mobile-nav-btn" type="button" data-mobile-view="teams"><span class="nav-icon">👥</span>Teams</button>
   <button class="mobile-nav-btn" type="button" data-mobile-view="players"><span class="nav-icon">⛳</span>Players</button>
-  <button class="mobile-nav-btn" type="button" data-mobile-view="course"><span class="nav-icon">•••</span>More</button>
+  <button id="mobileMoreBtn" class="mobile-nav-btn" type="button"><span class="nav-icon">•••</span>More</button>
 </nav>
+
+<div id="moreMenuBackdrop" class="more-sheet-backdrop" aria-hidden="true">
+  <div class="more-sheet" role="dialog" aria-modal="true" aria-label="More options">
+    <div class="more-sheet-head"><h3>More</h3><button id="moreMenuClose" class="more-sheet-close" type="button">Close</button></div>
+    <div class="more-menu-grid">
+      <button class="more-menu-btn" type="button" data-more-view="course"><span>🗺️</span>Course</button>
+      <button class="more-menu-btn" type="button" data-more-view="progress"><span>✅</span>Hole Progress</button>
+      <button class="more-menu-btn" type="button" data-more-view="handicap"><span>🏌️</span>My Handicap / Score</button>
+      <button class="more-menu-btn" type="button" data-more-view="trash"><span>💬</span>Trash Talk</button>
+      <button id="moreScoringBtn" class="more-menu-btn hidden" type="button" data-more-view="scoring"><span>✏️</span>Enter Scores</button>
+      <button id="moreAdminBtn" class="more-menu-btn admin-link hidden" type="button" data-more-view="admin"><span>⚙️</span>Commissioner</button>
+    </div>
+  </div>
+</div>
 
 </main>
 
@@ -1371,6 +1398,17 @@ $("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=n
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
 document.querySelectorAll("[data-home-go]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.homeGo)));
 document.querySelectorAll("[data-mobile-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.mobileView)));
+const moreBackdrop=$("moreMenuBackdrop"), moreBtn=$("mobileMoreBtn");
+function closeMoreMenu(){if(moreBackdrop){moreBackdrop.classList.remove("open");moreBackdrop.setAttribute("aria-hidden","true")}}
+function openMoreMenu(){
+ if($("moreAdminBtn"))$("moreAdminBtn").classList.toggle("hidden",!isCommissioner);
+ if($("moreScoringBtn"))$("moreScoringBtn").classList.toggle("hidden",!(isCommissioner||captainTeam));
+ if(moreBackdrop){moreBackdrop.classList.add("open");moreBackdrop.setAttribute("aria-hidden","false")}
+}
+if(moreBtn)moreBtn.addEventListener("click",openMoreMenu);
+if($("moreMenuClose"))$("moreMenuClose").addEventListener("click",closeMoreMenu);
+if(moreBackdrop)moreBackdrop.addEventListener("click",e=>{if(e.target===moreBackdrop)closeMoreMenu()});
+document.querySelectorAll("[data-more-view]").forEach(b=>b.addEventListener("click",()=>{closeMoreMenu();showView(b.dataset.moreView)}));
 if($("playerDirectoryMode"))$("playerDirectoryMode").addEventListener("change",renderPlayersDirectory);
 if($("playerDirectorySearch"))$("playerDirectorySearch").addEventListener("input",renderPlayersDirectory);
 if($("courseBrowseSelect"))$("courseBrowseSelect").addEventListener("change",()=>{
