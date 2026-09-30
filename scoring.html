@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.0.2">
+<meta name="elleng-app-version" content="2.0.3">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -340,6 +340,18 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 @media(max-width:760px){.experience-grid{grid-template-columns:1fr}.weather-grid{grid-template-columns:repeat(3,1fr)}}
 
 .section-break{margin:20px 4px 8px;padding-top:4px}
+
+#saveSelfScore:disabled,#clearSelfScore:disabled{
+  opacity:.52!important;
+  cursor:not-allowed!important;
+  filter:grayscale(.2);
+  box-shadow:none!important;
+}
+#selfScoreHole:disabled,#selfScoreParSelect:disabled,#selfScoreInput:disabled{
+  background:#f1f4f5!important;
+  color:#7d8991!important;
+  cursor:not-allowed!important;
+}
 </style>
 </head>
 <body>
@@ -2130,11 +2142,29 @@ function renderSelfHandicap(){
    bandSel.value=autoBand||(["A","B","C","D"].includes(String(g.band||"").toUpperCase())?String(g.band).toUpperCase():"A");
    bandSel.disabled=!!autoBand;
    bandSel.title=autoBand?`Auto-set from handicap ${effectiveHcp}`:"Choose a band only when exact handicap is blank.";
-   if(saveBtn)saveBtn.disabled=false;if(scoreBtn)scoreBtn.disabled=ti==null;if(clearBtn)clearBtn.disabled=false;
+   if(saveBtn)saveBtn.disabled=false;
+   if(scoreBtn){
+     scoreBtn.disabled=ti==null;
+     scoreBtn.textContent=ti==null?"Available After Draft":"Save My Score";
+   }
+   if(clearBtn){
+     clearBtn.disabled=ti==null;
+     clearBtn.textContent=ti==null?"Available After Draft":"Clear This Score";
+   }
+   const holeCtl=$("selfScoreHole"),parCtl=$("selfScoreParSelect"),scoreCtl=$("selfScoreInput");
+   if(holeCtl)holeCtl.disabled=ti==null;
+   if(parCtl)parCtl.disabled=ti==null;
+   if(scoreCtl)scoreCtl.disabled=ti==null;
  }else{
    if(identity)identity.innerHTML=`<strong>No player profile linked</strong><br><span class="status">Ask the Commissioner to create or link a player login for ${esc(visibleLogin()||"this account")}.</span>`;
    hcpInput.value="";bandSel.value="A";bandSel.disabled=true;
-   if(saveBtn)saveBtn.disabled=true;if(scoreBtn)scoreBtn.disabled=true;if(clearBtn)clearBtn.disabled=false;
+   if(saveBtn)saveBtn.disabled=true;
+   if(scoreBtn){scoreBtn.disabled=true;scoreBtn.textContent="Login Required";}
+   if(clearBtn){clearBtn.disabled=true;clearBtn.textContent="Login Required";}
+   const holeCtl=$("selfScoreHole"),parCtl=$("selfScoreParSelect"),scoreCtl=$("selfScoreInput");
+   if(holeCtl)holeCtl.disabled=true;
+   if(parCtl)parCtl.disabled=true;
+   if(scoreCtl)scoreCtl.disabled=true;
  }
  renderSelfScoreContext();
 }
