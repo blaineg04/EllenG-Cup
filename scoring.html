@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.0.9">
+<meta name="elleng-app-version" content="1.0.10">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -314,8 +314,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
     <label><small>Your name</small><select id="selfGolferSelect"><option value="">Select your name</option></select></label>
     <label><small>Handicap range</small><select id="selfBandSelect"><option value="A">A • 0–9</option><option value="B">B • 10–17</option><option value="C">C • 18–25</option><option value="D">D • 26+</option></select></label>
     <label><small>Exact handicap (optional)</small><input id="selfHandicapInput" type="number" min="0" max="54" step="0.1" inputmode="decimal" autocomplete="off" placeholder="Enter exact handicap"></label>
-    <label><small>Your personal PIN</small><input id="selfPinInput" type="password" inputmode="numeric" maxlength="6" placeholder="4–6 digits"></label>
-    <label><small>One-time activation code</small><input id="selfActivationInput" type="text" inputmode="numeric" maxlength="6" placeholder="First time only"></label>
+    <label><small>Your personal PIN</small><input id="selfPinInput" type="password" inputmode="numeric" maxlength="6" placeholder="Create or enter 4–6 digits"></label>
   </div>
   <div class="note" style="margin-top:10px"><strong>First time:</strong> select your name and create your own 4–6 digit personal PIN. That PIN stays with your player profile and is used for future handicap changes and score entry. If you forget it, the Commissioner can reset your PIN so you can create a new one.</div>
   <div class="row" style="margin-top:12px"><button id="saveSelfHandicap" class="primary" type="button">Save My Handicap</button></div>
@@ -444,7 +443,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </div>
 
 <div id="adminPlayers" class="card admin-card">
-  <div class="admin-section-title"><span class="step">4</span><div><h2>Players & Assignments</h2><div class="section-sub">Edit names, bands and handicaps, move golfers between teams, issue secure activation codes, or remove them.</div></div></div>
+  <div class="admin-section-title"><span class="step">4</span><div><h2>Players & Assignments</h2><div class="section-sub">Edit names, bands and handicaps, move golfers between teams, reset player PINs, or remove them.</div></div></div>
   <div style="margin:14px 0;padding:12px;border:2px solid var(--gold);border-radius:12px;background:#fffaf0">
     <div class="row between"><strong style="font-size:16px">Player Band Guide</strong><span class="badge" style="background:#fff3c8;color:#6c5200">HANDICAP RANGES</span></div>
     <div class="band-guide" style="margin-bottom:0"><div class="band-guide-item"><strong>A</strong><span>0–9 HCP</span></div><div class="band-guide-item"><strong>B</strong><span>10–17 HCP</span></div><div class="band-guide-item"><strong>C</strong><span>18–25 HCP</span></div><div class="band-guide-item"><strong>D</strong><span>26+ HCP</span></div></div>
@@ -1225,18 +1224,17 @@ async function saveSelfScore(clear=false){
  finally{btn.disabled=false}
 }
 async function resetGolferPin(i){
- if(!isCommissioner)return;
- const g=draftState?.golfers?.[i]; if(!g?.name)return;
- if(!confirm(`Issue a new one-time activation code for ${g.name}? This will invalidate any existing personal PIN immediately.`))return;
- try{
-   const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"issue_activation",draft_id:DRAFT_ID,golfer_index:i}});
-   if(error)throw error;if(data?.error)throw new Error(data.error);
-   const code=data.activation_code;
-   $("playerEditMsg").innerHTML=`<strong>${esc(g.name)} activation code: ${esc(code)}</strong> — give this 6-digit code only to ${esc(g.name)}. It works once; then they create their own personal PIN.`;
-   alert(`${g.name} activation code: ${code}\n\nGive this code only to ${g.name}. It works once.`);
- }catch(e){$("playerEditMsg").textContent=e?.message||"Unable to issue activation code."}
-}
-function renderAdmin(){
+  if(!isCommissioner)return;
+  const g=draftState?.golfers?.[i]; if(!g?.name)return;
+  if(!confirm(`Reset ${g.name}'s personal PIN? Their current PIN will stop working and they can create a new PIN in My Handicap.`))return;
+  try{
+    const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"reset_pin",draft_id:DRAFT_ID,golfer_index:i}});
+    if(error)throw error;if(data?.error)throw new Error(data.error);
+    $("playerEditMsg").textContent=`${g.name}'s PIN was reset. They can now create a new 4–6 digit PIN in My Handicap.`;
+    alert(`${g.name}'s PIN was reset. They can now create a new PIN in My Handicap.`);
+  }catch(e){$("playerEditMsg").textContent=e?.message||"Unable to reset PIN."}
+ }
+ function renderAdmin(){
  if(!isCommissioner){$("adminTab").classList.add("hidden");return;}
  $("adminTab").classList.remove("hidden"); ensureDraftShape();
  if($("courseSelect"))$("courseSelect").value=activeCourseId(); if($("courseRouteSelect")){const c=activeCourse();$("courseRouteSelect").innerHTML=Object.entries(c.routes).map(([id,r])=>`<option value="${id}">${r.label}</option>`).join("");$("courseRouteSelect").value=activeCourseRouteId();}
@@ -1256,8 +1254,20 @@ function renderAdmin(){
  if($("newTournamentName")&&!$("newTournamentName").dataset.touched){$("newTournamentName").value=tournament?.name||draftState?.tournamentName||"EllenG Cup";$("newTournamentName").dataset.touched="1"}
  renderTeamEditor(); renderPlayerEditor();
 }
-async function saveDraftState(messageEl){
+async function refreshLiveHandicapsBeforeStateSave(){
+ const {data,error}=await db.from("elleng_drafts").select("state").eq("id",DRAFT_ID).single();
+ if(error)throw error;
+ const liveGolfers=Array.isArray(data?.state?.golfers)?data.state.golfers:[];
+ if(!Array.isArray(draftState?.golfers))return;
+ draftState.golfers=draftState.golfers.map((g,i)=>{
+  const live=liveGolfers[i];
+  if(!live||String(live?.name||"").trim()!==String(g?.name||"").trim())return g;
+  return {...g,hcp:live.hcp??g.hcp,band:live.band??g.band};
+ });
+}
+async function saveDraftState(messageEl,allowHandicapChanges=false){
  ensureDraftShape(); rebuildTeamRosters();
+ if(!allowHandicapChanges)await refreshLiveHandicapsBeforeStateSave();
  const {data,error}=await db.from("elleng_drafts").update({state:draftState,updated_at:new Date().toISOString()}).eq("id",DRAFT_ID).select("state").single();
  if(error){if(messageEl)messageEl.textContent=error.message;throw error}
  draftState=structuredClone(data.state||draftState);
@@ -1594,7 +1604,7 @@ $("addGolferBtn").addEventListener("click",async()=>{
    $("addGolferMsg").textContent=`Golfer added. Setup is now ${draftGolferCount()} golfers and ${activeTeamCount()} teams.${splitNote}`;
  }catch(e){$("addGolferMsg").textContent=e?.message||"Unable to add golfer."}
 });
-$("savePlayers").addEventListener("click",async()=>{if(!isCommissioner)return;ensureDraftShape();$("playerEditMsg").textContent="Saving…";draftState.golfers.forEach((g,i)=>{const n=document.querySelector(`[data-player-name="${i}"]`),b=document.querySelector(`[data-player-band="${i}"]`),h=document.querySelector(`[data-player-hcp="${i}"]`),t=document.querySelector(`[data-player-team="${i}"]`);if(n)g.name=n.value.trim();if(h)g.hcp=h.value.trim();const autoBand=h&&h.value.trim()!==""?bandFromHandicapValue(h.value):null;if(b)g.band=autoBand||b.value;if(b&&autoBand)b.value=autoBand;if(t)g.team=t.value===""?null:Number(t.value)});try{await saveDraftState($("playerEditMsg"))}catch(e){}});
+$("savePlayers").addEventListener("click",async()=>{if(!isCommissioner)return;ensureDraftShape();$("playerEditMsg").textContent="Saving…";draftState.golfers.forEach((g,i)=>{const n=document.querySelector(`[data-player-name="${i}"]`),b=document.querySelector(`[data-player-band="${i}"]`),h=document.querySelector(`[data-player-hcp="${i}"]`),t=document.querySelector(`[data-player-team="${i}"]`);if(n)g.name=n.value.trim();if(h)g.hcp=h.value.trim();const autoBand=h&&h.value.trim()!==""?bandFromHandicapValue(h.value):null;if(b)g.band=autoBand||b.value;if(b&&autoBand)b.value=autoBand;if(t)g.team=t.value===""?null:Number(t.value)});try{await saveDraftState($("playerEditMsg"),true)}catch(e){}});
 $("trashPostBtn").addEventListener("click",postTrashTalk);
 $("trashMessage").addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter")postTrashTalk()});
 document.querySelectorAll("[data-trash-emoji]").forEach(b=>b.addEventListener("click",()=>{const ta=$("trashMessage");ta.value=(ta.value+(ta.value?" ":"")+b.dataset.trashEmoji).slice(0,280);ta.focus()}));
