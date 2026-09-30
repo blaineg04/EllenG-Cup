@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.0.11">
+<meta name="elleng-app-version" content="1.0.12">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -1199,7 +1199,9 @@ async function saveSelfHandicap(){
    const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"update_handicap",draft_id:DRAFT_ID,golfer_index:idx,band,handicap,pin}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
    $("selfPinInput").value="";
-   await loadBase();renderAll();
+   await loadBase();
+   selfHandicapEditing=false;selfHandicapDraftValue="";
+   renderAll();
    msg.textContent=`Saved. ${data.golfer_name}: ${data.band} (${data.band==="A"?"0–9":data.band==="B"?"10–17":data.band==="C"?"18–25":"26+"})${data.handicap!==""?` • Handicap ${data.handicap}`:""}.`;
  }catch(e){msg.textContent=e?.message||"Unable to update handicap."}
  finally{btn.disabled=false;btn.textContent="Save My Handicap"}
@@ -1504,6 +1506,14 @@ function syncPlayerBandField(input){
 }
 window.ellengSyncPlayerBand=syncPlayerBandField;
 $("selfHandicapInput").addEventListener("input",()=>{const raw=$("selfHandicapInput").value.trim(),band=bandFromHandicapValue(raw);if(band){$("selfBandSelect").value=band;$("selfBandSelect").disabled=true}else{$("selfBandSelect").disabled=false}});
+// Keep a player's in-progress handicap edit from being overwritten by the 5-second live refresh.
+const selfHcpEl=$("selfHandicapInput");
+if(selfHcpEl){
+ selfHcpEl.addEventListener("focus",()=>{selfHandicapEditing=true;selfHandicapDraftValue=selfHcpEl.value});
+ selfHcpEl.addEventListener("input",e=>{selfHandicapEditing=true;selfHandicapDraftValue=e.target.value});
+}
+const selfGolferEl=$("selfGolferSelect");
+if(selfGolferEl)selfGolferEl.addEventListener("change",()=>{selfHandicapEditing=false;selfHandicapDraftValue=""});
 $("newGolferHcp")?.addEventListener("input",()=>{const raw=$("newGolferHcp").value.trim(),band=bandFromHandicapValue(raw),sel=$("newGolferBand");if(!sel)return;if(band){sel.value=band;sel.disabled=true}else sel.disabled=false});
 $("playerEditor")?.addEventListener("input",e=>{const input=e.target.closest?.("[data-player-hcp]");if(input)syncPlayerBandField(input)});
 $("gatorSide").addEventListener("change",populateGatorHoles);
@@ -1629,13 +1639,6 @@ $("resetScoringOnly").addEventListener("click",clearScoresOnly);
 (async()=>{try{const {data:{session},error}=await db.auth.getSession();if(error)throw error;if(session){user=session.user;await enterApp()}else{await enterViewer()}}catch(e){console.error("Session restore error:",e);user=null;await enterViewer()}})();
 })();
 
-const selfHcpEl=$("selfHandicapInput");
-if(selfHcpEl){
- selfHcpEl.addEventListener("focus",()=>{selfHandicapEditing=true;selfHandicapDraftValue=selfHcpEl.value});
- selfHcpEl.addEventListener("input",(e)=>{selfHandicapEditing=true;selfHandicapDraftValue=e.target.value});
-}
-const selfGolferEl=$("selfGolferSelect");
-if(selfGolferEl)selfGolferEl.addEventListener("change",()=>{selfHandicapEditing=false;selfHandicapDraftValue=""});
 
 </script>
 </body>
