@@ -459,7 +459,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 
 <div id="adminPlayers" class="card admin-card">
   <div class="admin-section-title"><span class="step">4</span><div><h2>Players & Assignments</h2><div class="section-sub">Edit players and teams. Player logins are created automatically using first initial + last name.</div></div></div>
-  <div class="note" style="margin:12px 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb"><strong>Automatic player accounts:</strong> Username = first initial + last name. Duplicate usernames get 2, 3, etc. The temporary password is <strong>golf01</strong>. On first sign-in, each player must choose a new password.</div>
+  <div class="note" style="margin:12px 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb"><strong>Automatic player accounts:</strong> Username = first initial + last name. Duplicate usernames get 2, 3, etc. The temporary password is <strong>golf01</strong>. On first sign-in, each player must choose a new password.<div class="row" style="margin-top:10px"><button id="createMissingLogins" class="secondary" type="button">Create Missing Player Logins</button></div><div id="createMissingLoginsMsg" class="status" style="margin-top:7px"></div></div>
   <div style="margin:14px 0;padding:12px;border:2px solid var(--gold);border-radius:12px;background:#fffaf0">
     <div class="row between"><strong style="font-size:16px">Player Band Guide</strong><span class="badge" style="background:#fff3c8;color:#6c5200">HANDICAP RANGES</span></div>
     <div class="band-guide" style="margin-bottom:0"><div class="band-guide-item"><strong>A</strong><span>0–9 HCP</span></div><div class="band-guide-item"><strong>B</strong><span>10–17 HCP</span></div><div class="band-guide-item"><strong>C</strong><span>18–25 HCP</span></div><div class="band-guide-item"><strong>D</strong><span>26+ HCP</span></div></div>
@@ -571,22 +571,27 @@ const TEMP_PLAYER_PASSWORD="golf01";
 const cleanUsername=v=>String(v||"").trim().toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
 function baseUsernameForName(name){const parts=String(name||"").trim().split(/\s+/).filter(Boolean);if(!parts.length)return "player";if(parts.length===1)return cleanUsername(parts[0])||"player";return cleanUsername((parts[0][0]||"")+parts[parts.length-1])||"player"}
 function nextUniqueUsername(name,used){const base=baseUsernameForName(name);let u=base,n=2;while(used.has(u))u=`${base}${n++}`;used.add(u);return u}
-async function ensureAutomaticPlayerAccounts(){
- if(!isCommissioner)return;
+async function ensureAutomaticPlayerAccounts(statusEl=null){
+ if(!isCommissioner)return {created:0,failed:[]};
  const golfers=Array.isArray(draftState?.golfers)?draftState.golfers:[];
  const byIndex=new Map((playerAccounts||[]).map(a=>[Number(a.golfer_index),a]));
  const used=new Set((playerAccounts||[]).map(a=>cleanUsername(a.username)).filter(Boolean));
- let created=0;
+ let created=0;const failed=[];
  for(let i=0;i<golfers.length;i++){
    const g=golfers[i];if(!String(g?.name||"").trim()||byIndex.get(i)?.user_id)continue;
    const username=nextUniqueUsername(g.name,used);
-   const {data,error}=await db.functions.invoke("player-admin",{body:{action:"create_or_update",draft_id:DRAFT_ID,golfer_index:i,username,password:TEMP_PLAYER_PASSWORD}});
-   if(error)throw error;if(data?.error)throw new Error(data.error);created++;
+   try{
+     if(statusEl)statusEl.textContent=`Creating ${username}…`;
+     const {data,error}=await db.functions.invoke("player-admin",{body:{action:"create_or_update",draft_id:DRAFT_ID,golfer_index:i,username,password:TEMP_PLAYER_PASSWORD}});
+     if(error)throw error;if(data?.error)throw new Error(data.error);created++;
+   }catch(e){failed.push({name:String(g.name||`Player ${i+1}`),message:e?.message||"Unable to create login"});}
  }
- if(created){
-   const {data:listData,error:listError}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});
-   if(listError)throw listError;if(listData?.error)throw new Error(listData.error);playerAccounts=listData?.accounts||[];
+ const {data:listData,error:listError}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});
+ if(!listError&&!listData?.error)playerAccounts=listData?.accounts||[];
+ if(statusEl){
+   statusEl.textContent=failed.length?`${created} login${created===1?"":"s"} created. ${failed.length} failed: ${failed.map(x=>x.name).join(", ")}.`:`${created} missing login${created===1?"":"s"} created. All current golfers now have accounts.`;
  }
+ return {created,failed};
 }
 
 const DEFAULT_PARS=[4,4,3,4,5,4,3,4,5,4,4,3,5,4,4,3,5,4];
@@ -1725,10 +1730,23 @@ $("addGolferBtn").addEventListener("click",async()=>{
    await saveDraftState($("addGolferMsg"));
    $("newGolferName").value="";$("newGolferHcp").value="";$("newGolferTeam").value="";$("newGolferBand").disabled=false;
    const splitNote=isSplitPair()&&draftGolferCount()%4!==0?` Split-Pair mode will be ready after ${4-(draftGolferCount()%4)} more golfer${4-(draftGolferCount()%4)===1?"":"s"} are added.`:"";
-   $("addGolferMsg").textContent=`Golfer added. Setup is now ${draftGolferCount()} golfers and ${activeTeamCount()} teams.${splitNote}`;
+   $("addGolferMsg").textContent=`Golfer added. Creating player login…`;
+   const autoResult=await ensureAutomaticPlayerAccounts($("addGolferMsg"));
+   renderPlayerEditor();
+   if(!autoResult.failed.length)$("addGolferMsg").textContent=`Golfer added with automatic login. Setup is now ${draftGolferCount()} golfers and ${activeTeamCount()} teams.${splitNote}`;
  }catch(e){$("addGolferMsg").textContent=e?.message||"Unable to add golfer."}
 });
 $("savePlayers").addEventListener("click",async()=>{if(!isCommissioner)return;ensureDraftShape();$("playerEditMsg").textContent="Saving…";draftState.golfers.forEach((g,i)=>{const n=document.querySelector(`[data-player-name="${i}"]`),b=document.querySelector(`[data-player-band="${i}"]`),h=document.querySelector(`[data-player-hcp="${i}"]`),t=document.querySelector(`[data-player-team="${i}"]`);if(n)g.name=n.value.trim();if(h)g.hcp=h.value.trim();const autoBand=h&&h.value.trim()!==""?bandFromHandicapValue(h.value):null;if(b)g.band=autoBand||b.value;if(b&&autoBand)b.value=autoBand;if(t)g.team=t.value===""?null:Number(t.value)});try{await saveDraftState($("playerEditMsg"),true)}catch(e){}});
+
+const createMissingLoginsBtn=$("createMissingLogins");
+if(createMissingLoginsBtn)createMissingLoginsBtn.addEventListener("click",async()=>{
+ if(!isCommissioner)return;
+ const msg=$("createMissingLoginsMsg");
+ createMissingLoginsBtn.disabled=true;
+ try{await ensureAutomaticPlayerAccounts(msg);renderPlayerEditor();}
+ catch(e){if(msg)msg.textContent=e?.message||"Unable to create missing logins."}
+ finally{createMissingLoginsBtn.disabled=false}
+});
 $("trashPostBtn").addEventListener("click",postTrashTalk);
 $("trashMessage").addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter")postTrashTalk()});
 document.querySelectorAll("[data-trash-emoji]").forEach(b=>b.addEventListener("click",()=>{const ta=$("trashMessage");ta.value=(ta.value+(ta.value?" ":"")+b.dataset.trashEmoji).slice(0,280);ta.focus()}));
