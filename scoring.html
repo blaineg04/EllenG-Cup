@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.1.5">
+<meta name="elleng-app-version" content="1.1.6">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -737,7 +737,8 @@ function trashTime(ts){
 async function loadTrashTalk(){
  if(!user){trashMessages=[];return}
  const {data,error}=await db.from("elleng_trash_talk").select("id,tournament_id,display_name,team_index,message,created_at").eq("tournament_id",TOURNAMENT_ID).order("created_at",{ascending:true}).limit(100);
- if(error)throw error; trashMessages=data||[];
+ if(error){console.error("Trash Talk load failed",error);return}
+ trashMessages=data||[];
 }
 function renderTrashTalk(){
  const feed=$("trashFeed"); if(!feed)return;
@@ -757,7 +758,13 @@ async function postTrashTalk(){
  try{
   const {data,error}=await db.functions.invoke("trash-talk",{body:{action:"post",tournament_id:TOURNAMENT_ID,message}});
   if(error)throw error; if(data?.error)throw new Error(data.error);
-  $("trashMessage").value=""; msgEl.textContent="Posted."; await loadTrashTalk(); renderTrashTalk();
+  $("trashMessage").value=""; msgEl.textContent="Posted.";
+  if(data?.message?.id){
+    const i=trashMessages.findIndex(x=>Number(x.id)===Number(data.message.id));
+    if(i>=0)trashMessages[i]=data.message; else trashMessages.push(data.message);
+    renderTrashTalk();
+  }
+  await loadTrashTalk(); renderTrashTalk();
  }catch(e){msgEl.textContent=e?.message||"Unable to post."}
  finally{btn.disabled=false;btn.textContent="Post"}
 }
@@ -1720,6 +1727,12 @@ if(createMissingLoginsBtn)createMissingLoginsBtn.addEventListener("click",async(
 $("trashPostBtn").addEventListener("click",postTrashTalk);
 $("trashMessage").addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter")postTrashTalk()});
 document.querySelectorAll("[data-trash-emoji]").forEach(b=>b.addEventListener("click",()=>{const ta=$("trashMessage");ta.value=(ta.value+(ta.value?" ":"")+b.dataset.trashEmoji).slice(0,280);ta.focus()}));
+
+// Reliable cross-phone Trash Talk refresh. Realtime remains enabled; this is a fallback for mobile connections.
+setInterval(async()=>{
+ if(!user||document.hidden)return;
+ try{await loadTrashTalk();renderTrashTalk()}catch(e){console.error("Trash Talk refresh failed",e)}
+},3000);
 $("clearTrashTalk").addEventListener("click",clearTrashTalkFeed);
 $("archiveStartNew").addEventListener("click",archiveAndStartNew);
 $("resetCurrentLeader").addEventListener("click",()=>{
