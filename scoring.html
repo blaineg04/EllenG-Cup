@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.4.0">
+<meta name="elleng-app-version" content="1.4.1">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -189,6 +189,9 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .control-alert{margin-top:10px;padding:10px 12px;border-radius:10px;background:#f8fafb;border:1px solid var(--line);font-size:13px}
 .award-kicker{font-size:11px;font-weight:900;letter-spacing:.08em;color:var(--muted)}
 @media(max-width:560px){.lead-alert .lead-main{font-size:18px}.momentum-grid,.awards-grid,.control-grid{grid-template-columns:1fr 1fr}}
+
+.pulse-golf-line{font-weight:800;color:var(--ink);margin-top:2px}
+.pulse-cup-line{font-size:12px;font-weight:900;color:var(--green);margin-top:3px}
 </style>
 </head>
 <body>
@@ -911,6 +914,12 @@ function renderCommissionerControlRoom(){
  root.innerHTML=`<div class="control-card"><span>OFFICIAL HOLES</span><strong>${holes.length} / 18</strong><div class="status">Completed by every team</div></div><div class="control-card"><span>CURRENT LEADER</span><strong>${snap?(snap.tied?'Tied':esc(teams[snap.team]?.name||`Team ${snap.team+1}`)):'—'}</strong><div class="status">${snap?`${snap.pts.toFixed(snap.pts%1?1:0)} Cup pts`:'No official points yet'}</div></div><div class="control-card"><span>NEXT ACTIVE HOLE</span><strong>${nextHole<=18?'Hole '+nextHole:'Complete'}</strong><div class="status">${nextHole<=18?`${teams.length-pending.length}/${teams.length} teams posted`:'Round finished'}</div></div><div class="control-card"><span>PLAYER STATUS</span><strong>${(draftState?.golfers||[]).filter(g=>(g?.name||'').trim()).length}</strong><div class="status">${logged}</div></div>`;
  alert.innerHTML=nextHole>18?'<strong>Round scoring is complete.</strong> Review final standings, awards, Gator Hole and Final Cargo before marking the tournament complete.':pending.length?`<strong>Hole ${nextHole} pending:</strong> ${esc(pending.join(', '))}`:`<strong>Hole ${nextHole} ready to score.</strong> No teams have posted yet.`;
 }
+function pulseGolfLabel(score,par){
+ const diff=Number(score)-Number(par);
+ const rel=diff===0?"E":diff>0?`+${diff}`:`${diff}`;
+ const term=diff<=-3?"Albatross":diff===-2?"Eagle":diff===-1?"Birdie":diff===0?"Par":diff===1?"Bogey":diff===2?"Double Bogey":diff===3?"Triple Bogey":`${diff>0?"+":""}${diff}`;
+ return `${term} (${rel})`;
+}
 function renderTournamentPulse(){
  const root=$("tournamentPulse");if(!root)return;
  const teamsStarted=teams.map((_,ti)=>(scores||[]).some(x=>Number(x.team_index)===ti&&x.score!=null));
@@ -922,7 +931,7 @@ function renderTournamentPulse(){
  const events=(scores||[]).filter(x=>x&&x.score!=null).map(x=>{const ti=Number(x.team_index),h=Number(x.hole),par=parForHole(h),g=relativeGolf(Number(x.score),par);return{ti,h,score:Number(x.score),g,ts:x.updated_at||x.created_at||""}}).sort((a,b)=>String(b.ts).localeCompare(String(a.ts))||b.h-a.h).slice(0,8);
  const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team),lead=ranking[0];
  let html="";
- if(lead&&lead.pts>0)html+=`<div class="pulse-item"><div class="pulse-icon">🏆</div><div class="pulse-main"><strong>${esc(teams[lead.team]?.name||`Team ${lead.team+1}`)} leads the EllenG Cup</strong><div class="status">Through ${lead.thru||0} hole${lead.thru===1?"":"s"}</div></div><div class="pulse-score">${lead.pts.toFixed(lead.pts%1?1:0)} pts</div></div>`;
+ if(lead&&lead.pts>0)html+=`<div class="pulse-item"><div class="pulse-icon">🏆</div><div class="pulse-main"><strong>${esc(teams[lead.team]?.name||`Team ${lead.team+1}`)} leads the EllenG Cup</strong><div class="status">Through ${lead.thru||0} hole${lead.thru===1?"":"s"}</div></div><div class="pulse-score">${lead.pts.toFixed(lead.pts%1?1:0)} Cup Points</div></div>`;
  html+=events.map(e=>{const special=tournament?.gator_revealed&&Number(tournament?.gator_hole)===e.h;const icon=special?"🐊":e.g.label==="Eagle"||e.g.label==="Albatross"?"🦅":e.g.label==="Birdie"?"🐦":e.g.label==="Par"?"⛳":"🏌️";return `<div class="pulse-item"><div class="pulse-icon">${icon}</div><div class="pulse-main"><strong><span class="mini-team-dot" style="background:${teamAccent(e.ti)}"></span>${esc(teams[e.ti]?.name||`Team ${e.ti+1}`)} • Hole ${e.h}</strong><div class="status">${special?"Gator Hole • ":""}${esc(e.g.label||"Score posted")} • ${e.score} stroke${e.score===1?"":"s"}</div></div><div class="pulse-score ${scoreClass(e.g.rel)}">${esc(e.g.rel)}</div></div>`}).join("");
  root.innerHTML=html||'<div class="note">Tournament Pulse will come alive as soon as scores start posting.</div>';
 }
