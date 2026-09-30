@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.2.0">
+<meta name="elleng-app-version" content="1.2.1">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -784,6 +784,14 @@ function renderTournamentRecap(){
  const root=$("postRoundRecap");if(!root)return;const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team),played=(scores||[]).filter(x=>x.score!=null).length,status=String(tournament?.status||"setup").toUpperCase(),done=status==="COMPLETE";
  if($("recapStatusBadge")){$("recapStatusBadge").textContent=done?"FINAL":"IN PROGRESS";$("recapStatusBadge").style.background=done?"#087c42":"#edf1f3";$("recapStatusBadge").style.color=done?"#fff":"#10202c"}if($("recapSub"))$("recapSub").textContent=done?"The final story of this EllenG Cup.":"Builds automatically as scores are posted.";
  if(!played){root.innerHTML='<div class="note" style="margin-top:12px">The recap will populate once tournament scoring begins.</div>';return}
+ const teamsStarted=teams.map((_,ti)=>(scores||[]).some(x=>Number(x.team_index)===ti&&x.score!=null));
+ const startedCount=teamsStarted.filter(Boolean).length;
+ if(teams.length&&startedCount<teams.length){
+   if($('recapStatusBadge')){$('recapStatusBadge').textContent='WAITING';$('recapStatusBadge').style.background='#fff3c8';$('recapStatusBadge').style.color='#6c5200'}
+   if($('recapSub'))$('recapSub').textContent='Podium and Best to Par appear after every team has started scoring.';
+   root.innerHTML=`<div class="note" style="margin-top:12px"><strong>${startedCount} of ${teams.length} teams have posted a score.</strong><br>The tournament recap will unlock once every active team has at least one completed hole.</div>`;
+   return;
+ }
  const medals=["🥇","🥈","🥉"],pod=ranking.slice(0,3).map((x,i)=>`<div class="recap-place team-accent" style="--team-accent:${teamAccent(x.team)}"><span class="medal">${medals[i]}</span><strong>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div class="status" style="margin-top:4px">${x.pts.toFixed(x.pts%1?1:0)} Cup pts • Thru ${x.thru||0}</div></div>`).join("");
  let best=null;teams.forEach((_,ti)=>{let s=0,p=0,c=0;for(let h=1;h<=18;h++){const r=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null);if(r){s+=Number(r.score);p+=parForHole(h);c++}}if(c&&(!best||((s-p)<best.rel)||((s-p)===best.rel&&c>best.c)))best={ti,rel:s-p,c}});
  const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Hole ${Number(tournament.gator_hole)}`:"Secret / not revealed";const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""?(teams[Number(tournament.final_cargo_team)]?.name||`Team ${Number(tournament.final_cargo_team)+1}`):"Not awarded";const bestText=best?`${teams[best.ti]?.name||`Team ${best.ti+1}`} ${best.rel===0?'E':best.rel>0?'+'+best.rel:'−'+Math.abs(best.rel)} (${best.c} holes)`:"—";
