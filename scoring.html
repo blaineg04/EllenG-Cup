@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.3.3">
+<meta name="elleng-app-version" content="2.4.0">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -420,14 +420,72 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
  .big-moment-title{font-size:25px}
 }
 
-.app-hub{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;padding:18px;background:radial-gradient(circle at 20% 10%,rgba(208,170,76,.14),transparent 26%),linear-gradient(160deg,#061b2b,#0b2f49 58%,#08253b)}
-.app-hub.hidden{display:none}.app-hub-card{width:min(640px,96vw);max-height:94vh;overflow:auto;background:#f8fafb;border-radius:24px;padding:24px;box-shadow:0 26px 70px rgba(0,0,0,.38)}
-.app-hub-logo-wrap{display:flex;justify-content:center;margin-bottom:8px}.app-hub-logo{width:86px;height:86px;object-fit:contain}
-.app-hub-card h1{margin:5px 0 5px;text-align:center;font-size:28px;color:#0a2c43}.app-hub-card>.premium-label{text-align:center}.app-hub-sub{text-align:center;color:var(--muted);font-weight:700;margin:0 0 18px}
-.app-hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.app-hub-btn{min-height:112px;border:1px solid #d8e1e5;border-radius:16px;background:#fff;padding:15px;display:flex;gap:12px;text-align:left;align-items:center;cursor:pointer;box-shadow:0 5px 14px rgba(8,37,59,.06)}
-.app-hub-btn strong{display:block;font-size:18px;color:#0a2c43;margin-bottom:4px}.app-hub-btn small{display:block;color:#61727c;font-weight:700;line-height:1.25}.app-hub-primary{border:2px solid #c9a13a;background:#fffaf0}.hub-icon{font-size:31px}
-.hub-skip-btn{display:block;margin:16px auto 0;border:0;background:transparent;color:#667985;font-weight:800;text-decoration:underline}
-@media(max-width:620px){.app-hub-grid{grid-template-columns:1fr}.app-hub-btn{min-height:88px}.app-hub-card{padding:18px}.app-hub-card h1{font-size:24px}}
+
+.app-hub{
+  position:fixed;inset:0;z-index:12000;display:grid;place-items:center;padding:18px;
+  background:
+    radial-gradient(circle at 50% 0%,rgba(213,172,67,.17),transparent 32%),
+    radial-gradient(circle at 15% 80%,rgba(19,92,117,.20),transparent 34%),
+    linear-gradient(160deg,#061824 0%,#0a2b42 58%,#071e2f 100%);
+}
+.app-hub.hidden{display:none}
+.app-hub-card{
+  width:min(680px,96vw);max-height:94vh;overflow:auto;position:relative;
+  background:linear-gradient(180deg,#ffffff 0%,#f6f8f9 100%);
+  border-radius:28px;padding:26px;
+  box-shadow:0 28px 80px rgba(0,0,0,.40);
+  border:1px solid rgba(255,255,255,.7);
+}
+.premium-home{overflow:hidden}
+.hub-watermark{
+  position:absolute;right:-90px;top:-70px;width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(205,164,60,.13),rgba(205,164,60,0) 68%);
+  pointer-events:none;
+}
+.app-hub-logo-wrap{display:flex;justify-content:center;margin-bottom:8px;position:relative;z-index:1}
+.app-hub-logo{width:98px;height:98px;object-fit:contain;filter:drop-shadow(0 7px 13px rgba(0,0,0,.16))}
+.hub-brand{text-align:center;color:#98721b;letter-spacing:.18em;font-weight:1000;font-size:12px}
+.app-hub-card h1{
+  margin:6px 0 4px;text-align:center;font-size:30px;line-height:1.08;color:#0a2b42;font-weight:1000
+}
+.app-hub-sub{text-align:center;color:#314b5b;font-weight:900;margin:9px 0 3px;font-size:15px}
+.hub-helper{text-align:center;color:#7b8991;margin:0 0 18px;font-weight:700}
+.hub-tournament-strip{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:2px 0 16px;
+  border:1px solid #e1e7ea;background:#f9fbfb;border-radius:14px;padding:10px
+}
+.hub-tournament-strip.hidden{display:none}
+.hub-tournament-strip>div{text-align:center;padding:5px 4px}
+.hub-tournament-strip span{display:block;font-size:9px;letter-spacing:.12em;font-weight:1000;color:#8a989f}
+.hub-tournament-strip strong{display:block;margin-top:3px;color:#17384d;font-size:13px}
+.app-hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.app-hub-btn{
+  min-height:112px;border:1px solid #dbe3e7;border-radius:18px;background:#fff;padding:15px 14px;
+  display:grid;grid-template-columns:auto 1fr auto;gap:12px;text-align:left;align-items:center;cursor:pointer;
+  box-shadow:0 8px 18px rgba(8,37,59,.07);transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;
+}
+.app-hub-btn:active{transform:scale(.985)}
+.app-hub-btn:hover{box-shadow:0 11px 22px rgba(8,37,59,.10)}
+.app-hub-btn strong{display:block;font-size:19px;color:#0a2b42;margin-bottom:4px}
+.app-hub-btn small{display:block;color:#65757f;font-weight:750;line-height:1.27;font-size:12px}
+.app-hub-primary{
+  border:2px solid #c89c2d;
+  background:linear-gradient(135deg,#fffaf0,#fffdf8);
+  box-shadow:0 9px 22px rgba(174,130,26,.12);
+}
+.hub-icon{font-size:31px;line-height:1}
+.hub-arrow{font-size:32px;line-height:1;color:#98a5ac;font-weight:500}
+.hub-copy{min-width:0}
+@media(max-width:620px){
+  .app-hub{padding:10px}
+  .app-hub-card{padding:20px 16px;border-radius:24px}
+  .app-hub-card h1{font-size:27px}
+  .app-hub-logo{width:88px;height:88px}
+  .app-hub-grid{grid-template-columns:1fr}
+  .app-hub-btn{min-height:91px;padding:13px}
+  .hub-tournament-strip{grid-template-columns:1fr 1fr}
+}
+.app-hub-btn{min-height:88px}.app-hub-card{padding:18px}.app-hub-card h1{font-size:24px}}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -442,57 +500,55 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </head>
 <body>
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
+
 <div id="appHub" class="app-hub">
-  <div class="app-hub-card">
+  <div class="app-hub-card premium-home">
+    <div class="hub-watermark" aria-hidden="true"></div>
+
     <div class="app-hub-logo-wrap">
       <img src="gator.png" alt="EllenG Cup" class="app-hub-logo">
     </div>
-    <div class="premium-label">ELLENG CUP</div>
-    <h1>Choose Where You Want to Go</h1>
-    <p class="app-hub-sub">Draft night, captain access, live scoring, or the Clubhouse.</p>
-    <div class="app-hub-grid">
-      <button type="button" class="app-hub-btn" id="hubDraft"><span class="hub-icon">📝</span><span><strong>Draft</strong><small>Watch the draft and team selections</small></span></button>
-      <button type="button" class="app-hub-btn" id="hubCaptain"><span class="hub-icon">🧢</span><span><strong>Captain Login</strong><small>Captain-only draft and team controls</small></span></button>
-      <button type="button" class="app-hub-btn app-hub-primary" id="hubScoring"><span class="hub-icon">🏆</span><span><strong>Live Scoring</strong><small>Scores, leaderboard and live tournament action</small></span></button>
-      <button type="button" class="app-hub-btn" id="hubClubhouse"><span class="hub-icon">⛳</span><span><strong>Clubhouse</strong><small>RSVP, tee times, profiles, course and recaps</small></span></button>
+
+    <div class="hub-brand">ELLENG CUP</div>
+    <h1>Welcome to the EllenG Cup</h1>
+    <p class="app-hub-sub">Draft • Captain Access • Live Scoring • Clubhouse</p>
+    <p class="hub-helper">Choose where you want to go.</p>
+
+    <div id="hubTournamentStrip" class="hub-tournament-strip hidden">
+      <div><span>DATE</span><strong id="hubDate">—</strong></div>
+      <div><span>COURSE</span><strong id="hubCourse">—</strong></div>
+      <div><span>FORMAT</span><strong id="hubFormat">—</strong></div>
+      <div><span>TEAMS</span><strong id="hubTeams">—</strong></div>
     </div>
-    <button type="button" class="hub-skip-btn" id="hubContinue">Continue to App</button>
+
+    <div class="app-hub-grid">
+      <button type="button" class="app-hub-btn" id="hubDraft">
+        <span class="hub-icon">📝</span>
+        <span class="hub-copy"><strong>Draft</strong><small>Watch the live draft, teams, and available golfers</small></span>
+        <span class="hub-arrow">›</span>
+      </button>
+
+      <button type="button" class="app-hub-btn" id="hubCaptain">
+        <span class="hub-icon">🧢</span>
+        <span class="hub-copy"><strong>Captain Login</strong><small>Captain-only picks and team controls</small></span>
+        <span class="hub-arrow">›</span>
+      </button>
+
+      <button type="button" class="app-hub-btn app-hub-primary" id="hubScoring">
+        <span class="hub-icon">🏆</span>
+        <span class="hub-copy"><strong>Live Scoring</strong><small>Scores, leaderboard, and live tournament action</small></span>
+        <span class="hub-arrow">›</span>
+      </button>
+
+      <button type="button" class="app-hub-btn" id="hubClubhouse">
+        <span class="hub-icon">⛳</span>
+        <span class="hub-copy"><strong>Clubhouse</strong><small>RSVP, profiles, course info, tee times, and recaps</small></span>
+        <span class="hub-arrow">›</span>
+      </button>
+    </div>
   </div>
 </div>
 
-<header class="top"><div class="brand">
-<img src="gator.png" alt="EllenG Cup gator logo">
-<div><h1>EllenG Cup</h1><p id="tournamentSubtitle">LIVE TOURNAMENT SCORING • 18 HOLES</p></div>
-</div></header>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v1.1.5</span></div>
-<div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
-
-<main class="wrap">
-<section id="loginCard" class="card login">
-<h2 style="margin-top:0">Sign in</h2>
-<p class="note">Sign in to enter the EllenG Cup tournament hub. Player accounts include the leaderboard, teams, players, course, hole progress, Trash Talk, handicap management and permitted score entry.</p>
-<div class="row"><input id="email" type="text" autocapitalize="none" autocomplete="username" placeholder="Player username or commissioner email"><input id="password" type="password" autocomplete="current-password" placeholder="Password"><button id="loginBtn" class="primary">Sign In</button></div>
-<div id="loginMsg" class="status" style="margin-top:9px"></div>
-<div id="connectionStatus" class="status" style="margin-top:7px;font-weight:700">Checking app connection…</div>
-</section>
-
-<section id="passwordChangeCard" class="card login hidden">
-<h2 style="margin-top:0">Choose Your Password</h2>
-<p class="note">This is your first sign-in. Create a password you will use for your EllenG Cup account from now on.</p>
-<div class="admin-grid" style="margin-top:12px">
-<label><small>New password</small><input id="newAccountPassword" type="password" minlength="6" autocomplete="new-password" placeholder="At least 6 characters"></label>
-<label><small>Confirm password</small><input id="confirmAccountPassword" type="password" minlength="6" autocomplete="new-password" placeholder="Enter it again"></label>
-</div>
-<div class="row" style="margin-top:12px"><button id="changeAccountPasswordBtn" class="primary" type="button">Save My Password</button></div>
-<div id="changeAccountPasswordMsg" class="status" style="margin-top:9px"></div>
-</section>
-
-<section id="app" class="hidden">
-<div class="card row between">
-<div class="top-account-wrap">
-  <div id="topAccountAvatar" class="top-account-avatar">—</div>
-  <div class="top-account-text"><strong id="roleLabel">Live scoring</strong><div id="userLabel" class="status"></div></div>
-</div>
 <div class="row"><span id="liveBadge" class="badge">SETUP</span><button id="authBtn" class="secondary">Player / Captain / Commissioner Login</button><button id="logoutBtn" class="secondary hidden">Sign Out</button></div>
 </div>
 
@@ -2690,6 +2746,20 @@ function checkBigMoments(){
  const cargo=tournament?.final_cargo_team;
  if(cargo!==null&&cargo!==undefined&&cargo!==""&&String(cargo)!==String(lastBigMomentCargo)){const ti=Number(cargo);showBigMoment("🚢","FINAL CARGO",`${teams[ti]?.name||`Team ${ti+1}`} GETS THE CARGO`,`+${Number(tournament?.final_cargo_points||6)} Cup points`);lastBigMomentCargo=cargo}
 }
+
+function renderHubTournamentStrip(){
+ const strip=$("hubTournamentStrip");if(!strip)return;
+ const date=draftState?.tournamentDate||tournament?.tournament_date||"";
+ const course=tournamentCourseLabel?.()||"";
+ const format=draftState?.format||draftState?.playFormat||tournament?.format||"";
+ const teamCount=(teams||[]).filter(Boolean).length||0;
+ const hasAny=!!(date||course||format||teamCount);
+ strip.classList.toggle("hidden",!hasAny);
+ if($("hubDate"))$("hubDate").textContent=date?formatTournamentDate(date):"TBD";
+ if($("hubCourse"))$("hubCourse").textContent=course||"TBD";
+ if($("hubFormat"))$("hubFormat").textContent=format||"TBD";
+ if($("hubTeams"))$("hubTeams").textContent=teamCount||"TBD";
+}
 function renderHome(){
  if(!draftState||!tournament)return;
  const status=String(tournament?.status||"setup").toUpperCase();
@@ -2830,6 +2900,7 @@ function renderAll(){
 
  // CORE APP: these must always render before optional experience features.
  renderHome();
+ renderHubTournamentStrip();
  renderNextEvent();
  renderLeaderSpotlight();
  renderTeamMomentumMeter();
@@ -3060,8 +3131,6 @@ if($("hubDraft"))$("hubDraft").addEventListener("click",()=>openHubView("draft")
 if($("hubCaptain"))$("hubCaptain").addEventListener("click",()=>openHubView("captain"));
 if($("hubScoring"))$("hubScoring").addEventListener("click",()=>openHubView("scoring"));
 if($("hubClubhouse"))$("hubClubhouse").addEventListener("click",()=>openHubView("clubhouse"));
-if($("hubContinue"))$("hubContinue").addEventListener("click",closeAppHub);
-
 window.addEventListener("online",()=>{renderOfflineState();flushOfflineScores()});
 window.addEventListener("offline",renderOfflineState);
 if("serviceWorker" in navigator){window.addEventListener("load",async()=>{try{const reg=await navigator.serviceWorker.register("./service-worker.js",{scope:"./"});reg.update().catch(()=>{})}catch(e){console.warn("Service worker registration skipped",e)}})}
