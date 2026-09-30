@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.1.14">
+<meta name="elleng-app-version" content="1.1.15">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -1291,11 +1291,11 @@ function renderSelfHandicap(){
    bandSel.value=autoBand||(["A","B","C","D"].includes(String(g.band||"").toUpperCase())?String(g.band).toUpperCase():"A");
    bandSel.disabled=!!autoBand;
    bandSel.title=autoBand?`Auto-set from handicap ${effectiveHcp}`:"Choose a band only when exact handicap is blank.";
-   if(saveBtn)saveBtn.disabled=false;if(scoreBtn)scoreBtn.disabled=ti==null;if(clearBtn)clearBtn.disabled=ti==null;
+   if(saveBtn)saveBtn.disabled=false;if(scoreBtn)scoreBtn.disabled=ti==null;if(clearBtn)clearBtn.disabled=false;
  }else{
    if(identity)identity.innerHTML=`<strong>No player profile linked</strong><br><span class="status">Ask the Commissioner to create or link a player login for ${esc(visibleLogin()||"this account")}.</span>`;
    hcpInput.value="";bandSel.value="A";bandSel.disabled=true;
-   if(saveBtn)saveBtn.disabled=true;if(scoreBtn)scoreBtn.disabled=true;if(clearBtn)clearBtn.disabled=true;
+   if(saveBtn)saveBtn.disabled=true;if(scoreBtn)scoreBtn.disabled=true;if(clearBtn)clearBtn.disabled=false;
  }
  renderSelfScoreContext();
 }
@@ -1637,7 +1637,15 @@ $("selfScoreHole").addEventListener("change",()=>{syncSelfScoreParToHole();rende
 $("selfScoreParSelect").addEventListener("change",renderSelfGolfScore);
 $("selfScoreInput").addEventListener("input",renderSelfGolfScore);
 $("saveSelfScore").addEventListener("click",()=>saveSelfScore(false));
-$("clearSelfScore").addEventListener("click",()=>saveSelfScore(true));
+$("clearSelfScore").addEventListener("click",async()=>{
+ const input=$("selfScoreInput"),msg=$("selfScoreMsg"),h=Number($("selfScoreHole")?.value||1);
+ if(input)input.value="";
+ renderSelfGolfScore();
+ if(currentGolferIndex==null){if(msg)msg.textContent=`Entry cleared for Hole ${h}.`;return;}
+ const ti=selfGolferTeamIndex(currentGolferIndex);
+ if(ti==null){if(msg)msg.textContent=`Entry cleared for Hole ${h}.`;return;}
+ await saveSelfScore(true);
+});
 syncSelfScoreParToHole();
 renderSelfGolfScore();
 function bandFromHandicapValue(v){const raw=String(v??"").trim();if(raw==="")return null;const n=Number(raw);if(!Number.isFinite(n)||n<0||n>54)return null;return n<=9?"A":n<=17?"B":n<=25?"C":"D"}
