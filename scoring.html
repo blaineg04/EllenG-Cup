@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.6.0">
+<meta name="elleng-app-version" content="1.6.1">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -401,6 +401,17 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   </div>
   <div class="note" style="margin-top:10px">Handicaps update automatically when players or the Commissioner change them. Players who have not been drafted yet are shown as Available / Unassigned.</div>
   <div id="playerDirectory" class="player-list"></div>
+</div>
+
+<div class="card" id="playerProfileCardsSection">
+  <div class="row between">
+    <div>
+      <h2 style="margin:0">Player Profile Cards</h2>
+      <div class="status">Tournament player profiles, team identity and live scoring stats.</div>
+    </div>
+    <span class="badge">LIVE STATS</span>
+  </div>
+  <div id="playerProfileCards" class="player-profile-grid"></div>
 </div>
 </section>
 
