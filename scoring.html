@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.0.3">
+<meta name="elleng-app-version" content="1.0.5">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -175,7 +175,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <img src="gator.png" alt="EllenG Cup gator logo">
 <div><h1>EllenG Cup</h1><p id="tournamentSubtitle">LIVE TOURNAMENT SCORING • 6 TEAMS • 18 HOLES</p></div>
 </div></header>
-<div class="app-version-bar"><span id="appVersionChip" class="app-version-chip">EllenG Live v1.0.4</span></div>
+<div class="app-version-bar"><span id="appVersionChip" class="app-version-chip">EllenG Live v1.0.5</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -1460,7 +1460,10 @@ $("saveSelfHandicap").addEventListener("click",saveSelfHandicap);
 $("selfScoreHole").addEventListener("change",renderSelfScoreContext);
 $("saveSelfScore").addEventListener("click",()=>saveSelfScore(false));
 $("clearSelfScore").addEventListener("click",()=>saveSelfScore(true));
-$("selfHandicapInput").addEventListener("input",()=>{const v=$("selfHandicapInput").value.trim();if(v==="")return;const n=Number(v);if(!Number.isFinite(n))return;$("selfBandSelect").value=n<10?"A":n<18?"B":n<26?"C":"D"});
+function bandFromHandicapValue(v){const n=Number(String(v??"").trim());if(!Number.isFinite(n))return null;return n<10?"A":n<18?"B":n<26?"C":"D"}
+$("selfHandicapInput").addEventListener("input",()=>{const band=bandFromHandicapValue($("selfHandicapInput").value);if(band)$("selfBandSelect").value=band});
+$("newGolferHcp")?.addEventListener("input",()=>{const band=bandFromHandicapValue($("newGolferHcp").value);if(band&&$("newGolferBand"))$("newGolferBand").value=band});
+$("playerEditor")?.addEventListener("input",e=>{const input=e.target.closest?.("[data-player-hcp]");if(!input)return;const i=input.getAttribute("data-player-hcp"),band=bandFromHandicapValue(input.value),sel=document.querySelector(`[data-player-band="${i}"]`);if(band&&sel)sel.value=band});
 $("gatorSide").addEventListener("change",populateGatorHoles);
 function previewTeamBuild(){
  const gc=Number($("golferCountSelect")?.value||draftGolferCount()),size=Number($("teamSizeSelect")?.value||draftTeamSize()),tc=Math.max(2,Math.min(9,Number($("teamCountSelect")?.value||activeTeamCount()))),base=Math.floor(gc/tc),extra=gc%tc;
@@ -1562,7 +1565,7 @@ $("addGolferBtn").addEventListener("click",async()=>{
    $("addGolferMsg").textContent=`Golfer added. Setup is now ${draftGolferCount()} golfers and ${activeTeamCount()} teams.${splitNote}`;
  }catch(e){$("addGolferMsg").textContent=e?.message||"Unable to add golfer."}
 });
-$("savePlayers").addEventListener("click",async()=>{if(!isCommissioner)return;ensureDraftShape();$("playerEditMsg").textContent="Saving…";draftState.golfers.forEach((g,i)=>{const n=document.querySelector(`[data-player-name="${i}"]`),b=document.querySelector(`[data-player-band="${i}"]`),h=document.querySelector(`[data-player-hcp="${i}"]`),t=document.querySelector(`[data-player-team="${i}"]`);if(n)g.name=n.value.trim();if(b)g.band=b.value;if(h)g.hcp=h.value.trim();if(t)g.team=t.value===""?null:Number(t.value)});try{await saveDraftState($("playerEditMsg"))}catch(e){}});
+$("savePlayers").addEventListener("click",async()=>{if(!isCommissioner)return;ensureDraftShape();$("playerEditMsg").textContent="Saving…";draftState.golfers.forEach((g,i)=>{const n=document.querySelector(`[data-player-name="${i}"]`),b=document.querySelector(`[data-player-band="${i}"]`),h=document.querySelector(`[data-player-hcp="${i}"]`),t=document.querySelector(`[data-player-team="${i}"]`);if(n)g.name=n.value.trim();if(h)g.hcp=h.value.trim();const autoBand=h&&h.value.trim()!==""?bandFromHandicapValue(h.value):null;if(b)g.band=autoBand||b.value;if(b&&autoBand)b.value=autoBand;if(t)g.team=t.value===""?null:Number(t.value)});try{await saveDraftState($("playerEditMsg"))}catch(e){}});
 $("trashPostBtn").addEventListener("click",postTrashTalk);
 $("trashMessage").addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter")postTrashTalk()});
 document.querySelectorAll("[data-trash-emoji]").forEach(b=>b.addEventListener("click",()=>{const ta=$("trashMessage");ta.value=(ta.value+(ta.value?" ":"")+b.dataset.trashEmoji).slice(0,280);ta.focus()}));
