@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.2.1">
+<meta name="elleng-app-version" content="1.2.2">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -764,6 +764,12 @@ function teamAccent(i){const colors=["#d5a72c","#087c42","#315b9b","#8b1e2d","#7
 function scoreClass(rel){if(!rel||rel==="—")return "";if(rel==="0")return "score-even";return rel.startsWith("−")?"score-good":"score-bad"}
 function renderTournamentPulse(){
  const root=$("tournamentPulse");if(!root)return;
+ const teamsStarted=teams.map((_,ti)=>(scores||[]).some(x=>Number(x.team_index)===ti&&x.score!=null));
+ const startedCount=teamsStarted.filter(Boolean).length;
+ if(teams.length&&startedCount<teams.length){
+   root.innerHTML=`<div class="note"><strong>Waiting for all teams to start scoring.</strong><br>${startedCount} of ${teams.length} teams have posted a score.</div>`;
+   return;
+ }
  const events=(scores||[]).filter(x=>x&&x.score!=null).map(x=>{const ti=Number(x.team_index),h=Number(x.hole),par=parForHole(h),g=relativeGolf(Number(x.score),par);return{ti,h,score:Number(x.score),g,ts:x.updated_at||x.created_at||""}}).sort((a,b)=>String(b.ts).localeCompare(String(a.ts))||b.h-a.h).slice(0,8);
  const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team),lead=ranking[0];
  let html="";
