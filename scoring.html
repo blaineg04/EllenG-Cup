@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.0.12">
+<meta name="elleng-app-version" content="1.1.1">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -168,6 +168,10 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   #adminNewTournament .commissioner-actions{display:grid!important;grid-template-columns:1fr!important;gap:10px;width:100%;}
   #adminNewTournament .commissioner-actions button{display:block;width:100%!important;max-width:100%;min-width:0;min-height:50px;white-space:normal;}
 }
+
+.player-login-row{display:grid;grid-template-columns:minmax(190px,1fr) minmax(150px,.7fr) auto auto;gap:8px;align-items:end;padding:8px 0 14px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+.player-login-row label{min-width:0}.player-login-row input{width:100%;min-width:0}.player-login-status{grid-column:1/-1;font-size:12px;color:var(--muted)}
+@media(max-width:650px){.player-login-row{grid-template-columns:1fr}.player-login-row button{width:100%}.player-login-status{grid-column:1}}
 </style>
 </head>
 <body>
@@ -175,14 +179,14 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <img src="gator.png" alt="EllenG Cup gator logo">
 <div><h1>EllenG Cup</h1><p id="tournamentSubtitle">LIVE TOURNAMENT SCORING • 6 TEAMS • 18 HOLES</p></div>
 </div></header>
-<div class="app-version-bar"><span id="appVersionChip" class="app-version-chip">EllenG Live v1.0.7</span></div>
+<div class="app-version-bar"><span id="appVersionChip" class="app-version-chip">EllenG Live v1.1.2</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
 <section id="loginCard" class="card login hidden">
 <h2 style="margin-top:0">Sign in</h2>
-<p class="note">Captains sign in with the same account used for the draft. The commissioner can edit every team.</p>
-<div class="row"><input id="email" type="email" autocomplete="email" placeholder="Email"><input id="password" type="password" autocomplete="current-password" placeholder="Password"><button id="loginBtn" class="primary">Sign In</button><button id="cancelLoginBtn" class="secondary" type="button">Cancel</button></div>
+<p class="note">Players, captains and the commissioner sign in with their EllenG Cup account. Your login determines what you can edit.</p>
+<div class="row"><input id="email" type="text" autocapitalize="none" autocomplete="username" placeholder="Player username or commissioner email"><input id="password" type="password" autocomplete="current-password" placeholder="Password"><button id="loginBtn" class="primary">Sign In</button><button id="cancelLoginBtn" class="secondary" type="button">Cancel</button></div>
 <div id="loginMsg" class="status" style="margin-top:9px"></div>
 <div id="connectionStatus" class="status" style="margin-top:7px;font-weight:700">Checking app connection…</div>
 </section>
@@ -190,18 +194,18 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <section id="app">
 <div class="card row between">
 <div><strong id="roleLabel">Live scoring</strong><div id="userLabel" class="status"></div></div>
-<div class="row"><span id="liveBadge" class="badge">SETUP</span><button id="authBtn" class="secondary">Captain / Commissioner Login</button><button id="logoutBtn" class="secondary hidden">Sign Out</button></div>
+<div class="row"><span id="liveBadge" class="badge">SETUP</span><button id="authBtn" class="secondary">Player / Captain / Commissioner Login</button><button id="logoutBtn" class="secondary hidden">Sign Out</button></div>
 </div>
 
 <div class="card top-tabs-card"><div class="tabs">
 <button class="tab active" data-view="home">Home</button>
 <button class="tab" data-view="leaderboard">Leaderboard</button>
 <button class="tab" data-view="teams">Teams</button>
-<button class="tab" data-view="players">Players</button>
+<button id="playersTab" class="tab hidden" data-view="players">Players</button>
 <button class="tab" data-view="course">Course</button>
 <button class="tab" data-view="progress">Hole Progress</button>
-<button class="tab" data-view="handicap">My Handicap</button>
-<button class="tab" data-view="trash">Trash Talk</button>
+<button id="handicapTab" class="tab hidden" data-view="handicap">My Golf</button>
+<button id="trashTab" class="tab hidden" data-view="trash">Trash Talk</button>
 <button id="scoringTab" class="tab hidden" data-view="scoring">Enter Scores</button>
 <button id="adminTab" class="tab hidden" data-view="admin">Commissioner</button>
 </div></div>
@@ -309,20 +313,20 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 
 <section id="handicapView" class="view hidden">
 <div class="card">
-  <div class="row between"><div><h2 style="margin:0">My Handicap</h2><div class="status">Update only your own handicap information. If you know your exact handicap, enter it and your A/B/C/D band will update automatically.</div></div><span class="badge">PLAYER SELF-SERVICE</span></div>
+  <div class="row between"><div><h2 style="margin:0">My Golf</h2><div class="status">Your account is linked to your player profile. No PIN or name selection is required.</div></div><span class="badge">PLAYER ACCOUNT</span></div>
+  <div id="selfPlayerIdentity" class="note" style="margin-top:12px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb">Loading your player profile…</div>
+  <select id="selfGolferSelect" class="hidden"><option value="">Player</option></select>
   <div class="admin-grid" style="margin-top:14px">
-    <label><small>Your name</small><select id="selfGolferSelect"><option value="">Select your name</option></select></label>
     <label><small>Handicap range</small><select id="selfBandSelect"><option value="A">A • 0–9</option><option value="B">B • 10–17</option><option value="C">C • 18–25</option><option value="D">D • 26+</option></select></label>
     <label><small>Exact handicap (optional)</small><input id="selfHandicapInput" type="number" min="0" max="54" step="0.1" inputmode="decimal" autocomplete="off" placeholder="Enter exact handicap"></label>
-    <label><small>Your personal PIN</small><input id="selfPinInput" type="password" inputmode="numeric" maxlength="6" placeholder="Create or enter 4–6 digits"></label>
   </div>
-  <div class="note" style="margin-top:10px"><strong>First time:</strong> select your name and create your own 4–6 digit personal PIN. That PIN stays with your player profile and is used for future handicap changes and score entry. If you forget it, the Commissioner can reset your PIN so you can create a new one.</div>
+  <div class="note" style="margin-top:10px">Your login protects this profile. You can update only the golfer account linked to your username.</div>
   <div class="row" style="margin-top:12px"><button id="saveSelfHandicap" class="primary" type="button">Save My Handicap</button></div>
   <div id="selfHandicapMsg" class="status" style="margin-top:9px"></div>
 </div>
 <div class="card">
-  <div class="row between"><div><h2 style="margin:0">My Score Entry</h2><div class="status">Once you are drafted, use your same personal PIN to help score your team. Your permissions follow the format automatically.</div></div><span class="badge">PLAYER SCORING</span></div>
-  <div id="selfScoreContext" class="note" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb">Select your name above, choose a hole, and enter your PIN.</div>
+  <div class="row between"><div><h2 style="margin:0">My Score Entry</h2><div class="status">Once you are drafted, your login automatically gives you the score-entry permissions for your own player/team role.</div></div><span class="badge">PLAYER SCORING</span></div>
+  <div id="selfScoreContext" class="note" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb">Your player account is loading. Choose a hole after your profile is linked.</div>
   <div class="admin-grid" style="margin-top:12px">
     <label><small>Hole</small><select id="selfScoreHole"><option value="1">Hole 1</option><option value="2">Hole 2</option><option value="3">Hole 3</option><option value="4">Hole 4</option><option value="5">Hole 5</option><option value="6">Hole 6</option><option value="7">Hole 7</option><option value="8">Hole 8</option><option value="9">Hole 9</option><option value="10">Hole 10</option><option value="11">Hole 11</option><option value="12">Hole 12</option><option value="13">Hole 13</option><option value="14">Hole 14</option><option value="15">Hole 15</option><option value="16">Hole 16</option><option value="17">Hole 17</option><option value="18">Hole 18</option></select></label>
     <label><small>Score</small><input id="selfScoreInput" type="number" min="1" max="20" step="1" inputmode="numeric" placeholder="1–20 strokes"></label>
@@ -335,7 +339,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 
 <section id="trashView" class="view hidden">
 <div class="card">
-  <div class="row between"><div><h2 style="margin:0">Live Trash Talk</h2><div class="status">Everyone can watch live. Players can post with the tournament PIN.</div></div><span class="badge">LIVE</span></div>
+  <div class="row between"><div><h2 style="margin:0">Live Trash Talk</h2><div class="status">Everyone can watch live. Signed-in players can post with the tournament PIN.</div></div><span class="badge">LIVE</span></div>
   <div id="trashFeed" class="trash-feed" style="margin-top:14px"><div class="note">No trash talk yet. Somebody has to start it.</div></div>
 </div>
 <div class="card">
@@ -443,7 +447,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </div>
 
 <div id="adminPlayers" class="card admin-card">
-  <div class="admin-section-title"><span class="step">4</span><div><h2>Players & Assignments</h2><div class="section-sub">Edit names, bands and handicaps, move golfers between teams, reset player PINs, or remove them.</div></div></div>
+  <div class="admin-section-title"><span class="step">4</span><div><h2>Players & Assignments</h2><div class="section-sub">Edit names, bands and handicaps, move golfers between teams, create username/password player logins, or remove golfers.</div></div></div>
   <div style="margin:14px 0;padding:12px;border:2px solid var(--gold);border-radius:12px;background:#fffaf0">
     <div class="row between"><strong style="font-size:16px">Player Band Guide</strong><span class="badge" style="background:#fff3c8;color:#6c5200">HANDICAP RANGES</span></div>
     <div class="band-guide" style="margin-bottom:0"><div class="band-guide-item"><strong>A</strong><span>0–9 HCP</span></div><div class="band-guide-item"><strong>B</strong><span>10–17 HCP</span></div><div class="band-guide-item"><strong>C</strong><span>18–25 HCP</span></div><div class="band-guide-item"><strong>D</strong><span>26+ HCP</span></div></div>
@@ -545,9 +549,12 @@ if(!cfg?.supabaseUrl||!supabaseKey){connection("EllenG configuration did not loa
 const db=window.supabase.createClient(cfg.supabaseUrl,supabaseKey);
 connection("✓ App connected — live scoring ready.",true);
 const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
-let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, user=null, captainTeam=null, isCommissioner=false, hole=1;
+let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", hole=1;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const PLAYER_LOGIN_DOMAIN="@players.ellengcup.app";
+const usernameToAuthEmail=u=>`${String(u||"").trim().toLowerCase()}${PLAYER_LOGIN_DOMAIN}`;
+const visibleLogin=()=>currentUsername||(String(user?.email||"").endsWith(PLAYER_LOGIN_DOMAIN)?String(user.email).slice(0,-PLAYER_LOGIN_DOMAIN.length):String(user?.email||""));
 
 const DEFAULT_PARS=[4,4,3,4,5,4,3,4,5,4,4,3,5,4,4,3,5,4];
 const COURSE_LIBRARY={
@@ -1032,8 +1039,16 @@ async function loadBase(){
  isCommissioner=!!user&&d.owner_id===user.id; captainTeam=null;
  if(user){
   const {data:c,error:ce}=await db.from("elleng_captains").select("team_index,user_id").eq("draft_id",DRAFT_ID);
-  if(ce)throw ce; const mine=(c||[]).find(x=>x.user_id===user.id); captainTeam=mine?Number(mine.team_index):null;
- }
+  if(ce)throw ce;
+  const mine=(c||[]).find(x=>x.user_id===user.id); captainTeam=mine?Number(mine.team_index):null;
+  const {data:profile,error:profileError}=await db.functions.invoke("player-profile",{body:{draft_id:DRAFT_ID}});
+  if(profileError)throw profileError;if(profile?.error)throw new Error(profile.error);
+  currentGolferIndex=profile?.linked?Number(profile.golfer_index):null;currentUsername=profile?.linked?String(profile.username||""):"";
+  if(isCommissioner){
+    const {data:listData,error:listError}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});
+    if(listError)throw listError;if(listData?.error)throw new Error(listData.error);playerAccounts=listData?.accounts||[];
+  }else playerAccounts=[];
+ }else {currentGolferIndex=null;currentUsername="";playerAccounts=[];}
 }
 async function loadScores(){
  const {data,error}=await db.from("elleng_team_scores").select("*").eq("tournament_id",TOURNAMENT_ID);
@@ -1105,15 +1120,48 @@ function renderPlayerEditor(){
  $("playerEditor").innerHTML=draftState.golfers.map((g,i)=>{
    const rawHcp=String(g.hcp??"").trim();
    const shownBand=rawHcp!==""?(bandFromHandicapValue(rawHcp)||String(g.band||"A").toUpperCase()):String(g.band||"A").toUpperCase();
-   return `<div class="player-admin-row" data-player-row="${i}"><input data-player-name="${i}" value="${esc(g.name||"")}" placeholder="Golfer name"><select data-player-band="${i}" ${rawHcp!==""?"disabled":""}>${["A","B","C","D"].map(b=>`<option ${shownBand===b?"selected":""}>${b}</option>`).join("")}</select><input data-player-hcp="${i}" type="number" min="0" max="54" step="0.1" inputmode="decimal" value="${esc(g.hcp??"")}" placeholder="HCP" oninput="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onchange="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onblur="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)"><select class="player-team" data-player-team="${i}">${teamOptions(g.team==null?"":g.team)}</select><div class="row player-actions" style="gap:5px;flex-wrap:nowrap"><button class="secondary" style="padding:8px 9px;font-size:11px" data-reset-player-pin="${i}" type="button">Issue Code</button><button class="danger" style="padding:8px 9px;font-size:11px" data-remove-player="${i}" type="button">Remove</button></div></div>`;
+   const acct=playerAccounts.find(a=>Number(a.golfer_index)===i);
+   const loginUsername=String(acct?.username||"");
+   const linked=!!acct?.user_id;
+   return `<div data-player-block="${i}"><div class="player-admin-row" data-player-row="${i}"><input data-player-name="${i}" value="${esc(g.name||"")}" placeholder="Golfer name"><select data-player-band="${i}" ${rawHcp!==""?"disabled":""}>${["A","B","C","D"].map(b=>`<option ${shownBand===b?"selected":""}>${b}</option>`).join("")}</select><input data-player-hcp="${i}" type="number" min="0" max="54" step="0.1" inputmode="decimal" value="${esc(g.hcp??"")}" placeholder="HCP" oninput="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onchange="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onblur="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)"><select class="player-team" data-player-team="${i}">${teamOptions(g.team==null?"":g.team)}</select><div class="row player-actions" style="gap:5px;flex-wrap:nowrap"><button class="danger" style="padding:8px 9px;font-size:11px" data-remove-player="${i}" type="button">Remove</button></div></div><div class="player-login-row"><label><small>Player username</small><input data-player-login-username="${i}" type="text" autocapitalize="none" autocomplete="off" value="${esc(loginUsername)}" placeholder="Example: ${esc(String(g.name||"player").toLowerCase().replace(/[^a-z0-9]+/g,""))}"></label><label><small>${linked?"New password (changes current)":"Temporary password"}</small><input data-player-login-password="${i}" type="password" minlength="6" placeholder="At least 6 characters"></label><button class="primary" type="button" data-save-player-login="${i}">${linked?"Update Login":"Create Login"}</button><button class="secondary" type="button" data-unlink-player-login="${i}" ${linked||loginUsername?"":"disabled"}>Unlink</button><div class="player-login-status" data-player-login-msg="${i}">${linked?`✓ Username: ${esc(loginUsername||"linked account")}`:"No player login linked yet."}</div></div></div>`;
  }).join("")||'<div class="note" style="padding:12px 0">No golfers yet.</div>';
  document.querySelectorAll("[data-remove-player]").forEach(b=>b.addEventListener("click",()=>removePlayer(Number(b.dataset.removePlayer))));
- document.querySelectorAll("[data-reset-player-pin]").forEach(b=>b.addEventListener("click",()=>resetGolferPin(Number(b.dataset.resetPlayerPin))));
+ document.querySelectorAll("[data-save-player-login]").forEach(b=>b.addEventListener("click",()=>savePlayerLogin(Number(b.dataset.savePlayerLogin))));
+ document.querySelectorAll("[data-unlink-player-login]").forEach(b=>b.addEventListener("click",()=>unlinkPlayerLogin(Number(b.dataset.unlinkPlayerLogin))));
  document.querySelectorAll("[data-player-hcp]").forEach(input=>{
    const syncBand=()=>syncPlayerBandField(input);
    ["input","change","keyup","blur"].forEach(evt=>input.addEventListener(evt,syncBand));
    syncBand();
  });
+}
+async function savePlayerLogin(i){
+ if(!isCommissioner)return;
+ const username=document.querySelector(`[data-player-login-username="${i}"]`)?.value.trim().toLowerCase()||"";
+ const password=document.querySelector(`[data-player-login-password="${i}"]`)?.value||"";
+ const msg=document.querySelector(`[data-player-login-msg="${i}"]`);
+ const btn=document.querySelector(`[data-save-player-login="${i}"]`);
+ if(!username){if(msg)msg.textContent="Enter a username for this player.";return}
+ if(password.length<6){if(msg)msg.textContent="Enter a password with at least 6 characters.";return}
+ if(btn)btn.disabled=true;if(msg)msg.textContent="Saving player login…";
+ try{
+   const {data,error}=await db.functions.invoke("player-admin",{body:{action:"create_or_update",draft_id:DRAFT_ID,golfer_index:i,username,password}});
+   if(error)throw error;if(data?.error)throw new Error(data.error);
+   const pw=document.querySelector(`[data-player-login-password="${i}"]`);if(pw)pw.value="";
+   await loadBase();renderAll();
+   const fresh=document.querySelector(`[data-player-login-msg="${i}"]`);if(fresh)fresh.textContent=`✓ Login ready for ${data.golfer_name} • username: ${data.username}`;
+ }catch(e){if(msg)msg.textContent=e?.message||"Unable to create player login."}
+ finally{if(btn)btn.disabled=false}
+}
+async function unlinkPlayerLogin(i){
+ if(!isCommissioner)return;
+ const g=draftState?.golfers?.[i];if(!g?.name)return;
+ if(!confirm(`Unlink ${g.name}'s player login? The Auth account will remain, but it will no longer control this golfer profile.`))return;
+ const msg=document.querySelector(`[data-player-login-msg="${i}"]`);if(msg)msg.textContent="Unlinking…";
+ try{
+   const {data,error}=await db.functions.invoke("player-admin",{body:{action:"unlink",draft_id:DRAFT_ID,golfer_index:i}});
+   if(error)throw error;if(data?.error)throw new Error(data.error);
+   await loadBase();renderAll();
+ }catch(e){if(msg)msg.textContent=e?.message||"Unable to unlink player login."}
 }
 function populateGatorHoles(){
  const side=$("gatorSide")?.value||((Number(tournament?.gator_hole)||10)<=9?"front":"back");
@@ -1136,9 +1184,9 @@ function selfGolferTeamIndex(idx){
 }
 function renderSelfScoreContext(){
  const box=$("selfScoreContext");if(!box||!draftState)return;
- const idx=$("selfGolferSelect")?.value===""?null:Number($("selfGolferSelect")?.value);
+ const idx=currentGolferIndex;
  const h=Number($("selfScoreHole")?.value||1);
- if(idx==null){box.textContent="Select your name above, choose a hole, and enter your PIN.";return}
+ if(idx==null){box.textContent="Your login is not linked to a golfer profile yet. Ask the Commissioner to create/link your player login.";return}
  const g=draftState?.golfers?.[idx];
  const ti=selfGolferTeamIndex(idx);
  if(ti==null){box.textContent=`${g?.name||"Golfer"}, you have not been drafted to a team yet. Score entry will unlock automatically after the draft.`;return}
@@ -1147,12 +1195,12 @@ function renderSelfScoreContext(){
    const roster=Array.isArray(draftState?.teams?.[ti]?.roster)?draftState.teams[ti].roster:[];
    const pos=roster.findIndex(r=>Number(typeof r==="object"?r?.golferIndex:r)===idx);
    const pair=pos>=0&&pos<2?1:pos>=2&&pos<4?2:null;
-   box.textContent=pair?`${g.name} • ${teamName} • Pair ${pair}. You can update your own 2-man pair score for Hole ${h}.`:`${g.name} • ${teamName}. Your split-pair assignment is not finalized yet.`;
+   box.textContent=pair?`${g.name} • ${teamName} • Pair ${pair}. Your login can update your 2-man pair score for Hole ${h}.`:`${g.name} • ${teamName}. Your split-pair assignment is not finalized yet.`;
  }else if(h<=9){
    const row=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null);
-   box.textContent=`${g.name} • ${teamName} • Front 9 Scramble. You can update your team's score for Hole ${h}${row?` (current team score: ${row.score})`:""}.`;
+   box.textContent=`${g.name} • ${teamName} • Front 9 Scramble. Your login can update your team's score for Hole ${h}${row?` (current team score: ${row.score})`:""}.`;
  }else{
-   box.textContent=`${g.name} • ${teamName} • Back 9 Shamble. You can update only your own individual score for Hole ${h}. The app will calculate the team low score after everyone enters theirs.`;
+   box.textContent=`${g.name} • ${teamName} • Back 9 Shamble. Your login can update only your own individual score for Hole ${h}. The app calculates the team low score after everyone enters theirs.`;
  }
 }
 let selfHandicapEditing=false;
@@ -1160,45 +1208,42 @@ let selfHandicapDraftValue="";
 function renderSelfHandicap(){
  const sel=$("selfGolferSelect"); if(!sel||!draftState)return;
  const golfers=Array.isArray(draftState.golfers)?draftState.golfers:[];
- const prior=sel.value;
- sel.innerHTML='<option value="">Select your name</option>'+golfers.map((g,i)=>(g?.name||"").trim()?`<option value="${i}">${esc(g.name)}</option>`:"").join("");
- if(prior!==""&&golfers[Number(prior)]?.name)sel.value=prior;
- const idx=sel.value===""?null:Number(sel.value);
+ const idx=currentGolferIndex;
+ sel.innerHTML='<option value="">Player</option>'+golfers.map((g,i)=>(g?.name||"").trim()?`<option value="${i}">${esc(g.name)}</option>`:"").join("");
+ sel.value=idx==null?"":String(idx);
  const g=idx==null?null:golfers[idx];
- const bandSel=$("selfBandSelect");
- const hcpInput=$("selfHandicapInput");
+ const identity=$("selfPlayerIdentity"), bandSel=$("selfBandSelect"), hcpInput=$("selfHandicapInput"), saveBtn=$("saveSelfHandicap"), scoreBtn=$("saveSelfScore"), clearBtn=$("clearSelfScore");
  if(g){
+   const ti=selfGolferTeamIndex(idx);const teamName=ti==null?"Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`);
+   if(identity)identity.innerHTML=`<strong>${esc(g.name)}</strong> • ${esc(teamName)}<br><span class="status">Signed in as ${esc(visibleLogin())}</span>`;
    const rawHcp=g.hcp==null?"":String(g.hcp).trim();
    if(!selfHandicapEditing) hcpInput.value=rawHcp;
    const effectiveHcp=selfHandicapEditing?selfHandicapDraftValue:rawHcp;
    const autoBand=bandFromHandicapValue(effectiveHcp);
    bandSel.value=autoBand||(["A","B","C","D"].includes(String(g.band||"").toUpperCase())?String(g.band).toUpperCase():"A");
    bandSel.disabled=!!autoBand;
-   bandSel.title=autoBand?`Auto-set from handicap ${rawHcp}`:"Choose a band only when exact handicap is blank.";
+   bandSel.title=autoBand?`Auto-set from handicap ${effectiveHcp}`:"Choose a band only when exact handicap is blank.";
+   if(saveBtn)saveBtn.disabled=false;if(scoreBtn)scoreBtn.disabled=ti==null;if(clearBtn)clearBtn.disabled=ti==null;
  }else{
-   hcpInput.value="";
-   bandSel.value="A";
-   bandSel.disabled=false;
-   bandSel.title="Choose a band only when exact handicap is blank.";
+   if(identity)identity.innerHTML=`<strong>No player profile linked</strong><br><span class="status">Ask the Commissioner to create or link a player login for ${esc(visibleLogin()||"this account")}.</span>`;
+   hcpInput.value="";bandSel.value="A";bandSel.disabled=true;
+   if(saveBtn)saveBtn.disabled=true;if(scoreBtn)scoreBtn.disabled=true;if(clearBtn)clearBtn.disabled=true;
  }
  renderSelfScoreContext();
 }
 async function saveSelfHandicap(){
  const msg=$("selfHandicapMsg"),btn=$("saveSelfHandicap");
- const idx=$("selfGolferSelect").value===""?null:Number($("selfGolferSelect").value);
+ const idx=currentGolferIndex;
  let band=$("selfBandSelect").value;
  const handicap=$("selfHandicapInput").value.trim();
  const exactBand=bandFromHandicapValue(handicap);
+ if(idx==null){msg.textContent="Your login is not linked to a golfer profile yet.";return}
  if(handicap!==""&&!exactBand){msg.textContent="Enter a handicap from 0 to 54, or leave it blank.";return}
  if(exactBand){band=exactBand;$("selfBandSelect").value=exactBand;$("selfBandSelect").disabled=true}
- const pin=$("selfPinInput").value.trim();
- if(idx==null){msg.textContent="Select your name first.";return}
- if(!/^\d{4,6}$/.test(pin)){msg.textContent="Enter a 4–6 digit personal PIN.";return}
  btn.disabled=true;btn.textContent="Saving…";msg.textContent="";
  try{
-   const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"update_handicap",draft_id:DRAFT_ID,golfer_index:idx,band,handicap,pin}});
+   const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"update_handicap",draft_id:DRAFT_ID,band,handicap}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
-   $("selfPinInput").value="";
    await loadBase();
    selfHandicapEditing=false;selfHandicapDraftValue="";
    renderAll();
@@ -1208,17 +1253,15 @@ async function saveSelfHandicap(){
 }
 async function saveSelfScore(clear=false){
  const msg=$("selfScoreMsg"),btn=$("saveSelfScore");
- const idx=$("selfGolferSelect").value===""?null:Number($("selfGolferSelect").value);
- const pin=$("selfPinInput").value.trim();
+ const idx=currentGolferIndex;
  const h=Number($("selfScoreHole").value);
  const raw=$("selfScoreInput").value.trim();
- if(idx==null){msg.textContent="Select your name first.";return}
- if(!/^\d{4,6}$/.test(pin)){msg.textContent="Enter your 4–6 digit personal PIN above.";return}
+ if(idx==null){msg.textContent="Your login is not linked to a golfer profile yet.";return}
  if(!clear&&raw===""){msg.textContent="Enter your score first.";return}
  const score=clear?"":raw;
  btn.disabled=true;msg.textContent=clear?"Clearing…":"Saving…";
  try{
-   const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"update_score",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,golfer_index:idx,hole:h,score,pin}});
+   const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"update_score",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,hole:h,score}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
    await loadBase();await loadScores();renderAll();
    if(clear){$("selfScoreInput").value="";msg.textContent=`Score cleared for Hole ${h}.`;}
@@ -1229,16 +1272,10 @@ async function saveSelfScore(clear=false){
  finally{btn.disabled=false}
 }
 async function resetGolferPin(i){
-  if(!isCommissioner)return;
-  const g=draftState?.golfers?.[i]; if(!g?.name)return;
-  if(!confirm(`Reset ${g.name}'s personal PIN? Their current PIN will stop working and they can create a new PIN in My Handicap.`))return;
-  try{
-    const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"reset_pin",draft_id:DRAFT_ID,golfer_index:i}});
-    if(error)throw error;if(data?.error)throw new Error(data.error);
-    $("playerEditMsg").textContent=`${g.name}'s PIN was reset. They can now create a new 4–6 digit PIN in My Handicap.`;
-    alert(`${g.name}'s PIN was reset. They can now create a new PIN in My Handicap.`);
-  }catch(e){$("playerEditMsg").textContent=e?.message||"Unable to reset PIN."}
- }
+ if(!isCommissioner)return;
+ const g=draftState?.golfers?.[i];if(!g?.name)return;
+ $("playerEditMsg").textContent=`${g.name} uses account login now. Use the Player Login controls under their profile instead of a PIN.`;
+}
  function renderAdmin(){
  if(!isCommissioner){$("adminTab").classList.add("hidden");return;}
  $("adminTab").classList.remove("hidden"); ensureDraftShape();
@@ -1360,12 +1397,23 @@ function renderHome(){
 function renderAll(){
  if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • ${teams.length} TEAMS • 18 HOLES`;
  $("liveBadge").textContent=(tournament?.status||"setup").toUpperCase();
- $("roleLabel").textContent=isCommissioner?"Commissioner":captainTeam!=null?`${teams[captainTeam].name} Captain`:"Public Viewer";
- $("userLabel").textContent=user?(user.email||""):"No login required — live results are view-only. Trash Talk is open with the tournament PIN.";
+ const playerName=currentGolferIndex!=null?String(draftState?.golfers?.[currentGolferIndex]?.name||""):"";
+ $("roleLabel").textContent=isCommissioner?"Commissioner":captainTeam!=null?`${teams[captainTeam].name} Captain`:user?(playerName||"Player"):"Public Viewer";
+ $("userLabel").textContent=user?`${visibleLogin()}${playerName?` • ${playerName}`:" • Login not linked to a golfer yet"}`:"Public view — sign in for player scoring, handicap updates and account features.";
  $("authBtn").classList.toggle("hidden",!!user);
  $("logoutBtn").classList.toggle("hidden",!user);
- $("scoringTab").classList.toggle("hidden",!user);
- if(!user){$("adminTab").classList.add("hidden"); if(document.querySelector('.tab.active')?.dataset.view==='scoring'||document.querySelector('.tab.active')?.dataset.view==='admin'){showView('home')}}
+ if($("playersTab"))$("playersTab").classList.toggle("hidden",!user);
+ if($("handicapTab"))$("handicapTab").classList.toggle("hidden",!user);
+ if($("trashTab"))$("trashTab").classList.toggle("hidden",!user);
+ $("scoringTab").classList.toggle("hidden",!(isCommissioner||captainTeam!=null));
+ const mobilePlayers=document.querySelector('[data-mobile-view="players"]');if(mobilePlayers)mobilePlayers.classList.toggle("hidden",!user);
+ const moreHandicap=document.querySelector('[data-more-view="handicap"]');if(moreHandicap)moreHandicap.classList.toggle("hidden",!user);
+ const moreTrash=document.querySelector('[data-more-view="trash"]');if(moreTrash)moreTrash.classList.toggle("hidden",!user);
+ if(!user){
+   $("adminTab").classList.add("hidden");
+   const active=document.querySelector('.tab.active')?.dataset.view;
+   if(["players","handicap","trash","scoring","admin"].includes(active||""))showView("home");
+ }
  renderHome();renderLeaderboard();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderScoring();renderTrashTalk();renderAdmin();
 }
 let syncBusy=false;
@@ -1379,6 +1427,11 @@ async function syncLive(){
   tournament=t;
   const {data:d}=await db.from("elleng_drafts").select("state").eq("id",DRAFT_ID).single();
   if(d?.state)draftState=structuredClone(d.state);
+  if(user){
+   const {data:profile}=await db.functions.invoke("player-profile",{body:{draft_id:DRAFT_ID}});
+   currentGolferIndex=profile?.linked?Number(profile.golfer_index):null;currentUsername=profile?.linked?String(profile.username||""):"";
+   if(isCommissioner){const {data:listData}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});playerAccounts=listData?.accounts||[];}else playerAccounts=[];
+  }else {playerAccounts=[];currentGolferIndex=null;currentUsername="";}
   if(Array.isArray(d?.state?.teams)){
    const golfers=Array.isArray(d.state?.golfers)?d.state.golfers:[];
    teams=Array.from({length:activeTeamCount()},(_,i)=>{
@@ -1442,6 +1495,9 @@ async function enterApp(){
  }
 }
 function showView(name){
+ if(!user&&["players","handicap","trash","scoring","admin"].includes(name))name="home";
+ if(name==="scoring"&&!(isCommissioner||captainTeam!=null))name="handicap";
+ if(name==="admin"&&!isCommissioner)name=user?"handicap":"home";
  const target=$(name+"View");if(!target)return;
  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.view===name));
  document.querySelectorAll(".mobile-nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.mobileView===name));
@@ -1450,8 +1506,9 @@ function showView(name){
  window.scrollTo({top:0,behavior:"smooth"});
 }
 $("loginBtn").addEventListener("click",async()=>{
- const btn=$("loginBtn"), email=$("email").value.trim(), password=$("password").value;
- if(!email||!password){$("loginMsg").textContent="Enter your email and password.";return}
+ const btn=$("loginBtn"), login=$("email").value.trim().toLowerCase(), password=$("password").value;
+ if(!login||!password){$("loginMsg").textContent="Enter your username/email and password.";return}
+ const email=login.includes("@")?login:usernameToAuthEmail(login);
  btn.disabled=true;btn.textContent="Signing In…";$("loginMsg").textContent="Signing in…";
  try{
   const {data,error}=await db.auth.signInWithPassword({email,password});
@@ -1466,7 +1523,7 @@ $("loginBtn").addEventListener("click",async()=>{
 });
 $("authBtn").addEventListener("click",()=>{$("loginCard").classList.remove("hidden");$("loginMsg").textContent="";$("loginCard").scrollIntoView({behavior:"smooth",block:"start"})});
 $("cancelLoginBtn").addEventListener("click",()=>{$("loginCard").classList.add("hidden")});
-$("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;showView("home");await enterViewer()});
+$("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";showView("home");await enterViewer()});
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
 document.querySelectorAll("[data-home-go]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.homeGo)));
 document.querySelectorAll("[data-mobile-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.mobileView)));
@@ -1474,7 +1531,7 @@ const moreBackdrop=$("moreMenuBackdrop"), moreBtn=$("mobileMoreBtn");
 function closeMoreMenu(){if(moreBackdrop){moreBackdrop.classList.remove("open");moreBackdrop.setAttribute("aria-hidden","true")}}
 function openMoreMenu(){
  if($("moreAdminBtn"))$("moreAdminBtn").classList.toggle("hidden",!isCommissioner);
- if($("moreScoringBtn"))$("moreScoringBtn").classList.toggle("hidden",!(isCommissioner||captainTeam));
+ if($("moreScoringBtn"))$("moreScoringBtn").classList.toggle("hidden",!(isCommissioner||captainTeam!=null));
  if(moreBackdrop){moreBackdrop.classList.add("open");moreBackdrop.setAttribute("aria-hidden","false")}
 }
 if(moreBtn)moreBtn.addEventListener("click",openMoreMenu);
