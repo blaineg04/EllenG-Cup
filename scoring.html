@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.4.1">
+<meta name="elleng-app-version" content="1.5.0">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -192,6 +192,36 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 
 .pulse-golf-line{font-weight:800;color:var(--ink);margin-top:2px}
 .pulse-cup-line{font-size:12px;font-weight:900;color:var(--green);margin-top:3px}
+
+.team-identity-strip{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.team-color-dot{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.15)}
+.matchup-grid{display:grid;gap:8px;margin-top:12px}
+.matchup-row{display:grid;grid-template-columns:32px minmax(120px,1fr) 90px 130px 100px;gap:8px;align-items:center;border:1px solid var(--line);border-radius:11px;padding:10px;background:#fff}
+.matchup-row .teamname{font-weight:900}
+.matchup-row .muted{font-size:12px;color:var(--muted)}
+.matchup-row .cup{font-weight:900;color:var(--green);text-align:right}
+.player-profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:12px}
+.player-profile-card{border:1px solid var(--line);border-radius:13px;padding:12px;background:#fff;position:relative;overflow:hidden}
+.player-profile-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--team-accent,#d5a72c)}
+.player-profile-name{font-size:18px;font-weight:900;margin-left:5px}
+.player-profile-meta{font-size:12px;color:var(--muted);margin:3px 0 10px 5px}
+.player-stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.player-stat{border:1px solid var(--line);border-radius:9px;padding:8px;text-align:center;background:#f8fafb}
+.player-stat strong{display:block;font-size:17px}
+.player-stat span{font-size:10px;color:var(--muted);font-weight:800}
+.draft-history-list{display:grid;gap:7px;margin-top:10px}
+.draft-history-row{display:grid;grid-template-columns:58px minmax(130px,1fr) minmax(120px,1fr) 70px;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:9px 10px;background:#fff}
+.draft-pick{font-weight:900}
+.identity-editor{display:grid;grid-template-columns:minmax(160px,1fr) 92px minmax(160px,1fr);gap:8px;align-items:end;margin-top:8px}
+.identity-editor input[type="color"]{width:64px;height:44px;padding:3px}
+@media(max-width:650px){
+ .matchup-row{grid-template-columns:28px minmax(100px,1fr) 74px 1fr}
+ .matchup-row .cup{grid-column:2/-1;text-align:left}
+ .draft-history-row{grid-template-columns:50px 1fr}
+ .draft-history-row .draft-team,.draft-history-row .draft-band{grid-column:2}
+ .identity-editor{grid-template-columns:1fr 82px}
+ .identity-editor .slogan-field{grid-column:1/-1}
+}
 </style>
 </head>
 <body>
@@ -279,7 +309,19 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </div>
 <div class="card" id="tournamentPulseCard">
   <div class="row between"><div><div class="premium-label">LIVE EXPERIENCE</div><h2 style="margin:3px 0 0">Tournament Pulse</h2><div class="status">The latest scoring moments across the EllenG Cup.</div></div><span class="badge" style="background:#edf7f1;color:#087c42">LIVE</span></div>
-  <div id="tournamentPulse" class="pulse-list" style="margin-top:12px"></div>
+  
+<div class="card">
+  <div class="row between">
+    <div>
+      <div style="font-size:12px;font-weight:900;letter-spacing:.08em;color:#80620a">LIVE MATCHUP</div>
+      <h2 style="margin:3px 0 0">Hole Matchup</h2>
+      <div class="status">Compare every team on a single hole without leaving the Home screen.</div>
+    </div>
+    <label><small>Hole</small><select id="matchupHoleSelect"></select></label>
+  </div>
+  <div id="holeMatchup" class="matchup-grid"></div>
+</div>
+<div id="tournamentPulse" class="pulse-list" style="margin-top:12px"></div>
 </div>
 <div class="card" id="postRoundRecapCard">
   <div class="row between"><div><div class="premium-label">TOURNAMENT STORY</div><h2 style="margin:3px 0 0">Tournament Recap</h2><div id="recapSub" class="status">Builds automatically as scores are posted.</div></div><span id="recapStatusBadge" class="badge">IN PROGRESS</span></div>
@@ -321,6 +363,11 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div class="row between"><div><h2 style="margin:0">Teams & Rosters</h2><div class="status">Use the dropdown to quickly check who is on each team.</div></div><span class="badge">LIVE DRAFT SYNC</span></div>
 <div style="margin-top:12px"><label><small>View team</small><select id="teamRosterSelect" style="max-width:360px"><option value="all">All Teams</option></select></label></div>
 <div id="teamCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:14px"></div>
+<div class="card">
+  <div class="row between"><div><h2 style="margin:0">Draft History</h2><div class="status">Pick-by-pick history from the current EllenG Cup draft.</div></div><span class="badge">DRAFT</span></div>
+  <div id="draftHistory" class="draft-history-list"></div>
+</div>
+
 </div>
 </section>
 
@@ -1358,9 +1405,26 @@ function rebuildTeamRosters(){
  ensureDraftShape(); draftState.teams.forEach(t=>t.roster=[]);
  draftState.golfers.forEach((g,i)=>{let ti=(g.team==null||g.team==="")?null:Number(g.team);if(Number.isInteger(ti)&&ti>=0&&ti<draftState.teams.length){g.team=ti;draftState.teams[ti].roster.push(i)}else g.team=null});
 }
+
+const TEAM_DEFAULT_COLORS=["#d5a72c","#188754","#2f6fc0","#a7263d","#8750b5","#df6f2f","#248b8b","#6f7a85","#b48a17"];
+function teamAccent(i){
+ const t=teams?.[i]||draftState?.teams?.[i]||{};
+ return String(t.color||TEAM_DEFAULT_COLORS[i%TEAM_DEFAULT_COLORS.length]);
+}
+function teamSlogan(i){
+ const t=teams?.[i]||draftState?.teams?.[i]||{};
+ return String(t.slogan||"").trim();
+}
+function golfLabelFor(score,par){
+ if(score==null||!Number.isFinite(Number(score)))return "—";
+ const d=Number(score)-Number(par);
+ const rel=d===0?"E":d>0?`+${d}`:`${d}`;
+ const term=d<=-3?"Albatross":d===-2?"Eagle":d===-1?"Birdie":d===0?"Par":d===1?"Bogey":d===2?"Double Bogey":d===3?"Triple Bogey":`${rel}`;
+ return `${term} (${rel})`;
+}
 function renderTeamEditor(){
  ensureDraftShape();
- $("teamEditor").innerHTML=draftState.teams.slice(0,activeTeamCount()).map((t,i)=>`<div class="editor-card"><h3>Team ${i+1}</h3><label><small>Team name</small><input data-team-name="${i}" value="${esc(t.name||`Team ${i+1}`)}"></label><label><small>Captain name</small><input data-team-captain="${i}" value="${esc(t.captain||"")}" placeholder="Captain"></label><label><small>Captain email / login</small><input data-team-email="${i}" type="email" value="${esc(t.captainEmail||"")}" placeholder="captain@email.com"></label><label><small>Captain password</small><input data-team-password="${i}" type="password" minlength="6" placeholder="At least 6 characters"></label><div class="row" style="margin-top:8px"><button class="primary" type="button" data-create-captain="${i}">Create / Update Login</button><button class="secondary" type="button" data-remove-captain="${i}">Remove Login</button></div><div class="status" data-captain-msg="${i}" style="margin-top:7px"></div></div>`).join("");
+ $("teamEditor").innerHTML=draftState.teams.slice(0,activeTeamCount()).map((t,i)=>`<div class="editor-card"><h3>Team ${i+1}</h3><label><small>Team name</small><input data-team-name="${i}" value="${esc(t.name||`Team ${i+1}`)}"></label><label><small>Captain name</small><input data-team-captain="${i}" value="${esc(t.captain||"")}" placeholder="Captain"></label><label><small>Captain email / login</small><input data-team-email="${i}" type="email" value="${esc(t.captainEmail||"")}" placeholder="captain@email.com"></label><label><small>Captain password</small><input data-team-password="${i}" type="password" minlength="6" placeholder="At least 6 characters"></label><div class="row" style="margin-top:8px"><button class="primary" type="button" data-create-captain="${i}">Create / Update Login</button><button class="secondary" type="button" data-remove-captain="${i}">Remove Login</button></div><div class="status" data-captain-msg="${i}" style="margin-top:7px"></div><div class="identity-editor"><label><small>Team color</small><input type="color" class="team-color-input" data-team="${i}" value="${teamAccent(i)}"></label><label class="slogan-field"><small>Team slogan</small><input class="team-slogan-input" data-team="${i}" value="${esc(teamSlogan(i))}" placeholder="Optional team slogan"></label></div></div>`).join("");
  document.querySelectorAll("[data-create-captain]").forEach(b=>b.addEventListener("click",()=>saveCaptainLogin(Number(b.dataset.createCaptain))));
  document.querySelectorAll("[data-remove-captain]").forEach(b=>b.addEventListener("click",()=>removeCaptainLogin(Number(b.dataset.removeCaptain))));
 }
@@ -1713,7 +1777,65 @@ function renderHome(){
  if($("homeSpecialText"))$("homeSpecialText").textContent=gator+cargo;
 }
 
-function renderAll(){
+
+function renderHoleMatchup(){
+ const root=$("holeMatchup"),sel=$("matchupHoleSelect");if(!root||!sel)return;
+ if(!sel.options.length){sel.innerHTML=Array.from({length:18},(_,i)=>`<option value="${i+1}">Hole ${i+1}</option>`).join("");}
+ const h=Number(sel.value||1);sel.value=String(h);
+ const par=Number((tournament?.pars||draftState?.holePars||[])[h-1]||4);
+ const pts=pointsForHole(h);
+ const complete=teams.length>0&&teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null));
+ root.innerHTML=teams.map((t,ti)=>{
+   const row=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null);
+   const sc=row?Number(row.score):null;
+   const cup=complete&&pts?.[ti]!=null?`${fmt(pts[ti])} pts`:"Pending";
+   return `<div class="matchup-row" style="border-left:5px solid ${teamAccent(ti)}">
+     <div><span class="team-color-dot" style="background:${teamAccent(ti)}"></span></div>
+     <div><div class="teamname">${esc(t.name||`Team ${ti+1}`)}</div><div class="muted">${esc(teamSlogan(ti)||"")}</div></div>
+     <div><strong>${sc==null?"—":sc}</strong><div class="muted">strokes</div></div>
+     <div><strong>${sc==null?"—":golfLabelFor(sc,par)}</strong><div class="muted">Par ${par}</div></div>
+     <div class="cup">${cup}</div>
+   </div>`;
+ }).join("");
+}
+function renderPlayerProfileCards(){
+ const root=$("playerProfileCards");if(!root)return;
+ const golfers=draftState?.golfers||[];
+ root.innerHTML=golfers.map((g,gi)=>{
+   let ti=g.team==null||g.team===""?null:Number(g.team);
+   if(!Number.isInteger(ti)){ti=(draftState?.teams||[]).findIndex(t=>(t.roster||[]).map(Number).includes(gi));if(ti<0)ti=null}
+   const own=(playerScores||[]).filter(x=>Number(x.golfer_index)===gi&&x.score!=null);
+   let birdies=0,eagles=0;
+   own.forEach(x=>{const h=Number(x.hole),par=Number((tournament?.pars||draftState?.holePars||[])[h-1]||4),d=Number(x.score)-par;if(d===-1)birdies++;if(d<=-2)eagles++;});
+   const teamName=ti==null?"Unassigned":(teams?.[ti]?.name||`Team ${ti+1}`);
+   const accent=ti==null?"#d5a72c":teamAccent(ti);
+   return `<div class="player-profile-card" style="--team-accent:${accent}">
+     <div class="player-profile-name">${esc(g.name||`Golfer ${gi+1}`)}</div>
+     <div class="player-profile-meta">${esc(teamName)} • ${esc(String(g.band||"—"))} • HCP ${esc(String(g.hcp??"—"))}</div>
+     <div class="player-stat-row">
+       <div class="player-stat"><strong>${own.length}</strong><span>HOLES</span></div>
+       <div class="player-stat"><strong>${birdies}</strong><span>BIRDIES</span></div>
+       <div class="player-stat"><strong>${eagles}</strong><span>EAGLES+</span></div>
+     </div>
+   </div>`;
+ }).join("");
+}
+function renderDraftHistory(){
+ const root=$("draftHistory");if(!root)return;
+ const picks=Array.isArray(draftState?.picks)?draftState.picks:[];
+ if(!picks.length){root.innerHTML='<div class="status">Draft history will appear after picks are made.</div>';return}
+ root.innerHTML=picks.map((p,idx)=>{
+   const gi=Number(p.golfer),ti=Number(p.team);
+   const g=draftState?.golfers?.[gi]||{},t=draftState?.teams?.[ti]||{};
+   return `<div class="draft-history-row" style="border-left:5px solid ${teamAccent(ti)}">
+     <div class="draft-pick">#${idx+1}</div>
+     <div><strong>${esc(g.name||`Golfer ${gi+1}`)}</strong></div>
+     <div class="draft-team">${esc(t.name||`Team ${ti+1}`)}</div>
+     <div class="draft-band">${esc(String(g.band||"—"))}</div>
+   </div>`;
+ }).join("");
+}
+function renderAll(){renderHoleMatchup();renderPlayerProfileCards();renderDraftHistory();
  if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • 18 HOLES`;
  $("liveBadge").textContent=(tournament?.status||"setup").toUpperCase();
  const playerName=currentGolferIndex!=null?String(draftState?.golfers?.[currentGolferIndex]?.name||""):"";
@@ -1996,7 +2118,18 @@ $("saveAdmin").addEventListener("click",async()=>{
  }catch(e){$("adminMsg").textContent=e?.message||"Unable to save tournament controls."}
 });
 $("reloadAdmin").addEventListener("click",async()=>{if(!isCommissioner)return;$("adminMsg").textContent="Reloading…";try{await loadBase();await loadScores();renderAll();$("adminMsg").textContent="Current data reloaded."}catch(e){$("adminMsg").textContent=e.message}});
-$("saveTeams").addEventListener("click",async()=>{if(!isCommissioner)return;ensureDraftShape();$("teamEditMsg").textContent="Saving…";document.querySelectorAll("[data-team-name]").forEach(x=>{let i=Number(x.dataset.teamName);draftState.teams[i].name=x.value.trim()||`Team ${i+1}`});document.querySelectorAll("[data-team-captain]").forEach(x=>draftState.teams[Number(x.dataset.teamCaptain)].captain=x.value.trim());document.querySelectorAll("[data-team-email]").forEach(x=>draftState.teams[Number(x.dataset.teamEmail)].captainEmail=x.value.trim());try{await saveDraftState($("teamEditMsg"))}catch(e){}});
+
+if($("matchupHoleSelect"))$("matchupHoleSelect").addEventListener("change",renderHoleMatchup);
+document.addEventListener("input",e=>{
+ const t=e.target;
+ if(t?.classList?.contains("team-color-input")){
+   const i=Number(t.dataset.team);ensureDraftShape();if(draftState.teams?.[i])draftState.teams[i].color=t.value;
+ }
+ if(t?.classList?.contains("team-slogan-input")){
+   const i=Number(t.dataset.team);ensureDraftShape();if(draftState.teams?.[i])draftState.teams[i].slogan=t.value;
+ }
+});
+$("saveTeams").addEventListener("click",async()=>{document.querySelectorAll(".team-color-input").forEach(x=>{const i=Number(x.dataset.team);if(draftState.teams?.[i])draftState.teams[i].color=x.value});document.querySelectorAll(".team-slogan-input").forEach(x=>{const i=Number(x.dataset.team);if(draftState.teams?.[i])draftState.teams[i].slogan=x.value});if(!isCommissioner)return;ensureDraftShape();$("teamEditMsg").textContent="Saving…";document.querySelectorAll("[data-team-name]").forEach(x=>{let i=Number(x.dataset.teamName);draftState.teams[i].name=x.value.trim()||`Team ${i+1}`});document.querySelectorAll("[data-team-captain]").forEach(x=>draftState.teams[Number(x.dataset.teamCaptain)].captain=x.value.trim());document.querySelectorAll("[data-team-email]").forEach(x=>draftState.teams[Number(x.dataset.teamEmail)].captainEmail=x.value.trim());try{await saveDraftState($("teamEditMsg"))}catch(e){}});
 $("addGolferBtn").addEventListener("click",async()=>{
  if(!isCommissioner)return;
  ensureDraftShape();
