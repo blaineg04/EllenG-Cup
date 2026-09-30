@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.7.1">
+<meta name="elleng-app-version" content="1.7.2">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -253,6 +253,19 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .self-photo-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .self-photo-actions input[type="file"]{max-width:100%}
 @media(max-width:560px){.self-photo-wrap{grid-template-columns:68px 1fr}.self-photo-preview{width:68px;height:68px;border-radius:14px}}
+
+.self-photo-actions{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 10px;align-items:center;width:100%;min-width:0}
+.self-photo-file{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;overflow:hidden!important;pointer-events:none}
+.self-photo-choose{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 14px;border-radius:10px;border:1px solid #bcc8cf;background:#f3f6f7;font-weight:900;color:var(--ink);cursor:pointer;white-space:nowrap}
+.self-photo-filename{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:13px}
+.self-photo-actions #uploadSelfPhoto{grid-column:1/-1;width:max-content;max-width:100%}
+@media(max-width:560px){
+ .self-photo-wrap{grid-template-columns:64px minmax(0,1fr)}
+ .self-photo-actions{grid-template-columns:1fr}
+ .self-photo-choose{width:100%}
+ .self-photo-filename{white-space:normal;word-break:break-word}
+ .self-photo-actions #uploadSelfPhoto{grid-column:1;width:100%}
+}
 </style>
 </head>
 <body>
@@ -486,7 +499,9 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
     <div>
       <div id="selfPhotoPlayerName" style="font-weight:900;margin-bottom:8px">Loading player…</div>
       <div class="self-photo-actions">
-        <input id="selfPhotoFile" type="file" accept="image/*">
+        <input id="selfPhotoFile" class="self-photo-file" type="file" accept="image/*">
+        <label for="selfPhotoFile" class="self-photo-choose">Choose Photo</label>
+        <span id="selfPhotoFileName" class="self-photo-filename">No photo selected</span>
         <button id="uploadSelfPhoto" class="primary" type="button">Upload My Photo</button>
       </div>
       <div id="selfPhotoMsg" class="status" style="margin-top:8px"></div>
@@ -1517,6 +1532,13 @@ async function removeCaptainLogin(i){
  }catch(e){if(msg)msg.textContent=e?.message||"Unable to remove captain login."}
 }
 
+
+function updateSelfPhotoFileName(){
+ const input=$("selfPhotoFile"),name=$("selfPhotoFileName");
+ if(!name)return;
+ const f=input?.files?.[0];
+ name.textContent=f?f.name:"No photo selected";
+}
 function renderSelfProfilePhoto(){
  const preview=$("selfPhotoPreview"),nameEl=$("selfPhotoPlayerName"),btn=$("uploadSelfPhoto"),input=$("selfPhotoFile"),msg=$("selfPhotoMsg");
  if(!preview||!nameEl)return;
@@ -1559,7 +1581,7 @@ async function uploadMyProfilePhoto(){
    const {data,error}=await db.functions.invoke("player-profile",{body:{action:"update_photo",draft_id:DRAFT_ID,photo_url:photoUrl}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
    if(draftState?.golfers?.[currentGolferIndex])draftState.golfers[currentGolferIndex].photo_url=photoUrl;
-   if(input)input.value="";
+   if(input)input.value="";updateSelfPhotoFileName();
    if(msg)msg.textContent="✓ Your profile photo has been updated.";
    renderSelfProfilePhoto();
    try{await syncLive()}catch(e){console.warn("Photo refresh skipped",e)}
@@ -2177,6 +2199,7 @@ if($("courseBrowseSelect"))$("courseBrowseSelect").addEventListener("change",()=
 });
 if($("courseBrowseRouteSelect"))$("courseBrowseRouteSelect").addEventListener("change",renderCourse);
 $("selfGolferSelect").addEventListener("change",renderSelfHandicap);
+if($("selfPhotoFile"))$("selfPhotoFile").addEventListener("change",updateSelfPhotoFileName);
 if($("uploadSelfPhoto"))$("uploadSelfPhoto").addEventListener("click",uploadMyProfilePhoto);
 $("saveSelfHandicap").addEventListener("click",saveSelfHandicap);
 $("selfScoreHole").addEventListener("change",()=>{syncSelfScoreParToHole();renderSelfScoreContext();renderSelfGolfScore()});
