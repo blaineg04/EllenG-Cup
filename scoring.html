@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.3.1">
+<meta name="elleng-app-version" content="1.3.2">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -676,6 +676,12 @@ function activeCourseId(){return draftState?.courseId&&COURSE_LIBRARY[draftState
 function activeCourse(){return COURSE_LIBRARY[activeCourseId()]}
 function activeCourseRouteId(){const c=activeCourse(),keys=Object.keys(c.routes);return draftState?.courseRoute&&c.routes[draftState.courseRoute]?draftState.courseRoute:keys[0]}
 function activeCourseRoute(){return activeCourse().routes[activeCourseRouteId()]}
+function tournamentCourseIsConfirmed(){return draftState?.courseSelectedConfirmed===true}
+function tournamentCourseLabel(){
+ if(!tournamentCourseIsConfirmed())return "";
+ const c=activeCourse(),r=activeCourseRoute();
+ return `${c.name} • ${r.label}`;
+}
 function courseYardage(h,tee){const r=activeCourseRoute();return Number(r?.[tee]?.[h-1]||0)}
 function courseTotal(tee){const vals=activeCourseRoute()?.[tee];return Array.isArray(vals)?vals.reduce((a,b)=>a+Number(b||0),0):0}
 function activeTeeLine(h,compact=false){const c=activeCourse();return (c.tees||[]).map(t=>`${compact?t.label.charAt(0):t.label} ${courseYardage(h,t.key)}`).join(" • ")}
@@ -698,11 +704,11 @@ function renderCourse(){
  }
  const r=c.routes[browseRoute];
  const browsingActive=browseId===activeId&&browseRoute===activeRouteId;
- if($("activeCourseBadge"))$("activeCourseBadge").textContent=browsingActive?"TOURNAMENT COURSE":"BROWSING ONLY";
+ if($("activeCourseBadge"))$("activeCourseBadge").textContent=(tournamentCourseIsConfirmed()&&browsingActive)?"TOURNAMENT COURSE":"BROWSING ONLY";
  if($("courseHeroImage")){ $("courseHeroImage").src=c.image; $("courseHeroImage").alt=`${c.name} course`; }
  const overlay=document.querySelector("#courseView .course-overlay"); if(overlay)overlay.style.display=c.bakedText?"none":"block";
  if($("courseNameDisplay"))$("courseNameDisplay").textContent=c.name;
- if($("courseRouteDisplay"))$("courseRouteDisplay").textContent=`${c.location} • ${r.label}${browsingActive?" • Active tournament course":" • Course library preview"}`;
+ if($("courseRouteDisplay"))$("courseRouteDisplay").textContent=`${c.location} • ${r.label}${tournamentCourseIsConfirmed()&&browsingActive?" • Active tournament course":" • Course library preview"}`;
  if($("courseSummaryBadges"))$("courseSummaryBadges").innerHTML=`<span class="badge">Par ${r.par.reduce((a,b)=>a+b,0)}</span>`+(c.tees||[]).map(t=>`<span class="badge">${t.label} ${(r[t.key]||[]).reduce((a,b)=>a+Number(b||0),0).toLocaleString()} yds</span>`).join("");
  if($("courseScorecard")){
    const holes=Array.from({length:18},(_,i)=>i+1);
@@ -811,7 +817,7 @@ function renderBroadcast(){
  $("broadcastTicker").textContent=latestTournamentMoment();
  $("broadcastStandings").innerHTML=arr.map((x,n)=>`<div class="broadcast-row"><div class="b-rank">${n+1}</div><div><strong><span class="mini-team-dot" style="background:${teamAccent(x.team)}"></span>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div style="opacity:.65;font-size:12px">${x.provisionalHoles?'Pending • no points yet':'Official posted holes'}</div></div><div class="b-pts">${x.projected.toFixed(x.projected%1?1:0)} pts</div><div class="b-thru">${x.thru?`Thru ${x.thru}`:'—'}</div></div>`).join('')||'<div style="opacity:.75">Waiting for scores…</div>';
  $("broadcastLeader").textContent=hasLeader?(teams[leader.team]?.name||'—'):'—';$("broadcastLeaderSub").textContent=hasLeader?`${leader.pts.toFixed(leader.pts%1?1:0)} official Cup pts • Thru ${leader.thru||0}`:'No official Cup points yet';
- const c=activeCourse(),r=activeCourseRoute();$("broadcastCourse").textContent=`${c.name} • ${r.label}`;
+ $("broadcastCourse").textContent=tournamentCourseLabel()||"Course not selected";
  let complete=0;for(let h=1;h<=18;h++){if(teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null)))complete++}$("broadcastHoles").textContent=`${complete} / 18`;
  const g=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Gator: Hole ${Number(tournament.gator_hole)}`:'Gator: Secret';const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`Cargo: ${teams[Number(tournament.final_cargo_team)]?.name||'Awarded'}`:'Cargo: Not awarded';$("broadcastSpecial").textContent=`${g} • ${cargo}`;
 }
@@ -825,7 +831,7 @@ async function createWinnerGraphic(){
  const grad=ctx.createLinearGradient(0,0,1200,675);grad.addColorStop(0,'#061827');grad.addColorStop(.6,'#08253b');grad.addColorStop(1,'#123d55');ctx.fillStyle=grad;ctx.fillRect(0,0,1200,675);
  ctx.fillStyle='#d5a72c';ctx.fillRect(0,0,1200,12);ctx.fillRect(0,663,1200,12);ctx.textAlign='center';ctx.fillStyle='#d5a72c';ctx.font='900 70px Georgia, serif';ctx.fillText('EllenG Cup',600,120);ctx.fillStyle='#ffffff';ctx.font='700 30px Arial';ctx.fillText('TOURNAMENT CHAMPIONS',600,176);
  ctx.fillStyle='#ffffff';ctx.font='900 66px Arial';ctx.fillText(teams[win.team]?.name||`Team ${win.team+1}`,600,305);ctx.fillStyle='#d5a72c';ctx.font='900 44px Arial';ctx.fillText(`${win.pts.toFixed(win.pts%1?1:0)} CUP POINTS`,600,365);
- const c=activeCourse(),r=activeCourseRoute();ctx.fillStyle='rgba(255,255,255,.82)';ctx.font='26px Arial';ctx.fillText(`${c.name} • ${r.label}`,600,430);const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`Final Cargo: ${teams[Number(tournament.final_cargo_team)]?.name||'Awarded'}`:'Final Cargo: —';ctx.font='22px Arial';ctx.fillText(cargo,600,475);ctx.fillStyle='rgba(255,255,255,.65)';ctx.font='20px Arial';ctx.fillText('PLAY BAD. LOOK GOOD. • ELLENG CUP',600,590);
+ ctx.fillStyle='rgba(255,255,255,.82)';ctx.font='26px Arial';ctx.fillText(tournamentCourseLabel()||'Course not selected',600,430);const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`Final Cargo: ${teams[Number(tournament.final_cargo_team)]?.name||'Awarded'}`:'Final Cargo: —';ctx.font='22px Arial';ctx.fillText(cargo,600,475);ctx.fillStyle='rgba(255,255,255,.65)';ctx.font='20px Arial';ctx.fillText('PLAY BAD. LOOK GOOD. • ELLENG CUP',600,590);
  const url=canvas.toDataURL('image/png');preview.innerHTML=`<img src="${url}" alt="EllenG Cup winner graphic"><a class="primary" id="winnerDownload" download="EllenG-Cup-Champions.png" href="${url}" style="padding:11px 14px;border-radius:10px;color:white;font-weight:800">Save Winner Graphic</a> <button type="button" class="secondary" id="winnerShare">Share</button>`;msg.textContent='Winner graphic ready.';
  const share=$("winnerShare");if(share)share.onclick=async()=>{try{const blob=await (await fetch(url)).blob(),file=new File([blob],'EllenG-Cup-Champions.png',{type:'image/png'});if(navigator.canShare?.({files:[file]}))await navigator.share({files:[file],title:'EllenG Cup Champions'});else if(navigator.share)await navigator.share({title:'EllenG Cup Champions',text:`${teams[win.team]?.name||'Champions'} won the EllenG Cup.`});else msg.textContent='Use Save Winner Graphic to save or share it.'}catch(e){if(e?.name!=='AbortError')msg.textContent='Use Save Winner Graphic to save or share it.'}};
 }
@@ -1600,8 +1606,7 @@ function renderHome(){
  if(!draftState||!tournament)return;
  const status=String(tournament?.status||"setup").toUpperCase();
  if($("homeStatusBadge"))$("homeStatusBadge").textContent=status;
- const c=activeCourse(), r=activeCourseRoute();
- if($("homeCourseBadge"))$("homeCourseBadge").textContent=`${c.name} • ${r.label}`;
+ if($("homeCourseBadge"))$("homeCourseBadge").textContent=tournamentCourseLabel()||"—";
  if($("homeHeadline"))$("homeHeadline").textContent=status==="LIVE"?"The EllenG Cup Is Live":status==="COMPLETE"?"Final Results":"EllenG Cup Tournament Hub";
  if($("homeSubline"))$("homeSubline").textContent=status==="LIVE"?"Follow the leaderboard, check teams, view players and keep up with every hole.":status==="COMPLETE"?"The tournament is complete. Review the final leaderboard and results.":"Everything players need before and during tournament day.";
  const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
@@ -1881,6 +1886,7 @@ $("saveAdmin").addEventListener("click",async()=>{
   if(courseSelection){
     draftState.courseId=courseSelection;
     draftState.courseRoute=$("courseRouteSelect")?.value||Object.keys(COURSE_LIBRARY[draftState.courseId].routes)[0];
+    draftState.courseSelectedConfirmed=true;
   }else{
     draftState.courseId=draftState.courseId||activeCourseId();
     draftState.courseRoute=draftState.courseRoute||activeCourseRouteId();
