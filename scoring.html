@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.2.2">
+<meta name="elleng-app-version" content="1.2.3">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -779,12 +779,20 @@ function renderTournamentPulse(){
 }
 function renderDigitalScorecard(){
  const sel=$("digitalScorecardTeam"),root=$("digitalScorecard");if(!sel||!root)return;
- const prior=sel.value;sel.innerHTML=teams.map((t,i)=>`<option value="${i}">${esc(t.name)}</option>`).join("");if(prior!==""&&teams[Number(prior)])sel.value=prior;
- const ti=Number(sel.value||0),team=teams[ti];if(!team){root.innerHTML='<div class="note">No team available.</div>';return}
+ const prior=sel.value;
+ sel.innerHTML=`<option value="">Select a team</option>`+teams.map((t,i)=>`<option value="${i}">${esc(t.name||`Team ${i+1}`)}</option>`).join("");
+ if(prior!==""&&teams[Number(prior)])sel.value=prior;else sel.value="";
+ if(sel.value===""){root.innerHTML='<div class="note" style="margin-top:12px">Choose a team above to view its digital scorecard.</div>';return}
+ const ti=Number(sel.value),team=teams[ti];if(!team){root.innerHTML='<div class="note">No team available.</div>';return}
  let strokeTotal=0,parTotal=0,entered=0,pointTotal=0;
- const rows=Array.from({length:18},(_,j)=>{const h=j+1,par=parForHole(h),r=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null),score=r?Number(r.score):null,g=relativeGolf(score,par),pts=pointsForHole(h)[ti];if(score!=null){strokeTotal+=score;parTotal+=par;entered++}if(pts!=null)pointTotal+=pts;return `<tr><td><strong>${h}${tournament?.gator_revealed&&Number(tournament?.gator_hole)===h?' 🐊':''}</strong></td><td>${par}</td><td>${score==null?'—':score}</td><td class="${scoreClass(g.rel)}">${score==null?'—':esc(g.rel)}</td><td>${score==null?'':esc(g.label)}</td><td>${pts==null?'Pending':pts.toFixed(pts%1?1:0)}</td></tr>`}).join("");
+ const rows=Array.from({length:18},(_,j)=>{
+   const h=j+1,par=parForHole(h),r=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null),score=r?Number(r.score):null,g=relativeGolf(score,par),pts=pointsForHole(h)[ti];
+   if(score!=null){strokeTotal+=score;parTotal+=par;entered++}if(pts!=null)pointTotal+=pts;
+   const golfDisplay=score==null?'—':`${esc(g.rel)} • ${esc(g.label)}`;
+   return `<tr><td><strong>${h}${tournament?.gator_revealed&&Number(tournament?.gator_hole)===h?' 🐊':''}</strong></td><td>${par}</td><td>${score==null?'—':score}</td><td class="${scoreClass(g.rel)}"><strong>${golfDisplay}</strong></td><td>${pts==null?'Pending':pts.toFixed(pts%1?1:0)}</td></tr>`
+ }).join("");
  const totalRel=entered?strokeTotal-parTotal:null,gTotal=totalRel==null?'—':totalRel===0?'E':totalRel>0?`+${totalRel}`:`−${Math.abs(totalRel)}`;
- root.innerHTML=`<table class="digital-scorecard"><thead><tr><th>Hole</th><th>Par</th><th>Strokes</th><th>To Par</th><th>Result</th><th>Cup Pts</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td><strong>Total</strong></td><td>${entered?parTotal:'—'}</td><td><strong>${entered?strokeTotal:'—'}</strong></td><td class="${totalRel==null?'':totalRel<0?'score-good':totalRel>0?'score-bad':'score-even'}"><strong>${gTotal}</strong></td><td>${entered}/18 entered</td><td><strong>${pointTotal.toFixed(pointTotal%1?1:0)}</strong></td></tr></tfoot></table>`;
+ root.innerHTML=`<table class="digital-scorecard"><thead><tr><th>Hole</th><th>Par</th><th>Strokes</th><th>Golf Score</th><th>Cup Pts</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td><strong>Total</strong></td><td>${entered?parTotal:'—'}</td><td><strong>${entered?strokeTotal:'—'}</strong></td><td class="${totalRel==null?'':totalRel<0?'score-good':totalRel>0?'score-bad':'score-even'}"><strong>${gTotal}</strong> <span class="status">(${entered}/18 entered)</span></td><td><strong>${pointTotal.toFixed(pointTotal%1?1:0)}</strong></td></tr></tfoot></table>`;
 }
 function renderTournamentRecap(){
  const root=$("postRoundRecap");if(!root)return;const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team),played=(scores||[]).filter(x=>x.score!=null).length,status=String(tournament?.status||"setup").toUpperCase(),done=status==="COMPLETE";
