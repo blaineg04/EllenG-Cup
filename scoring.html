@@ -175,7 +175,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <img src="gator.png" alt="EllenG Cup gator logo">
 <div><h1>EllenG Cup</h1><p id="tournamentSubtitle">LIVE TOURNAMENT SCORING • 6 TEAMS • 18 HOLES</p></div>
 </div></header>
-<div class="app-version-bar"><span id="appVersionChip" class="app-version-chip">EllenG Live v1.0.6</span></div>
+<div class="app-version-bar"><span id="appVersionChip" class="app-version-chip">EllenG Live v1.0.7</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -1106,18 +1106,12 @@ function renderPlayerEditor(){
  $("playerEditor").innerHTML=draftState.golfers.map((g,i)=>{
    const rawHcp=String(g.hcp??"").trim();
    const shownBand=rawHcp!==""?(bandFromHandicapValue(rawHcp)||String(g.band||"A").toUpperCase()):String(g.band||"A").toUpperCase();
-   return `<div class="player-admin-row" data-player-row="${i}"><input data-player-name="${i}" value="${esc(g.name||"")}" placeholder="Golfer name"><select data-player-band="${i}">${["A","B","C","D"].map(b=>`<option ${shownBand===b?"selected":""}>${b}</option>`).join("")}</select><input data-player-hcp="${i}" type="number" min="0" max="54" step="0.1" inputmode="decimal" value="${esc(g.hcp??"")}" placeholder="HCP"><select class="player-team" data-player-team="${i}">${teamOptions(g.team==null?"":g.team)}</select><div class="row player-actions" style="gap:5px;flex-wrap:nowrap"><button class="secondary" style="padding:8px 9px;font-size:11px" data-reset-player-pin="${i}" type="button">Issue Code</button><button class="danger" style="padding:8px 9px;font-size:11px" data-remove-player="${i}" type="button">Remove</button></div></div>`;
+   return `<div class="player-admin-row" data-player-row="${i}"><input data-player-name="${i}" value="${esc(g.name||"")}" placeholder="Golfer name"><select data-player-band="${i}" ${rawHcp!==""?"disabled":""}>${["A","B","C","D"].map(b=>`<option ${shownBand===b?"selected":""}>${b}</option>`).join("")}</select><input data-player-hcp="${i}" type="number" min="0" max="54" step="0.1" inputmode="decimal" value="${esc(g.hcp??"")}" placeholder="HCP" oninput="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onchange="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onblur="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)"><select class="player-team" data-player-team="${i}">${teamOptions(g.team==null?"":g.team)}</select><div class="row player-actions" style="gap:5px;flex-wrap:nowrap"><button class="secondary" style="padding:8px 9px;font-size:11px" data-reset-player-pin="${i}" type="button">Issue Code</button><button class="danger" style="padding:8px 9px;font-size:11px" data-remove-player="${i}" type="button">Remove</button></div></div>`;
  }).join("")||'<div class="note" style="padding:12px 0">No golfers yet.</div>';
  document.querySelectorAll("[data-remove-player]").forEach(b=>b.addEventListener("click",()=>removePlayer(Number(b.dataset.removePlayer))));
  document.querySelectorAll("[data-reset-player-pin]").forEach(b=>b.addEventListener("click",()=>resetGolferPin(Number(b.dataset.resetPlayerPin))));
  document.querySelectorAll("[data-player-hcp]").forEach(input=>{
-   const syncBand=()=>{
-     const i=input.getAttribute("data-player-hcp");
-     const sel=document.querySelector(`[data-player-band="${i}"]`);
-     const raw=String(input.value??"").trim();
-     const band=raw!==""?bandFromHandicapValue(raw):null;
-     if(sel&&band)sel.value=band;
-   };
+   const syncBand=()=>syncPlayerBandField(input);
    ["input","change","keyup","blur"].forEach(evt=>input.addEventListener(evt,syncBand));
    syncBand();
  });
@@ -1475,10 +1469,18 @@ $("saveSelfHandicap").addEventListener("click",saveSelfHandicap);
 $("selfScoreHole").addEventListener("change",renderSelfScoreContext);
 $("saveSelfScore").addEventListener("click",()=>saveSelfScore(false));
 $("clearSelfScore").addEventListener("click",()=>saveSelfScore(true));
-function bandFromHandicapValue(v){const n=Number(String(v??"").trim());if(!Number.isFinite(n))return null;return n<10?"A":n<18?"B":n<26?"C":"D"}
-$("selfHandicapInput").addEventListener("input",()=>{const band=bandFromHandicapValue($("selfHandicapInput").value);if(band)$("selfBandSelect").value=band});
-$("newGolferHcp")?.addEventListener("input",()=>{const band=bandFromHandicapValue($("newGolferHcp").value);if(band&&$("newGolferBand"))$("newGolferBand").value=band});
-$("playerEditor")?.addEventListener("input",e=>{const input=e.target.closest?.("[data-player-hcp]");if(!input)return;const i=input.getAttribute("data-player-hcp"),band=bandFromHandicapValue(input.value),sel=document.querySelector(`[data-player-band="${i}"]`);if(band&&sel)sel.value=band});
+function bandFromHandicapValue(v){const raw=String(v??"").trim();if(raw==="")return null;const n=Number(raw);if(!Number.isFinite(n))return null;return n<10?"A":n<18?"B":n<26?"C":"D"}
+function syncPlayerBandField(input){
+ const i=input?.getAttribute?.("data-player-hcp"); if(i==null)return;
+ const sel=document.querySelector(`[data-player-band="${i}"]`); if(!sel)return;
+ const raw=String(input.value??"").trim(),band=bandFromHandicapValue(raw);
+ if(band){sel.value=band;sel.disabled=true;sel.title=`Auto-set from handicap ${raw}`;}
+ else{sel.disabled=false;sel.title="Choose band manually when exact handicap is blank.";}
+}
+window.ellengSyncPlayerBand=syncPlayerBandField;
+$("selfHandicapInput").addEventListener("input",()=>{const raw=$("selfHandicapInput").value.trim(),band=bandFromHandicapValue(raw);if(band){$("selfBandSelect").value=band;$("selfBandSelect").disabled=true}else{$("selfBandSelect").disabled=false}});
+$("newGolferHcp")?.addEventListener("input",()=>{const raw=$("newGolferHcp").value.trim(),band=bandFromHandicapValue(raw),sel=$("newGolferBand");if(!sel)return;if(band){sel.value=band;sel.disabled=true}else sel.disabled=false});
+$("playerEditor")?.addEventListener("input",e=>{const input=e.target.closest?.("[data-player-hcp]");if(input)syncPlayerBandField(input)});
 $("gatorSide").addEventListener("change",populateGatorHoles);
 function previewTeamBuild(){
  const gc=Number($("golferCountSelect")?.value||draftGolferCount()),size=Number($("teamSizeSelect")?.value||draftTeamSize()),tc=Math.max(2,Math.min(9,Number($("teamCountSelect")?.value||activeTeamCount()))),base=Math.floor(gc/tc),extra=gc%tc;
@@ -1554,7 +1556,7 @@ $("addGolferBtn").addEventListener("click",async()=>{
  const name=$("newGolferName").value.trim();
  if(!name){$("addGolferMsg").textContent="Enter the golfer's name.";return}
  const teamVal=$("newGolferTeam").value;
- const g={name,hcp:$("newGolferHcp").value.trim(),band:$("newGolferBand").value,team:teamVal===""?null:Number(teamVal)};
+ const newHcp=$("newGolferHcp").value.trim(); const g={name,hcp:newHcp,band:bandFromHandicapValue(newHcp)||$("newGolferBand").value,team:teamVal===""?null:Number(teamVal)};
  const emptyIndex=draftState.golfers.findIndex(x=>!(x?.name||"").trim()&&(x?.team==null||x?.team===""));
  const addingNewSlot=emptyIndex===-1;
  if(addingNewSlot&&draftState.golfers.length>=36){$("addGolferMsg").textContent="The app currently supports a maximum of 36 golfers.";return}
@@ -1575,7 +1577,7 @@ $("addGolferBtn").addEventListener("click",async()=>{
      if(error)throw error; tournament=data;
    }
    await saveDraftState($("addGolferMsg"));
-   $("newGolferName").value="";$("newGolferHcp").value="";$("newGolferTeam").value="";
+   $("newGolferName").value="";$("newGolferHcp").value="";$("newGolferTeam").value="";$("newGolferBand").disabled=false;
    const splitNote=isSplitPair()&&draftGolferCount()%4!==0?` Split-Pair mode will be ready after ${4-(draftGolferCount()%4)} more golfer${4-(draftGolferCount()%4)===1?"":"s"} are added.`:"";
    $("addGolferMsg").textContent=`Golfer added. Setup is now ${draftGolferCount()} golfers and ${activeTeamCount()} teams.${splitNote}`;
  }catch(e){$("addGolferMsg").textContent=e?.message||"Unable to add golfer."}
