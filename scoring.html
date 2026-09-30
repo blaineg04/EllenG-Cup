@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.8.1">
+<meta name="elleng-app-version" content="1.8.2">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -286,6 +286,17 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
  .self-login-profile{grid-template-columns:62px minmax(0,1fr)}
  .self-login-photo{width:62px;height:62px;border-radius:15px}
 }
+
+.top-account-wrap{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;align-items:center;min-width:0}
+.top-account-avatar{width:52px;height:52px;border-radius:15px;background:#edf1f3;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;overflow:hidden}
+.top-account-avatar img{width:100%;height:100%;object-fit:cover}
+.top-account-text{min-width:0}
+.top-account-text #roleLabel{display:block;font-size:18px;line-height:1.15}
+.top-account-text #userLabel{margin-top:3px;white-space:normal;word-break:break-word}
+@media(max-width:560px){
+ .top-account-wrap{grid-template-columns:46px minmax(0,1fr)}
+ .top-account-avatar{width:46px;height:46px;border-radius:13px}
+}
 </style>
 </head>
 <body>
@@ -318,7 +329,10 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 
 <section id="app" class="hidden">
 <div class="card row between">
-<div><strong id="roleLabel">Live scoring</strong><div id="userLabel" class="status"></div></div>
+<div class="top-account-wrap">
+  <div id="topAccountAvatar" class="top-account-avatar">—</div>
+  <div class="top-account-text"><strong id="roleLabel">Live scoring</strong><div id="userLabel" class="status"></div></div>
+</div>
 <div class="row"><span id="liveBadge" class="badge">SETUP</span><button id="authBtn" class="secondary">Player / Captain / Commissioner Login</button><button id="logoutBtn" class="secondary hidden">Sign Out</button></div>
 </div>
 
@@ -2098,12 +2112,32 @@ function renderDraftHistory(){
    </div>`;
  }).join("");
 }
+
+function renderTopAccountAvatar(){
+ const el=$("topAccountAvatar");if(!el)return;
+ let g=null;
+ if(Number.isInteger(currentGolferIndex))g=draftState?.golfers?.[currentGolferIndex]||null;
+ if(!g&&isCommissioner){
+   const golfers=Array.isArray(draftState?.golfers)?draftState.golfers:[];
+   g=golfers.find(x=>String(x?.name||"").trim().toLowerCase()==="blaine guy")||null;
+ }
+ if(!g){
+   const label=isCommissioner?"C":captainTeam!=null?"C":"?";
+   el.textContent=label;return;
+ }
+ const photo=String(g.photo_url||g.photo||"").trim();
+ const initials=playerInitials(g.name||"Player");
+ if(photo){
+   el.innerHTML=`<img src="${esc(photo)}" alt="${esc(g.name||"Player")}" onerror="this.style.display='none';this.parentElement.textContent='${esc(initials)}'">`;
+ }else el.textContent=initials;
+}
 function renderAll(){
  if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • 18 HOLES`;
  $("liveBadge").textContent=(tournament?.status||"setup").toUpperCase();
  const playerName=currentGolferIndex!=null?String(draftState?.golfers?.[currentGolferIndex]?.name||""):"";
  $("roleLabel").textContent=isCommissioner?"Commissioner":captainTeam!=null?`${teams[captainTeam].name} Captain`:(playerName||"Player");
  $("userLabel").textContent=user?`${visibleLogin()}${playerName?` • ${playerName}`:" • Login not linked to a golfer yet"}`:"";
+ renderTopAccountAvatar();
  $("authBtn").classList.toggle("hidden",!!user);
  $("logoutBtn").classList.toggle("hidden",!user);
  if($("playersTab"))$("playersTab").classList.toggle("hidden",!user);
