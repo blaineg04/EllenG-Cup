@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.2.3">
+<meta name="elleng-app-version" content="1.3.0">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -175,6 +175,10 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 
 /* Premium tournament experience */
 .pulse-list{display:grid;gap:8px}.pulse-item{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}.pulse-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#edf1f3;font-size:18px}.pulse-main strong{display:block}.pulse-main .status{margin-top:2px}.pulse-score{font-weight:900;color:var(--green);white-space:nowrap}.team-accent{border-top:5px solid var(--team-accent,#d5a72c)!important}.scorecard-wrap{overflow:auto}.digital-scorecard{width:100%;border-collapse:collapse;min-width:760px;margin-top:12px}.digital-scorecard th,.digital-scorecard td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:center}.digital-scorecard th:first-child,.digital-scorecard td:first-child{text-align:left;position:sticky;left:0;background:#fff}.digital-scorecard thead th{font-size:12px;color:var(--muted)}.score-good{color:#087c42;font-weight:900}.score-bad{color:#8b1e2d;font-weight:900}.score-even{font-weight:900;color:var(--navy)}.health-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px}.health-tile{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}.health-tile strong{display:block;font-size:22px;color:var(--navy)}.health-tile span{font-size:12px;color:var(--muted);font-weight:800}.health-alerts{display:grid;gap:7px;margin-top:12px}.health-alert{padding:9px 11px;border-radius:10px;background:#f8fafb;border-left:4px solid var(--gold);font-size:13px}.recap-podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:12px}.recap-place{border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;background:#fff}.recap-place strong{display:block;font-size:18px;color:var(--navy)}.recap-place .medal{font-size:28px;display:block;margin-bottom:4px}.recap-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:10px}.recap-stat{padding:10px;border-radius:10px;background:#f8fafb;text-align:center}.recap-stat strong{display:block;font-size:18px}.mini-team-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:1px}.premium-label{letter-spacing:.08em;font-weight:900;font-size:11px;color:#8b6a00}@media(max-width:650px){.pulse-item{grid-template-columns:36px minmax(0,1fr);}.pulse-score{grid-column:2}.health-grid{grid-template-columns:1fr 1fr}.recap-podium{grid-template-columns:1fr}.recap-stats{grid-template-columns:1fr 1fr}.digital-scorecard{min-width:670px}}
+.projected-grid{display:grid;gap:8px;margin-top:12px}.projected-row{display:grid;grid-template-columns:42px minmax(120px,1fr) 100px 100px;gap:8px;align-items:center;border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:#fff}.projected-row .rank{font-size:20px;font-weight:900}.projected-row .projected-points{text-align:right;font-weight:900;color:var(--green)}.projected-row .official-points{text-align:right;font-size:12px;color:var(--muted)}
+.broadcast-launch{background:linear-gradient(135deg,#08253b,#0f4b67);color:#fff!important}.broadcast-overlay{position:fixed;inset:0;z-index:99999;background:radial-gradient(circle at 75% 10%,#164f70 0,#08253b 38%,#03131f 100%);color:#fff;display:none;overflow:auto}.broadcast-overlay.open{display:block}.broadcast-shell{max-width:1500px;margin:0 auto;padding:28px}.broadcast-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}.broadcast-brand{font-family:Georgia,"Times New Roman",serif;font-size:54px;font-weight:900;color:#f3c14b;text-shadow:0 3px 0 rgba(0,0,0,.35)}.broadcast-sub{font-size:18px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}.broadcast-close{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2)}.broadcast-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:18px;margin-top:24px}.broadcast-panel{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:20px;backdrop-filter:blur(8px)}.broadcast-panel h2{margin:0 0 12px;font-size:24px}.broadcast-leader{font-size:42px;font-weight:900;color:#f3c14b}.broadcast-rows{display:grid;gap:9px}.broadcast-row{display:grid;grid-template-columns:48px minmax(0,1fr) 120px 90px;gap:10px;align-items:center;background:rgba(255,255,255,.08);border-radius:12px;padding:12px 14px}.broadcast-row .b-rank{font-size:26px;font-weight:900}.broadcast-row strong{font-size:19px}.broadcast-row .b-pts{text-align:right;font-size:20px;font-weight:900;color:#f3c14b}.broadcast-row .b-thru{text-align:right;opacity:.75}.broadcast-ticker{margin-top:18px;padding:12px 16px;border-top:1px solid rgba(255,255,255,.16);border-bottom:1px solid rgba(255,255,255,.16);font-weight:800;letter-spacing:.03em}.winner-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.winner-preview{margin-top:12px}.winner-preview img{max-width:100%;border-radius:14px;border:1px solid var(--line);display:block}.winner-preview a{display:inline-block;margin-top:9px;text-decoration:none}.projected-note{margin-top:8px;font-size:12px;color:var(--muted)}
+@media(max-width:800px){.broadcast-shell{padding:16px}.broadcast-brand{font-size:34px}.broadcast-grid{grid-template-columns:1fr}.broadcast-row{grid-template-columns:36px minmax(0,1fr) 90px 70px}.broadcast-row strong{font-size:15px}.broadcast-row .b-pts{font-size:16px}.projected-row{grid-template-columns:34px minmax(90px,1fr) 84px 80px}}
+
 </style>
 </head>
 <body>
@@ -246,6 +250,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
     <button class="home-action" type="button" data-home-go="teams"><span>👥</span>Teams</button>
     <button class="home-action" type="button" data-home-go="players"><span>⛳</span>Players</button>
     <button class="home-action" type="button" data-home-go="course"><span>🗺️</span>Course</button>
+    <button class="home-action broadcast-launch" type="button" id="openBroadcast"><span>📺</span>Broadcast Mode</button>
   </div>
 </div>
 
@@ -261,6 +266,8 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div class="card" id="postRoundRecapCard">
   <div class="row between"><div><div class="premium-label">TOURNAMENT STORY</div><h2 style="margin:3px 0 0">Tournament Recap</h2><div id="recapSub" class="status">Builds automatically as scores are posted.</div></div><span id="recapStatusBadge" class="badge">IN PROGRESS</span></div>
   <div id="postRoundRecap"></div>
+  <div class="winner-tools"><button type="button" id="generateWinnerGraphic" class="primary">🏆 Create Winner Graphic</button><span id="winnerGraphicMsg" class="status"></span></div>
+  <div id="winnerGraphicPreview" class="winner-preview"></div>
 </div>
 </section>
 
@@ -268,6 +275,11 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div class="card">
 <div class="row between"><div><h2 style="margin:0">Live Leaderboard</h2><div class="status">Cup points update automatically as scores are entered.</div></div><span id="pointScaleBadge" class="badge">6–5–4–3–2–1</span></div>
 <div id="leaderboard" class="leader" style="margin-top:14px"></div>
+</div>
+<div class="card" id="projectedStandingsCard">
+  <div class="row between"><div><div class="premium-label">IF PLAY STOPPED RIGHT NOW</div><h2 style="margin:3px 0 0">Projected Standings</h2><div class="status">Includes provisional points from holes that are still waiting on other teams.</div></div><span class="badge" style="background:#fff3c8;color:#6c5200">UNOFFICIAL</span></div>
+  <div id="projectedStandings" class="projected-grid"></div>
+  <div class="projected-note">Official Cup points are unchanged until every active team finishes the hole.</div>
 </div>
 <div class="card">
 <div class="row between"><div><h2 style="margin:0">Live Hole Scores</h2><div class="status">Scores appear as soon as each team enters them. Official Cup points post when all teams finish the hole.</div></div><span class="badge">LIVE</span></div>
@@ -550,6 +562,17 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
+<div id="broadcastOverlay" class="broadcast-overlay" aria-hidden="true">
+  <div class="broadcast-shell">
+    <div class="broadcast-top"><div><div class="broadcast-brand">EllenG Cup</div><div class="broadcast-sub">Live Tournament Broadcast</div></div><button type="button" id="closeBroadcast" class="broadcast-close">Exit Broadcast</button></div>
+    <div id="broadcastTicker" class="broadcast-ticker">Waiting for tournament action…</div>
+    <div class="broadcast-grid">
+      <div class="broadcast-panel"><h2>Live Standings</h2><div id="broadcastStandings" class="broadcast-rows"></div></div>
+      <div class="broadcast-panel"><h2>Tournament Now</h2><div class="status" style="color:rgba(255,255,255,.7)">CURRENT LEADER</div><div id="broadcastLeader" class="broadcast-leader">—</div><div id="broadcastLeaderSub" style="margin-top:5px;opacity:.78">No official points yet</div><div style="margin-top:22px" class="status">COURSE</div><strong id="broadcastCourse" style="display:block;font-size:20px;margin-top:4px">—</strong><div style="margin-top:18px" class="status">HOLES COMPLETE</div><strong id="broadcastHoles" style="display:block;font-size:30px;margin-top:4px">0 / 18</strong><div style="margin-top:18px" class="status">GATOR / CARGO</div><strong id="broadcastSpecial" style="display:block;font-size:17px;margin-top:4px">Secret / Not awarded</strong></div>
+    </div>
+  </div>
+</div>
+
 <script>
 (()=>{
 const APP_VERSION=document.querySelector('meta[name="elleng-app-version"]')?.content||"1.0.0";
@@ -762,6 +785,58 @@ function renderLiveHoleScores(){
 
 function teamAccent(i){const colors=["#d5a72c","#087c42","#315b9b","#8b1e2d","#7a4ea3","#d36b2c","#2b7a78","#6d5b4b","#5c6f7b"];return colors[Math.abs(Number(i)||0)%colors.length]}
 function scoreClass(rel){if(!rel||rel==="—")return "";if(rel==="0")return "score-even";return rel.startsWith("−")?"score-good":"score-bad"}
+function projectedTotals(){
+ const official=totals();
+ const out=teams.map((_,i)=>({team:i,official:official[i]?.pts||0,projected:0,thru:official[i]?.thru||0,provisionalHoles:0}));
+ for(let h=1;h<=18;h++){
+   const vals=teams.map((_,i)=>{const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&x.score!=null);return r?Number(r.score):NaN});
+   const entered=vals.filter(Number.isFinite).length;
+   if(!entered)continue;
+   let pts;
+   if(entered===teams.length)pts=pointsForHole(h);
+   else if(tournament&&Number(tournament.gator_hole)===h&&tournament.gator_revealed){
+     pts=Array(teams.length).fill(null);const valid=vals.filter(Number.isFinite),low=Math.min(...valid),w=[];vals.forEach((v,i)=>{if(Number.isFinite(v)&&v===low)w.push(i)});w.forEach(i=>pts[i]=12/w.length);vals.forEach((v,i)=>{if(Number.isFinite(v)&&pts[i]==null)pts[i]=0});
+   } else pts=normalPoints(vals);
+   out.forEach((x,i)=>{if(pts[i]!=null&&Number.isFinite(Number(pts[i])))x.projected+=Number(pts[i]);if(entered<teams.length&&pts[i]!=null)x.provisionalHoles++});
+ }
+ if(tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""){
+   const ti=Number(tournament.final_cargo_team);if(out[ti])out[ti].projected+=Number(tournament.final_cargo_points||6);
+ }
+ return out.sort((a,b)=>b.projected-a.projected||b.thru-a.thru||a.team-b.team);
+}
+function renderProjectedStandings(){
+ const root=$("projectedStandings");if(!root)return;const arr=projectedTotals();
+ const any=(scores||[]).some(x=>x.score!=null);if(!any){root.innerHTML='<div class="note">Projected standings will appear after the first score is entered.</div>';return}
+ root.innerHTML=arr.map((x,n)=>{const delta=x.projected-x.official;return `<div class="projected-row"><div class="rank">${n+1}</div><div><strong><span class="mini-team-dot" style="background:${teamAccent(x.team)}"></span>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div class="status">${x.provisionalHoles?`${x.provisionalHoles} provisional hole${x.provisionalHoles===1?'':'s'}`:'All posted points official'}</div></div><div class="projected-points">${x.projected.toFixed(x.projected%1?1:0)} proj.</div><div class="official-points">${x.official.toFixed(x.official%1?1:0)} official${delta>0?` • +${delta.toFixed(delta%1?1:0)}`:''}</div></div>`}).join('');
+}
+function latestTournamentMoment(){
+ const ev=(scores||[]).filter(x=>x.score!=null).map(x=>{const h=Number(x.hole),ti=Number(x.team_index),g=relativeGolf(Number(x.score),parForHole(h));return {h,ti,score:Number(x.score),g}}).sort((a,b)=>b.h-a.h||b.ti-a.ti)[0];
+ if(!ev)return 'Waiting for the first score to be posted.';
+ return `${teams[ev.ti]?.name||`Team ${ev.ti+1}`} • Hole ${ev.h} • ${ev.g.rel} ${ev.g.label||''} • ${ev.score} stroke${ev.score===1?'':'s'}`;
+}
+function renderBroadcast(){
+ const ov=$("broadcastOverlay");if(!ov)return;const arr=projectedTotals();const official=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team),leader=official[0],hasLeader=leader&&leader.pts>0;
+ $("broadcastTicker").textContent=latestTournamentMoment();
+ $("broadcastStandings").innerHTML=arr.map((x,n)=>`<div class="broadcast-row"><div class="b-rank">${n+1}</div><div><strong><span class="mini-team-dot" style="background:${teamAccent(x.team)}"></span>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div style="opacity:.65;font-size:12px">${x.provisionalHoles?'Projected / provisional':'Official posted holes'}</div></div><div class="b-pts">${x.projected.toFixed(x.projected%1?1:0)} pts</div><div class="b-thru">${x.thru?`Thru ${x.thru}`:'—'}</div></div>`).join('')||'<div style="opacity:.75">Waiting for scores…</div>';
+ $("broadcastLeader").textContent=hasLeader?(teams[leader.team]?.name||'—'):'—';$("broadcastLeaderSub").textContent=hasLeader?`${leader.pts.toFixed(leader.pts%1?1:0)} official Cup pts • Thru ${leader.thru||0}`:'No official Cup points yet';
+ const c=activeCourse(),r=activeCourseRoute();$("broadcastCourse").textContent=`${c.name} • ${r.label}`;
+ let complete=0;for(let h=1;h<=18;h++){if(teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null)))complete++}$("broadcastHoles").textContent=`${complete} / 18`;
+ const g=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Gator: Hole ${Number(tournament.gator_hole)}`:'Gator: Secret';const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`Cargo: ${teams[Number(tournament.final_cargo_team)]?.name||'Awarded'}`:'Cargo: Not awarded';$("broadcastSpecial").textContent=`${g} • ${cargo}`;
+}
+async function openBroadcastMode(){const ov=$("broadcastOverlay");if(!ov)return;ov.classList.add('open');ov.setAttribute('aria-hidden','false');renderBroadcast();try{await ov.requestFullscreen?.()}catch(e){}}
+async function closeBroadcastMode(){const ov=$("broadcastOverlay");if(!ov)return;ov.classList.remove('open');ov.setAttribute('aria-hidden','true');try{if(document.fullscreenElement)await document.exitFullscreen()}catch(e){}}
+function allHolesComplete(){return teams.length>0&&Array.from({length:18},(_,i)=>i+1).every(h=>teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null)))}
+async function createWinnerGraphic(){
+ const msg=$("winnerGraphicMsg"),preview=$("winnerGraphicPreview");if(!msg||!preview)return;const complete=String(tournament?.status||'').toUpperCase()==='COMPLETE'||allHolesComplete();if(!complete){msg.textContent='Available after the tournament is complete.';return}
+ const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team),win=ranking[0];if(!win){msg.textContent='No final results available yet.';return}
+ const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=675;const ctx=canvas.getContext('2d');
+ const grad=ctx.createLinearGradient(0,0,1200,675);grad.addColorStop(0,'#061827');grad.addColorStop(.6,'#08253b');grad.addColorStop(1,'#123d55');ctx.fillStyle=grad;ctx.fillRect(0,0,1200,675);
+ ctx.fillStyle='#d5a72c';ctx.fillRect(0,0,1200,12);ctx.fillRect(0,663,1200,12);ctx.textAlign='center';ctx.fillStyle='#d5a72c';ctx.font='900 70px Georgia, serif';ctx.fillText('EllenG Cup',600,120);ctx.fillStyle='#ffffff';ctx.font='700 30px Arial';ctx.fillText('TOURNAMENT CHAMPIONS',600,176);
+ ctx.fillStyle='#ffffff';ctx.font='900 66px Arial';ctx.fillText(teams[win.team]?.name||`Team ${win.team+1}`,600,305);ctx.fillStyle='#d5a72c';ctx.font='900 44px Arial';ctx.fillText(`${win.pts.toFixed(win.pts%1?1:0)} CUP POINTS`,600,365);
+ const c=activeCourse(),r=activeCourseRoute();ctx.fillStyle='rgba(255,255,255,.82)';ctx.font='26px Arial';ctx.fillText(`${c.name} • ${r.label}`,600,430);const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`Final Cargo: ${teams[Number(tournament.final_cargo_team)]?.name||'Awarded'}`:'Final Cargo: —';ctx.font='22px Arial';ctx.fillText(cargo,600,475);ctx.fillStyle='rgba(255,255,255,.65)';ctx.font='20px Arial';ctx.fillText('PLAY BAD. LOOK GOOD. • ELLENG CUP',600,590);
+ const url=canvas.toDataURL('image/png');preview.innerHTML=`<img src="${url}" alt="EllenG Cup winner graphic"><a class="primary" id="winnerDownload" download="EllenG-Cup-Champions.png" href="${url}" style="padding:11px 14px;border-radius:10px;color:white;font-weight:800">Save Winner Graphic</a> <button type="button" class="secondary" id="winnerShare">Share</button>`;msg.textContent='Winner graphic ready.';
+ const share=$("winnerShare");if(share)share.onclick=async()=>{try{const blob=await (await fetch(url)).blob(),file=new File([blob],'EllenG-Cup-Champions.png',{type:'image/png'});if(navigator.canShare?.({files:[file]}))await navigator.share({files:[file],title:'EllenG Cup Champions'});else if(navigator.share)await navigator.share({title:'EllenG Cup Champions',text:`${teams[win.team]?.name||'Champions'} won the EllenG Cup.`});else msg.textContent='Use Save Winner Graphic to save or share it.'}catch(e){if(e?.name!=='AbortError')msg.textContent='Use Save Winner Graphic to save or share it.'}};
+}
 function renderTournamentPulse(){
  const root=$("tournamentPulse");if(!root)return;
  const teamsStarted=teams.map((_,ti)=>(scores||[]).some(x=>Number(x.team_index)===ti&&x.score!=null));
@@ -1576,7 +1651,7 @@ function renderAll(){
    const active=document.querySelector('.tab.active')?.dataset.view;
    if(["players","handicap","trash","scoring","admin"].includes(active||""))showView("home");
  }
- renderHome();renderTournamentPulse();renderTournamentRecap();renderLeaderboard();renderDigitalScorecard();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderScoring();renderTrashTalk();renderAdmin();renderTournamentHealth();
+ renderHome();renderTournamentPulse();renderTournamentRecap();renderLeaderboard();renderProjectedStandings();renderDigitalScorecard();renderBroadcast();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderScoring();renderTrashTalk();renderAdmin();renderTournamentHealth();
 }
 let syncBusy=false;
 async function syncLive(){
@@ -1885,6 +1960,11 @@ if(createMissingLoginsBtn)createMissingLoginsBtn.addEventListener("click",async(
  catch(e){if(msg)msg.textContent=e?.message||"Unable to create missing logins."}
  finally{createMissingLoginsBtn.disabled=false}
 });
+const openBroadcastBtn=$("openBroadcast");if(openBroadcastBtn)openBroadcastBtn.addEventListener("click",openBroadcastMode);
+const closeBroadcastBtn=$("closeBroadcast");if(closeBroadcastBtn)closeBroadcastBtn.addEventListener("click",closeBroadcastMode);
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("broadcastOverlay")?.classList.contains("open"))closeBroadcastMode()});
+const winnerBtn=$("generateWinnerGraphic");if(winnerBtn)winnerBtn.addEventListener("click",createWinnerGraphic);
+setInterval(()=>{if($("broadcastOverlay")?.classList.contains("open"))renderBroadcast()},3000);
 $("trashPostBtn").addEventListener("click",postTrashTalk);
 $("trashMessage").addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter")postTrashTalk()});
 document.querySelectorAll("[data-trash-emoji]").forEach(b=>b.addEventListener("click",()=>{const ta=$("trashMessage");ta.value=(ta.value+(ta.value?" ":"")+b.dataset.trashEmoji).slice(0,280);ta.focus()}));
