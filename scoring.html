@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.0.0">
+<meta name="elleng-app-version" content="2.0.1">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -2399,11 +2399,16 @@ function renderTopAccountAvatar(){
    el.innerHTML=`<img src="${esc(photo)}" alt="${esc(g.name||"Player")}" onerror="this.style.display='none';this.parentElement.textContent='${esc(initials)}'">`;
  }else el.textContent=initials;
 }
+
+function safeFeatureRender(name,fn){
+ try{fn()}
+ catch(e){console.warn(`${name} render skipped`,e)}
+}
 function renderAll(){
  if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • 18 HOLES`;
  $("liveBadge").textContent=(tournament?.status||"setup").toUpperCase();
  const playerName=currentGolferIndex!=null?String(draftState?.golfers?.[currentGolferIndex]?.name||""):"";
- $("roleLabel").textContent=isCommissioner?"Commissioner":captainTeam!=null?`${teams[captainTeam].name} Captain`:(playerName||"Player");
+ $("roleLabel").textContent=isCommissioner?"Commissioner":captainTeam!=null?`${teams[captainTeam]?.name||`Team ${captainTeam+1}`} Captain`:(playerName||"Player");
  $("userLabel").textContent=user?`${visibleLogin()}${playerName?` • ${playerName}`:" • Login not linked to a golfer yet"}`:"";
  renderTopAccountAvatar();
  $("authBtn").classList.toggle("hidden",!!user);
@@ -2420,10 +2425,41 @@ function renderAll(){
    const active=document.querySelector('.tab.active')?.dataset.view;
    if(["players","handicap","trash","scoring","admin"].includes(active||""))showView("home");
  }
- renderHome();renderFeaturedMatchup();renderPlayerSpotlight();renderWhatChangedFeed();renderOnTheClock();renderPaceTracker();renderLeadChangeAlert();renderMomentumTracker();renderTournamentPulse();renderTournamentRecap();renderTournamentAwards();renderLeaderboard();renderHoleBattleTimeline();renderDigitalScorecard();renderClubhouse();renderBroadcast();renderTeams();renderPlayersDirectory();renderCourse();renderCourseHoleCard();renderProgress();renderSelfHandicap();renderSelfProfilePhoto();renderScoring();renderTrashTalk();renderAdmin();renderTournamentHealth();renderCommissionerControlRoom();
- try{renderHoleMatchup()}catch(e){console.warn("Hole Matchup render skipped",e)}
- try{renderDraftHistory()}catch(e){console.warn("Draft History render skipped",e)}
- try{renderPlayerProfileCards()}catch(e){console.warn("Player Profile Cards render skipped",e)}
+
+ // CORE APP: these must always render before optional experience features.
+ renderHome();
+ renderLeaderboard();
+ renderDigitalScorecard();
+ renderBroadcast();
+ renderTeams();
+ renderPlayersDirectory();
+ renderCourse();
+ renderProgress();
+ renderSelfHandicap();
+ renderSelfProfilePhoto();
+ renderScoring();
+ renderTrashTalk();
+ renderAdmin();
+ renderTournamentHealth();
+ renderCommissionerControlRoom();
+
+ // OPTIONAL EXPERIENCE FEATURES: no feature is allowed to interrupt core scoring.
+ safeFeatureRender("Featured Matchup",renderFeaturedMatchup);
+ safeFeatureRender("Player Spotlight",renderPlayerSpotlight);
+ safeFeatureRender("What Changed",renderWhatChangedFeed);
+ safeFeatureRender("On the Clock",renderOnTheClock);
+ safeFeatureRender("Pace Tracker",renderPaceTracker);
+ safeFeatureRender("Lead Change",renderLeadChangeAlert);
+ safeFeatureRender("Momentum Tracker",renderMomentumTracker);
+ safeFeatureRender("Tournament Pulse",renderTournamentPulse);
+ safeFeatureRender("Tournament Recap",renderTournamentRecap);
+ safeFeatureRender("Tournament Awards",renderTournamentAwards);
+ safeFeatureRender("Hole Battle",renderHoleBattleTimeline);
+ safeFeatureRender("Clubhouse",renderClubhouse);
+ safeFeatureRender("Course Hole Card",renderCourseHoleCard);
+ safeFeatureRender("Hole Matchup",renderHoleMatchup);
+ safeFeatureRender("Draft History",renderDraftHistory);
+ safeFeatureRender("Player Profile Cards",renderPlayerProfileCards);
 }
 let syncBusy=false;
 async function syncLive(){
@@ -2455,7 +2491,7 @@ async function syncLive(){
   if(user&&(!tournamentArchives.length))await loadTournamentArchives();
   const adminOpen=isCommissioner&&document.querySelector('.tab.active')?.dataset.view==='admin';
   if(!adminOpen)renderAll();
- }catch(e){console.error("Live sync failed:",e);setSyncStatus("error","Sync issue")}
+ }catch(e){console.error("Live data sync failed:",e);setSyncStatus("error","Sync issue")}
  finally{syncBusy=false}
 }
 setInterval(syncLive,5000);
