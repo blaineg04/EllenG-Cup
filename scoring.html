@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.1.12">
+<meta name="elleng-app-version" content="1.1.13">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -20,7 +20,7 @@ input,select{min-height:44px;border:1px solid #bdc8ce;border-radius:9px;padding:
 .leader{display:grid;gap:8px}.leader-row{display:grid;grid-template-columns:42px minmax(100px,1fr) 90px 82px;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:10px}
 .place{font-weight:900;font-size:20px}.pts{font-weight:900;color:var(--green);text-align:right}.thru{text-align:right;color:var(--muted);font-size:13px}
 .holebar{display:grid;grid-template-columns:repeat(9,minmax(48px,1fr));gap:6px;overflow:auto}.holebtn{padding:10px 6px;background:#edf1f3}.holebtn.active{background:var(--green);color:white}.holebtn.gator{outline:2px solid var(--gold)}
-.score-grid{display:grid;grid-template-columns:minmax(105px,1fr) 110px 92px;gap:8px;align-items:center}.score-grid .head{font-size:12px;color:var(--muted);font-weight:700}.score-input{width:92px;text-align:center;font-size:20px;font-weight:800}.golf-result{display:inline-block;margin-top:5px;padding:3px 7px;border-radius:999px;background:#edf1f3;font-size:12px;font-weight:800;white-space:nowrap}.point{font-weight:800;text-align:center}
+.score-grid{display:grid;grid-template-columns:minmax(105px,1fr) 110px 92px;gap:8px;align-items:center}.score-grid .head{font-size:12px;color:var(--muted);font-weight:700}.score-input{width:92px;text-align:center;font-size:20px;font-weight:800}.golf-result{display:inline-block;margin-top:5px;padding:3px 7px;border-radius:999px;background:#edf1f3;font-size:12px;font-weight:800;white-space:nowrap}.self-score-summary{display:grid;grid-template-columns:repeat(2,minmax(140px,1fr));gap:10px;margin-top:12px}.self-score-box{border:1px solid var(--line);border-radius:12px;background:#f8fafb;padding:12px;text-align:center}.self-score-box small{display:block;color:var(--muted);font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px}.self-score-box strong{display:block;font-size:26px;line-height:1.05}.self-score-box .term{font-size:15px;margin-top:5px;font-weight:900;color:var(--green)}@media(max-width:560px){.self-score-summary{grid-template-columns:1fr 1fr}.self-score-box strong{font-size:22px}}.point{font-weight:800;text-align:center}
 .mobile-stepper{display:none}.mobile-stepper button{min-width:34px;height:34px;padding:0;border-radius:8px;font-size:22px;font-weight:900;line-height:1}.mobile-stepper .step-down,.mobile-stepper .step-up,.mobile-stepper .step-zero{background:#e9eef1;color:var(--ink)}.mobile-score-input{display:none}.mobile-only{display:none}.mobile-strokes{display:none}.mobile-hole-guide{display:none}
 
 .trash-feed{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow:auto;padding-right:2px}.trash-msg{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}.trash-meta{display:flex;gap:7px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:5px}.trash-who{font-weight:900}.trash-team{display:inline-block;border-radius:999px;padding:2px 7px;background:#edf1f3;font-size:11px;font-weight:800}.trash-time{font-size:11px;color:var(--muted)}.trash-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.4}.trash-compose{display:grid;grid-template-columns:minmax(120px,1fr) minmax(130px,1fr) 120px;gap:8px}.trash-compose input,.trash-compose select,.trash-compose textarea{width:100%}.trash-compose textarea{grid-column:1/-1;min-height:82px;resize:vertical;border:1px solid #bdc8ce;border-radius:9px;padding:10px;font:inherit}.emoji-row{display:flex;gap:6px;flex-wrap:wrap}.emoji-row button{padding:7px 10px;background:#edf1f3}.trash-delete{padding:5px 8px;font-size:11px;background:#f3e6e8;color:#8b1e2d}
@@ -340,7 +340,11 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   <div id="selfScoreContext" class="note" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb">Your player account is loading. Choose a hole after your profile is linked.</div>
   <div class="admin-grid" style="margin-top:12px">
     <label><small>Hole</small><select id="selfScoreHole"><option value="1">Hole 1</option><option value="2">Hole 2</option><option value="3">Hole 3</option><option value="4">Hole 4</option><option value="5">Hole 5</option><option value="6">Hole 6</option><option value="7">Hole 7</option><option value="8">Hole 8</option><option value="9">Hole 9</option><option value="10">Hole 10</option><option value="11">Hole 11</option><option value="12">Hole 12</option><option value="13">Hole 13</option><option value="14">Hole 14</option><option value="15">Hole 15</option><option value="16">Hole 16</option><option value="17">Hole 17</option><option value="18">Hole 18</option></select></label>
-    <label><small>Score</small><input id="selfScoreInput" type="number" min="1" max="20" step="1" inputmode="numeric" placeholder="1–20 strokes"></label>
+    <label><small>Strokes</small><input id="selfScoreInput" type="number" min="1" max="20" step="1" inputmode="numeric" placeholder="Enter strokes"></label>
+  </div>
+  <div class="self-score-summary">
+    <div class="self-score-box"><small>Hole Par</small><strong id="selfScorePar">Par 4</strong></div>
+    <div class="self-score-box"><small>Golf Score</small><strong id="selfScoreRelative">—</strong><div id="selfScoreTerm" class="term">Enter strokes</div></div>
   </div>
   <div class="note" style="margin-top:10px">Standard EllenG: any golfer on the team can update the Front 9 scramble team score. On the Back 9 shamble, each golfer can update only their own individual score. Split-Pair: each golfer can update only their own 2-man pair score.</div>
   <div class="row" style="margin-top:12px"><button id="saveSelfScore" class="primary" type="button">Save My Score</button><button id="clearSelfScore" class="secondary" type="button">Clear This Score</button></div>
@@ -1209,6 +1213,41 @@ function selfGolferTeamIndex(idx){
  const found=ts.findIndex(t=>(Array.isArray(t?.roster)?t.roster:[]).some(r=>Number(typeof r==="object"?r?.golferIndex:r)===Number(idx)));
  return found>=0?found:null;
 }
+function golfRelativeLabel(diff){
+ if(diff===0)return "E";
+ return diff>0?`+${diff}`:String(diff);
+}
+function golfScoreTerm(diff,strokes,par){
+ if(strokes===1){
+   if(par===3)return "Hole-in-One • Eagle";
+   if(par===4)return "Hole-in-One • Albatross";
+   if(par===5)return "Hole-in-One • Condor";
+   return "Hole-in-One";
+ }
+ if(diff<=-4)return "Condor";
+ if(diff===-3)return "Albatross";
+ if(diff===-2)return "Eagle";
+ if(diff===-1)return "Birdie";
+ if(diff===0)return "Par";
+ if(diff===1)return "Bogey";
+ if(diff===2)return "Double Bogey";
+ if(diff===3)return "Triple Bogey";
+ if(diff===4)return "Quadruple Bogey";
+ return `${diff>0?"+":""}${diff} Over Par`;
+}
+function renderSelfGolfScore(){
+ const h=Number($("selfScoreHole")?.value||1);
+ renderSelfGolfScore();
+ const par=Number(parForHole(h))||4;
+ const raw=$("selfScoreInput")?.value?.trim?.()||"";
+ const p=$("selfScorePar"),rel=$("selfScoreRelative"),term=$("selfScoreTerm");
+ if(p)p.textContent=`Par ${par}`;
+ if(raw===""||!Number.isFinite(Number(raw))){if(rel)rel.textContent="—";if(term)term.textContent="Enter strokes";return}
+ const strokes=Number(raw);
+ const diff=strokes-par;
+ if(rel)rel.textContent=golfRelativeLabel(diff);
+ if(term)term.textContent=golfScoreTerm(diff,strokes,par);
+}
 function renderSelfScoreContext(){
  const box=$("selfScoreContext");if(!box||!draftState)return;
  const idx=currentGolferIndex;
@@ -1284,17 +1323,21 @@ async function saveSelfScore(clear=false){
  const h=Number($("selfScoreHole").value);
  const raw=$("selfScoreInput").value.trim();
  if(idx==null){msg.textContent="Your login is not linked to a golfer profile yet.";return}
- if(!clear&&raw===""){msg.textContent="Enter your score first.";return}
+ if(!clear&&raw===""){msg.textContent="Enter your strokes first.";return}
+ if(!clear&&(!Number.isInteger(Number(raw))||Number(raw)<1||Number(raw)>20)){msg.textContent="Enter a whole-number stroke score from 1 to 20.";return}
  const score=clear?"":raw;
  btn.disabled=true;msg.textContent=clear?"Clearing…":"Saving…";
  try{
    const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"update_score",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,hole:h,score}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
    await loadBase();await loadScores();renderAll();
-   if(clear){$("selfScoreInput").value="";msg.textContent=`Score cleared for Hole ${h}.`;}
-   else if(data.mode==="player_shamble")msg.textContent=`Saved your personal shamble score for Hole ${h}.`;
-   else if(data.mode==="split_pair")msg.textContent=`Saved your Pair ${Number(data.pair_index)+1} score for Hole ${h}.`;
-   else msg.textContent=`Saved ${draftState?.teams?.[data.team_index]?.name||"your team"} score for Hole ${h}.`;
+   if(clear){$("selfScoreInput").value="";renderSelfGolfScore();msg.textContent=`Score cleared for Hole ${h}.`;}
+   else {
+     const par=Number(parForHole(h))||4,diff=Number(raw)-par,summary=`${golfRelativeLabel(diff)} • ${golfScoreTerm(diff,Number(raw),par)}`;
+     if(data.mode==="player_shamble")msg.textContent=`Saved your personal shamble score for Hole ${h}: ${raw} strokes (${summary}).`;
+     else if(data.mode==="split_pair")msg.textContent=`Saved your Pair ${Number(data.pair_index)+1} score for Hole ${h}: ${raw} strokes (${summary}).`;
+     else msg.textContent=`Saved ${draftState?.teams?.[data.team_index]?.name||"your team"} score for Hole ${h}: ${raw} strokes (${summary}).`;
+   }
  }catch(e){msg.textContent=e?.message||"Unable to save score."}
  finally{btn.disabled=false}
 }
@@ -1588,7 +1631,8 @@ if($("courseBrowseSelect"))$("courseBrowseSelect").addEventListener("change",()=
 if($("courseBrowseRouteSelect"))$("courseBrowseRouteSelect").addEventListener("change",renderCourse);
 $("selfGolferSelect").addEventListener("change",renderSelfHandicap);
 $("saveSelfHandicap").addEventListener("click",saveSelfHandicap);
-$("selfScoreHole").addEventListener("change",renderSelfScoreContext);
+$("selfScoreHole").addEventListener("change",()=>{renderSelfScoreContext();renderSelfGolfScore()});
+$("selfScoreInput").addEventListener("input",renderSelfGolfScore);
 $("saveSelfScore").addEventListener("click",()=>saveSelfScore(false));
 $("clearSelfScore").addEventListener("click",()=>saveSelfScore(true));
 function bandFromHandicapValue(v){const raw=String(v??"").trim();if(raw==="")return null;const n=Number(raw);if(!Number.isFinite(n)||n<0||n>54)return null;return n<=9?"A":n<=17?"B":n<=25?"C":"D"}
