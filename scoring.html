@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.3.2">
+<meta name="elleng-app-version" content="1.4.0">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -179,6 +179,16 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .broadcast-launch{background:linear-gradient(135deg,#08253b,#0f4b67);color:#fff!important}.broadcast-overlay{position:fixed;inset:0;z-index:99999;background:radial-gradient(circle at 75% 10%,#164f70 0,#08253b 38%,#03131f 100%);color:#fff;display:none;overflow:auto}.broadcast-overlay.open{display:block}.broadcast-shell{max-width:1500px;margin:0 auto;padding:28px}.broadcast-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}.broadcast-brand{font-family:Georgia,"Times New Roman",serif;font-size:54px;font-weight:900;color:#f3c14b;text-shadow:0 3px 0 rgba(0,0,0,.35)}.broadcast-sub{font-size:18px;letter-spacing:.08em;text-transform:uppercase;opacity:.8}.broadcast-close{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2)}.broadcast-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:18px;margin-top:24px}.broadcast-panel{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:20px;backdrop-filter:blur(8px)}.broadcast-panel h2{margin:0 0 12px;font-size:24px}.broadcast-leader{font-size:42px;font-weight:900;color:#f3c14b}.broadcast-rows{display:grid;gap:9px}.broadcast-row{display:grid;grid-template-columns:48px minmax(0,1fr) 120px 90px;gap:10px;align-items:center;background:rgba(255,255,255,.08);border-radius:12px;padding:12px 14px}.broadcast-row .b-rank{font-size:26px;font-weight:900}.broadcast-row strong{font-size:19px}.broadcast-row .b-pts{text-align:right;font-size:20px;font-weight:900;color:#f3c14b}.broadcast-row .b-thru{text-align:right;opacity:.75}.broadcast-ticker{margin-top:18px;padding:12px 16px;border-top:1px solid rgba(255,255,255,.16);border-bottom:1px solid rgba(255,255,255,.16);font-weight:800;letter-spacing:.03em}.winner-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.winner-preview{margin-top:12px}.winner-preview img{max-width:100%;border-radius:14px;border:1px solid var(--line);display:block}.winner-preview a{display:inline-block;margin-top:9px;text-decoration:none}.projected-note{margin-top:8px;font-size:12px;color:var(--muted)}
 @media(max-width:800px){.broadcast-shell{padding:16px}.broadcast-brand{font-size:34px}.broadcast-grid{grid-template-columns:1fr}.broadcast-row{grid-template-columns:36px minmax(0,1fr) 90px 70px}.broadcast-row strong{font-size:15px}.broadcast-row .b-pts{font-size:16px}.projected-row{grid-template-columns:34px minmax(90px,1fr) 84px 80px}}
 
+
+.lead-alert{display:none;margin-bottom:14px;padding:14px 16px;border-radius:14px;border:2px solid var(--gold);background:linear-gradient(135deg,#fff8df,#fff);box-shadow:0 8px 24px rgba(8,37,59,.08)}
+.lead-alert.show{display:block}.lead-alert .lead-title{font-size:12px;font-weight:900;letter-spacing:.09em;color:#7a5b00}.lead-alert .lead-main{font-size:22px;font-weight:950;margin-top:3px}.lead-alert .lead-sub{font-size:13px;color:var(--muted);margin-top:4px}
+.momentum-grid,.awards-grid,.control-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:12px}
+.momentum-card,.award-card,.control-card{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;position:relative;overflow:hidden}
+.momentum-card:before,.award-card:before,.control-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent,var(--gold))}
+.momentum-card strong,.award-card strong,.control-card strong{display:block;font-size:18px;margin-top:4px}.momentum-card span,.award-card span,.control-card span{font-size:12px;color:var(--muted)}
+.control-alert{margin-top:10px;padding:10px 12px;border-radius:10px;background:#f8fafb;border:1px solid var(--line);font-size:13px}
+.award-kicker{font-size:11px;font-weight:900;letter-spacing:.08em;color:var(--muted)}
+@media(max-width:560px){.lead-alert .lead-main{font-size:18px}.momentum-grid,.awards-grid,.control-grid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -259,6 +269,11 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   <div id="homeSpecialText" class="note" style="margin-top:8px">The Gator Hole is secret until the Commissioner reveals it. Final Cargo adds 6 points to the selected winner.</div>
 </div>
 
+<div id="leadChangeAlert" class="lead-alert"><div class="lead-title">LEAD CHANGE</div><div id="leadChangeMain" class="lead-main">—</div><div id="leadChangeSub" class="lead-sub"></div></div>
+<div class="card" id="momentumCard">
+  <div class="row between"><div><div class="premium-label">WHO'S HOT</div><h2 style="margin:3px 0 0">Momentum Tracker</h2><div class="status">Best teams over the most recent completed holes.</div></div><span class="badge">LAST 3</span></div>
+  <div id="momentumTracker" class="momentum-grid"></div>
+</div>
 <div class="card" id="tournamentPulseCard">
   <div class="row between"><div><div class="premium-label">LIVE EXPERIENCE</div><h2 style="margin:3px 0 0">Tournament Pulse</h2><div class="status">The latest scoring moments across the EllenG Cup.</div></div><span class="badge" style="background:#edf7f1;color:#087c42">LIVE</span></div>
   <div id="tournamentPulse" class="pulse-list" style="margin-top:12px"></div>
@@ -268,6 +283,10 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   <div id="postRoundRecap"></div>
   <div class="winner-tools"><button type="button" id="generateWinnerGraphic" class="primary">🏆 Create Winner Graphic</button><span id="winnerGraphicMsg" class="status"></span></div>
   <div id="winnerGraphicPreview" class="winner-preview"></div>
+</div>
+<div class="card" id="awardsCard">
+  <div class="row between"><div><div class="premium-label">TOURNAMENT AWARDS</div><h2 style="margin:3px 0 0">EllenG Awards</h2><div class="status">Updates automatically as the round develops.</div></div><span id="awardsStatus" class="badge">LIVE</span></div>
+  <div id="tournamentAwards" class="awards-grid"></div>
 </div>
 </section>
 
@@ -450,6 +469,11 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
     <div class="health-tile"><strong id="healthMissingCaptains">0</strong><span>CAPTAINS MISSING</span></div>
   </div>
   <div id="healthAlerts" class="health-alerts"></div>
+  <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
+    <div class="row between"><div><div class="premium-label">LIVE CONTROL ROOM</div><h3 style="margin:3px 0 0">Tournament Operations</h3></div><span class="badge">COMMISSIONER</span></div>
+    <div id="commissionerControlRoom" class="control-grid"></div>
+    <div id="commissionerControlAlert" class="control-alert"></div>
+  </div>
 </div>
 
 <div id="adminTournament" class="card admin-card">
@@ -834,6 +858,58 @@ async function createWinnerGraphic(){
  ctx.fillStyle='rgba(255,255,255,.82)';ctx.font='26px Arial';ctx.fillText(tournamentCourseLabel()||'Course not selected',600,430);const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`Final Cargo: ${teams[Number(tournament.final_cargo_team)]?.name||'Awarded'}`:'Final Cargo: —';ctx.font='22px Arial';ctx.fillText(cargo,600,475);ctx.fillStyle='rgba(255,255,255,.65)';ctx.font='20px Arial';ctx.fillText('PLAY BAD. LOOK GOOD. • ELLENG CUP',600,590);
  const url=canvas.toDataURL('image/png');preview.innerHTML=`<img src="${url}" alt="EllenG Cup winner graphic"><a class="primary" id="winnerDownload" download="EllenG-Cup-Champions.png" href="${url}" style="padding:11px 14px;border-radius:10px;color:white;font-weight:800">Save Winner Graphic</a> <button type="button" class="secondary" id="winnerShare">Share</button>`;msg.textContent='Winner graphic ready.';
  const share=$("winnerShare");if(share)share.onclick=async()=>{try{const blob=await (await fetch(url)).blob(),file=new File([blob],'EllenG-Cup-Champions.png',{type:'image/png'});if(navigator.canShare?.({files:[file]}))await navigator.share({files:[file],title:'EllenG Cup Champions'});else if(navigator.share)await navigator.share({title:'EllenG Cup Champions',text:`${teams[win.team]?.name||'Champions'} won the EllenG Cup.`});else msg.textContent='Use Save Winner Graphic to save or share it.'}catch(e){if(e?.name!=='AbortError')msg.textContent='Use Save Winner Graphic to save or share it.'}};
+}
+function completedHoles(){
+ return Array.from({length:18},(_,i)=>i+1).filter(h=>teams.length>0&&teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null)));
+}
+function leaderSnapshot(){
+ const arr=totals().slice().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
+ if(!arr.length||arr[0].pts<=0)return null;
+ const topPts=arr[0].pts, tied=arr.filter(x=>x.pts===topPts);
+ return {team:arr[0].team,pts:topPts,thru:arr[0].thru,tied:tied.length>1};
+}
+function renderLeadChangeAlert(){
+ const box=$("leadChangeAlert"),main=$("leadChangeMain"),sub=$("leadChangeSub");if(!box||!main||!sub)return;
+ const snap=leaderSnapshot();if(!snap){box.classList.remove("show");return}
+ const key=`elleng_last_leader_${TOURNAMENT_ID}`;let prev=null;try{prev=JSON.parse(localStorage.getItem(key)||"null")}catch(e){}
+ if(!prev){localStorage.setItem(key,JSON.stringify(snap));box.classList.remove("show");return}
+ const changed=Number(prev.team)!==Number(snap.team)||!!prev.tied!==!!snap.tied;
+ if(changed){
+   box.classList.add("show");
+   main.textContent=snap.tied?`Tie at the top — ${snap.pts.toFixed(snap.pts%1?1:0)} pts`:`${teams[snap.team]?.name||`Team ${snap.team+1}`} takes the lead`;
+   sub.textContent=snap.tied?`The lead is now shared after the latest completed hole.`:`Now at ${snap.pts.toFixed(snap.pts%1?1:0)} Cup points • Thru ${snap.thru||0}`;
+   setTimeout(()=>box.classList.remove("show"),12000);
+ }
+ localStorage.setItem(key,JSON.stringify(snap));
+}
+function renderMomentumTracker(){
+ const root=$("momentumTracker");if(!root)return;const holes=completedHoles();
+ if(!holes.length){root.innerHTML='<div class="note">Momentum will appear after the first hole is completed by every team.</div>';return}
+ const recent=holes.slice(-3), rows=teams.map((t,ti)=>{let pts=0,rel=0;recent.forEach(h=>{const p=pointsForHole(h)[ti];if(p!=null)pts+=Number(p);const r=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null);if(r)rel+=Number(r.score)-parForHole(h)});return{ti,pts,rel}}).sort((a,b)=>b.pts-a.pts||a.rel-b.rel||a.ti-b.ti);
+ root.innerHTML=rows.slice(0,3).map((x,i)=>`<div class="momentum-card" style="--accent:${teamAccent(x.ti)}"><span>${i===0?'🔥 HOT TEAM':i===1?'⬆️ CHASING':'⚡ IN THE MIX'}</span><strong>${esc(teams[x.ti]?.name||`Team ${x.ti+1}`)}</strong><div class="status" style="margin-top:4px">${x.pts.toFixed(x.pts%1?1:0)} pts over Holes ${recent.join(', ')} • ${x.rel===0?'E':x.rel>0?'+'+x.rel:'−'+Math.abs(x.rel)}</div></div>`).join('');
+}
+function teamRoundStats(ti,start=1,end=18){let strokes=0,par=0,count=0,birdies=0,eagles=0;for(let h=start;h<=end;h++){const r=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null);if(!r)continue;const s=Number(r.score),p=parForHole(h),d=s-p;strokes+=s;par+=p;count++;if(d===-1)birdies++;if(d<=-2)eagles++}return{rel:strokes-par,count,birdies,eagles}}
+function bestByRel(start,end){let best=null;teams.forEach((_,ti)=>{const s=teamRoundStats(ti,start,end);if(!s.count)return;if(!best||s.rel<best.rel||(s.rel===best.rel&&s.count>best.count))best={ti,...s}});return best}
+function renderTournamentAwards(){
+ const root=$("tournamentAwards");if(!root)return;const front=bestByRel(1,9),back=bestByRel(10,18);let birds=null,eagles=null;teams.forEach((_,ti)=>{const s=teamRoundStats(ti);if(!birds||s.birdies>birds.value)birds={ti,value:s.birdies};if(!eagles||s.eagles>eagles.value)eagles={ti,value:s.eagles}});
+ const gatorHole=Number(tournament?.gator_hole)||0;let gatorWinner=null;if(tournament?.gator_revealed&&gatorHole&&teams.length&&teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===gatorHole&&x.score!=null))){const vals=teams.map((_,ti)=>Number(scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===gatorHole)?.score));const low=Math.min(...vals),w=vals.map((v,i)=>v===low?i:null).filter(x=>x!=null);gatorWinner={names:w.map(i=>teams[i]?.name||`Team ${i+1}`).join(' / '),score:low}}
+ const cards=[
+  ['BEST FRONT 9',front?teams[front.ti]?.name:'—',front?`${front.rel===0?'E':front.rel>0?'+'+front.rel:'−'+Math.abs(front.rel)} through ${front.count} holes`:'Waiting on scores',front?.ti],
+  ['BEST BACK 9',back?teams[back.ti]?.name:'—',back?`${back.rel===0?'E':back.rel>0?'+'+back.rel:'−'+Math.abs(back.rel)} through ${back.count} holes`:'Waiting on scores',back?.ti],
+  ['BIRDIE LEADER',birds&&birds.value?teams[birds.ti]?.name:'—',birds&&birds.value?`${birds.value} birdie${birds.value===1?'':'s'}`:'No birdies yet',birds?.ti],
+  ['EAGLE WATCH',eagles&&eagles.value?teams[eagles.ti]?.name:'—',eagles&&eagles.value?`${eagles.value} eagle${eagles.value===1?'':'s'}`:'No eagles yet',eagles?.ti],
+  ['GATOR KILLER',gatorWinner?gatorWinner.names:'—',gatorWinner?`Hole ${gatorHole} • ${gatorWinner.score} strokes`:(tournament?.gator_revealed?'Waiting on all teams':'Gator Hole still secret'),null],
+  ['CARGO KING',tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?(teams[Number(tournament.final_cargo_team)]?.name||'—'):'—',tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`+${Number(tournament.final_cargo_points||6)} Final Cargo points`:'Not awarded yet',Number(tournament?.final_cargo_team)]
+ ];
+ root.innerHTML=cards.map(c=>`<div class="award-card" style="--accent:${Number.isInteger(c[3])?teamAccent(c[3]):'var(--gold)'}"><div class="award-kicker">${esc(c[0])}</div><strong>${esc(c[1]||'—')}</strong><span>${esc(c[2])}</span></div>`).join('');
+ if($("awardsStatus"))$("awardsStatus").textContent=String(tournament?.status||'setup').toUpperCase()==='COMPLETE'?'FINAL':'LIVE';
+}
+function renderCommissionerControlRoom(){
+ const root=$("commissionerControlRoom"),alert=$("commissionerControlAlert");if(!root||!alert||!isCommissioner)return;const holes=completedHoles(),snap=leaderSnapshot();let nextHole=1;while(nextHole<=18&&holes.includes(nextHole))nextHole++;
+ const pending=nextHole<=18?teams.filter((_,ti)=>!scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===nextHole&&x.score!=null)).map(t=>t.name):[];
+ const logged='Live account tracking is not enabled';
+ root.innerHTML=`<div class="control-card"><span>OFFICIAL HOLES</span><strong>${holes.length} / 18</strong><div class="status">Completed by every team</div></div><div class="control-card"><span>CURRENT LEADER</span><strong>${snap?(snap.tied?'Tied':esc(teams[snap.team]?.name||`Team ${snap.team+1}`)):'—'}</strong><div class="status">${snap?`${snap.pts.toFixed(snap.pts%1?1:0)} Cup pts`:'No official points yet'}</div></div><div class="control-card"><span>NEXT ACTIVE HOLE</span><strong>${nextHole<=18?'Hole '+nextHole:'Complete'}</strong><div class="status">${nextHole<=18?`${teams.length-pending.length}/${teams.length} teams posted`:'Round finished'}</div></div><div class="control-card"><span>PLAYER STATUS</span><strong>${(draftState?.golfers||[]).filter(g=>(g?.name||'').trim()).length}</strong><div class="status">${logged}</div></div>`;
+ alert.innerHTML=nextHole>18?'<strong>Round scoring is complete.</strong> Review final standings, awards, Gator Hole and Final Cargo before marking the tournament complete.':pending.length?`<strong>Hole ${nextHole} pending:</strong> ${esc(pending.join(', '))}`:`<strong>Hole ${nextHole} ready to score.</strong> No teams have posted yet.`;
 }
 function renderTournamentPulse(){
  const root=$("tournamentPulse");if(!root)return;
@@ -1648,7 +1724,7 @@ function renderAll(){
    const active=document.querySelector('.tab.active')?.dataset.view;
    if(["players","handicap","trash","scoring","admin"].includes(active||""))showView("home");
  }
- renderHome();renderTournamentPulse();renderTournamentRecap();renderLeaderboard();renderProjectedStandings();renderDigitalScorecard();renderBroadcast();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderScoring();renderTrashTalk();renderAdmin();renderTournamentHealth();
+ renderHome();renderLeadChangeAlert();renderMomentumTracker();renderTournamentPulse();renderTournamentRecap();renderTournamentAwards();renderLeaderboard();renderProjectedStandings();renderDigitalScorecard();renderBroadcast();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderScoring();renderTrashTalk();renderAdmin();renderTournamentHealth();renderCommissionerControlRoom();
 }
 let syncBusy=false;
 async function syncLive(){
