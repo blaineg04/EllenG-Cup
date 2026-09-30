@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.1.11">
+<meta name="elleng-app-version" content="1.1.12">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -1413,8 +1413,9 @@ function renderHome(){
  if($("homeTeamCount"))$("homeTeamCount").textContent=draftState?.teamCountConfirmed===true?String(teams.length):"—";
  const playerCount=(draftState.golfers||[]).filter(g=>(g?.name||"").trim()).length;
  if($("homePlayerCount"))$("homePlayerCount").textContent=`${playerCount} player${playerCount===1?"":"s"}`;
- if($("homeFormat"))$("homeFormat").textContent=isSplitPair()?"Split-Pair Scramble":`${draftTeamSize()}-Man EllenG`;
- if($("homeFormatSub"))$("homeFormatSub").textContent=isSplitPair()?"Two 2-man pairs • both scores count":"Front 9 Scramble • Back 9 Shamble";
+ const formatConfirmed=draftState?.playFormatConfirmed===true;
+ if($("homeFormat"))$("homeFormat").textContent=formatConfirmed?(isSplitPair()?"Split-Pair Scramble":`${draftTeamSize()}-Man EllenG`):"—";
+ if($("homeFormatSub"))$("homeFormatSub").textContent=formatConfirmed?(isSplitPair()?"Two 2-man pairs • both scores count":"Front 9 Scramble • Back 9 Shamble"):"";
  const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Gator Hole: Hole ${Number(tournament.gator_hole)}. `:"Gator Hole is still secret. ";
  let cargo="Final Cargo has not been awarded.";
  if(tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""){const ti=Number(tournament.final_cargo_team);cargo=`Final Cargo: ${teams[ti]?.name||`Team ${ti+1}`} +${Number(tournament.final_cargo_points||6)} points.`}
@@ -1643,10 +1644,12 @@ $("saveAdmin").addEventListener("click",async()=>{
   const golferSelection=$("golferCountSelect")?.value||"";
   const desiredGolfers=golferSelection===""?draftGolferCount():Math.max(8,Math.min(36,Number(golferSelection)));
   const selectedTeamSize=Number($("teamSizeSelect")?.value||draftTeamSize());
-  const selectedPlayFormat=$("playFormatSelect")?.value||playFormat();
+  const playFormatSelection=$("playFormatSelect")?.value||"";
+  const selectedPlayFormat=playFormatSelection||playFormat();
   const teamCountSelection=$("teamCountSelect")?.value||"";
   const newCount=teamCountSelection===""?activeTeamCount():Math.max(2,Math.min(9,Number(teamCountSelection)));
   if(teamCountSelection!=="")draftState.teamCountConfirmed=true;
+  if(playFormatSelection!=="")draftState.playFormatConfirmed=true;
   if(selectedPlayFormat==="split_pair"&&(selectedTeamSize!==4||desiredGolfers!==newCount*4)){$("adminMsg").textContent="Split-Pair Scramble requires 4-man teams with exactly 4 golfers on every team. Set golfers to 4 × the number of teams.";return}
   const namedGolfers=(draftState.golfers||[]).filter(g=>(g?.name||"").trim()).length;
   if(desiredGolfers<namedGolfers){$("adminMsg").textContent=`You already have ${namedGolfers} named golfers. Remove golfers first before lowering the setup to ${desiredGolfers}.`;return}
