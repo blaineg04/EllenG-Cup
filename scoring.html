@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.1.13">
+<meta name="elleng-app-version" content="1.1.14">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -340,10 +340,10 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   <div id="selfScoreContext" class="note" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb">Your player account is loading. Choose a hole after your profile is linked.</div>
   <div class="admin-grid" style="margin-top:12px">
     <label><small>Hole</small><select id="selfScoreHole"><option value="1">Hole 1</option><option value="2">Hole 2</option><option value="3">Hole 3</option><option value="4">Hole 4</option><option value="5">Hole 5</option><option value="6">Hole 6</option><option value="7">Hole 7</option><option value="8">Hole 8</option><option value="9">Hole 9</option><option value="10">Hole 10</option><option value="11">Hole 11</option><option value="12">Hole 12</option><option value="13">Hole 13</option><option value="14">Hole 14</option><option value="15">Hole 15</option><option value="16">Hole 16</option><option value="17">Hole 17</option><option value="18">Hole 18</option></select></label>
+    <label><small>Par</small><select id="selfScoreParSelect"><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option></select></label>
     <label><small>Strokes</small><input id="selfScoreInput" type="number" min="1" max="20" step="1" inputmode="numeric" placeholder="Enter strokes"></label>
   </div>
   <div class="self-score-summary">
-    <div class="self-score-box"><small>Hole Par</small><strong id="selfScorePar">Par 4</strong></div>
     <div class="self-score-box"><small>Golf Score</small><strong id="selfScoreRelative">—</strong><div id="selfScoreTerm" class="term">Enter strokes</div></div>
   </div>
   <div class="note" style="margin-top:10px">Standard EllenG: any golfer on the team can update the Front 9 scramble team score. On the Back 9 shamble, each golfer can update only their own individual score. Split-Pair: each golfer can update only their own 2-man pair score.</div>
@@ -1235,13 +1235,15 @@ function golfScoreTerm(diff,strokes,par){
  if(diff===4)return "Quadruple Bogey";
  return `${diff>0?"+":""}${diff} Over Par`;
 }
-function renderSelfGolfScore(){
+function syncSelfScoreParToHole(){
  const h=Number($("selfScoreHole")?.value||1);
- renderSelfGolfScore();
- const par=Number(parForHole(h))||4;
+ const sel=$("selfScoreParSelect");
+ if(sel)sel.value=String(Number(parForHole(h))||4);
+}
+function renderSelfGolfScore(){
+ const par=Number($("selfScoreParSelect")?.value||4);
  const raw=$("selfScoreInput")?.value?.trim?.()||"";
- const p=$("selfScorePar"),rel=$("selfScoreRelative"),term=$("selfScoreTerm");
- if(p)p.textContent=`Par ${par}`;
+ const rel=$("selfScoreRelative"),term=$("selfScoreTerm");
  if(raw===""||!Number.isFinite(Number(raw))){if(rel)rel.textContent="—";if(term)term.textContent="Enter strokes";return}
  const strokes=Number(raw);
  const diff=strokes-par;
@@ -1333,7 +1335,7 @@ async function saveSelfScore(clear=false){
    await loadBase();await loadScores();renderAll();
    if(clear){$("selfScoreInput").value="";renderSelfGolfScore();msg.textContent=`Score cleared for Hole ${h}.`;}
    else {
-     const par=Number(parForHole(h))||4,diff=Number(raw)-par,summary=`${golfRelativeLabel(diff)} • ${golfScoreTerm(diff,Number(raw),par)}`;
+     const par=Number($("selfScoreParSelect")?.value||parForHole(h)||4),diff=Number(raw)-par,summary=`${golfRelativeLabel(diff)} • ${golfScoreTerm(diff,Number(raw),par)}`;
      if(data.mode==="player_shamble")msg.textContent=`Saved your personal shamble score for Hole ${h}: ${raw} strokes (${summary}).`;
      else if(data.mode==="split_pair")msg.textContent=`Saved your Pair ${Number(data.pair_index)+1} score for Hole ${h}: ${raw} strokes (${summary}).`;
      else msg.textContent=`Saved ${draftState?.teams?.[data.team_index]?.name||"your team"} score for Hole ${h}: ${raw} strokes (${summary}).`;
@@ -1631,10 +1633,13 @@ if($("courseBrowseSelect"))$("courseBrowseSelect").addEventListener("change",()=
 if($("courseBrowseRouteSelect"))$("courseBrowseRouteSelect").addEventListener("change",renderCourse);
 $("selfGolferSelect").addEventListener("change",renderSelfHandicap);
 $("saveSelfHandicap").addEventListener("click",saveSelfHandicap);
-$("selfScoreHole").addEventListener("change",()=>{renderSelfScoreContext();renderSelfGolfScore()});
+$("selfScoreHole").addEventListener("change",()=>{syncSelfScoreParToHole();renderSelfScoreContext();renderSelfGolfScore()});
+$("selfScoreParSelect").addEventListener("change",renderSelfGolfScore);
 $("selfScoreInput").addEventListener("input",renderSelfGolfScore);
 $("saveSelfScore").addEventListener("click",()=>saveSelfScore(false));
 $("clearSelfScore").addEventListener("click",()=>saveSelfScore(true));
+syncSelfScoreParToHole();
+renderSelfGolfScore();
 function bandFromHandicapValue(v){const raw=String(v??"").trim();if(raw==="")return null;const n=Number(raw);if(!Number.isFinite(n)||n<0||n>54)return null;return n<=9?"A":n<=17?"B":n<=25?"C":"D"}
 function syncPlayerBandField(input){
  const i=input?.getAttribute?.("data-player-hcp"); if(i==null)return;
