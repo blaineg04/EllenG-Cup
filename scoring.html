@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.7.2">
+<meta name="elleng-app-version" content="1.8.0">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -266,6 +266,12 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
  .self-photo-filename{white-space:normal;word-break:break-word}
  .self-photo-actions #uploadSelfPhoto{grid-column:1;width:100%}
 }
+
+.app-version-bar{gap:10px;align-items:center}
+.sync-status-chip{font-size:11px;font-weight:900;letter-spacing:.02em;color:#17384c;background:#eef5f2;border:1px solid #c8d9d2;border-radius:999px;padding:4px 8px;white-space:nowrap}
+.sync-status-chip.saving{background:#fff3c8;border-color:#e1bd46;color:#695000}
+.sync-status-chip.error{background:#fde9e7;border-color:#e6b5af;color:#8d2519}
+.sync-status-chip.saved{background:#e7f5ec;border-color:#b9ddc7;color:#116338}
 </style>
 </head>
 <body>
@@ -273,7 +279,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <img src="gator.png" alt="EllenG Cup gator logo">
 <div><h1>EllenG Cup</h1><p id="tournamentSubtitle">LIVE TOURNAMENT SCORING • 18 HOLES</p></div>
 </div></header>
-<div class="app-version-bar"><span id="appVersionChip" class="app-version-chip">EllenG Live v1.1.5</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v1.1.5</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -761,8 +767,22 @@ if(!cfg?.supabaseUrl||!supabaseKey){connection("EllenG configuration did not loa
 const db=window.supabase.createClient(cfg.supabaseUrl,supabaseKey);
 connection("✓ App connected — live scoring ready.",true);
 const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
-let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", mustChangePassword=false, hole=1;
+let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, draftUpdatedAt=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", mustChangePassword=false, hole=1;
+let scoreSaveBusy=false, lastSuccessfulSyncAt=null;
 const $=id=>document.getElementById(id);
+function setSyncStatus(kind="saved",label="Synced"){
+ const el=$("syncStatusChip");if(!el)return;
+ el.className=`sync-status-chip ${kind}`;
+ el.textContent=label;
+ if(kind==="saved")lastSuccessfulSyncAt=new Date();
+}
+function syncedLabel(){
+ if(!lastSuccessfulSyncAt)return "Synced";
+ const s=Math.max(0,Math.round((Date.now()-lastSuccessfulSyncAt.getTime())/1000));
+ return s<8?"Synced just now":s<60?`Synced ${s}s ago`:`Synced ${Math.floor(s/60)}m ago`;
+}
+setInterval(()=>{const el=$("syncStatusChip");if(el&&el.classList.contains("saved"))el.textContent=syncedLabel()},10000);
+
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const PLAYER_LOGIN_DOMAIN="@players.ellengcup.app";
 const usernameToAuthEmail=u=>`${String(u||"").trim().toLowerCase()}${PLAYER_LOGIN_DOMAIN}`;
@@ -937,7 +957,6 @@ function renderLiveHoleScores(){
  }).join('');
 }
 
-function teamAccent(i){const colors=["#d5a72c","#087c42","#315b9b","#8b1e2d","#7a4ea3","#d36b2c","#2b7a78","#6d5b4b","#5c6f7b"];return colors[Math.abs(Number(i)||0)%colors.length]}
 function scoreClass(rel){if(!rel||rel==="—")return "";if(rel==="0")return "score-even";return rel.startsWith("−")?"score-good":"score-bad"}
 function projectedTotals(){
  const official=totals();
@@ -1270,8 +1289,15 @@ function renderShambleScoring(par,pts){
  }).join("");
  document.querySelectorAll(".shamble-player-score:not([disabled])").forEach(inp=>inp.addEventListener("change",()=>savePlayerShambleScore(Number(inp.dataset.team),Number(inp.dataset.golfer),inp.value)));
 }
+function beginScoreSave(message="Saving…"){
+ if(scoreSaveBusy){const el=$("saveMsg");if(el)el.textContent="A score is already saving — please wait.";return false}
+ scoreSaveBusy=true;setSyncStatus("saving",message);return true;
+}
+function endScoreSave(ok=true){
+ scoreSaveBusy=false;setSyncStatus(ok?"saved":"error",ok?"Saved ✓":"Save failed");
+}
 async function savePlayerShambleScore(teamIndex,golferIndex,val){
- if(hole<10||hole>18||!canEditTeam(teamIndex))return;
+ if(hole<10||hole>18||!canEditTeam(teamIndex))return;if(!beginScoreSave())return;
  const el=$("saveMsg"); el.textContent="Saving shamble score…";
  const score=val===""?null:Number(val);
  try{
@@ -1297,7 +1323,7 @@ async function savePlayerShambleScore(teamIndex,golferIndex,val){
    await loadScores();
    el.textContent="Saved. Lowest completed player score becomes the team score.";
    renderAll();
- }catch(e){el.textContent=e?.message||"Unable to save shamble score."}
+ }catch(e){el.textContent=e?.message||"Unable to save shamble score.";endScoreSave(false);return}endScoreSave(true)
 }
 function renderPairScoring(par,pts){
  const area=$("shambleScoreArea"), front=$("frontNineScoreGrid");
@@ -1325,7 +1351,7 @@ function renderPairScoring(par,pts){
  document.querySelectorAll(".pair-score-input:not([disabled])").forEach(inp=>inp.addEventListener("change",()=>savePairScore(Number(inp.dataset.team),Number(inp.dataset.pair),inp.value)));
 }
 async function savePairScore(teamIndex,pairIndex,val){
- if(!isSplitPair()||!canEditTeam(teamIndex))return;
+ if(!isSplitPair()||!canEditTeam(teamIndex))return;if(!beginScoreSave())return;
  const el=$("saveMsg");el.textContent="Saving pair score…";
  const score=val===""?null:Number(val);
  try{
@@ -1346,7 +1372,7 @@ async function savePairScore(teamIndex,pairIndex,val){
      const {error}=await db.from("elleng_team_scores").delete().eq("tournament_id",TOURNAMENT_ID).eq("team_index",teamIndex).eq("hole",hole);if(error)throw error;
    }
    await loadScores();el.textContent="Saved. Both 2-man pair scores combine into the team total.";renderAll();
- }catch(e){el.textContent=e?.message||"Unable to save pair score."}
+ }catch(e){el.textContent=e?.message||"Unable to save pair score.";endScoreSave(false);return}endScoreSave(true)
 }
 function renderScoring(){
  renderHolebar();
@@ -1410,19 +1436,26 @@ function renderScoring(){
  }));
 }
 async function saveScore(teamIndex,val){
- $("saveMsg").textContent="Saving…"; const score=val===""?null:Number(val);
- if(score===null){const {error}=await db.from("elleng_team_scores").delete().eq("tournament_id",TOURNAMENT_ID).eq("team_index",teamIndex).eq("hole",hole);if(error){$("saveMsg").textContent=error.message;return}}
- else {if(!Number.isInteger(score)||score<1||score>20){$("saveMsg").textContent="Enter a score from 1 to 20.";return}
- const {error}=await db.from("elleng_team_scores").upsert({tournament_id:TOURNAMENT_ID,team_index:teamIndex,hole,score,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:"tournament_id,team_index,hole"});if(error){$("saveMsg").textContent=error.message;return}}
- await loadScores();$("saveMsg").textContent="Saved.";renderAll();
+ if(!canEditTeam(teamIndex)||teamIndex<0||teamIndex>=activeTeamCount())return;
+ if(!beginScoreSave())return;
+ const el=$("saveMsg");el.textContent="Saving…";const score=val===""?null:Number(val);
+ try{
+   if(score===null){
+     const {error}=await db.from("elleng_team_scores").delete().eq("tournament_id",TOURNAMENT_ID).eq("team_index",teamIndex).eq("hole",hole);if(error)throw error;
+   }else{
+     if(!Number.isInteger(score)||score<1||score>20)throw new Error("Enter a score from 1 to 20.");
+     const {error}=await db.from("elleng_team_scores").upsert({tournament_id:TOURNAMENT_ID,team_index:teamIndex,hole,score,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:"tournament_id,team_index,hole"});if(error)throw error;
+   }
+   await loadScores();el.textContent="Saved.";renderAll();endScoreSave(true);
+ }catch(e){el.textContent=e?.message||"Unable to save score.";endScoreSave(false)}
 }
 async function loadBase(){
  const tournamentSource="elleng_tournaments";
  const [{data:t,error:te},{data:d,error:de}]=await Promise.all([
   db.from(tournamentSource).select("*").eq("id",TOURNAMENT_ID).single(),
-  db.from("elleng_drafts").select("owner_id,state").eq("id",DRAFT_ID).single()
+  db.from("elleng_drafts").select("owner_id,state,updated_at").eq("id",DRAFT_ID).single()
  ]);
- if(te)throw te;if(de)throw de;tournament=t; draftState=structuredClone(d.state||{});
+ if(te)throw te;if(de)throw de;tournament=t; draftState=structuredClone(d.state||{});draftUpdatedAt=d.updated_at||null;setSyncStatus("saved","Synced");
  const count=activeTeamCount(), rawTeams=Array.isArray(d.state?.teams)?d.state.teams:[], golfers=Array.isArray(d.state?.golfers)?d.state.golfers:[];
  teams=Array.from({length:count},(_,i)=>{
   const x=rawTeams[i]||{name:`Team ${i+1}`,captain:"",roster:[]};
@@ -1617,8 +1650,9 @@ async function uploadExistingPlayerPhoto(i){
  if(btn)btn.disabled=true;if(msg)msg.textContent="Uploading photo…";
  try{
    const url=await uploadPlayerPhotoFile(file,i,g.name);
-   draftState.golfers[i].photo_url=url;
-   await saveDraftState(msg,true);
+   const {data,error}=await db.functions.invoke("player-profile",{body:{action:"commissioner_update_photo",draft_id:DRAFT_ID,golfer_index:i,photo_url:url}});
+   if(error)throw error;if(data?.error)throw new Error(data.error);
+   await loadBase();renderAll();setSyncStatus("saved","Saved ✓");
    if(msg)msg.textContent="✓ Player photo uploaded and saved.";
  }catch(e){if(msg)msg.textContent=e?.message||"Unable to upload photo."}
  finally{if(btn)btn.disabled=false}
@@ -1788,7 +1822,7 @@ async function saveSelfHandicap(){
  if(idx==null){msg.textContent="Your login is not linked to a golfer profile yet.";return}
  if(handicap!==""&&!exactBand){msg.textContent="Enter a handicap from 0 to 54, or leave it blank.";return}
  if(exactBand){band=exactBand;$("selfBandSelect").value=exactBand;$("selfBandSelect").disabled=true}
- btn.disabled=true;btn.textContent="Saving…";msg.textContent="";
+ btn.disabled=true;btn.textContent="Saving…";msg.textContent="";setSyncStatus("saving","Saving…");
  try{
    const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"update_handicap",draft_id:DRAFT_ID,band,handicap}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
@@ -1796,11 +1830,11 @@ async function saveSelfHandicap(){
    selfHandicapEditing=false;selfHandicapDraftValue="";
    renderAll();
    msg.textContent=`Saved. ${data.golfer_name}: ${data.band} (${data.band==="A"?"0–9":data.band==="B"?"10–17":data.band==="C"?"18–25":"26+"})${data.handicap!==""?` • Handicap ${data.handicap}`:""}.`;
- }catch(e){msg.textContent=e?.message||"Unable to update handicap."}
- finally{btn.disabled=false;btn.textContent="Save My Handicap"}
+ }catch(e){msg.textContent=e?.message||"Unable to update handicap.";setSyncStatus("error","Save failed")}
+ finally{btn.disabled=false;btn.textContent="Save My Handicap";if(!String(msg.textContent||"").toLowerCase().includes("unable"))setSyncStatus("saved","Saved ✓")}
 }
 async function saveSelfScore(clear=false){
- const msg=$("selfScoreMsg"),btn=$("saveSelfScore");
+ const msg=$("selfScoreMsg"),btn=$("saveSelfScore");if(scoreSaveBusy){msg.textContent="A score is already saving — please wait.";return}
  const idx=currentGolferIndex;
  const h=Number($("selfScoreHole").value);
  const raw=$("selfScoreInput").value.trim();
@@ -1808,7 +1842,7 @@ async function saveSelfScore(clear=false){
  if(!clear&&raw===""){msg.textContent="Enter your strokes first.";return}
  if(!clear&&(!Number.isInteger(Number(raw))||Number(raw)<1||Number(raw)>20)){msg.textContent="Enter a whole-number stroke score from 1 to 20.";return}
  const score=clear?"":raw;
- btn.disabled=true;msg.textContent=clear?"Clearing…":"Saving…";
+ btn.disabled=true;scoreSaveBusy=true;setSyncStatus("saving",clear?"Clearing…":"Saving…");msg.textContent=clear?"Clearing…":"Saving…";
  try{
    const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"update_score",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,hole:h,score}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
@@ -1820,8 +1854,8 @@ async function saveSelfScore(clear=false){
      else if(data.mode==="split_pair")msg.textContent=`Saved your Pair ${Number(data.pair_index)+1} score for Hole ${h}: ${raw} strokes (${summary}).`;
      else msg.textContent=`Saved ${draftState?.teams?.[data.team_index]?.name||"your team"} score for Hole ${h}: ${raw} strokes (${summary}).`;
    }
- }catch(e){msg.textContent=e?.message||"Unable to save score."}
- finally{btn.disabled=false}
+ }catch(e){msg.textContent=e?.message||"Unable to save score.";setSyncStatus("error","Save failed")}
+ finally{btn.disabled=false;scoreSaveBusy=false;if(!String(msg.textContent||"").toLowerCase().includes("unable"))setSyncStatus("saved","Saved ✓")}
 }
 async function resetGolferPin(i){
  if(!isCommissioner)return;
@@ -1862,10 +1896,21 @@ async function refreshLiveHandicapsBeforeStateSave(){
 async function saveDraftState(messageEl,allowHandicapChanges=false){
  ensureDraftShape(); rebuildTeamRosters();
  if(!allowHandicapChanges)await refreshLiveHandicapsBeforeStateSave();
- const {data,error}=await db.from("elleng_drafts").update({state:draftState,updated_at:new Date().toISOString()}).eq("id",DRAFT_ID).select("state").single();
- if(error){if(messageEl)messageEl.textContent=error.message;throw error}
- draftState=structuredClone(data.state||draftState);
- await loadBase(); renderAll(); if(messageEl)messageEl.textContent="Saved — changes are live everywhere.";
+ if(!draftUpdatedAt){await loadBase()}
+ setSyncStatus("saving","Saving…");
+ const {data,error}=await db.rpc("elleng_save_state_if_fresh",{p_draft_id:DRAFT_ID,p_expected_updated_at:draftUpdatedAt,p_state:draftState});
+ if(error){
+   setSyncStatus("error","Reload needed");
+   try{await loadBase();renderAll()}catch(_){}
+   const msg=error.message||"Tournament changed on another device. Reload and try again.";
+   if(messageEl)messageEl.textContent=msg;
+   throw error;
+ }
+ const row=Array.isArray(data)?data[0]:data;
+ if(row?.state)draftState=structuredClone(row.state);
+ draftUpdatedAt=row?.updated_at||draftUpdatedAt;
+ await loadBase(); renderAll();setSyncStatus("saved","Saved ✓");
+ if(messageEl)messageEl.textContent="Saved — changes are live everywhere.";
 }
 async function removePlayer(idx){
  if(!isCommissioner)return; ensureDraftShape(); const g=draftState.golfers[idx]; if(!g)return; if(!confirm(`Remove ${g.name||"this golfer"}?`))return;
@@ -2064,8 +2109,8 @@ async function syncLive(){
   const {data:t,error:te}=await db.from(tournamentSource).select("*").eq("id",TOURNAMENT_ID).single();
   if(te)throw te;
   tournament=t;
-  const {data:d}=await db.from("elleng_drafts").select("state").eq("id",DRAFT_ID).single();
-  if(d?.state)draftState=structuredClone(d.state);
+  const {data:d}=await db.from("elleng_drafts").select("state,updated_at").eq("id",DRAFT_ID).single();
+  if(d?.state){draftState=structuredClone(d.state);draftUpdatedAt=d.updated_at||draftUpdatedAt;}
   if(user){
    const {data:profile}=await db.functions.invoke("player-profile",{body:{draft_id:DRAFT_ID}});
    currentGolferIndex=profile?.linked?Number(profile.golfer_index):null;currentUsername=profile?.linked?String(profile.username||""):"";mustChangePassword=!!profile?.must_change_password;
@@ -2080,10 +2125,10 @@ async function syncLive(){
     return {name:x.name||`Team ${i+1}`,captain:x.captain||"",roster:rosterNames};
    });
   }
-  await loadScores();
+  await loadScores();setSyncStatus("saved","Synced");
   const adminOpen=isCommissioner&&document.querySelector('.tab.active')?.dataset.view==='admin';
   if(!adminOpen)renderAll();
- }catch(e){console.error("Live sync failed:",e)}
+ }catch(e){console.error("Live sync failed:",e);setSyncStatus("error","Sync issue")}
  finally{syncBusy=false}
 }
 setInterval(syncLive,5000);
@@ -2111,7 +2156,7 @@ async function enterApp(){
  $("loginMsg").textContent="Signed in — loading tournament…";
  try{
   await loadBase();
-  await loadScores();
+  await loadScores();setSyncStatus("saved","Synced");
   await loadTrashTalk();
   $("loginCard").classList.add("hidden");
   if(mustChangePassword&&!isCommissioner){
@@ -2311,7 +2356,7 @@ $("saveAdmin").addEventListener("click",async()=>{
   const {data,error}=await db.from("elleng_tournaments").update(patch).eq("id",TOURNAMENT_ID).select().single();if(error)throw error;
   tournament=data;
   rebuildTeamRosters();
-  const {error:de}=await db.from("elleng_drafts").update({state:draftState,updated_at:new Date().toISOString()}).eq("id",DRAFT_ID);if(de)throw de;
+  await saveDraftState(null,false);
   await loadBase(); await loadScores(); renderAll();
   $("adminMsg").textContent=`Tournament controls saved. ${isSplitPair()?"Split-Pair Scramble":draftTeamSize()+"-man Standard EllenG"} format, ${teams.length} teams and ${draftGolferCount()} golfers active.`;
  }catch(e){$("adminMsg").textContent=e?.message||"Unable to save tournament controls."}
@@ -2380,16 +2425,29 @@ $("addGolferBtn").addEventListener("click",async()=>{
    if(!autoResult.failed.length)$("addGolferMsg").textContent=`Golfer added with automatic login. Setup is now ${draftGolferCount()} golfers and ${activeTeamCount()} teams.${splitNote}`;
  }catch(e){$("addGolferMsg").textContent=e?.message||"Unable to add golfer."}
 });
-$("savePlayers").addEventListener("click",async()=>{document.querySelectorAll(".player-photo-input").forEach(x=>{const i=Number(x.dataset.idx);if(draftState.golfers?.[i])draftState.golfers[i].photo_url=x.value.trim()});if(!isCommissioner)return;ensureDraftShape();$("playerEditMsg").textContent="Saving…";draftState.golfers.forEach((g,i)=>{const n=document.querySelector(`[data-player-name="${i}"]`),b=document.querySelector(`[data-player-band="${i}"]`),h=document.querySelector(`[data-player-hcp="${i}"]`),t=document.querySelector(`[data-player-team="${i}"]`);if(n)g.name=n.value.trim();if(h)g.hcp=h.value.trim();const autoBand=h&&h.value.trim()!==""?bandFromHandicapValue(h.value):null;if(b)g.band=autoBand||b.value;if(b&&autoBand)b.value=autoBand;if(t)g.team=t.value===""?null:Number(t.value)});try{await saveDraftState($("playerEditMsg"),true)}catch(e){}});
-
-const createMissingLoginsBtn=$("createMissingLogins");
-if(createMissingLoginsBtn)createMissingLoginsBtn.addEventListener("click",async()=>{
- if(!isCommissioner)return;
- const msg=$("createMissingLoginsMsg");
- createMissingLoginsBtn.disabled=true;
- try{await ensureAutomaticPlayerAccounts(msg);renderPlayerEditor();}
- catch(e){if(msg)msg.textContent=e?.message||"Unable to create missing logins."}
- finally{createMissingLoginsBtn.disabled=false}
+$("savePlayers").addEventListener("click",async()=>{
+ if(!isCommissioner)return;ensureDraftShape();
+ const btn=$("savePlayers"),msg=$("playerEditMsg");if(btn)btn.disabled=true;if(msg)msg.textContent="Saving player changes…";setSyncStatus("saving","Saving…");
+ try{
+   const patches=draftState.golfers.map((g,i)=>{
+     const n=document.querySelector(`[data-player-name="${i}"]`),b=document.querySelector(`[data-player-band="${i}"]`),h=document.querySelector(`[data-player-hcp="${i}"]`),t=document.querySelector(`[data-player-team="${i}"]`),p=document.querySelector(`.player-photo-input[data-idx="${i}"]`);
+     const hcp=h?h.value.trim():String(g.hcp??"").trim();
+     const autoBand=hcp!==""?bandFromHandicapValue(hcp):null;
+     if(b&&autoBand)b.value=autoBand;
+     return {index:i,patch:{
+       name:n?n.value.trim():g.name,
+       hcp,
+       band:autoBand||(b?b.value:g.band),
+       team:t?(t.value===""?null:Number(t.value)):(g.team??null),
+       photo_url:p?p.value.trim():String(g.photo_url||"").trim()
+     }};
+   });
+   const {data,error}=await db.functions.invoke("player-admin",{body:{action:"patch_players",draft_id:DRAFT_ID,patches}});
+   if(error)throw error;if(data?.error)throw new Error(data.error);
+   await loadBase();renderAll();setSyncStatus("saved","Saved ✓");
+   if(msg)msg.textContent="Saved — player changes were merged safely with the latest live data.";
+ }catch(e){setSyncStatus("error","Save failed");if(msg)msg.textContent=e?.message||"Unable to save player changes."}
+ finally{if(btn)btn.disabled=false}
 });
 const openBroadcastBtn=$("openBroadcast");if(openBroadcastBtn)openBroadcastBtn.addEventListener("click",openBroadcastMode);
 const closeBroadcastBtn=$("closeBroadcast");if(closeBroadcastBtn)closeBroadcastBtn.addEventListener("click",closeBroadcastMode);
