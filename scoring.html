@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.0.0">
+<meta name="elleng-app-version" content="1.0.2">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -134,6 +134,16 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .more-menu-btn.admin-link{background:#fff8df;border-color:#e2bd54}
 @media(max-width:420px){.more-menu-grid{grid-template-columns:1fr}}
 
+
+/* Commissioner mobile controls: keep every field visible and prevent horizontal overflow */
+#adminView .admin-grid label{min-width:0;max-width:100%;}
+#adminView .admin-grid input,#adminView .admin-grid select{width:100%;max-width:100%;min-width:0;}
+@media(max-width:700px){
+  #adminView .admin-grid{grid-template-columns:minmax(0,1fr)!important;}
+  #adminView .admin-grid label{width:100%;}
+  #adminView .admin-grid select,#adminView .admin-grid input{display:block;width:100%;max-width:100%;}
+  #adminTournament{overflow:hidden;}
+}
 </style>
 </head>
 <body>
@@ -141,7 +151,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <img src="gator.png" alt="EllenG Cup gator logo">
 <div><h1>EllenG Cup</h1><p id="tournamentSubtitle">LIVE TOURNAMENT SCORING • 6 TEAMS • 18 HOLES</p></div>
 </div></header>
-<div class="app-version-bar"><span id="appVersionChip" class="app-version-chip">EllenG Live v1.0.1</span></div>
+<div class="app-version-bar"><span id="appVersionChip" class="app-version-chip">EllenG Live v1.0.2</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -372,7 +382,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
     <label><small>Tournament status</small><select id="statusSelect"><option value="setup">Setup</option><option value="live">Live</option><option value="complete">Complete</option><option value="archived">Archived</option></select></label>
     <label><small>Playing format</small><select id="playFormatSelect"><option value="standard">Standard EllenG — Front 9 Scramble / Back 9 Shamble</option><option value="split_pair">Split-Pair Scramble — two 2-man pairs per 4-man team</option></select></label>
     <label><small>Players per team</small><select id="teamSizeSelect"><option value="2">2-man team</option><option value="3">3-man team</option><option value="4">4-man team</option></select></label>
-    <label><small>Number of teams (automatic)</small><select id="teamCountSelect" disabled><option value="2">2 teams</option><option value="3">3 teams</option><option value="4">4 teams</option><option value="5">5 teams</option><option value="6">6 teams</option><option value="7">7 teams</option><option value="8">8 teams</option><option value="9">9 teams</option></select></label>
+    <label><small>Number of teams</small><select id="teamCountSelect"><option value="2">2 teams</option><option value="3">3 teams</option><option value="4">4 teams</option><option value="5">5 teams</option><option value="6">6 teams</option><option value="7">7 teams</option><option value="8">8 teams</option><option value="9">9 teams</option></select></label>
     <label><small>Number of golfers</small><select id="golferCountSelect"><option value="8">8 golfers</option><option value="9">9 golfers</option><option value="10">10 golfers</option><option value="11">11 golfers</option><option value="12">12 golfers</option><option value="13">13 golfers</option><option value="14">14 golfers</option><option value="15">15 golfers</option><option value="16">16 golfers</option><option value="17">17 golfers</option><option value="18">18 golfers</option><option value="19">19 golfers</option><option value="20">20 golfers</option><option value="21">21 golfers</option><option value="22">22 golfers</option><option value="23">23 golfers</option><option value="24">24 golfers</option><option value="25">25 golfers</option><option value="26">26 golfers</option><option value="27">27 golfers</option><option value="28">28 golfers</option><option value="29">29 golfers</option><option value="30">30 golfers</option><option value="31">31 golfers</option><option value="32">32 golfers</option><option value="33">33 golfers</option><option value="34">34 golfers</option><option value="35">35 golfers</option><option value="36">36 golfers</option></select></label>
     <label><small>Gator Hole side</small><select id="gatorSide"><option value="front">Front 9</option><option value="back">Back 9</option></select></label>
     <label><small>Secret Gator Hole</small><select id="gatorHole"><option value="">Not selected</option></select></label>
@@ -1427,11 +1437,12 @@ $("clearSelfScore").addEventListener("click",()=>saveSelfScore(true));
 $("selfHandicapInput").addEventListener("input",()=>{const v=$("selfHandicapInput").value.trim();if(v==="")return;const n=Number(v);if(!Number.isFinite(n))return;$("selfBandSelect").value=n<10?"A":n<18?"B":n<26?"C":"D"});
 $("gatorSide").addEventListener("change",populateGatorHoles);
 function previewTeamBuild(){
- const gc=Number($("golferCountSelect")?.value||draftGolferCount()),size=Number($("teamSizeSelect")?.value||draftTeamSize()),tc=Math.ceil(gc/size),base=Math.floor(gc/tc),extra=gc%tc;
- if($("teamCountSelect")&&tc>=2&&tc<=9)$("teamCountSelect").value=String(tc);
+ const gc=Number($("golferCountSelect")?.value||draftGolferCount()),size=Number($("teamSizeSelect")?.value||draftTeamSize()),tc=Math.max(2,Math.min(9,Number($("teamCountSelect")?.value||activeTeamCount()))),base=Math.floor(gc/tc),extra=gc%tc;
  if($("teamBuildSummary")){
-   if(tc>9){$("teamBuildSummary").innerHTML=`<strong>${gc} golfers with ${size}-man teams would require ${tc} teams.</strong> The current EllenG Cup app supports up to 9 teams, so ${size}-man teams support a maximum of ${size*9} golfers.`;return}
-   $("teamBuildSummary").innerHTML=extra===0?`<strong>${gc} golfers → ${tc} teams of ${size}.</strong>`:`<strong>${gc} golfers → ${tc} teams using a ${size}-man format.</strong> ${extra} team${extra===1?"":"s"} will have ${base+1} golfers and the other ${tc-extra} will have ${base}.`;
+   if(isNaN(tc)||tc<2||tc>9){$("teamBuildSummary").innerHTML=`Choose between 2 and 9 teams.`;return}
+   if(gc<tc){$("teamBuildSummary").innerHTML=`<strong>${gc} golfers across ${tc} teams.</strong> Some teams would have no golfer assigned.`;return}
+   const dist=extra===0?`${tc} teams of ${base}`:`${extra} team${extra===1?"":"s"} of ${base+1} and ${tc-extra} team${tc-extra===1?"":"s"} of ${base}`;
+   $("teamBuildSummary").innerHTML=`<strong>${gc} golfers • ${tc} teams • ${size}-man format.</strong> Even distribution: ${dist}. You can still assign golfers manually in the draft.`;
  }
 }
 
@@ -1444,6 +1455,7 @@ $("courseSelect").addEventListener("change",()=>{
 });
 $("courseRouteSelect").addEventListener("change",applySelectedCourseToPars);
 $("teamSizeSelect").addEventListener("change",previewTeamBuild);
+$("teamCountSelect").addEventListener("change",previewTeamBuild);
 $("golferCountSelect").addEventListener("change",previewTeamBuild);
 $("playFormatSelect").addEventListener("change",previewTeamBuild);
 
@@ -1456,10 +1468,8 @@ $("saveAdmin").addEventListener("click",async()=>{
   const desiredGolfers=Math.max(8,Math.min(36,Number($("golferCountSelect")?.value||draftGolferCount())));
   const selectedTeamSize=Number($("teamSizeSelect")?.value||draftTeamSize());
   const selectedPlayFormat=$("playFormatSelect")?.value||"standard";
-  if(selectedPlayFormat==="split_pair"&&(selectedTeamSize!==4||desiredGolfers%4!==0)){$("adminMsg").textContent="Split-Pair Scramble requires 4-man teams and a golfer count divisible by 4 so every team has two complete 2-man pairs.";return}
-  const newCount=Math.ceil(desiredGolfers/selectedTeamSize);
-  if(newCount>9){$("adminMsg").textContent=`${desiredGolfers} golfers with ${selectedTeamSize}-man teams requires ${newCount} teams. The app currently supports a maximum of 9 teams. Reduce golfers or choose a larger team size.`;return}
-  $("teamCountSelect").value=String(newCount);
+  const newCount=Math.max(2,Math.min(9,Number($("teamCountSelect")?.value||activeTeamCount())));
+  if(selectedPlayFormat==="split_pair"&&(selectedTeamSize!==4||desiredGolfers!==newCount*4)){$("adminMsg").textContent="Split-Pair Scramble requires 4-man teams with exactly 4 golfers on every team. Set golfers to 4 × the number of teams.";return}
   const namedGolfers=(draftState.golfers||[]).filter(g=>(g?.name||"").trim()).length;
   if(desiredGolfers<namedGolfers){$("adminMsg").textContent=`You already have ${namedGolfers} named golfers. Remove golfers first before lowering the setup to ${desiredGolfers}.`;return}
   while(draftState.golfers.length<desiredGolfers)draftState.golfers.push({name:"",hcp:"",band:"",team:null});
@@ -1489,7 +1499,7 @@ $("saveAdmin").addEventListener("click",async()=>{
   rebuildTeamRosters();
   const {error:de}=await db.from("elleng_drafts").update({state:draftState,updated_at:new Date().toISOString()}).eq("id",DRAFT_ID);if(de)throw de;
   await loadBase(); await loadScores(); renderAll();
-  $("adminMsg").textContent=`Tournament controls saved. ${isSplitPair()?"Split-Pair Scramble":draftTeamSize()+"-man Standard EllenG"} format, ${teams.length} teams and ${draftGolferCount()} golfer slots active.`;
+  $("adminMsg").textContent=`Tournament controls saved. ${isSplitPair()?"Split-Pair Scramble":draftTeamSize()+"-man Standard EllenG"} format, ${teams.length} teams and ${draftGolferCount()} golfers active.`;
  }catch(e){$("adminMsg").textContent=e?.message||"Unable to save tournament controls."}
 });
 $("reloadAdmin").addEventListener("click",async()=>{if(!isCommissioner)return;$("adminMsg").textContent="Reloading…";try{await loadBase();await loadScores();renderAll();$("adminMsg").textContent="Current data reloaded."}catch(e){$("adminMsg").textContent=e.message}});
