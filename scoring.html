@@ -89,6 +89,34 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .player-band-chip{display:inline-block;border-radius:999px;padding:4px 8px;background:#edf1f3;font-weight:900;min-width:34px;text-align:center}
 .player-section-title{margin:18px 0 8px;font-size:18px}
 @media(max-width:650px){.players-toolbar{grid-template-columns:1fr}.player-row-public{grid-template-columns:minmax(120px,1fr) 74px 58px}.player-team-public{grid-column:1/4;color:var(--muted);font-size:12px}.player-team-head{align-items:flex-start}.player-team-head .status{text-align:right}}
+
+
+/* Player Home Dashboard + mobile app navigation */
+.home-hero{background:linear-gradient(135deg,#08253b,#0b3d5d);color:#fff;border:0;overflow:hidden;position:relative}
+.home-hero:after{content:"🐊";position:absolute;right:14px;bottom:-18px;font-size:92px;opacity:.08;transform:rotate(-8deg)}
+.home-kicker{font-size:12px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:#f0ce67}
+.home-hero h2{font-size:30px;margin:5px 0 7px;color:#fff}
+.home-hero .status{color:rgba(255,255,255,.82)}
+.home-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.home-tile{border:1px solid var(--line);border-radius:13px;padding:14px;background:#fff}
+.home-tile strong.big{display:block;font-size:26px;line-height:1.05;color:var(--navy);margin-top:3px}
+.home-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.home-action{border:1px solid var(--line);background:#fff;color:var(--ink);text-align:center;padding:13px 8px;border-radius:12px;font-weight:800;cursor:pointer}
+.home-action span{display:block;font-size:24px;margin-bottom:5px}
+.home-highlight{border-left:4px solid var(--gold);background:#fffaf0}
+.mobile-bottom-nav{display:none}
+@media(max-width:650px){
+ body{padding-bottom:78px}
+ .home-hero h2{font-size:25px;padding-right:54px}
+ .home-grid{grid-template-columns:1fr 1fr}
+ .home-actions{grid-template-columns:1fr 1fr}
+ .top-tabs-card{display:none}
+ .mobile-bottom-nav{display:grid;position:fixed;left:0;right:0;bottom:0;z-index:999;grid-template-columns:repeat(5,1fr);background:rgba(255,255,255,.97);border-top:1px solid var(--line);box-shadow:0 -4px 18px rgba(8,37,59,.12);padding:6px max(5px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(5px,env(safe-area-inset-left));backdrop-filter:blur(12px)}
+ .mobile-nav-btn{background:transparent;color:var(--muted);padding:5px 2px 4px;border-radius:9px;font-size:10px;line-height:1.1;min-width:0}
+ .mobile-nav-btn .nav-icon{display:block;font-size:21px;line-height:1;margin-bottom:3px}
+ .mobile-nav-btn.active{color:var(--green);background:#edf7f1}
+}
+
 </style>
 </head>
 <body>
@@ -112,8 +140,9 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div class="row"><span id="liveBadge" class="badge">SETUP</span><button id="authBtn" class="secondary">Captain / Commissioner Login</button><button id="logoutBtn" class="secondary hidden">Sign Out</button></div>
 </div>
 
-<div class="card"><div class="tabs">
-<button class="tab active" data-view="leaderboard">Leaderboard</button>
+<div class="card top-tabs-card"><div class="tabs">
+<button class="tab active" data-view="home">Home</button>
+<button class="tab" data-view="leaderboard">Leaderboard</button>
 <button class="tab" data-view="teams">Teams</button>
 <button class="tab" data-view="players">Players</button>
 <button class="tab" data-view="course">Course</button>
@@ -124,7 +153,38 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <button id="adminTab" class="tab hidden" data-view="admin">Commissioner</button>
 </div></div>
 
-<section id="leaderboardView" class="view">
+<section id="homeView" class="view">
+<div class="card home-hero">
+  <div class="home-kicker">ELLENG CUP • TOURNAMENT HUB</div>
+  <h2 id="homeHeadline">Tournament Day</h2>
+  <div id="homeSubline" class="status">Live standings, teams, players and course information in one place.</div>
+  <div class="row" style="margin-top:13px"><span id="homeStatusBadge" class="badge" style="background:#d5a72c;color:#10202c">SETUP</span><span id="homeCourseBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">Course</span></div>
+</div>
+
+<div class="home-grid">
+  <div class="home-tile"><div class="status">CURRENT LEADER</div><strong id="homeLeader" class="big">—</strong><div id="homeLeaderPts" class="status" style="margin-top:5px">No official points yet</div></div>
+  <div class="home-tile"><div class="status">HOLES COMPLETE</div><strong id="homeHolesComplete" class="big">0 / 18</strong><div class="status" style="margin-top:5px">Updates automatically</div></div>
+  <div class="home-tile"><div class="status">TEAMS</div><strong id="homeTeamCount" class="big">6</strong><div id="homePlayerCount" class="status" style="margin-top:5px">Players loaded</div></div>
+  <div class="home-tile"><div class="status">FORMAT</div><strong id="homeFormat" class="big" style="font-size:18px">EllenG</strong><div id="homeFormatSub" class="status" style="margin-top:5px">Front 9 / Back 9</div></div>
+</div>
+
+<div class="card">
+  <div class="row between"><div><h2 style="margin:0">Quick Access</h2><div class="status">Everything players need during the tournament.</div></div><span class="badge">LIVE</span></div>
+  <div class="home-actions" style="margin-top:12px">
+    <button class="home-action" type="button" data-home-go="leaderboard"><span>🏆</span>Leaderboard</button>
+    <button class="home-action" type="button" data-home-go="teams"><span>👥</span>Teams</button>
+    <button class="home-action" type="button" data-home-go="players"><span>⛳</span>Players</button>
+    <button class="home-action" type="button" data-home-go="course"><span>🗺️</span>Course</button>
+  </div>
+</div>
+
+<div id="homeSpecialCard" class="card home-highlight">
+  <div class="row between"><strong>🐊 Gator Hole & Final Cargo</strong><span class="badge">SPECIAL SCORING</span></div>
+  <div id="homeSpecialText" class="note" style="margin-top:8px">The Gator Hole is secret until the Commissioner reveals it. Final Cargo adds 6 points to the selected winner.</div>
+</div>
+</section>
+
+<section id="leaderboardView" class="view hidden">
 <div class="card">
 <div class="row between"><div><h2 style="margin:0">Live Leaderboard</h2><div class="status">Cup points update automatically as scores are entered.</div></div><span id="pointScaleBadge" class="badge">6–5–4–3–2–1</span></div>
 <div id="leaderboard" class="leader" style="margin-top:14px"></div>
@@ -364,6 +424,15 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </div>
 </section>
 </section>
+
+<nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+  <button class="mobile-nav-btn active" type="button" data-mobile-view="home"><span class="nav-icon">⌂</span>Home</button>
+  <button class="mobile-nav-btn" type="button" data-mobile-view="leaderboard"><span class="nav-icon">🏆</span>Scores</button>
+  <button class="mobile-nav-btn" type="button" data-mobile-view="teams"><span class="nav-icon">👥</span>Teams</button>
+  <button class="mobile-nav-btn" type="button" data-mobile-view="players"><span class="nav-icon">⛳</span>Players</button>
+  <button class="mobile-nav-btn" type="button" data-mobile-view="course"><span class="nav-icon">•••</span>More</button>
+</nav>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1130,6 +1199,31 @@ async function archiveAndStartNew(){
   if(msg)msg.textContent="New tournament is ready. Scores, picks, golfer team assignments, captain names, captain team assignments, Gator Hole and Final Cargo were reset. Captain login accounts were kept.";
  }catch(e){console.error(e);if(msg)msg.textContent=e?.message||"Unable to start the new tournament."}
 }
+function renderHome(){
+ if(!draftState||!tournament)return;
+ const status=String(tournament?.status||"setup").toUpperCase();
+ if($("homeStatusBadge"))$("homeStatusBadge").textContent=status;
+ const c=activeCourse(), r=activeCourseRoute();
+ if($("homeCourseBadge"))$("homeCourseBadge").textContent=`${c.name} • ${r.label}`;
+ if($("homeHeadline"))$("homeHeadline").textContent=status==="LIVE"?"The EllenG Cup Is Live":status==="COMPLETE"?"Final Results":"EllenG Cup Tournament Hub";
+ if($("homeSubline"))$("homeSubline").textContent=status==="LIVE"?"Follow the leaderboard, check teams, view players and keep up with every hole.":status==="COMPLETE"?"The tournament is complete. Review the final leaderboard and results.":"Everything players need before and during tournament day.";
+ const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
+ const lead=ranking[0];
+ if($("homeLeader"))$("homeLeader").textContent=lead?teams[lead.team]?.name||"—":"—";
+ if($("homeLeaderPts"))$("homeLeaderPts").textContent=lead&&lead.pts>0?`${lead.pts.toFixed(lead.pts%1?1:0)} Cup pts • Thru ${lead.thru||0}`:"No official points yet";
+ let complete=0;for(let h=1;h<=18;h++){const count=teams.filter((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null)).length;if(count===teams.length)complete++}
+ if($("homeHolesComplete"))$("homeHolesComplete").textContent=`${complete} / 18`;
+ if($("homeTeamCount"))$("homeTeamCount").textContent=String(teams.length);
+ const playerCount=(draftState.golfers||[]).filter(g=>(g?.name||"").trim()).length;
+ if($("homePlayerCount"))$("homePlayerCount").textContent=`${playerCount} player${playerCount===1?"":"s"}`;
+ if($("homeFormat"))$("homeFormat").textContent=isSplitPair()?"Split-Pair Scramble":`${draftTeamSize()}-Man EllenG`;
+ if($("homeFormatSub"))$("homeFormatSub").textContent=isSplitPair()?"Two 2-man pairs • both scores count":"Front 9 Scramble • Back 9 Shamble";
+ const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Gator Hole: Hole ${Number(tournament.gator_hole)}. `:"Gator Hole is still secret. ";
+ let cargo="Final Cargo has not been awarded.";
+ if(tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""){const ti=Number(tournament.final_cargo_team);cargo=`Final Cargo: ${teams[ti]?.name||`Team ${ti+1}`} +${Number(tournament.final_cargo_points||6)} points.`}
+ if($("homeSpecialText"))$("homeSpecialText").textContent=gator+cargo;
+}
+
 function renderAll(){
  if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • ${teams.length} TEAMS • 18 HOLES`;
  $("liveBadge").textContent=(tournament?.status||"setup").toUpperCase();
@@ -1138,8 +1232,8 @@ function renderAll(){
  $("authBtn").classList.toggle("hidden",!!user);
  $("logoutBtn").classList.toggle("hidden",!user);
  $("scoringTab").classList.toggle("hidden",!user);
- if(!user){$("adminTab").classList.add("hidden"); if(document.querySelector('.tab.active')?.dataset.view==='scoring'||document.querySelector('.tab.active')?.dataset.view==='admin'){showView('leaderboard')}}
- renderLeaderboard();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderScoring();renderTrashTalk();renderAdmin();
+ if(!user){$("adminTab").classList.add("hidden"); if(document.querySelector('.tab.active')?.dataset.view==='scoring'||document.querySelector('.tab.active')?.dataset.view==='admin'){showView('home')}}
+ renderHome();renderLeaderboard();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderScoring();renderTrashTalk();renderAdmin();
 }
 let syncBusy=false;
 async function syncLive(){
@@ -1215,9 +1309,12 @@ async function enterApp(){
  }
 }
 function showView(name){
+ const target=$(name+"View");if(!target)return;
  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.view===name));
+ document.querySelectorAll(".mobile-nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.mobileView===name));
  document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));
- $(name+"View").classList.remove("hidden");
+ target.classList.remove("hidden");
+ window.scrollTo({top:0,behavior:"smooth"});
 }
 $("loginBtn").addEventListener("click",async()=>{
  const btn=$("loginBtn"), email=$("email").value.trim(), password=$("password").value;
@@ -1236,8 +1333,10 @@ $("loginBtn").addEventListener("click",async()=>{
 });
 $("authBtn").addEventListener("click",()=>{$("loginCard").classList.remove("hidden");$("loginMsg").textContent="";$("loginCard").scrollIntoView({behavior:"smooth",block:"start"})});
 $("cancelLoginBtn").addEventListener("click",()=>{$("loginCard").classList.add("hidden")});
-$("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;showView("leaderboard");await enterViewer()});
+$("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;showView("home");await enterViewer()});
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
+document.querySelectorAll("[data-home-go]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.homeGo)));
+document.querySelectorAll("[data-mobile-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.mobileView)));
 if($("playerDirectoryMode"))$("playerDirectoryMode").addEventListener("change",renderPlayersDirectory);
 if($("playerDirectorySearch"))$("playerDirectorySearch").addEventListener("input",renderPlayersDirectory);
 if($("courseBrowseSelect"))$("courseBrowseSelect").addEventListener("change",()=>{
