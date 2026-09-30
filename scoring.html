@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.1.1">
+<meta name="elleng-app-version" content="1.1.5">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -179,14 +179,14 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <img src="gator.png" alt="EllenG Cup gator logo">
 <div><h1>EllenG Cup</h1><p id="tournamentSubtitle">LIVE TOURNAMENT SCORING • 6 TEAMS • 18 HOLES</p></div>
 </div></header>
-<div class="app-version-bar"><span id="appVersionChip" class="app-version-chip">EllenG Live v1.1.2</span></div>
+<div class="app-version-bar"><span id="appVersionChip" class="app-version-chip">EllenG Live v1.1.5</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
-<section id="loginCard" class="card login hidden">
+<section id="loginCard" class="card login">
 <h2 style="margin-top:0">Sign in</h2>
-<p class="note">Players, captains and the commissioner sign in with their EllenG Cup account. Your login determines what you can edit.</p>
-<div class="row"><input id="email" type="text" autocapitalize="none" autocomplete="username" placeholder="Player username or commissioner email"><input id="password" type="password" autocomplete="current-password" placeholder="Password"><button id="loginBtn" class="primary">Sign In</button><button id="cancelLoginBtn" class="secondary" type="button">Cancel</button></div>
+<p class="note">Sign in to enter the EllenG Cup tournament hub. Player accounts include the leaderboard, teams, players, course, hole progress, Trash Talk, handicap management and permitted score entry.</p>
+<div class="row"><input id="email" type="text" autocapitalize="none" autocomplete="username" placeholder="Player username or commissioner email"><input id="password" type="password" autocomplete="current-password" placeholder="Password"><button id="loginBtn" class="primary">Sign In</button></div>
 <div id="loginMsg" class="status" style="margin-top:9px"></div>
 <div id="connectionStatus" class="status" style="margin-top:7px;font-weight:700">Checking app connection…</div>
 </section>
@@ -202,7 +202,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <div id="changeAccountPasswordMsg" class="status" style="margin-top:9px"></div>
 </section>
 
-<section id="app">
+<section id="app" class="hidden">
 <div class="card row between">
 <div><strong id="roleLabel">Live scoring</strong><div id="userLabel" class="status"></div></div>
 <div class="row"><span id="liveBadge" class="badge">SETUP</span><button id="authBtn" class="secondary">Player / Captain / Commissioner Login</button><button id="logoutBtn" class="secondary hidden">Sign Out</button></div>
@@ -350,15 +350,12 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 
 <section id="trashView" class="view hidden">
 <div class="card">
-  <div class="row between"><div><h2 style="margin:0">Live Trash Talk</h2><div class="status">Everyone can watch live. Signed-in players can post with the tournament PIN.</div></div><span class="badge">LIVE</span></div>
+  <div class="row between"><div><h2 style="margin:0">Live Trash Talk</h2><div class="status">Signed-in EllenG Cup players can post. Your account automatically supplies your golfer name and team.</div></div><span class="badge">PLAYERS ONLY</span></div>
   <div id="trashFeed" class="trash-feed" style="margin-top:14px"><div class="note">No trash talk yet. Somebody has to start it.</div></div>
 </div>
 <div class="card">
-  <div class="row between"><div><strong>Jump In</strong><div class="status">Enter your name, team and tournament PIN. Keep it fun — the Commissioner can remove posts.</div></div><span class="badge">280 CHARACTERS</span></div>
+  <div class="row between"><div><strong>Jump In</strong><div class="status">No extra PIN required. Keep it fun — the Commissioner can remove posts.</div></div><span class="badge">280 CHARACTERS</span></div>
   <div class="trash-compose" style="margin-top:12px">
-    <input id="trashName" maxlength="30" placeholder="Your name">
-    <select id="trashTeam"><option value="">No team / spectator</option></select>
-    <input id="trashPin" inputmode="numeric" maxlength="8" placeholder="Tournament PIN">
     <textarea id="trashMessage" maxlength="280" placeholder="Talk your trash…"></textarea>
   </div>
   <div class="row between" style="margin-top:9px">
@@ -471,11 +468,8 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </div>
 
 <div id="adminTrashTalk" class="card admin-card">
-  <div class="admin-section-title"><span class="step">5</span><div><h2>Trash Talk Controls</h2><div class="section-sub">Set the player posting PIN or clear the live feed. Everyone can still view the feed without a PIN.</div></div></div>
-  <div class="admin-grid" style="margin-top:12px">
-    <label><small>Player posting PIN (4–8 digits)</small><input id="adminTrashPin" inputmode="numeric" maxlength="8" placeholder="Example: 4827"></label>
-  </div>
-  <div class="row" style="margin-top:10px"><button id="saveTrashPin" class="primary" type="button">Set / Change Trash Talk PIN</button><button id="clearTrashTalk" class="danger" type="button">Clear Trash Talk Feed</button></div>
+  <div class="admin-section-title"><span class="step">5</span><div><h2>Trash Talk Controls</h2><div class="section-sub">Posting is limited to signed-in EllenG Cup accounts. No separate Trash Talk PIN is used.</div></div></div>
+  <div class="row" style="margin-top:10px"><button id="clearTrashTalk" class="danger" type="button">Clear Trash Talk Feed</button></div>
   <div id="adminTrashMsg" class="status" style="margin-top:8px"></div>
 </div>
 
@@ -741,16 +735,11 @@ function trashTime(ts){
  try{return new Date(ts).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}catch(e){return ""}
 }
 async function loadTrashTalk(){
+ if(!user){trashMessages=[];return}
  const {data,error}=await db.from("elleng_trash_talk").select("id,tournament_id,display_name,team_index,message,created_at").eq("tournament_id",TOURNAMENT_ID).order("created_at",{ascending:true}).limit(100);
  if(error)throw error; trashMessages=data||[];
 }
 function renderTrashTalk(){
- const teamSel=$("trashTeam");
- if(teamSel){
-  const prior=teamSel.value;
-  teamSel.innerHTML='<option value="">No team / spectator</option>'+teams.map((t,i)=>`<option value="${i}">${esc(t.name)}</option>`).join("");
-  if(prior===""||teams[Number(prior)])teamSel.value=prior;
- }
  const feed=$("trashFeed"); if(!feed)return;
  if(!trashMessages.length){feed.innerHTML='<div class="note">No trash talk yet. Somebody has to start it.</div>';return}
  feed.innerHTML=trashMessages.map(m=>{
@@ -761,16 +750,13 @@ function renderTrashTalk(){
  feed.scrollTop=feed.scrollHeight;
 }
 async function postTrashTalk(){
- const btn=$("trashPostBtn"), msgEl=$("trashMsg");
- const displayName=$("trashName").value.trim(), team=$("trashTeam").value, pin=$("trashPin").value.trim(), message=$("trashMessage").value.trim();
- if(!displayName){msgEl.textContent="Enter your name.";return}
+ const btn=$("trashPostBtn"), msgEl=$("trashMsg"), message=$("trashMessage").value.trim();
+ if(!user){msgEl.textContent="Sign in to post.";return}
  if(!message){msgEl.textContent="Type a message first.";return}
- if(!pin){msgEl.textContent="Enter the tournament PIN.";return}
  btn.disabled=true; btn.textContent="Posting…"; msgEl.textContent="";
  try{
-  const {data,error}=await db.functions.invoke("trash-talk",{body:{action:"post",tournament_id:TOURNAMENT_ID,display_name:displayName,team_index:team===""?null:Number(team),pin,message}});
+  const {data,error}=await db.functions.invoke("trash-talk",{body:{action:"post",tournament_id:TOURNAMENT_ID,message}});
   if(error)throw error; if(data?.error)throw new Error(data.error);
-  try{localStorage.setItem("ellengTrashName",displayName);localStorage.setItem("ellengTrashTeam",team)}catch(e){}
   $("trashMessage").value=""; msgEl.textContent="Posted."; await loadTrashTalk(); renderTrashTalk();
  }catch(e){msgEl.textContent=e?.message||"Unable to post."}
  finally{btn.disabled=false;btn.textContent="Post"}
@@ -778,12 +764,6 @@ async function postTrashTalk(){
 async function deleteTrashTalk(id){
  if(!isCommissioner)return; if(!confirm("Delete this trash talk message?"))return;
  try{const {data,error}=await db.functions.invoke("trash-talk",{body:{action:"delete",tournament_id:TOURNAMENT_ID,id}});if(error)throw error;if(data?.error)throw new Error(data.error);await loadTrashTalk();renderTrashTalk()}catch(e){alert(e?.message||"Unable to delete message.")}
-}
-async function setTrashTalkPin(){
- if(!isCommissioner)return; const el=$("adminTrashMsg"), pin=$("adminTrashPin").value.trim();
- if(!/^\d{4,8}$/.test(pin)){el.textContent="PIN must be 4 to 8 digits.";return}
- el.textContent="Saving PIN…";
- try{const {data,error}=await db.functions.invoke("trash-talk",{body:{action:"set_pin",tournament_id:TOURNAMENT_ID,pin}});if(error)throw error;if(data?.error)throw new Error(data.error);$("adminTrashPin").value="";el.textContent="Trash Talk PIN is set. Share it with tournament players."}catch(e){el.textContent=e?.message||"Unable to set PIN."}
 }
 async function clearTrashTalkFeed(){
  if(!isCommissioner)return;if(!confirm("Clear every Trash Talk message for this tournament?"))return;const el=$("adminTrashMsg");el.textContent="Clearing…";
@@ -1057,7 +1037,7 @@ async function saveScore(teamIndex,val){
  await loadScores();$("saveMsg").textContent="Saved.";renderAll();
 }
 async function loadBase(){
- const tournamentSource=user?"elleng_tournaments":"elleng_public_tournaments";
+ const tournamentSource="elleng_tournaments";
  const [{data:t,error:te},{data:d,error:de}]=await Promise.all([
   db.from(tournamentSource).select("*").eq("id",TOURNAMENT_ID).single(),
   db.from("elleng_drafts").select("owner_id,state").eq("id",DRAFT_ID).single()
@@ -1437,8 +1417,8 @@ function renderAll(){
  if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • ${teams.length} TEAMS • 18 HOLES`;
  $("liveBadge").textContent=(tournament?.status||"setup").toUpperCase();
  const playerName=currentGolferIndex!=null?String(draftState?.golfers?.[currentGolferIndex]?.name||""):"";
- $("roleLabel").textContent=isCommissioner?"Commissioner":captainTeam!=null?`${teams[captainTeam].name} Captain`:user?(playerName||"Player"):"Public Viewer";
- $("userLabel").textContent=user?`${visibleLogin()}${playerName?` • ${playerName}`:" • Login not linked to a golfer yet"}`:"Public view — sign in for player scoring, handicap updates and account features.";
+ $("roleLabel").textContent=isCommissioner?"Commissioner":captainTeam!=null?`${teams[captainTeam].name} Captain`:(playerName||"Player");
+ $("userLabel").textContent=user?`${visibleLogin()}${playerName?` • ${playerName}`:" • Login not linked to a golfer yet"}`:"";
  $("authBtn").classList.toggle("hidden",!!user);
  $("logoutBtn").classList.toggle("hidden",!user);
  if($("playersTab"))$("playersTab").classList.toggle("hidden",!user);
@@ -1457,10 +1437,11 @@ function renderAll(){
 }
 let syncBusy=false;
 async function syncLive(){
+ if(!user)return;
  if(syncBusy)return;
  syncBusy=true;
  try{
-  const tournamentSource=user?"elleng_tournaments":"elleng_public_tournaments";
+  const tournamentSource="elleng_tournaments";
   const {data:t,error:te}=await db.from(tournamentSource).select("*").eq("id",TOURNAMENT_ID).single();
   if(te)throw te;
   tournament=t;
@@ -1502,20 +1483,10 @@ function subscribeLive(){
  liveChannel.subscribe();
 }
 async function enterViewer(){
- try{
-  await loadBase();
-  await loadScores();
-  await loadTrashTalk();
-  $("loginCard").classList.add("hidden");
-  $("app").classList.remove("hidden");
-  renderAll();
-  subscribeLive();
- }catch(e){
-  console.error("Public tournament load failed:",e);
-  $("app").classList.add("hidden");
-  $("loginCard").classList.remove("hidden");
-  $("loginMsg").textContent="Live scoring could not load: "+(e?.message||String(e));
- }
+ $("app").classList.add("hidden");
+ $("passwordChangeCard").classList.add("hidden");
+ $("loginCard").classList.remove("hidden");
+ $("loginMsg").textContent="Sign in with your EllenG Cup account to continue.";
 }
 async function enterApp(){
  $("loginMsg").textContent="Signed in — loading tournament…";
@@ -1541,7 +1512,7 @@ async function enterApp(){
  }
 }
 function showView(name){
- if(!user&&["players","handicap","trash","scoring","admin"].includes(name))name="home";
+ if(!user){enterViewer();return}
  if(name==="scoring"&&!(isCommissioner||captainTeam!=null))name="handicap";
  if(name==="admin"&&!isCommissioner)name=user?"handicap":"home";
  const target=$(name+"View");if(!target)return;
@@ -1581,7 +1552,6 @@ $("changeAccountPasswordBtn").addEventListener("click",async()=>{
  finally{btn.disabled=false}
 });
 $("authBtn").addEventListener("click",()=>{$("loginCard").classList.remove("hidden");$("loginMsg").textContent="";$("loginCard").scrollIntoView({behavior:"smooth",block:"start"})});
-$("cancelLoginBtn").addEventListener("click",()=>{$("loginCard").classList.add("hidden")});
 $("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;$("passwordChangeCard").classList.add("hidden");showView("home");await enterViewer()});
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
 document.querySelectorAll("[data-home-go]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.homeGo)));
@@ -1750,9 +1720,7 @@ if(createMissingLoginsBtn)createMissingLoginsBtn.addEventListener("click",async(
 $("trashPostBtn").addEventListener("click",postTrashTalk);
 $("trashMessage").addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter")postTrashTalk()});
 document.querySelectorAll("[data-trash-emoji]").forEach(b=>b.addEventListener("click",()=>{const ta=$("trashMessage");ta.value=(ta.value+(ta.value?" ":"")+b.dataset.trashEmoji).slice(0,280);ta.focus()}));
-$("saveTrashPin").addEventListener("click",setTrashTalkPin);
 $("clearTrashTalk").addEventListener("click",clearTrashTalkFeed);
-try{$("trashName").value=localStorage.getItem("ellengTrashName")||"";$("trashTeam").value=localStorage.getItem("ellengTrashTeam")||""}catch(e){}
 $("archiveStartNew").addEventListener("click",archiveAndStartNew);
 $("resetCurrentLeader").addEventListener("click",()=>{
  if(!isCommissioner)return;
