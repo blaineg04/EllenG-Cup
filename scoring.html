@@ -424,7 +424,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   </div>
   <div class="row commissioner-actions" style="margin-top:12px">
     <button id="archiveStartNew" class="danger save-wide" type="button">Archive Current & Start New Tournament</button>
-    <button id="resetScoringOnly" class="secondary" type="button">Clear Scores Only</button>
+    <button id="resetCurrentLeader" class="secondary" type="button">Reset Current Leader</button><button id="resetScoringOnly" class="secondary" type="button">Clear Scores Only</button>
   </div>
   <div id="newTournamentMsg" class="status" style="margin-top:9px"></div>
 </div>
@@ -1242,8 +1242,9 @@ function renderHome(){
  if($("homeSubline"))$("homeSubline").textContent=status==="LIVE"?"Follow the leaderboard, check teams, view players and keep up with every hole.":status==="COMPLETE"?"The tournament is complete. Review the final leaderboard and results.":"Everything players need before and during tournament day.";
  const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
  const lead=ranking[0];
- if($("homeLeader"))$("homeLeader").textContent=lead?teams[lead.team]?.name||"—":"—";
- if($("homeLeaderPts"))$("homeLeaderPts").textContent=lead&&lead.pts>0?`${lead.pts.toFixed(lead.pts%1?1:0)} Cup pts • Thru ${lead.thru||0}`:"No official points yet";
+ const hasOfficialLeader=!!(lead&&Number(lead.pts)>0);
+ if($("homeLeader"))$("homeLeader").textContent=hasOfficialLeader?(teams[lead.team]?.name||"—"):"—";
+ if($("homeLeaderPts"))$("homeLeaderPts").textContent=hasOfficialLeader?`${lead.pts.toFixed(lead.pts%1?1:0)} Cup pts • Thru ${lead.thru||0}`:"No official points yet";
  let complete=0;for(let h=1;h<=18;h++){const count=teams.filter((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null)).length;if(count===teams.length)complete++}
  if($("homeHolesComplete"))$("homeHolesComplete").textContent=`${complete} / 18`;
  if($("homeTeamCount"))$("homeTeamCount").textContent=String(teams.length);
@@ -1495,6 +1496,16 @@ $("saveTrashPin").addEventListener("click",setTrashTalkPin);
 $("clearTrashTalk").addEventListener("click",clearTrashTalkFeed);
 try{$("trashName").value=localStorage.getItem("ellengTrashName")||"";$("trashTeam").value=localStorage.getItem("ellengTrashTeam")||""}catch(e){}
 $("archiveStartNew").addEventListener("click",archiveAndStartNew);
+$("resetCurrentLeader").addEventListener("click",()=>{
+ if(!isCommissioner)return;
+ const leader=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team)[0];
+ if(leader&&Number(leader.pts)>0){
+   $("newTournamentMsg").textContent="Current leader is calculated from official Cup points. Correct or clear the scores to change it.";
+   return;
+ }
+ renderHome();
+ $("newTournamentMsg").textContent="Current leader display reset. No team will show as the leader until official Cup points are posted.";
+});
 $("resetScoringOnly").addEventListener("click",clearScoresOnly);
 (async()=>{try{const {data:{session},error}=await db.auth.getSession();if(error)throw error;if(session){user=session.user;await enterApp()}else{await enterViewer()}}catch(e){console.error("Session restore error:",e);user=null;await enterViewer()}})();
 })();
