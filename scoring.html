@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="elleng-app-version" content="1.0.0">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -117,6 +118,9 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
  .mobile-nav-btn.active{color:var(--green);background:#edf7f1}
 }
 
+/* App version / update notice */
+.app-version-bar{max-width:1100px;margin:10px auto 0;padding:0 16px;display:flex;justify-content:flex-end}.app-version-chip{font-size:11px;font-weight:800;color:rgba(255,255,255,.78);letter-spacing:.03em}.update-banner{position:sticky;top:0;z-index:1200;background:#fff3c8;border-bottom:1px solid #e1bd46;padding:10px 14px;box-shadow:0 4px 12px rgba(8,37,59,.12)}.update-banner .update-inner{max-width:1100px;margin:auto;display:flex;gap:10px;align-items:center;justify-content:space-between}.update-banner strong{color:#5d4700}.update-banner button{background:#08253b;color:white;padding:9px 12px}.update-banner.hidden{display:none!important}@media(max-width:560px){.app-version-bar{padding:0 10px}.update-banner .update-inner{align-items:flex-start;flex-direction:column}.update-banner button{width:100%}}
+
 </style>
 </head>
 <body>
@@ -124,6 +128,8 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <img src="gator.png" alt="EllenG Cup gator logo">
 <div><h1>EllenG Cup</h1><p id="tournamentSubtitle">LIVE TOURNAMENT SCORING • 6 TEAMS • 18 HOLES</p></div>
 </div></header>
+<div class="app-version-bar"><span id="appVersionChip" class="app-version-chip">EllenG Live v1.0.0</span></div>
+<div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
 <section id="loginCard" class="card login hidden">
@@ -439,6 +445,33 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <script src="config.js"></script>
 <script>
 (()=>{
+const APP_VERSION=document.querySelector('meta[name="elleng-app-version"]')?.content||"1.0.0";
+const versionChip=document.getElementById("appVersionChip");
+if(versionChip)versionChip.textContent=`EllenG Live v${APP_VERSION}`;
+const updateBanner=document.getElementById("updateBanner");
+const updateText=document.getElementById("updateText");
+const refreshAppBtn=document.getElementById("refreshAppBtn");
+if(refreshAppBtn)refreshAppBtn.onclick=()=>{
+  try{localStorage.setItem("elleng_last_refresh",Date.now().toString())}catch(_){}
+  const u=new URL(window.location.href);u.searchParams.set("v",Date.now().toString());window.location.replace(u.toString());
+};
+async function checkForAppUpdate(){
+  try{
+    const u=new URL(window.location.href);u.searchParams.set("versioncheck",Date.now().toString());
+    const r=await fetch(u.toString(),{cache:"no-store",headers:{"Cache-Control":"no-cache"}});
+    if(!r.ok)return;
+    const t=await r.text();
+    const m=t.match(/<meta\s+name=["']elleng-app-version["']\s+content=["']([^"']+)["']/i)||t.match(/<meta\s+content=["']([^"']+)["']\s+name=["']elleng-app-version["']/i);
+    const latest=m?.[1];
+    if(latest&&latest!==APP_VERSION){
+      if(updateText)updateText.textContent=`Version ${latest} is available. Refresh to stay in sync with everyone else.`;
+      updateBanner?.classList.remove("hidden");
+    }
+  }catch(_){/* stay quiet if offline */}
+}
+setTimeout(checkForAppUpdate,2500);
+setInterval(checkForAppUpdate,60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkForAppUpdate()});
 const connectionStatus=document.getElementById("connectionStatus");
 function connection(text,ok=false){if(connectionStatus){connectionStatus.textContent=text;connectionStatus.style.color=ok?"#087c42":"#8b1e2d"}}
 window.addEventListener("error",e=>connection("App error: "+(e.message||"JavaScript failed to load.")));
