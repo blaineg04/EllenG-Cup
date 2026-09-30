@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.6.1">
+<meta name="elleng-app-version" content="1.6.3">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -597,7 +597,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   <div class="admin-grid" style="margin-top:12px">
     <label><small>Golfer name</small><input id="newGolferName" placeholder="Name"></label>
     <label><small>Band</small><select id="newGolferBand"><option>A</option><option>B</option><option>C</option><option>D</option></select></label>
-    <label><small>Handicap</small><input id="newGolferHcp" placeholder="HCP"></label>
+    <label><small>Handicap</small><input id="newGolferHcp" placeholder="HCP"></label><label><small>Profile photo URL (optional)</small><input id="newGolferPhoto" placeholder="https://..."></label>
     <label><small>Team</small><select id="newGolferTeam"><option value="">Available / Unassigned</option></select></label>
   </div>
   <div class="row" style="margin-top:12px"><button id="addGolferBtn" class="primary save-wide">Add Golfer</button></div>
@@ -614,7 +614,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   <div class="section-toolbar"><button id="savePlayers" class="primary save-wide">Save Player Changes</button></div>
   <div class="player-admin-row" style="font-size:12px;font-weight:800;color:var(--muted);margin-top:10px"><div>PLAYER</div><div>BAND</div><div>HCP</div><div class="player-team">TEAM</div><div></div></div>
   <div id="playerEditor"></div>
-  <div id="playerEditMsg" class="status" style="margin-top:9px"></div>
+  <div class="note" style="margin-top:8px">Photos stay with the golfer profile and carry forward with the roster unless you change or remove the URL.</div><div id="playerEditMsg" class="status" style="margin-top:9px"></div>
 </div>
 
 <div id="adminTrashTalk" class="card admin-card">
@@ -1889,7 +1889,7 @@ function renderDraftHistory(){
    </div>`;
  }).join("");
 }
-function renderAll(){renderHoleMatchup();renderPlayerProfileCards();renderDraftHistory();
+function renderAll(){
  if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • 18 HOLES`;
  $("liveBadge").textContent=(tournament?.status||"setup").toUpperCase();
  const playerName=currentGolferIndex!=null?String(draftState?.golfers?.[currentGolferIndex]?.name||""):"";
@@ -1910,6 +1910,9 @@ function renderAll(){renderHoleMatchup();renderPlayerProfileCards();renderDraftH
    if(["players","handicap","trash","scoring","admin"].includes(active||""))showView("home");
  }
  renderHome();renderLeadChangeAlert();renderMomentumTracker();renderTournamentPulse();renderTournamentRecap();renderTournamentAwards();renderLeaderboard();renderProjectedStandings();renderDigitalScorecard();renderBroadcast();renderTeams();renderPlayersDirectory();renderCourse();renderProgress();renderSelfHandicap();renderScoring();renderTrashTalk();renderAdmin();renderTournamentHealth();renderCommissionerControlRoom();
+ try{renderHoleMatchup()}catch(e){console.warn("Hole Matchup render skipped",e)}
+ try{renderDraftHistory()}catch(e){console.warn("Draft History render skipped",e)}
+ try{renderPlayerProfileCards()}catch(e){console.warn("Player Profile Cards render skipped",e)}
 }
 let syncBusy=false;
 async function syncLive(){
@@ -2192,6 +2195,7 @@ document.addEventListener("input",e=>{
 });
 $("saveTeams").addEventListener("click",async()=>{document.querySelectorAll(".team-color-input").forEach(x=>{const i=Number(x.dataset.team);if(draftState.teams?.[i])draftState.teams[i].color=x.value});document.querySelectorAll(".team-slogan-input").forEach(x=>{const i=Number(x.dataset.team);if(draftState.teams?.[i])draftState.teams[i].slogan=x.value});if(!isCommissioner)return;ensureDraftShape();$("teamEditMsg").textContent="Saving…";document.querySelectorAll("[data-team-name]").forEach(x=>{let i=Number(x.dataset.teamName);draftState.teams[i].name=x.value.trim()||`Team ${i+1}`});document.querySelectorAll("[data-team-captain]").forEach(x=>draftState.teams[Number(x.dataset.teamCaptain)].captain=x.value.trim());document.querySelectorAll("[data-team-email]").forEach(x=>draftState.teams[Number(x.dataset.teamEmail)].captainEmail=x.value.trim());try{await saveDraftState($("teamEditMsg"))}catch(e){}});
 $("addGolferBtn").addEventListener("click",async()=>{
+ const photoUrl=($("newGolferPhoto")?.value||"").trim();
  if(!isCommissioner)return;
  ensureDraftShape();
  const name=$("newGolferName").value.trim();
@@ -2218,7 +2222,7 @@ $("addGolferBtn").addEventListener("click",async()=>{
      if(error)throw error; tournament=data;
    }
    await saveDraftState($("addGolferMsg"));
-   $("newGolferName").value="";$("newGolferHcp").value="";$("newGolferTeam").value="";$("newGolferBand").disabled=false;
+   $("newGolferName").value="";$("newGolferPhoto").value="";$("newGolferHcp").value="";$("newGolferTeam").value="";$("newGolferBand").disabled=false;
    const splitNote=isSplitPair()&&draftGolferCount()%4!==0?` Split-Pair mode will be ready after ${4-(draftGolferCount()%4)} more golfer${4-(draftGolferCount()%4)===1?"":"s"} are added.`:"";
    $("addGolferMsg").textContent=`Golfer added. Creating player login…`;
    const autoResult=await ensureAutomaticPlayerAccounts($("addGolferMsg"));
