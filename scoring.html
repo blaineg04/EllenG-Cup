@@ -144,6 +144,18 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   #adminView .admin-grid select,#adminView .admin-grid input{display:block;width:100%;max-width:100%;}
   #adminTournament{overflow:hidden;}
 }
+
+/* Add Golfer mobile layout: stack fields cleanly with no overlap */
+#adminAddGolfer .admin-grid label{min-width:0;max-width:100%;}
+#adminAddGolfer .admin-grid input,#adminAddGolfer .admin-grid select{width:100%;max-width:100%;min-width:0;}
+@media(max-width:700px){
+  #adminAddGolfer{overflow:hidden;}
+  #adminAddGolfer .admin-grid{display:flex!important;flex-direction:column!important;gap:12px!important;}
+  #adminAddGolfer .admin-grid label{display:block!important;width:100%!important;max-width:100%!important;}
+  #adminAddGolfer .admin-grid input,#adminAddGolfer .admin-grid select{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;}
+  #adminAddGolfer #addGolferBtn{width:100%;}
+}
+
 </style>
 </head>
 <body>
