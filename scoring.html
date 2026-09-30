@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.0.10">
+<meta name="elleng-app-version" content="1.0.11">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -1155,6 +1155,8 @@ function renderSelfScoreContext(){
    box.textContent=`${g.name} • ${teamName} • Back 9 Shamble. You can update only your own individual score for Hole ${h}. The app will calculate the team low score after everyone enters theirs.`;
  }
 }
+let selfHandicapEditing=false;
+let selfHandicapDraftValue="";
 function renderSelfHandicap(){
  const sel=$("selfGolferSelect"); if(!sel||!draftState)return;
  const golfers=Array.isArray(draftState.golfers)?draftState.golfers:[];
@@ -1167,8 +1169,9 @@ function renderSelfHandicap(){
  const hcpInput=$("selfHandicapInput");
  if(g){
    const rawHcp=g.hcp==null?"":String(g.hcp).trim();
-   hcpInput.value=rawHcp;
-   const autoBand=bandFromHandicapValue(rawHcp);
+   if(!selfHandicapEditing) hcpInput.value=rawHcp;
+   const effectiveHcp=selfHandicapEditing?selfHandicapDraftValue:rawHcp;
+   const autoBand=bandFromHandicapValue(effectiveHcp);
    bandSel.value=autoBand||(["A","B","C","D"].includes(String(g.band||"").toUpperCase())?String(g.band).toUpperCase():"A");
    bandSel.disabled=!!autoBand;
    bandSel.title=autoBand?`Auto-set from handicap ${rawHcp}`:"Choose a band only when exact handicap is blank.";
@@ -1625,6 +1628,15 @@ $("resetCurrentLeader").addEventListener("click",()=>{
 $("resetScoringOnly").addEventListener("click",clearScoresOnly);
 (async()=>{try{const {data:{session},error}=await db.auth.getSession();if(error)throw error;if(session){user=session.user;await enterApp()}else{await enterViewer()}}catch(e){console.error("Session restore error:",e);user=null;await enterViewer()}})();
 })();
+
+const selfHcpEl=$("selfHandicapInput");
+if(selfHcpEl){
+ selfHcpEl.addEventListener("focus",()=>{selfHandicapEditing=true;selfHandicapDraftValue=selfHcpEl.value});
+ selfHcpEl.addEventListener("input",(e)=>{selfHandicapEditing=true;selfHandicapDraftValue=e.target.value});
+}
+const selfGolferEl=$("selfGolferSelect");
+if(selfGolferEl)selfGolferEl.addEventListener("change",()=>{selfHandicapEditing=false;selfHandicapDraftValue=""});
+
 </script>
 </body>
 </html>
