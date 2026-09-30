@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="1.1.8">
+<meta name="elleng-app-version" content="1.1.9">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -412,19 +412,20 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   </div>
   <div class="admin-grid">
 
-    <label><small>Golf course</small><select id="courseSelect"><option value="bayou-din">Bayou Din Golf Club — Beaumont, TX</option><option value="brentwood">Brentwood Country Club — Beaumont, TX</option><option value="babe-zaharias">Babe Zaharias Golf Course — Port Arthur, TX</option></select></label>
+    <label><small>Golf course</small><select id="courseSelect"><option value="">— Select / keep current —</option><option value="bayou-din">Bayou Din Golf Club — Beaumont, TX</option><option value="brentwood">Brentwood Country Club — Beaumont, TX</option><option value="babe-zaharias">Babe Zaharias Golf Course — Port Arthur, TX</option></select></label>
     <label><small>Course routing</small><select id="courseRouteSelect"><option value="front-back">Front → Back</option><option value="links-front">Links → Front</option><option value="links-back">Links → Back</option></select></label>
     <label><small>Tournament status</small><select id="statusSelect"><option value="setup">Setup</option><option value="live">Live</option><option value="complete">Complete</option><option value="archived">Archived</option></select></label>
     <label><small>Playing format</small><select id="playFormatSelect"><option value="standard">Standard EllenG — Front 9 Scramble / Back 9 Shamble</option><option value="split_pair">Split-Pair Scramble — two 2-man pairs per 4-man team</option></select></label>
     <label><small>Players per team</small><select id="teamSizeSelect"><option value="2">2-man team</option><option value="3">3-man team</option><option value="4">4-man team</option></select></label>
-    <label><small>Number of teams</small><select id="teamCountSelect"><option value="2">2 teams</option><option value="3">3 teams</option><option value="4">4 teams</option><option value="5">5 teams</option><option value="6">6 teams</option><option value="7">7 teams</option><option value="8">8 teams</option><option value="9">9 teams</option></select></label>
-    <label><small>Number of golfers</small><select id="golferCountSelect"><option value="8">8 golfers</option><option value="9">9 golfers</option><option value="10">10 golfers</option><option value="11">11 golfers</option><option value="12">12 golfers</option><option value="13">13 golfers</option><option value="14">14 golfers</option><option value="15">15 golfers</option><option value="16">16 golfers</option><option value="17">17 golfers</option><option value="18">18 golfers</option><option value="19">19 golfers</option><option value="20">20 golfers</option><option value="21">21 golfers</option><option value="22">22 golfers</option><option value="23">23 golfers</option><option value="24">24 golfers</option><option value="25">25 golfers</option><option value="26">26 golfers</option><option value="27">27 golfers</option><option value="28">28 golfers</option><option value="29">29 golfers</option><option value="30">30 golfers</option><option value="31">31 golfers</option><option value="32">32 golfers</option><option value="33">33 golfers</option><option value="34">34 golfers</option><option value="35">35 golfers</option><option value="36">36 golfers</option></select></label>
+    <label><small>Number of teams</small><select id="teamCountSelect"><option value="">— Select / keep current —</option><option value="2">2 teams</option><option value="3">3 teams</option><option value="4">4 teams</option><option value="5">5 teams</option><option value="6">6 teams</option><option value="7">7 teams</option><option value="8">8 teams</option><option value="9">9 teams</option></select></label>
+    <label><small>Number of golfers</small><select id="golferCountSelect"><option value="">— Select / keep current —</option><option value="8">8 golfers</option><option value="9">9 golfers</option><option value="10">10 golfers</option><option value="11">11 golfers</option><option value="12">12 golfers</option><option value="13">13 golfers</option><option value="14">14 golfers</option><option value="15">15 golfers</option><option value="16">16 golfers</option><option value="17">17 golfers</option><option value="18">18 golfers</option><option value="19">19 golfers</option><option value="20">20 golfers</option><option value="21">21 golfers</option><option value="22">22 golfers</option><option value="23">23 golfers</option><option value="24">24 golfers</option><option value="25">25 golfers</option><option value="26">26 golfers</option><option value="27">27 golfers</option><option value="28">28 golfers</option><option value="29">29 golfers</option><option value="30">30 golfers</option><option value="31">31 golfers</option><option value="32">32 golfers</option><option value="33">33 golfers</option><option value="34">34 golfers</option><option value="35">35 golfers</option><option value="36">36 golfers</option></select></label>
     <label><small>Gator Hole side</small><select id="gatorSide"><option value="front">Front 9</option><option value="back">Back 9</option></select></label>
     <label><small>Secret Gator Hole</small><select id="gatorHole"><option value="">Not selected</option></select></label>
     <label><small>Gator Hole visibility</small><select id="gatorReveal"><option value="false">Keep Secret</option><option value="true">Reveal Gator Hole</option></select></label>
     <label><small>Final Cargo winner</small><select id="cargoTeam"><option value="">Not awarded</option></select></label>
   </div>
   <div id="teamBuildSummary" class="note" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb"></div>
+  <div class="note" style="margin-top:7px">For Golf course, Number of teams, and Number of golfers, leaving the selector blank keeps the current saved setting.</div>
   <div style="margin-top:16px">
     <div class="row between"><div><strong>Hole Pars</strong><div class="status">Set each hole as a Par 3, 4 or 5. Live scoring automatically shows − / + and Birdie, Par, Bogey, etc.</div></div><span class="badge">PAR 3–5</span></div>
     <div id="holeParEditor" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin-top:10px"></div>
@@ -1305,8 +1306,8 @@ async function resetGolferPin(i){
  function renderAdmin(){
  if(!isCommissioner){$("adminTab").classList.add("hidden");return;}
  $("adminTab").classList.remove("hidden"); ensureDraftShape();
- if($("courseSelect"))$("courseSelect").value=activeCourseId(); if($("courseRouteSelect")){const c=activeCourse();$("courseRouteSelect").innerHTML=Object.entries(c.routes).map(([id,r])=>`<option value="${id}">${r.label}</option>`).join("");$("courseRouteSelect").value=activeCourseRouteId();}
- $("statusSelect").value=tournament.status; if($("playFormatSelect"))$("playFormatSelect").value=playFormat(); if($("teamSizeSelect"))$("teamSizeSelect").value=String(draftTeamSize()); if($("golferCountSelect"))$("golferCountSelect").value=String(draftGolferCount()); if($("teamCountSelect"))$("teamCountSelect").value=String(Math.min(9,Math.max(2,calculatedTeamCount())));
+ if($("courseSelect"))$("courseSelect").value=""; if($("courseRouteSelect")){const c=activeCourse();$("courseRouteSelect").innerHTML=Object.entries(c.routes).map(([id,r])=>`<option value="${id}">${r.label}</option>`).join("");$("courseRouteSelect").value=activeCourseRouteId();}
+ $("statusSelect").value=tournament.status; if($("playFormatSelect"))$("playFormatSelect").value=playFormat(); if($("teamSizeSelect"))$("teamSizeSelect").value=String(draftTeamSize()); if($("golferCountSelect"))$("golferCountSelect").value=""; if($("teamCountSelect"))$("teamCountSelect").value="";
  const gh=Number(tournament.gator_hole)||0; $("gatorSide").value=gh&&gh<=9?"front":"back";
  renderHoleParEditor(); populateGatorHoles();
  $("gatorReveal").value=String(!!tournament.gator_revealed);
@@ -1639,10 +1640,12 @@ $("saveAdmin").addEventListener("click",async()=>{
  try{
   const oldCount=activeTeamCount();
   ensureDraftShape();
-  const desiredGolfers=Math.max(8,Math.min(36,Number($("golferCountSelect")?.value||draftGolferCount())));
+  const golferSelection=$("golferCountSelect")?.value||"";
+  const desiredGolfers=golferSelection===""?draftGolferCount():Math.max(8,Math.min(36,Number(golferSelection)));
   const selectedTeamSize=Number($("teamSizeSelect")?.value||draftTeamSize());
   const selectedPlayFormat=$("playFormatSelect")?.value||"standard";
-  const newCount=Math.max(2,Math.min(9,Number($("teamCountSelect")?.value||activeTeamCount())));
+  const teamCountSelection=$("teamCountSelect")?.value||"";
+  const newCount=teamCountSelection===""?activeTeamCount():Math.max(2,Math.min(9,Number(teamCountSelection)));
   if(selectedPlayFormat==="split_pair"&&(selectedTeamSize!==4||desiredGolfers!==newCount*4)){$("adminMsg").textContent="Split-Pair Scramble requires 4-man teams with exactly 4 golfers on every team. Set golfers to 4 × the number of teams.";return}
   const namedGolfers=(draftState.golfers||[]).filter(g=>(g?.name||"").trim()).length;
   if(desiredGolfers<namedGolfers){$("adminMsg").textContent=`You already have ${namedGolfers} named golfers. Remove golfers first before lowering the setup to ${desiredGolfers}.`;return}
@@ -1655,8 +1658,14 @@ $("saveAdmin").addEventListener("click",async()=>{
   draftState.golferCount=desiredGolfers;
   draftState.teamSize=selectedTeamSize;
   draftState.playFormat=selectedPlayFormat;
-  draftState.courseId=$("courseSelect")?.value||"bayou-din";
-  draftState.courseRoute=$("courseRouteSelect")?.value||Object.keys(COURSE_LIBRARY[draftState.courseId].routes)[0];
+  const courseSelection=$("courseSelect")?.value||"";
+  if(courseSelection){
+    draftState.courseId=courseSelection;
+    draftState.courseRoute=$("courseRouteSelect")?.value||Object.keys(COURSE_LIBRARY[draftState.courseId].routes)[0];
+  }else{
+    draftState.courseId=draftState.courseId||activeCourseId();
+    draftState.courseRoute=draftState.courseRoute||activeCourseRouteId();
+  }
   if(newCount<oldCount){
    const affected=(draftState.golfers||[]).filter(g=>g.team!=null&&Number(g.team)>=newCount).length;
    if(affected&&!confirm(`${affected} golfer(s) are assigned to teams being removed. They will become unassigned. Continue?`)){ $("adminMsg").textContent="Team count change canceled.";return }
