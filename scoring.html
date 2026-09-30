@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.2.0">
+<meta name="elleng-app-version" content="2.2.1">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -424,11 +424,15 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#08253b">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="EllenG Cup">
 <meta name="apple-mobile-web-app-title" content="EllenG Cup">
-<link rel="apple-touch-icon" href="gator.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" sizes="180x180" href="gator.png">
 </head>
 <body>
+<script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
 <header class="top"><div class="brand">
 <img src="gator.png" alt="EllenG Cup gator logo">
 <div><h1>EllenG Cup</h1><p id="tournamentSubtitle">LIVE TOURNAMENT SCORING • 18 HOLES</p></div>
@@ -3010,7 +3014,7 @@ if($("saveGroupAssignments"))$("saveGroupAssignments").addEventListener("click",
 if($("sharePostRoundRecap"))$("sharePostRoundRecap").addEventListener("click",sharePostRoundRecap);
 window.addEventListener("online",()=>{renderOfflineState();flushOfflineScores()});
 window.addEventListener("offline",renderOfflineState);
-if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js").catch(e=>console.warn("Service worker registration skipped",e)))}
+if("serviceWorker" in navigator){window.addEventListener("load",async()=>{try{const reg=await navigator.serviceWorker.register("./service-worker.js",{scope:"./"});reg.update().catch(()=>{})}catch(e){console.warn("Service worker registration skipped",e)}})}
 
 
 $("selfGolferSelect").addEventListener("change",renderSelfHandicap);
