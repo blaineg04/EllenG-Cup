@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.5.2">
+<meta name="elleng-app-version" content="2.5.3">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -1227,7 +1227,6 @@ const supabaseKey=cfg?.supabasePublishableKey||cfg?.supabaseAnonKey;
 if(!cfg?.supabaseUrl||!supabaseKey){connection("EllenG configuration did not load.");return}
 const db=window.supabase.createClient(cfg.supabaseUrl,supabaseKey);
 connection("✓ App connected — live scoring ready.",true);
- setSyncStatus("saved","Connected");
 const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
 let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, draftUpdatedAt=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", mustChangePassword=false, hole=1;
 let scoreSaveBusy=false, lastSuccessfulSyncAt=null;
@@ -1242,6 +1241,7 @@ function setSyncStatus(kind="saved",label="Synced"){
  el.textContent=label;
  if(kind==="saved")lastSuccessfulSyncAt=new Date();
 }
+setSyncStatus("saved","Connected");
 function syncedLabel(){
  if(!lastSuccessfulSyncAt)return "Synced";
  const s=Math.max(0,Math.round((Date.now()-lastSuccessfulSyncAt.getTime())/1000));
