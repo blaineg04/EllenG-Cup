@@ -735,18 +735,42 @@ input,select,textarea{
   .teamhead strong{font-size:19px!important}
   .slot,.roster-slot{padding:11px 13px!important;min-height:46px!important}
 }
-</style></head><body><header class="top"><div class="brand">
+</style>
+<style id="draft-status-colors">
+.draft-status-strip.status-live .draft-live-dot{
+  background:#3fd27b!important;
+  box-shadow:0 0 0 3px rgba(63,210,123,.14)!important;
+}
+.draft-status-strip.status-connecting .draft-live-dot{
+  background:#d5a72c!important;
+  box-shadow:0 0 0 3px rgba(213,167,44,.14)!important;
+}
+.draft-status-strip.status-offline .draft-live-dot{
+  background:#d54a4a!important;
+  box-shadow:0 0 0 3px rgba(213,74,74,.14)!important;
+}
+</style>
+</head><body><header class="top"><div class="brand">
 <img src="gator.png" alt="EllenG Cup gator logo">
 <div><h1>EllenG Cup</h1><p>LIVE DRAFT • OFFICIAL DRAFT BOARD</p></div>
 </div></header><div id="globalMainMenuBar" class="global-main-menu-bar">
   <a class="global-main-menu-btn" href="./scoring.html#hub" onclick="sessionStorage.setItem('elleng_internal_menu','1')">← Main Menu</a>
 </div>
-<div class="draft-status-strip">
+<div id="draftStatusStrip" class="draft-status-strip status-connecting">
   <span class="draft-live-dot"></span>
   <span id="connection">CONNECTING</span>
 </div>
 <div class="wrap"><div class="card" style="margin-bottom:12px"><button id="soundToggle" class="gold">🔊 Enable Draft Sounds</button><span id="soundStatus" class="muted" style="margin-left:10px">Sound off</span></div><div class="card"><div class="bar"><div><strong id="onclock">Loading draft…</strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div class="muted">LIVE PICK CLOCK</div></div></div></div><div id="teams" class="teams"></div><div class="card" style="margin-top:12px"><h3>Available Golfers</h3><div style="overflow:auto"><table><thead><tr><th>Golfer</th><th>Rank</th><th>Handicap Range</th><th>Status</th></tr></thead><tbody id="publicPool"></tbody></table></div></div><div class="card" style="margin-top:12px"><h3>Draft Log</h3><div id="log" class="muted"></div></div></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script>
+<script>
+if (typeof window.bandRange !== "function") {
+  window.bandRange = function(b){
+    const r={A:"0–9",B:"10–17",C:"18–25",D:"26+"};
+    return r[b] || "—";
+  };
+}
+</script>
+<script>
 let draftSoundEnabled=false,lastSoundPickCount=null,audioCtx=null;
 async function enableDraftSound(){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")await audioCtx.resume();draftSoundEnabled=!draftSoundEnabled;document.getElementById("soundToggle").textContent=draftSoundEnabled?"🔇 Mute Draft Sounds":"🔊 Enable Draft Sounds";document.getElementById("soundStatus").textContent=draftSoundEnabled?"Sound ON — test growl played":"Sound off";if(draftSoundEnabled){gatorGrowl(true);setTimeout(()=>{if(draftSoundEnabled)document.getElementById("soundStatus").textContent="Gator sound ON"},1400)}}catch(e){draftSoundEnabled=false;document.getElementById("soundStatus").textContent="Audio blocked — tap again"}}
 function gatorGrowl(force=false){
@@ -760,12 +784,23 @@ function checkDraftSound(){let n=S.picks.length;if(lastSoundPickCount===null){la
 function render(){checkDraftSound();let totalGolfers=S.golfers.filter(g=>g?.name).length||S.golfers.length,done=S.picks.length>=totalGolfers,t=order(S.picks.length);document.getElementById("onclock").textContent=done?"DRAFT COMPLETE":"ON THE CLOCK: "+S.teams[t].name;document.getElementById("meta").textContent=done?`All ${totalGolfers} golfers drafted`:`Round ${Math.floor(S.picks.length/Math.max(1,S.teams.length))+1} • Pick ${S.picks.length+1} of ${totalGolfers}`;document.getElementById("teams").innerHTML=S.teams.map((tm,i)=>`<div class="team"><div class="teamhead"><strong>${esc(tm.name)}</strong><div class="muted" style="color:#ddd">${tm.captain?"Captain: "+esc(tm.captain):""}</div><div style="font-size:11px">${bands.map(b=>b+" "+tbc(i,b)).join(" • ")}</div></div><div class="roster">${Array.from({length:Math.max(1,Math.ceil(totalGolfers/Math.max(1,S.teams.length)))},(_,j)=>{let g=S.golfers[tm.roster[j]];return g?`<div class="slot"><strong>${esc(g.name)}</strong> <span class="badge">${g.band}</span><div class="muted">${bandRange(g.band)}</div></div>`:`<div class="slot muted">Open roster spot</div>`}).join("")}</div></div>`).join("");document.getElementById("publicPool").innerHTML=S.golfers.filter(g=>g.name && g.team==null).map(g=>`<tr><td><strong>${esc(g.name)}</strong></td><td><span class="badge">${g.band}</span></td><td>${bandRange(g.band)}</td><td>AVAILABLE</td></tr>`).join("");document.getElementById("log").innerHTML=S.picks.length?S.picks.map((p,i)=>`${i+1}. ${esc(S.teams[p.team].name)} — ${esc(S.golfers[p.golfer].name)} (${S.golfers[p.golfer].band})`).join("<br>"):"Waiting for the first pick.";draw()}
 function draw(){let x=remaining();document.getElementById("clock").textContent=Math.floor(x/60)+":"+String(x%60).padStart(2,"0");document.getElementById("clock").style.color=x<=10?"#9b2f2f":""}
 document.getElementById("soundToggle").onclick=enableDraftSound;
+
+function setDraftConnectionStatus(state,label){
+  const strip=document.getElementById("draftStatusStrip");
+  const conn=document.getElementById("connection");
+  if(strip){
+    strip.classList.remove("status-live","status-connecting","status-offline");
+    strip.classList.add("status-"+state);
+  }
+  if(conn) conn.textContent=label;
+}
+
 (async()=>{
  try{
-   await load();render();subscribe(render);setInterval(draw,500);
+   await load();setDraftConnectionStatus("live","LIVE");render();subscribe(render);setInterval(draw,500);
  }catch(e){
    console.error("Draft load error:",e);
-   document.getElementById("connection").textContent="OFFLINE";
+   setDraftConnectionStatus("offline","OFFLINE");
    document.getElementById("onclock").textContent="Draft connection error";
    document.getElementById("meta").textContent=e?.message||"Unable to load the live draft.";
  }
