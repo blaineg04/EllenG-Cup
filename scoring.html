@@ -1674,7 +1674,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 
 <style>
-/* v2.7.16 — hard mobile screen isolation + compact in-app chrome */
+/* v2.7.17 — hard mobile screen isolation + compact in-app chrome */
 @media (max-width:650px){
   /* The marketing masthead is useful on sign-in, but wastes most of the screen once inside the app. */
   body:not(.login-mode) > header.top{display:none!important}
@@ -1695,6 +1695,68 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   body:not(.login-mode) #app > .card:first-child{position:relative!important;z-index:3!important}
 }
 </style>
+
+<style>
+/* v2.7.17 — player profile screen fix */
+@media (max-width:650px){
+  body.player-simple-home #playersView{position:relative!important;}
+
+  /* When a profile is open, swap the directory screen for a contained profile screen. */
+  body.player-simple-home #playersView:has(#playerProfileCardsSection:not(.hidden)) > .card:first-child{display:none!important;}
+  body.player-simple-home #playersView #playerProfileCardsSection:not(.hidden){
+    position:relative!important;
+    inset:auto!important;
+    flex:1 1 auto!important;
+    min-height:0!important;
+    width:100%!important;
+    height:auto!important;
+    margin:0!important;
+    padding:10px!important;
+    border-radius:14px!important;
+    overflow:hidden!important;
+    display:flex!important;
+    flex-direction:column!important;
+    box-shadow:none!important;
+    box-sizing:border-box!important;
+  }
+  body.player-simple-home #playersView #playerProfileCardsSection > .row{
+    flex:0 0 auto!important;
+    align-items:flex-start!important;
+    gap:8px!important;
+    margin:0!important;
+  }
+  body.player-simple-home #playersView #playerProfileCardsSection h2{
+    font-size:20px!important;
+    line-height:1.05!important;
+    margin:0 0 2px!important;
+  }
+  body.player-simple-home #playersView #playerProfileCardsSection .status{
+    font-size:11px!important;
+    line-height:1.2!important;
+  }
+  body.player-simple-home #playersView #closePlayerProfile{
+    flex:0 0 auto!important;
+    min-height:36px!important;
+    padding:6px 10px!important;
+    font-size:12px!important;
+  }
+  body.player-simple-home #playersView #playerProfileCards{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    margin-top:8px!important;
+    padding-bottom:4px!important;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  body.player-simple-home #playersView #playerProfileCards::-webkit-scrollbar{display:none;}
+  body.player-simple-home #playersView #playerProfileCards .player-profile-card{
+    margin:0!important;
+    max-width:none!important;
+  }
+}
+</style>
+
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -1755,7 +1817,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.16</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.17</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -4451,12 +4513,10 @@ document.querySelectorAll("[data-more-view]").forEach(b=>b.addEventListener("cli
 if($("playerDirectory"))$("playerDirectory").addEventListener("click",e=>{
  const row=e.target.closest("[data-player-profile]");if(!row)return;
  selectedPlayerProfileIndex=Number(row.dataset.playerProfile);renderPlayerProfileCards();
- $("playerProfileCardsSection")?.scrollIntoView({behavior:"smooth",block:"start"});
 });
 if($("playerDirectory"))$("playerDirectory").addEventListener("keydown",e=>{
  if(e.key!=="Enter"&&e.key!==" ")return;const row=e.target.closest("[data-player-profile]");if(!row)return;
  e.preventDefault();selectedPlayerProfileIndex=Number(row.dataset.playerProfile);renderPlayerProfileCards();
- $("playerProfileCardsSection")?.scrollIntoView({behavior:"smooth",block:"start"});
 });
 if($("closePlayerProfile"))$("closePlayerProfile").addEventListener("click",()=>{
  selectedPlayerProfileIndex=null;renderPlayerProfileCards();
