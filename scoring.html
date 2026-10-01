@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.5.0">
+<meta name="elleng-app-version" content="2.5.1">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -3081,14 +3081,13 @@ function clearInternalMenuFlag(){
   sessionStorage.removeItem("elleng_internal_menu");
 }
 async function enterViewer(){
- setSyncStatus("saving","Connecting…");
  hideAuthBoot();setGlobalMenuVisible(false);
- if($("authBoot"))$("authBoot").classList.add("hidden");
  const hub=$("appHub");if(hub)hub.classList.add("hidden");
  $("app").classList.add("hidden");
  $("passwordChangeCard").classList.add("hidden");
  $("loginCard").classList.remove("hidden");
- $("loginMsg").textContent="Sign in once to continue.";
+ $("loginMsg").innerHTML=`<span class="ok">✓ App connected — live scoring ready.</span>`;
+ setSyncStatus("saved","Connected");
 }
 async function enterApp(){
  hideAuthBoot();setGlobalMenuVisible(false);
@@ -3495,7 +3494,36 @@ $("resetCurrentLeader").addEventListener("click",()=>{
  $("newTournamentMsg").textContent="Current leader display reset. No team will show as the leader until official Cup points are posted.";
 });
 $("resetScoringOnly").addEventListener("click",clearScoresOnly);
-(async()=>{try{const {data:{session},error}=await db.auth.getSession();if(error)throw error;if(session&&enteredFromInternalMenu()){user=session.user;clearInternalMenuFlag();await enterApp();}else{await enterViewer();}}catch(e){console.error("Session restore error:",e);user=null;await enterViewer()}})();
+(async()=>{
+ // Normal app launch: show Sign In immediately. Do not wait on session restoration.
+ if(!enteredFromInternalMenu()){
+   await enterViewer();
+   return;
+ }
+
+ // Returning through Main Menu: restore the existing session, but never hang forever.
+ try{
+   setSyncStatus("saving","Restoring…");
+   const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("Session restore timed out")),3000));
+   const result=await Promise.race([db.auth.getSession(),timeout]);
+   const session=result?.data?.session;
+   const error=result?.error;
+   if(error)throw error;
+   clearInternalMenuFlag();
+   if(session){
+     user=session.user;
+     await enterApp();
+   }else{
+     user=null;
+     await enterViewer();
+   }
+ }catch(e){
+   console.error("Session restore error:",e);
+   clearInternalMenuFlag();
+   user=null;
+   await enterViewer();
+ }
+})();
 })();
 
 
