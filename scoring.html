@@ -1374,6 +1374,56 @@ body.login-mode #mobileBottomNav{display:none!important}
   }
 }
 </style>
+
+<style id="desktop-team-editor-fix">
+/* Desktop commissioner team cards: prevent fields from spilling into neighboring cards. */
+@media (min-width:701px){
+  #teamEditor.team-editor{
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr))!important;
+    gap:14px!important;
+  }
+  #teamEditor .editor-card{
+    min-width:0!important;
+    overflow:hidden!important;
+  }
+  #teamEditor .editor-card > label,
+  #teamEditor .identity-editor label{
+    min-width:0!important;
+  }
+  #teamEditor .editor-card input,
+  #teamEditor .editor-card select{
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+  }
+  #teamEditor .editor-card > .row{
+    display:grid!important;
+    grid-template-columns:minmax(0,1.35fr) minmax(0,.85fr)!important;
+    gap:8px!important;
+    width:100%!important;
+  }
+  #teamEditor .editor-card > .row button{
+    width:100%!important;
+    min-width:0!important;
+    padding-left:9px!important;
+    padding-right:9px!important;
+    white-space:normal!important;
+  }
+  #teamEditor .identity-editor{
+    grid-template-columns:82px minmax(0,1fr)!important;
+    gap:10px!important;
+    width:100%!important;
+  }
+  #teamEditor .identity-editor .slogan-field{
+    grid-column:auto!important;
+    min-width:0!important;
+  }
+  #teamEditor .identity-editor input[type="color"]{
+    width:64px!important;
+    max-width:64px!important;
+  }
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
