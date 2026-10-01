@@ -21,6 +21,18 @@ function order(n){
 function bandCounts(){let c={A:0,B:0,C:0,D:0};S.golfers.forEach(g=>{if(g.name&&bands.includes(g.band))c[g.band]++});return c}
 function tbc(t,b){return S.teams[t].roster.reduce((n,i)=>n+(S.golfers[i]?.band===b),0)}
 
+function totalPicks(){
+  const named=S.golfers.filter(g=>g&&g.name).length;
+  return named||S.golfers.length;
+}
+function teamCapacity(teamIndex){
+  const teams=Math.max(1,S.teams.length);
+  const total=totalPicks();
+  const base=Math.floor(total/teams);
+  const extra=total%teams;
+  return base+(teamIndex<extra?1:0);
+}
+
 /*
  Fair-rank draft rule:
  A team may draft rank A/B/C/D only when its current count of that rank

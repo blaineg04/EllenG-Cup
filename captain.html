@@ -139,23 +139,56 @@ function checkDraftSound(){let n=S.picks.length;if(lastSoundPickCount===null){la
 function render(){checkDraftSound();let total=totalPicks(),done=S.picks.length>=total,t=done?0:order(S.picks.length),mine=!done&&t===myTeam&&!S.timerPaused;document.getElementById("onclock").textContent=done?"DRAFT COMPLETE":"ON THE CLOCK: "+(S.teams[t]?.name||"Team");document.getElementById("meta").textContent=done?`All ${total} golfers drafted`:`${S.teams.length} teams • ${total} golfers • Round ${Math.floor(S.picks.length/S.teams.length)+1} • Pick ${S.picks.length+1} of ${total}`;document.getElementById("notice").textContent=done?"":S.timerPaused?"Draft is paused. Waiting for the Commissioner to start or resume.":mine?"YOUR PICK — select an eligible golfer below.":"Waiting for "+(S.teams[t]?.name||"Team")+" to pick…";document.getElementById("pool").innerHTML=S.golfers.map((g,i)=>({...g,i})).filter(g=>g.name&&g.team==null).map(g=>{let ok=mine&&canBand(t,g.band);return `<div class="player"><strong>${esc(g.name)}</strong><span class="badge">${g.band}</span><span class="muted">${bandRange(g.band)}</span><button data-p="${g.i}" ${ok?"":"disabled"}>${mine?(ok?"DRAFT":"Band Limit"):"Waiting"}</button></div>`}).join("")||'<div class="muted">No available golfers.</div>';document.getElementById("teams").innerHTML=S.teams.map((tm,i)=>`<div class="team"><div class="teamhead"><strong>${esc(tm.name)}</strong>${i===myTeam?" • YOUR TEAM":""}<div class="muted" style="color:#ddd">${esc(tm.captain||"")}</div><div style="font-size:11px">${bands.map(b=>b+" "+tbc(i,b)).join(" • ")}</div></div><div class="roster">${Array.from({length:teamCapacity(i)},(_,j)=>{let g=S.golfers[tm.roster[j]];return g?`<div class="slot"><strong>${esc(g.name)}</strong> <span class="badge">${g.band}</span><div class="muted">${bandRange(g.band)}</div></div>`:`<div class="slot muted">Open roster spot</div>`}).join("")}</div></div>`).join("");document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>pick(+b.dataset.p));draw()}
 function draw(){let x=remaining();document.getElementById("clock").textContent=Math.floor(x/60)+":"+String(x%60).padStart(2,"0");document.getElementById("clock").style.color=x<=10?"#9b2f2f":""}
 async function pick(i){if(S.timerPaused){alert("The draft is paused. Wait for the Commissioner to start or resume it.");return}if(!confirm("Draft "+(S.golfers[i]?.name||"this golfer")+" for "+(S.teams[myTeam]?.name||"your team")+"?"))return;try{const {data,error}=await db.rpc("elleng_make_pick",{p_draft_id:cfg.draftId,p_golfer_index:i});if(error)throw error;S={...fresh(),...data};if(draftSoundEnabled){gatorGrowl();lastSoundPickCount=S.picks.length}render()}catch(e){await load();render();alert(e.message||"Pick could not be saved. Refresh and try again.")}}
-document.getElementById("signin").onclick=async()=>{let {error}=await db.auth.signInWithPassword({email:document.getElementById("email").value.trim(),password:document.getElementById("pw").value});if(error){document.getElementById("msg").textContent=error.message;return}if(await whoami()){document.getElementById("login").style.display="none";document.getElementById("app").style.display="block";await load();render();subscribe(render);setInterval(draw,500)}};
+document.getElementById("signin").onclick=async()=>{
+  const msg=document.getElementById("msg");
+  const status=document.getElementById("connection");
+  try{
+    if(status)status.textContent="CONNECTING";
+    let {error}=await db.auth.signInWithPassword({
+      email:document.getElementById("email").value.trim(),
+      password:document.getElementById("pw").value
+    });
+    if(error)throw error;
+    if(!(await whoami())){if(status)status.textContent="READY";return}
+    document.getElementById("login").style.display="none";
+    document.getElementById("app").style.display="block";
+    await load();
+    render();
+    if(status)status.textContent="LIVE";
+    subscribe(render);
+    setInterval(draw,500);
+  }catch(e){
+    console.error("Captain sign-in/load error:",e);
+    if(status)status.textContent="ERROR";
+    msg.textContent=e?.message||"Captain page could not load.";
+  }
+};
 document.getElementById("soundToggle").onclick=enableDraftSound;
 (async()=>{
+  const status=document.getElementById("connection");
   try{
+    if(status)status.textContent="CONNECTING";
     const {data:{user}}=await db.auth.getUser();
     if(user && await whoami()){
       document.getElementById("login").style.display="none";
       document.getElementById("app").style.display="block";
-      await load();render();subscribe(render);setInterval(draw,500);
+      await load();
+      render();
+      if(status)status.textContent="LIVE";
+      subscribe(render);
+      setInterval(draw,500);
     }else{
       document.getElementById("login").style.display="block";
       document.getElementById("app").style.display="none";
+      if(status)status.textContent="READY";
       if(user)document.getElementById("msg").textContent="This signed-in account is not assigned as a captain for this tournament.";
     }
   }catch(e){
+    console.error("Captain page startup error:",e);
+    if(status)status.textContent="ERROR";
     document.getElementById("login").style.display="block";
     document.getElementById("app").style.display="none";
+    document.getElementById("msg").textContent=e?.message||"Captain page could not load.";
   }
 })();
 </script></body></html>
