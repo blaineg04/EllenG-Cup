@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.11">
+<meta name="elleng-app-version" content="2.7.12">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1424,6 +1424,37 @@ body.login-mode #mobileBottomNav{display:none!important}
   }
 }
 </style>
+
+<style id="player-simplicity-v2712">
+/* v2.7.12 — player-facing simplicity pass. Commissioner controls are unchanged. */
+.player-essentials-card{border-left:5px solid var(--gold)!important}
+.player-essentials-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px}
+.player-essential-btn{border:1px solid rgba(213,167,44,.34)!important;background:#fffdfa!important;color:#102a3b!important;min-height:74px!important;text-align:center!important;padding:12px 8px!important}
+.player-essential-btn span{display:block;font-size:24px;line-height:1;margin-bottom:6px}
+.player-essential-btn strong{display:block;color:#102a3b!important;font-size:14px}
+.home-extras-toggle{width:100%;display:flex;align-items:center;justify-content:center;gap:7px;background:#e8edef!important;color:#17384d!important;border:1px solid #d0d9dd!important}
+body.player-simple-home:not(.player-extras-open) #momentumCard,
+body.player-simple-home:not(.player-extras-open) #tournamentPulseCard,
+body.player-simple-home:not(.player-extras-open) #postRoundRecapCard,
+body.player-simple-home:not(.player-extras-open) #awardsCard,
+body.player-simple-home:not(.player-extras-open) #leadChangeAlert,
+body.player-simple-home:not(.player-extras-open) #featuredMatchup,
+body.player-simple-home:not(.player-extras-open) #playerSpotlight,
+body.player-simple-home:not(.player-extras-open) #whatChangedFeed,
+body.player-simple-home:not(.player-extras-open) #onTheClock,
+body.player-simple-home:not(.player-extras-open) #paceTracker{display:none!important}
+body.player-simple-home:not(.player-extras-open) #featuredMatchupCard,
+body.player-simple-home:not(.player-extras-open) #playerSpotlightCard,
+body.player-simple-home:not(.player-extras-open) #whatChangedCard,
+body.player-simple-home:not(.player-extras-open) #onTheClockCard,
+body.player-simple-home:not(.player-extras-open) #paceTrackerCard{display:none!important}
+body.player-simple-home #openBroadcast{display:none!important}
+body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
+@media(max-width:650px){
+ .player-essentials-grid{grid-template-columns:1fr 1fr}
+ .player-essential-btn{min-height:70px!important}
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -1484,7 +1515,7 @@ body.login-mode #mobileBottomNav{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.11</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.12</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -1546,6 +1577,16 @@ body.login-mode #mobileBottomNav{display:none!important}
   <div id="nextEventDate" class="countdown-date"></div>
 </div>
 
+<div class="card player-essentials-card" id="playerEssentialsCard">
+  <div class="row between"><div><div class="premium-label">PLAYER ESSENTIALS</div><h2 style="margin:3px 0 0">What Do You Need?</h2><div class="status">The four things players use most during tournament day.</div></div><span class="badge">QUICK START</span></div>
+  <div class="player-essentials-grid">
+    <button class="player-essential-btn" type="button" data-home-go="leaderboard"><span>✏️</span><strong>My Score</strong></button>
+    <button class="player-essential-btn" type="button" data-home-go="leaderboard"><span>🏆</span><strong>Standings</strong></button>
+    <button class="player-essential-btn" type="button" data-home-go="teams"><span>👥</span><strong>My Team</strong></button>
+    <button class="player-essential-btn" type="button" data-home-go="clubhouse"><span>⏰</span><strong>Tee Time</strong></button>
+  </div>
+</div>
+
 <div id="inAppAlertStack" class="alert-stack"></div>
 <div id="leaderSpotlightCard" class="card leader-spotlight-card">
   <div class="row between">
@@ -1589,32 +1630,36 @@ body.login-mode #mobileBottomNav{display:none!important}
 
 
 <div class="experience-grid">
-  <div class="card wow-card">
+  <div class="card wow-card" id="featuredMatchupCard">
     <div class="row between"><div><div class="premium-label">FEATURED MATCHUP</div><h2 style="margin:3px 0 0">Closest Battle</h2></div><span class="badge">LIVE</span></div>
     <div id="featuredMatchup" class="wow-body"></div>
   </div>
-  <div class="card wow-card">
+  <div class="card wow-card" id="playerSpotlightCard">
     <div class="row between"><div><div class="premium-label">PLAYER SPOTLIGHT</div><h2 style="margin:3px 0 0">Who's Making Noise</h2></div><span class="badge">🔥</span></div>
     <div id="playerSpotlight" class="wow-body"></div>
     </div>
 </div>
 
-<div class="card">
+<div class="card" id="whatChangedCard">
   <div class="row between"><div><div class="premium-label">WHAT CHANGED?</div><h2 style="margin:3px 0 0">Live Tournament Feed</h2><div class="status">Lead changes, winning holes and big moments as they happen.</div></div><span class="badge">LIVE</span></div>
   <div id="whatChangedFeed" class="event-feed"></div>
 </div>
 
 <div class="experience-grid">
-  <div class="card">
+  <div class="card" id="onTheClockCard">
     <div class="row between"><div><div class="premium-label">ON THE CLOCK</div><h2 style="margin:3px 0 0">Next Big Moment</h2></div><span class="badge">PRESSURE</span></div>
     <div id="onTheClock" class="wow-body"></div>
   </div>
-  <div class="card">
+  <div class="card" id="paceTrackerCard">
     <div class="row between"><div><div class="premium-label">PACE OF PLAY</div><h2 style="margin:3px 0 0">Group Tracker</h2></div><span class="badge">LIVE</span></div>
     <div id="paceTracker" class="pace-list"></div>
   </div>
 </div>
 <div id="leadChangeAlert" class="lead-alert"><div class="lead-title">LEAD CHANGE</div><div id="leadChangeMain" class="lead-main">—</div><div id="leadChangeSub" class="lead-sub"></div></div>
+<div class="card" id="playerExtrasToggleCard">
+  <button id="playerExtrasToggle" class="home-extras-toggle" type="button">＋ Show Tournament Extras</button>
+  <div class="status" style="text-align:center;margin-top:8px">Matchups, momentum, live feed, awards and tournament recap.</div>
+</div>
 <div class="card" id="momentumCard">
   <div class="row between"><div><div class="premium-label">WHO'S HOT</div><h2 style="margin:3px 0 0">Momentum Tracker</h2><div class="status">Best teams over the most recent completed holes.</div></div><span class="badge">LAST 3</span></div>
   <div id="momentumTracker" class="momentum-grid"></div>
@@ -1922,7 +1967,7 @@ body.login-mode #mobileBottomNav{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.11 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.12 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -2049,7 +2094,7 @@ body.login-mode #mobileBottomNav{display:none!important}
 
 <nav id="mobileBottomNav" class="mobile-bottom-nav hidden" aria-label="Mobile navigation">
   <button class="mobile-nav-btn active" type="button" data-mobile-view="home"><span class="nav-icon">⌂</span>Home</button>
-  <button class="mobile-nav-btn" type="button" data-mobile-view="leaderboard"><span class="nav-icon">🏆</span>Scores</button>
+  <button class="mobile-nav-btn" type="button" data-mobile-view="leaderboard"><span class="nav-icon">✏️</span>My Score</button>
   <button class="mobile-nav-btn" type="button" data-mobile-view="teams"><span class="nav-icon">👥</span>Teams</button>
   <button class="mobile-nav-btn" type="button" data-mobile-view="players"><span class="nav-icon">⛳</span>Players</button>
   <button id="mobileMoreBtn" class="mobile-nav-btn" type="button"><span class="nav-icon">•••</span>More</button>
@@ -3781,6 +3826,13 @@ function checkBigMoments(){
  const cargo=tournament?.final_cargo_team;
  if(cargo!==null&&cargo!==undefined&&cargo!==""&&String(cargo)!==String(lastBigMomentCargo)){const ti=Number(cargo);showBigMoment("🚢","FINAL CARGO",`${teams[ti]?.name||`Team ${ti+1}`} GETS THE CARGO`,`+${Number(tournament?.final_cargo_points||6)} Cup points`);lastBigMomentCargo=cargo}
 }
+function applyPlayerSimplicity(){
+ const simple=!!user&&!isCommissioner;
+ document.body.classList.toggle("player-simple-home",simple);
+ if(!simple)document.body.classList.remove("player-extras-open");
+ const btn=$("playerExtrasToggle");
+ if(btn)btn.textContent=document.body.classList.contains("player-extras-open")?"− Hide Tournament Extras":"＋ Show Tournament Extras";
+}
 function renderHome(){
  if(!draftState||!tournament)return;
  const status=String(tournament?.status||"setup").toUpperCase();
@@ -3906,6 +3958,7 @@ function renderAll(){
  $("roleLabel").textContent=isCommissioner?"Commissioner":captainTeam!=null?`${teams[captainTeam]?.name||`Team ${captainTeam+1}`} Captain`:(playerName||"Player");
  $("userLabel").textContent=user?`${visibleLogin()}${playerName?` • ${playerName}`:" • Login not linked to a golfer yet"}`:"";
  renderTopAccountAvatar();
+ applyPlayerSimplicity();
  $("authBtn").classList.toggle("hidden",!!user);
  $("logoutBtn").classList.toggle("hidden",!user);
  if($("playersTab"))$("playersTab").classList.toggle("hidden",!user);
@@ -4164,6 +4217,7 @@ if($("digitalScorecardTeam"))$("digitalScorecardTeam").addEventListener("change"
 $("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;document.body.classList.add("login-mode");setMobileNavVisible(false);$("passwordChangeCard").classList.add("hidden");showView("home");await enterViewer()});
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
 document.querySelectorAll("[data-home-go]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.homeGo)));
+if($("playerExtrasToggle"))$("playerExtrasToggle").addEventListener("click",()=>{document.body.classList.toggle("player-extras-open");applyPlayerSimplicity();});
 document.querySelectorAll("[data-mobile-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.mobileView)));
 const moreBackdrop=$("moreMenuBackdrop"), moreBtn=$("mobileMoreBtn");
 function closeMoreMenu(){if(moreBackdrop){moreBackdrop.classList.remove("open");moreBackdrop.setAttribute("aria-hidden","true")}}
