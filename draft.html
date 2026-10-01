@@ -1,18 +1,6 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EllenG Cup Live Draft</title><link rel="stylesheet" href="style.css"><style>
 
 
-.global-main-menu-bar{
-  position:sticky;top:0;z-index:9998;display:flex;align-items:center;justify-content:flex-start;
-  min-height:52px;padding:7px 12px;background:#f3f6f7;border-bottom:1px solid #d9e1e5;
-  box-sizing:border-box
-}
-
-.global-main-menu-btn{
-  display:inline-flex;align-items:center;justify-content:center;min-height:38px;
-  background:#08253b;color:#fff!important;border:2px solid #d5a72c;border-radius:999px;
-  padding:7px 13px;font-weight:950;text-decoration:none;box-shadow:0 3px 9px rgba(0,0,0,.12);
-  font-size:13px;line-height:1
-}
 .auth-boot{
   min-height:calc(100vh - 20px);display:grid;place-items:center;text-align:center;
   background:linear-gradient(160deg,#061824,#0a2b42 58%,#071e2f);color:#fff;padding:24px
@@ -22,8 +10,38 @@
 .auth-boot-logo{width:92px;height:92px;object-fit:contain}
 .auth-boot strong{font-size:20px}
 .auth-boot span{font-size:13px;opacity:.75}
+
+.global-main-menu-bar{
+  position:relative;
+  z-index:20;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:12px 16px 8px;
+  background:transparent;
+  border:0;
+  min-height:auto;
+}
+
+.global-main-menu-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:150px;
+  min-height:40px;
+  background:#08253b;
+  color:#fff!important;
+  border:2px solid #d5a72c;
+  border-radius:999px;
+  padding:8px 18px;
+  font-weight:950;
+  text-decoration:none;
+  box-shadow:0 5px 13px rgba(0,0,0,.12);
+  font-size:14px;
+  line-height:1;
+}
 </style></head><body><div id="globalMainMenuBar" class="global-main-menu-bar">
-  <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
+  <a class="global-main-menu-btn" href="./scoring.html#hub" onclick="sessionStorage.setItem('elleng_internal_menu','1')">← Main Menu</a>
 </div><div class="top"><img src="gator.jpeg" style="width:118px;height:82px;object-fit:contain;object-position:center;background:#fff;padding:6px;border-radius:16px;border:3px solid #d5a72c;box-shadow:0 5px 16px rgba(0,0,0,.16)"><div><h1>EllenG Cup — Live Draft</h1><div>Official Live Draft Board</div></div><div style="margin-left:auto" id="connection">CONNECTING</div></div>
 <div class="wrap"><div class="card" style="margin-bottom:12px"><button id="soundToggle" class="gold">🔊 Enable Draft Sounds</button><span id="soundStatus" class="muted" style="margin-left:10px">Sound off</span></div><div class="card"><div class="bar"><div><strong id="onclock">Loading draft…</strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div class="muted">LIVE PICK CLOCK</div></div></div></div><div id="teams" class="teams"></div><div class="card" style="margin-top:12px"><h3>Available Golfers</h3><div style="overflow:auto"><table><thead><tr><th>Golfer</th><th>Rank</th><th>Handicap Range</th><th>Status</th></tr></thead><tbody id="publicPool"></tbody></table></div></div><div class="card" style="margin-top:12px"><h3>Draft Log</h3><div id="log" class="muted"></div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script>

@@ -3,7 +3,7 @@
   "name": "EllenG Cup",
   "short_name": "EllenG Cup",
   "description": "EllenG Cup live tournament scoring, teams, standings, player profiles and clubhouse.",
-  "start_url": "./scoring.html#hub",
+  "start_url": "./scoring.html",
   "scope": "./",
   "display": "standalone",
   "display_override": [
