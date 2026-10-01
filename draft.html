@@ -1,7 +1,19 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EllenG Cup Live Draft</title><link rel="stylesheet" href="style.css"><style>
-.main-menu-link{position:fixed;left:10px;bottom:12px;z-index:9999;background:#08253b;color:#fff!important;border:2px solid #d5a72c;border-radius:999px;padding:10px 14px;font-weight:900;text-decoration:none;box-shadow:0 7px 18px rgba(0,0,0,.22)}
-@media(max-width:560px){.main-menu-link{left:8px;bottom:8px;padding:9px 12px;font-size:12px}}
-</style></head><body><a class="main-menu-link" href="./scoring.html#hub">← Main Menu</a>
+}
+
+.main-menu-bar{
+  position:sticky;top:0;z-index:9999;background:#f3f6f7;padding:8px 12px;
+  border-bottom:1px solid #d9e1e5;display:flex;justify-content:flex-start
+}
+.main-menu-link{
+  display:inline-flex;align-items:center;background:#08253b;color:#fff!important;
+  border:2px solid #d5a72c;border-radius:999px;padding:9px 13px;font-weight:900;
+  text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,.12)
+}
+@media(max-width:560px){.main-menu-bar{padding:7px 9px}.main-menu-link{padding:8px 11px;font-size:12px}}
+</style></head><body><div class="main-menu-bar">
+  <a class="main-menu-link" href="./scoring.html#hub">← Main Menu</a>
+</div>
 <div class="top"><img src="gator.jpeg" style="width:118px;height:82px;object-fit:contain;object-position:center;background:#fff;padding:6px;border-radius:16px;border:3px solid #d5a72c;box-shadow:0 5px 16px rgba(0,0,0,.16)"><div><h1>EllenG Cup — Live Draft</h1><div>Official Live Draft Board</div></div><div style="margin-left:auto" id="connection">CONNECTING</div></div>
 <div class="wrap"><div class="card" style="margin-bottom:12px"><button id="soundToggle" class="gold">🔊 Enable Draft Sounds</button><span id="soundStatus" class="muted" style="margin-left:10px">Sound off</span></div><div class="card"><div class="bar"><div><strong id="onclock">Loading draft…</strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div class="muted">LIVE PICK CLOCK</div></div></div></div><div id="teams" class="teams"></div><div class="card" style="margin-top:12px"><h3>Available Golfers</h3><div style="overflow:auto"><table><thead><tr><th>Golfer</th><th>Rank</th><th>Handicap Range</th><th>Status</th></tr></thead><tbody id="publicPool"></tbody></table></div></div><div class="card" style="margin-top:12px"><h3>Draft Log</h3><div id="log" class="muted"></div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script>
