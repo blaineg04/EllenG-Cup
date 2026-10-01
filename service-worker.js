@@ -1,5 +1,5 @@
-const CACHE="elleng-cup-v2.7.1";
-const CORE=["./scoring.html","./draft.html","./captain.html","./config.js","./common.js","./manifest.webmanifest","./app-icon-180.png","./app-icon-192.png","./app-icon-512.png","./elleng-hub-background.jpg"];
+const CACHE="elleng-cup-v2.7.2";
+const CORE=["./scoring.html","./draft.html","./captain.html","./config.js","./common.js","./manifest.webmanifest","./app-icon-180.png","./app-icon-192.png","./app-icon-512.png"];
 
 self.addEventListener("install",event=>{
   self.skipWaiting();

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.1">
+<meta name="elleng-app-version" content="2.7.2">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -1177,6 +1177,27 @@ button.danger,.danger{
   thead th,tbody td{
     padding:9px 8px!important;
   }
+}
+
+/* v2.7.2 clean hub background — no photo / no visible scrollbar */
+.app-hub{
+  background:
+    radial-gradient(circle at 50% -8%,rgba(213,167,44,.11),transparent 28%),
+    linear-gradient(160deg,#061b2b 0%,#08283e 55%,#061824 100%)!important;
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+}
+.tour-hub-card{
+  max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 28px)!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+.tour-hub-card::-webkit-scrollbar{
+  display:none!important;
+  width:0!important;
+  height:0!important;
 }
 </style>
 
