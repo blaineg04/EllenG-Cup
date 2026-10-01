@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.22">
+<meta name="elleng-app-version" content="2.7.23">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1473,7 +1473,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </style>
 
 <style id="home-cleanup-v2720">
-/* v2.7.22: cleaner home-page hierarchy; all existing logo/branding markup is intentionally untouched. */
+/* v2.7.23: cleaner home-page hierarchy; all existing logo/branding markup is intentionally untouched. */
 #homeView{display:block}
 #homeView>.card{margin-bottom:14px}
 
@@ -1553,7 +1553,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 
 <style id="home-responsive-v2721">
-/* v2.7.22: desktop + mobile responsive polish. Existing EllenG alligator logo assets/markup are untouched. */
+/* v2.7.23: desktop + mobile responsive polish. Existing EllenG alligator logo assets/markup are untouched. */
 #homeView .home-hero{
   border-radius:18px!important;
   padding:22px 24px!important;
@@ -1627,7 +1627,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 
 <style id="home-flat-v2722">
-/* v2.7.22: intentionally flatter tournament-home layout. Branding and application logic are untouched. */
+/* v2.7.23: intentionally flatter tournament-home layout. Branding and application logic are untouched. */
 
 /* Account and navigation read as clean page strips instead of floating cards. */
 #app > .card.row.between,
@@ -1754,7 +1754,89 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   }
   #homeView .player-essential-btn:nth-child(odd){border-left:0!important}
 }
+
 </style>
+
+<style id="rounded-cards-v2723">
+/* v2.7.23: restore EllenG Cup rounded card treatment without changing layout or app logic. */
+#app > .card.row.between,
+#app > .top-tabs-card{
+  border-radius:14px!important;
+  overflow:hidden;
+}
+
+#homeView .home-hero{
+  border-radius:18px!important;
+  overflow:hidden;
+}
+
+#homeView .next-event-card{
+  border-radius:16px!important;
+  padding-left:18px!important;
+  padding-right:18px!important;
+  overflow:hidden;
+}
+
+#homeView .event-date-spotlight{
+  border-radius:12px!important;
+}
+
+#homeView .rsvp-home-card,
+#homeView .player-essentials-card{
+  border-radius:16px!important;
+  padding-left:16px!important;
+  padding-right:16px!important;
+}
+
+#homeView .rsvp-stat{
+  border-radius:10px!important;
+}
+
+#homeView .rsvp-player-group{
+  border-radius:12px!important;
+}
+
+#homeView .player-essential-btn{
+  border-radius:12px!important;
+}
+
+@media (max-width:760px){
+  #app > .card.row.between,
+  #app > .top-tabs-card{
+    border-radius:12px!important;
+  }
+
+  #homeView .home-hero{
+    border-radius:14px!important;
+  }
+
+  #homeView .next-event-card{
+    border-radius:14px!important;
+    padding-left:14px!important;
+    padding-right:14px!important;
+  }
+
+  #homeView .event-date-spotlight{
+    border-radius:10px!important;
+  }
+
+  #homeView .rsvp-home-card,
+  #homeView .player-essentials-card{
+    border-radius:14px!important;
+    padding-left:12px!important;
+    padding-right:12px!important;
+  }
+
+  #homeView .rsvp-player-group{
+    border-radius:10px!important;
+  }
+
+  #homeView .player-essential-btn{
+    border:1px solid rgba(16,42,59,.10)!important;
+    border-radius:12px!important;
+    background:rgba(255,255,255,.55)!important;
+  }
+}
 
 </head>
 <body class="login-mode">
@@ -1816,7 +1898,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.22</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.23</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2277,7 +2359,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.22 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.23 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
