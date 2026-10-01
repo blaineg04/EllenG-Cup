@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.20">
+<meta name="elleng-app-version" content="2.7.24">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1470,6 +1470,132 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
  .player-essential-btn{min-height:70px!important}
 }
 </style>
+
+<style id="home-cleanup-v2724">
+/* v2.7.24 — CSS-only Home cleanup. No tournament logic changed. */
+
+#app > .card.row.between,
+#app > .top-tabs-card{
+  border-radius:14px!important;
+}
+
+#homeView .home-hero{
+  border-radius:16px!important;
+  margin-bottom:10px!important;
+}
+
+#homeView .next-event-card{
+  background:transparent!important;
+  border:0!important;
+  border-bottom:1px solid rgba(8,37,59,.16)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:13px 5px 20px!important;
+  margin-bottom:12px!important;
+}
+
+#homeView .event-date-spotlight{
+  border-radius:14px!important;
+  box-shadow:0 5px 14px rgba(8,37,59,.10)!important;
+}
+
+#homeView .rsvp-home-card{
+  background:transparent!important;
+  border:0!important;
+  border-bottom:1px solid rgba(8,37,59,.16)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:13px 5px 20px!important;
+  margin-bottom:12px!important;
+}
+
+#homeView .rsvp-summary{
+  gap:0!important;
+  background:rgba(255,255,255,.54)!important;
+  border-radius:14px!important;
+  overflow:hidden!important;
+  border:1px solid rgba(8,37,59,.08)!important;
+}
+
+#homeView .rsvp-stat{
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  padding:12px 8px!important;
+}
+
+#homeView .rsvp-stat:not(:last-child){
+  border-right:1px solid rgba(8,37,59,.10)!important;
+}
+
+#homeView .rsvp-player-groups{
+  gap:0!important;
+  border-top:1px solid rgba(8,37,59,.10)!important;
+  margin-top:12px!important;
+}
+
+#homeView .rsvp-player-group{
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  padding:12px 14px!important;
+}
+
+#homeView .rsvp-player-group:not(:last-child){
+  border-right:1px solid rgba(8,37,59,.10)!important;
+}
+
+#homeView .player-essentials-card{
+  background:transparent!important;
+  border:0!important;
+  border-left:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:13px 5px 18px!important;
+  margin-bottom:16px!important;
+}
+
+#homeView .player-essential-btn{
+  border-radius:12px!important;
+  box-shadow:0 2px 7px rgba(8,37,59,.05)!important;
+}
+
+@media(max-width:650px){
+  #homeView .home-hero{
+    border-radius:14px!important;
+  }
+
+  #homeView .next-event-card,
+  #homeView .rsvp-home-card,
+  #homeView .player-essentials-card{
+    padding-left:2px!important;
+    padding-right:2px!important;
+  }
+
+  #homeView .event-date-spotlight{
+    border-radius:12px!important;
+  }
+
+  #homeView .rsvp-player-groups{
+    grid-template-columns:1fr!important;
+    border-top:1px solid rgba(8,37,59,.10)!important;
+  }
+
+  #homeView .rsvp-player-group{
+    padding:12px 4px!important;
+  }
+
+  #homeView .rsvp-player-group:not(:last-child){
+    border-right:0!important;
+    border-bottom:1px solid rgba(8,37,59,.10)!important;
+  }
+
+  #homeView .player-essential-btn{
+    border-radius:12px!important;
+  }
+}
+</style>
+
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -1530,7 +1656,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.20</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.24</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -1991,7 +2117,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.20 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.24 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
