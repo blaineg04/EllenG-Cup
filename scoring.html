@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.5.1">
+<meta name="elleng-app-version" content="2.5.2">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -597,13 +597,6 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </div>
 </div>
 
-<div id="authBoot" class="auth-boot">
-  <div class="auth-boot-inner">
-    <img src="gator.png" alt="" class="auth-boot-logo">
-    <strong>Opening EllenG Cup…</strong>
-    <span>Restoring your session</span>
-  </div>
-</div>
 <header class="top"><div class="brand">
 <img src="gator.png" alt="EllenG Cup gator logo">
 <div><h1>EllenG Cup</h1><p id="tournamentSubtitle">LIVE TOURNAMENT SCORING • 18 HOLES</p></div>
@@ -3072,7 +3065,6 @@ function subscribeLive(){
 function setGlobalMenuVisible(show){
  const bar=$("globalMainMenuBar");if(bar)bar.classList.toggle("hidden",!show);
 }
-function hideAuthBoot(){if($("authBoot"))$("authBoot").classList.add("hidden")}
 
 function enteredFromInternalMenu(){
   return location.hash==="#hub" || sessionStorage.getItem("elleng_internal_menu")==="1";
@@ -3081,17 +3073,17 @@ function clearInternalMenuFlag(){
   sessionStorage.removeItem("elleng_internal_menu");
 }
 async function enterViewer(){
- hideAuthBoot();setGlobalMenuVisible(false);
+setGlobalMenuVisible(false);
  const hub=$("appHub");if(hub)hub.classList.add("hidden");
- $("app").classList.add("hidden");
+ $("app").classList.add("hidden");$("app").style.display="none";
  $("passwordChangeCard").classList.add("hidden");
- $("loginCard").classList.remove("hidden");
+ $("loginCard").classList.remove("hidden");$("loginCard").style.display="block";
  $("loginMsg").innerHTML=`<span class="ok">✓ App connected — live scoring ready.</span>`;
  setSyncStatus("saved","Connected");
 }
 async function enterApp(){
- hideAuthBoot();setGlobalMenuVisible(false);
- if($("authBoot"))$("authBoot").classList.add("hidden");
+setGlobalMenuVisible(false);
+ 
  $("loginMsg").textContent="Signed in — loading tournament…";
  try{
   await loadBase();
@@ -3107,7 +3099,7 @@ async function enterApp(){
     $("changeAccountPasswordMsg").textContent=`Signed in as ${visibleLogin()}. Choose your new password to continue.`;
   }else{
     $("passwordChangeCard").classList.add("hidden");
-    $("app").classList.remove("hidden");
+    $("app").classList.remove("hidden");$("app").style.display="";
     renderAll();
     subscribeLive();
     setSyncStatus("saved","Synced");
@@ -3495,21 +3487,25 @@ $("resetCurrentLeader").addEventListener("click",()=>{
 });
 $("resetScoringOnly").addEventListener("click",clearScoresOnly);
 (async()=>{
- // Normal app launch: show Sign In immediately. Do not wait on session restoration.
- if(!enteredFromInternalMenu()){
+ const internal=enteredFromInternalMenu();
+
+ // Normal link/app launch: render Sign In immediately with no restore screen.
+ if(!internal){
+   clearInternalMenuFlag();
+   user=null;
    await enterViewer();
    return;
  }
 
- // Returning through Main Menu: restore the existing session, but never hang forever.
+ // Main Menu return path: try to reuse the active session.
+ // Keep the hub/loading state hidden while checking, but never show Sign In unless restore fails.
  try{
    setSyncStatus("saving","Restoring…");
-   const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("Session restore timed out")),3000));
+   const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("Session restore timed out")),2500));
    const result=await Promise.race([db.auth.getSession(),timeout]);
-   const session=result?.data?.session;
-   const error=result?.error;
-   if(error)throw error;
    clearInternalMenuFlag();
+   const session=result?.data?.session;
+   if(result?.error)throw result.error;
    if(session){
      user=session.user;
      await enterApp();
