@@ -1672,6 +1672,22 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 }
 </style>
 
+
+<style>
+/* v2.7.15 — prevent app-screen flex rules from overriding hidden views */
+@media (max-width:650px){
+  body.player-simple-home #homeView.hidden,
+  body.player-simple-home #leaderboardView.hidden,
+  body.player-simple-home #teamsView.hidden,
+  body.player-simple-home #playersView.hidden{display:none!important}
+
+  /* Only the selected primary screen gets the app-style flex layout. */
+  body.player-simple-home #homeView:not(.hidden){display:flex!important}
+  body.player-simple-home #leaderboardView:not(.hidden){display:flex!important}
+  body.player-simple-home #teamsView:not(.hidden){display:flex!important}
+  body.player-simple-home #playersView:not(.hidden){display:flex!important}
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
