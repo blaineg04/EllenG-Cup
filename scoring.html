@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.35">
+<meta name="elleng-app-version" content="2.7.12">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -82,13 +82,6 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 
 /* Public Players directory */
 .players-toolbar{display:grid;grid-template-columns:minmax(180px,260px) minmax(180px,1fr);gap:10px;margin-top:12px}
-
-.player-sort-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.player-sort-btn{background:#e8edef!important;color:#17384d!important;border:1px solid #d0d9dd!important;min-height:42px!important;padding:9px 12px!important}
-.player-sort-btn.active{background:#08253b!important;color:#f0c75d!important;border:2px solid #d5a72c!important}
-.player-sort-btn .sort-arrow{font-weight:1000;margin-right:5px}
-.player-band-range{font-size:12px;font-weight:800;color:#667782;margin-top:3px}
-@media(max-width:650px){.player-sort-controls{display:grid;grid-template-columns:1fr 1fr}.player-sort-btn{width:100%;font-size:13px!important}.player-sort-btn[data-player-sort="team"]{grid-column:1/-1}}
 .player-list{display:grid;gap:10px;margin-top:14px}
 .player-team-card{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
 .player-team-head{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px 14px;background:#f8fafb;border-bottom:1px solid var(--line)}
@@ -142,8 +135,6 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .more-menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .more-menu-btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:14px 10px;border-radius:12px;text-align:left;font-weight:850;min-height:62px}
 .more-menu-btn span{display:block;font-size:21px;margin-bottom:4px}
-.more-menu-btn .clubhouse-menu-icon{display:block;width:38px;height:38px;margin:0 auto 6px auto;line-height:0}
-.more-menu-btn .clubhouse-menu-icon img{display:block;width:100%;height:100%;object-fit:contain}
 .more-menu-btn.admin-link{background:#fff8df;border-color:#e2bd54}
 @media(max-width:420px){.more-menu-grid{grid-template-columns:1fr}}
 
@@ -363,15 +354,9 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   cursor:not-allowed!important;
 }
 
-.next-event-card{border:2px solid var(--gold)!important;border-left:7px solid var(--gold)!important;background:linear-gradient(135deg,#fff8df,#fffdf8)!important;box-shadow:0 10px 26px rgba(8,37,59,.12)!important}
+.next-event-card{border-left:5px solid var(--gold)}
 .countdown-badge{background:#0d5f4c;color:white;border-radius:999px;padding:8px 12px;font-weight:950;white-space:nowrap}
-.event-date-spotlight{display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 14px;border-radius:12px;background:#08253b;color:#fff;border:1px solid #d5a72c;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
-.event-date-icon{font-size:28px;line-height:1}
-.event-date-label{font-size:10px;font-weight:1000;letter-spacing:.14em;color:#f0c75d}
-.countdown-date{font-family:Georgia,"Times New Roman",serif;font-size:clamp(22px,5vw,30px);line-height:1.1;font-weight:900;margin-top:3px;color:#fff}
-.home-date-badge{background:#d5a72c!important;color:#10202c!important;border:1px solid #f0c75d!important;font-weight:1000!important;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-.rsvp-home-card{border:2px solid rgba(213,167,44,.55)!important}
-@media(max-width:560px){.event-date-spotlight{padding:12px}.event-date-icon{font-size:25px}.countdown-badge{font-size:11px;padding:7px 10px}.rsvp-home-card .rsvp-controls{display:grid;grid-template-columns:1fr 1fr}.rsvp-home-card .rsvp-btn{width:100%}}
+.countdown-date{font-size:18px;font-weight:900;margin-top:10px}
 .alert-stack{position:fixed;top:110px;right:16px;z-index:5000;display:grid;gap:8px;max-width:min(360px,calc(100vw - 32px));pointer-events:none}
 .app-alert{background:#0b2b42;color:white;border-left:5px solid var(--gold);border-radius:12px;padding:11px 13px;box-shadow:0 10px 28px rgba(0,0,0,.18);animation:alertIn .25s ease}
 .app-alert strong{display:block}.app-alert span{font-size:12px;opacity:.86}
@@ -379,7 +364,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .captain-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px}
 .captain-stat{background:#f7fafb;border:1px solid var(--line);border-radius:11px;padding:11px}.captain-stat strong{display:block;font-size:22px}.captain-stat span{font-size:11px;color:var(--muted)}
 .rsvp-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.rsvp-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;font-weight:900}.rsvp-btn.active{background:#0b6b50;color:#fff;border-color:#0b6b50}
-.rsvp-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.rsvp-stat{border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}.rsvp-stat strong{display:block;font-size:22px}.rsvp-player-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px;grid-column:1/-1}.rsvp-player-group{border:1px solid rgba(213,167,44,.34);border-radius:12px;background:#fffdfa;padding:11px;min-width:0}.rsvp-player-group-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px;font-weight:950;color:#102a3b}.rsvp-player-list{display:flex;flex-wrap:wrap;gap:6px}.rsvp-player-chip{display:inline-flex;align-items:center;min-height:30px;padding:5px 9px;border-radius:999px;background:#e8edef;border:1px solid #d0d9dd;color:#17384d;font-size:12px;font-weight:850}.rsvp-player-empty{font-size:12px;color:#6d7d87;font-style:italic}.rsvp-player-group.playing{border-top:4px solid #0a7b43}.rsvp-player-group.maybe{border-top:4px solid #d5a72c}.rsvp-player-group.out{border-top:4px solid #8e2734}@media(max-width:650px){.rsvp-player-groups{grid-template-columns:1fr}.rsvp-player-group{padding:10px}}
+.rsvp-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.rsvp-stat{border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}.rsvp-stat strong{display:block;font-size:22px}
 .group-assignment-list,.admin-group-list{display:grid;gap:8px;margin-top:12px}.group-row{display:grid;grid-template-columns:minmax(140px,1fr) 120px 100px 130px 120px;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:9px;background:#fff}
 .group-row input{width:100%}
 .player-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.achievement-badge{font-size:11px;font-weight:900;border-radius:999px;padding:5px 8px;background:#fff5ce;border:1px solid #ead28a}
@@ -1470,530 +1455,6 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
  .player-essential-btn{min-height:70px!important}
 }
 </style>
-
-<style id="home-cleanup-v2724">
-/* v2.7.35 — CSS-only Home cleanup. No tournament logic changed. */
-
-#app > .card.row.between,
-#app > .top-tabs-card{
-  border-radius:14px!important;
-}
-
-#homeView .home-hero{
-  border-radius:16px!important;
-  margin-bottom:10px!important;
-}
-
-#homeView .next-event-card{
-  background:transparent!important;
-  border:0!important;
-  border-bottom:1px solid rgba(8,37,59,.16)!important;
-  border-radius:0!important;
-  box-shadow:none!important;
-  padding:13px 5px 20px!important;
-  margin-bottom:12px!important;
-}
-
-#homeView .event-date-spotlight{
-  border-radius:14px!important;
-  box-shadow:0 5px 14px rgba(8,37,59,.10)!important;
-}
-
-#homeView .rsvp-home-card{
-  background:transparent!important;
-  border:0!important;
-  border-bottom:1px solid rgba(8,37,59,.16)!important;
-  border-radius:0!important;
-  box-shadow:none!important;
-  padding:13px 5px 20px!important;
-  margin-bottom:12px!important;
-}
-
-#homeView .rsvp-summary{
-  gap:0!important;
-  background:rgba(255,255,255,.54)!important;
-  border-radius:14px!important;
-  overflow:hidden!important;
-  border:1px solid rgba(8,37,59,.08)!important;
-}
-
-#homeView .rsvp-stat{
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  padding:12px 8px!important;
-}
-
-#homeView .rsvp-stat:not(:last-child){
-  border-right:1px solid rgba(8,37,59,.10)!important;
-}
-
-#homeView .rsvp-player-groups{
-  gap:0!important;
-  border-top:1px solid rgba(8,37,59,.10)!important;
-  margin-top:12px!important;
-}
-
-#homeView .rsvp-player-group{
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  padding:12px 14px!important;
-}
-
-#homeView .rsvp-player-group:not(:last-child){
-  border-right:1px solid rgba(8,37,59,.10)!important;
-}
-
-#homeView .player-essentials-card{
-  background:transparent!important;
-  border:0!important;
-  border-left:0!important;
-  border-radius:0!important;
-  box-shadow:none!important;
-  padding:13px 5px 18px!important;
-  margin-bottom:16px!important;
-}
-
-#homeView .player-essential-btn{
-  border-radius:12px!important;
-  box-shadow:0 2px 7px rgba(8,37,59,.05)!important;
-}
-
-@media(max-width:650px){
-  #homeView .home-hero{
-    border-radius:14px!important;
-  }
-
-  #homeView .next-event-card,
-  #homeView .rsvp-home-card,
-  #homeView .player-essentials-card{
-    padding-left:2px!important;
-    padding-right:2px!important;
-  }
-
-  #homeView .event-date-spotlight{
-    border-radius:12px!important;
-  }
-
-  #homeView .rsvp-player-groups{
-    grid-template-columns:1fr!important;
-    border-top:1px solid rgba(8,37,59,.10)!important;
-  }
-
-  #homeView .rsvp-player-group{
-    padding:12px 4px!important;
-  }
-
-  #homeView .rsvp-player-group:not(:last-child){
-    border-right:0!important;
-    border-bottom:1px solid rgba(8,37,59,.10)!important;
-  }
-
-  #homeView .player-essential-btn{
-    border-radius:12px!important;
-  }
-}
-</style>
-
-
-<style id="home-final-override-v2725">
-/*
-  v2.7.35 — FINAL HOME OVERRIDE
-  Intentionally high-specificity selectors so older global !important card rules
-  cannot override the Home-page cleanup. CSS only.
-*/
-
-/* Keep these two top utility areas rounded, but slightly lighter. */
-body #app > .card.row.between,
-body #app > .card.top-tabs-card{
-  border-radius:14px!important;
-}
-
-/* Tournament Hub remains the single main hero card. */
-body #app #homeView > .card.home-hero{
-  background:linear-gradient(180deg,#fffdf8,#f7f2e8)!important;
-  border:1px solid rgba(213,167,44,.34)!important;
-  border-radius:18px!important;
-  box-shadow:0 7px 18px rgba(8,37,59,.08)!important;
-  padding:20px 22px!important;
-  margin-bottom:8px!important;
-}
-
-/* NEXT ELLENG CUP = open section, no outer card. */
-body #app #homeView > .card.next-event-card{
-  background:transparent!important;
-  color:var(--eg-ink)!important;
-  border:0!important;
-  border-bottom:1px solid rgba(8,37,59,.18)!important;
-  border-radius:0!important;
-  box-shadow:none!important;
-  padding:17px 4px 22px!important;
-  margin:0 0 10px!important;
-}
-body #app #homeView > .card.next-event-card h1,
-body #app #homeView > .card.next-event-card h2,
-body #app #homeView > .card.next-event-card h3,
-body #app #homeView > .card.next-event-card strong{
-  color:var(--eg-ink)!important;
-}
-body #app #homeView > .card.next-event-card .status{
-  color:#667782!important;
-}
-
-/* Keep Tournament Date as the one purposeful dark highlight. */
-body #app #homeView .next-event-card .event-date-spotlight{
-  background:linear-gradient(135deg,#08253b,#0b3550)!important;
-  color:#fff!important;
-  border:1px solid rgba(213,167,44,.58)!important;
-  border-radius:14px!important;
-  box-shadow:0 6px 16px rgba(8,37,59,.12)!important;
-  padding:14px 16px!important;
-}
-body #app #homeView .next-event-card .event-date-spotlight *{
-  color:#fff!important;
-}
-
-/* RSVP = open section, no large cream rectangle. */
-body #app #homeView > .card.rsvp-home-card{
-  background:transparent!important;
-  color:var(--eg-ink)!important;
-  border:0!important;
-  border-bottom:1px solid rgba(8,37,59,.18)!important;
-  border-radius:0!important;
-  box-shadow:none!important;
-  padding:17px 4px 22px!important;
-  margin:0 0 10px!important;
-}
-body #app #homeView > .card.rsvp-home-card h1,
-body #app #homeView > .card.rsvp-home-card h2,
-body #app #homeView > .card.rsvp-home-card h3,
-body #app #homeView > .card.rsvp-home-card strong{
-  color:var(--eg-ink)!important;
-}
-body #app #homeView > .card.rsvp-home-card .status{
-  color:#667782!important;
-}
-
-/* Three totals share one clean strip instead of three separate cards. */
-body #app #homeView .rsvp-home-card .rsvp-summary{
-  display:grid!important;
-  grid-template-columns:repeat(3,minmax(0,1fr))!important;
-  gap:0!important;
-  background:rgba(255,255,255,.48)!important;
-  border:1px solid rgba(8,37,59,.09)!important;
-  border-radius:14px!important;
-  overflow:hidden!important;
-}
-body #app #homeView .rsvp-home-card .rsvp-stat{
-  background:transparent!important;
-  border:0!important;
-  border-radius:0!important;
-  box-shadow:none!important;
-  padding:12px 10px!important;
-}
-body #app #homeView .rsvp-home-card .rsvp-stat + .rsvp-stat{
-  border-left:1px solid rgba(8,37,59,.10)!important;
-}
-
-/* RSVP player lists are open columns with divider lines. */
-body #app #homeView .rsvp-home-card .rsvp-player-groups{
-  gap:0!important;
-  margin-top:12px!important;
-  border-top:1px solid rgba(8,37,59,.10)!important;
-}
-body #app #homeView .rsvp-home-card .rsvp-player-group{
-  background:transparent!important;
-  border:0!important;
-  border-radius:0!important;
-  box-shadow:none!important;
-  padding:12px 14px!important;
-}
-body #app #homeView .rsvp-home-card .rsvp-player-group + .rsvp-player-group{
-  border-left:1px solid rgba(8,37,59,.10)!important;
-}
-body #app #homeView .rsvp-home-card .rsvp-player-chip{
-  background:transparent!important;
-  border:0!important;
-  border-radius:0!important;
-  box-shadow:none!important;
-}
-
-/* Player Essentials = open section, while the four action buttons remain rounded. */
-body #app #homeView > .card.player-essentials-card{
-  background:transparent!important;
-  color:var(--eg-ink)!important;
-  border:0!important;
-  border-bottom:1px solid rgba(8,37,59,.18)!important;
-  border-radius:0!important;
-  box-shadow:none!important;
-  padding:17px 4px 22px!important;
-  margin:0 0 12px!important;
-}
-body #app #homeView > .card.player-essentials-card h1,
-body #app #homeView > .card.player-essentials-card h2,
-body #app #homeView > .card.player-essentials-card h3,
-body #app #homeView > .card.player-essentials-card strong{
-  color:var(--eg-ink)!important;
-}
-body #app #homeView > .card.player-essentials-card .status{
-  color:#667782!important;
-}
-body #app #homeView .player-essentials-card .player-essential-btn{
-  border:1px solid rgba(8,37,59,.10)!important;
-  border-radius:12px!important;
-  background:rgba(255,255,255,.58)!important;
-  box-shadow:0 2px 7px rgba(8,37,59,.05)!important;
-}
-
-/* Keep first below-the-fold highlight from immediately returning to the stacked-card feel. */
-body #app #homeView > .card.leader-spotlight-card{
-  margin-top:12px!important;
-}
-
-@media(max-width:650px){
-  body #app #homeView > .card.home-hero{
-    border-radius:15px!important;
-    padding:17px 15px!important;
-  }
-
-  body #app #homeView > .card.next-event-card,
-  body #app #homeView > .card.rsvp-home-card,
-  body #app #homeView > .card.player-essentials-card{
-    padding-left:1px!important;
-    padding-right:1px!important;
-  }
-
-  body #app #homeView .next-event-card .event-date-spotlight{
-    border-radius:12px!important;
-    padding:13px 14px!important;
-  }
-
-  body #app #homeView .rsvp-home-card .rsvp-player-groups{
-    grid-template-columns:1fr!important;
-  }
-
-  body #app #homeView .rsvp-home-card .rsvp-player-group + .rsvp-player-group{
-    border-left:0!important;
-    border-top:1px solid rgba(8,37,59,.10)!important;
-  }
-
-  body #app #homeView .player-essentials-card .player-essentials-grid{
-    grid-template-columns:1fr 1fr!important;
-    gap:8px!important;
-  }
-}
-</style>
-
-
-<style id="home-contrast-v2726">
-/* v2.7.35 — Home contrast fix only. Layout and app logic unchanged. */
-
-/* RSVP section typography on the dark page background. */
-body #app #homeView > .card.rsvp-home-card > .premium-label,
-body #app #homeView > .card.rsvp-home-card .premium-label{
-  color:#d5a72c!important;
-}
-
-body #app #homeView > .card.rsvp-home-card h1,
-body #app #homeView > .card.rsvp-home-card h2,
-body #app #homeView > .card.rsvp-home-card h3{
-  color:#ffffff!important;
-}
-
-body #app #homeView > .card.rsvp-home-card .status,
-body #app #homeView > .card.rsvp-home-card .muted,
-body #app #homeView > .card.rsvp-home-card p{
-  color:rgba(255,255,255,.76)!important;
-}
-
-/* Player Essentials typography on the dark page background. */
-body #app #homeView > .card.player-essentials-card > .premium-label,
-body #app #homeView > .card.player-essentials-card .premium-label{
-  color:#d5a72c!important;
-}
-
-body #app #homeView > .card.player-essentials-card h1,
-body #app #homeView > .card.player-essentials-card h2,
-body #app #homeView > .card.player-essentials-card h3{
-  color:#ffffff!important;
-}
-
-body #app #homeView > .card.player-essentials-card .status,
-body #app #homeView > .card.player-essentials-card .muted,
-body #app #homeView > .card.player-essentials-card p{
-  color:rgba(255,255,255,.76)!important;
-}
-
-/* Keep white cards/buttons readable. */
-body #app #homeView .rsvp-home-card .rsvp-summary,
-body #app #homeView .rsvp-home-card .rsvp-summary *,
-body #app #homeView .rsvp-home-card .rsvp-player-groups,
-body #app #homeView .rsvp-home-card .rsvp-player-groups *,
-body #app #homeView .player-essentials-card .player-essential-btn,
-body #app #homeView .player-essentials-card .player-essential-btn *{
-  color:#102a3b!important;
-}
-
-/* Preserve gold utility badges. */
-body #app #homeView .rsvp-home-card .badge,
-body #app #homeView .rsvp-home-card .pill,
-body #app #homeView .player-essentials-card .badge,
-body #app #homeView .player-essentials-card .pill{
-  color:#d5a72c!important;
-}
-</style>
-
-
-<style id="next-event-contrast-v2727">
-/* v2.7.35 — Fix remaining Next EllenG Cup contrast only. No layout or logic changes. */
-
-body #app #homeView > .card.next-event-card #nextEventName{
-  color:#ffffff!important;
-}
-
-body #app #homeView > .card.next-event-card #nextEventCourse{
-  color:rgba(255,255,255,.74)!important;
-}
-
-body #app #homeView > .card.next-event-card .premium-label{
-  color:#d5a72c!important;
-}
-</style>
-
-
-<style id="next-event-final-contrast-v2728">
-/* v2.7.35 — Restore correct dark/open Home baseline and fix ONLY Next EllenG Cup text contrast. */
-
-html body #app #homeView .next-event-card .premium-label{
-  color:#d5a72c!important;
-  opacity:1!important;
-}
-
-html body #app #homeView .next-event-card #nextEventName{
-  color:#ffffff!important;
-  opacity:1!important;
-  -webkit-text-fill-color:#ffffff!important;
-}
-
-html body #app #homeView .next-event-card #nextEventCourse{
-  color:rgba(255,255,255,.78)!important;
-  opacity:1!important;
-  -webkit-text-fill-color:rgba(255,255,255,.78)!important;
-}
-</style>
-
-
-<style id="home-cream-panels-v2729">
-/* v2.7.35 — Visual-only panel color refinement.
-   Changes gray Home panels/buttons to warm off-white/cream. No layout or app logic changes. */
-
-html body #app #homeView .rsvp-home-card .rsvp-summary,
-html body #app #homeView .rsvp-home-card .rsvp-player-groups{
-  background:#f6f1e7!important;
-  border-color:rgba(213,167,44,.28)!important;
-}
-
-html body #app #homeView .rsvp-home-card .rsvp-stat,
-html body #app #homeView .rsvp-home-card .rsvp-player-group{
-  background:#f6f1e7!important;
-}
-
-html body #app #homeView .rsvp-home-card .rsvp-stat *,
-html body #app #homeView .rsvp-home-card .rsvp-player-group *{
-  color:#102a3b!important;
-}
-
-html body #app #homeView .player-essentials-card .player-essential-btn{
-  background:#f6f1e7!important;
-  border-color:rgba(213,167,44,.28)!important;
-  color:#102a3b!important;
-}
-
-html body #app #homeView .player-essentials-card .player-essential-btn *{
-  color:#102a3b!important;
-}
-</style>
-
-
-<style id="home-date-dedupe-v2731">
-/* v2.7.35 — Remove duplicate Next EllenG Cup summary and keep one clean tournament-date block. */
-html body #app #homeView .next-event-card .event-date-spotlight{
-  display:grid!important;
-  grid-template-columns:auto minmax(0,1fr) auto!important;
-  align-items:center!important;
-  gap:14px!important;
-}
-html body #app #homeView .next-event-card .event-date-main{
-  min-width:0!important;
-}
-html body #app #homeView .next-event-card .countdown-badge{
-  margin:0!important;
-  align-self:center!important;
-  white-space:nowrap!important;
-}
-@media(max-width:650px){
-  html body #app #homeView .next-event-card .event-date-spotlight{
-    grid-template-columns:auto minmax(0,1fr)!important;
-  }
-  html body #app #homeView .next-event-card .countdown-badge{
-    grid-column:2!important;
-    justify-self:start!important;
-    margin-top:8px!important;
-  }
-}
-</style>
-
-
-<style id="home-single-summary-v2732">
-/* v2.7.35 — One tournament summary only.
-   Date + countdown now live inside the Tournament Hub card; separate date card removed. */
-
-html body #app #homeView .home-hero .home-hero-meta{
-  display:flex!important;
-  flex-wrap:wrap!important;
-  gap:10px!important;
-  align-items:center!important;
-}
-
-html body #app #homeView .home-hero .home-hero-date{
-  background:#08253b!important;
-  color:#f0c75d!important;
-  border:1px solid rgba(213,167,44,.65)!important;
-  font-weight:900!important;
-}
-
-html body #app #homeView .home-hero .home-hero-countdown{
-  background:#0d6b55!important;
-  color:#ffffff!important;
-  border:1px solid rgba(255,255,255,.12)!important;
-  font-weight:950!important;
-}
-
-@media(max-width:650px){
-  html body #app #homeView .home-hero .home-hero-meta{
-    gap:8px!important;
-  }
-  html body #app #homeView .home-hero .home-hero-date,
-  html body #app #homeView .home-hero .home-hero-countdown{
-    font-size:11px!important;
-    padding:7px 10px!important;
-  }
-}
-</style>
-
-
-<style id="home-hero-simplify-v2733">
-/* v2.7.35 — Simplify Tournament Hub header for players.
-   Hide the setup/status badge and the small gold kicker only.
-   Keep course, date, countdown, and all app logic unchanged. */
-
-html body #app #homeView .home-hero .home-kicker,
-html body #app #homeView .home-hero #homeStatusBadge{
-  display:none!important;
-}
-</style>
-
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -2054,7 +1515,7 @@ html body #app #homeView .home-hero #homeStatusBadge{
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.35</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.12</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2104,25 +1565,16 @@ html body #app #homeView .home-hero #homeStatusBadge{
   <div class="home-kicker">ELLENG CUP • TOURNAMENT HUB</div>
   <h2 id="homeHeadline">Tournament Day</h2>
   <div id="homeSubline" class="status">Live standings, teams, players and course information in one place.</div>
-  <div class="row home-hero-meta" style="margin-top:13px">
-    <span id="homeStatusBadge" class="badge" style="background:#d5a72c;color:#10202c">SETUP</span>
-    <span id="homeCourseBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">Course</span>
-    <span id="nextEventDate" class="badge home-hero-date">DATE TBD</span>
-    <span id="nextEventCountdown" class="badge home-hero-countdown">DATE TBD</span>
-  </div>
+  <div class="row" style="margin-top:13px"><span id="homeStatusBadge" class="badge" style="background:#d5a72c;color:#10202c">SETUP</span><span id="homeCourseBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">Course</span><span id="homeDateBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">DATE TBD</span></div>
+
 </div>
 
-<div class="card rsvp-home-card" id="rsvpCard">
-  <div class="row between"><div><div class="premium-label">AVAILABILITY</div><h2 style="margin:3px 0 0">Tournament RSVP</h2><div class="status">Players can mark Playing, Maybe or Out.</div></div><span class="badge">PLAYER STATUS</span></div>
-  <div id="myRsvpControls" class="rsvp-controls"></div>
-  <div id="rsvpSummary" class="rsvp-summary"></div>
-  <div id="commissionerRsvpReset" class="hidden" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(213,167,44,.34)">
-    <div class="row between">
-      <div><strong>Commissioner RSVP Control</strong><div class="status">Clear every RSVP so players can respond again for this tournament.</div></div>
-      <button id="resetAllRsvps" class="danger" type="button">Reset All RSVPs</button>
-    </div>
-    <div id="rsvpAdminMsg" class="status" style="margin-top:8px"></div>
+<div class="card next-event-card">
+  <div class="row between">
+    <div><div class="premium-label">NEXT EVENT</div><h2 id="nextEventName" style="margin:3px 0 0">EllenG Cup</h2><div id="nextEventCourse" class="status">Course TBD</div></div>
+    <span id="nextEventCountdown" class="countdown-badge">DATE TBD</span>
   </div>
+  <div id="nextEventDate" class="countdown-date"></div>
 </div>
 
 <div class="card player-essentials-card" id="playerEssentialsCard">
@@ -2131,7 +1583,7 @@ html body #app #homeView .home-hero #homeStatusBadge{
     <button class="player-essential-btn" type="button" data-home-go="leaderboard"><span>✏️</span><strong>My Score</strong></button>
     <button class="player-essential-btn" type="button" data-home-go="leaderboard"><span>🏆</span><strong>Standings</strong></button>
     <button class="player-essential-btn" type="button" data-home-go="teams"><span>👥</span><strong>My Team</strong></button>
-    <button class="player-essential-btn" type="button" data-home-go="course"><span>⛳</span><strong>Course</strong></button>
+    <button class="player-essential-btn" type="button" data-home-go="clubhouse"><span>⏰</span><strong>Tee Time</strong></button>
   </div>
 </div>
 
@@ -2334,16 +1786,23 @@ html body #app #homeView .home-hero #homeStatusBadge{
     <span class="badge">LIVE DRAFT SYNC</span>
   </div>
   <div class="players-toolbar">
+    <label><small>Organize players</small><select id="playerDirectoryMode"><option value="team">By Team</option><option value="all">All Players A–Z</option><option value="band">By A/B/C/D Band</option></select></label>
     <label><small>Find player</small><input id="playerDirectorySearch" placeholder="Search by player or team"></label>
   </div>
-  <select id="playerDirectoryMode" class="hidden" aria-hidden="true"><option value="band" selected>Handicap A–D</option><option value="all">Alphabetical by Last Name</option><option value="team">By Team</option></select>
-  <div class="player-sort-controls" aria-label="Sort players">
-    <button class="player-sort-btn active" type="button" data-player-sort="band"><span class="sort-arrow">↕</span>A–D Handicap</button>
-    <button class="player-sort-btn" type="button" data-player-sort="all"><span class="sort-arrow">↕</span>A–Z Last Name</button>
-    <button class="player-sort-btn" type="button" data-player-sort="team">👥 By Team</button>
-  </div>
-  <div class="note" style="margin-top:10px">A–D groups players by handicap letter and lists each group alphabetically by last name. Tap A–Z Last Name anytime to return to one alphabetical list.</div>
+  <div class="note" style="margin-top:10px">Tap a player to open their profile. Handicaps update automatically, and undrafted golfers are shown as Available / Unassigned.</div>
   <div id="playerDirectory" class="player-list"></div>
+<div class="card" id="rsvpCard" style="margin-top:14px">
+  <div class="row between"><div><div class="premium-label">AVAILABILITY</div><h2 style="margin:3px 0 0">Tournament RSVP</h2><div class="status">Players can mark Playing, Maybe or Out.</div></div><span class="badge">PLAYER STATUS</span></div>
+  <div id="myRsvpControls" class="rsvp-controls"></div>
+  <div id="rsvpSummary" class="rsvp-summary"></div>
+  <div id="commissionerRsvpReset" class="hidden" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(213,167,44,.34)">
+    <div class="row between">
+      <div><strong>Commissioner RSVP Control</strong><div class="status">Clear every RSVP so players can respond again for this tournament.</div></div>
+      <button id="resetAllRsvps" class="danger" type="button">Reset All RSVPs</button>
+    </div>
+    <div id="rsvpAdminMsg" class="status" style="margin-top:8px"></div>
+  </div>
+</div>
 </div>
 
 <div class="card hidden" id="playerProfileCardsSection">
@@ -2414,6 +1873,10 @@ html body #app #homeView .home-hero #homeStatusBadge{
 </div>
 
 <div class="experience-grid">
+  <div class="card">
+    <div class="row between"><div><div class="premium-label">CHECK-IN</div><h2 style="margin:3px 0 0">Tournament QR</h2><div class="status">Scan to open this EllenG Cup app.</div></div><span class="badge">QUICK ACCESS</span></div>
+    <div id="checkinQr" class="qr-wrap"></div>
+  </div>
   <div class="card">
     <div class="row between"><div><div class="premium-label">RIVALRY WATCH</div><h2 style="margin:3px 0 0">Closest Rivals</h2></div><span class="badge">HEAD-TO-HEAD</span></div>
     <div id="rivalryWatch" class="wow-body"></div>
@@ -2504,7 +1967,7 @@ html body #app #homeView .home-hero #homeStatusBadge{
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.35 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.12 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -2546,7 +2009,7 @@ html body #app #homeView .home-hero #homeStatusBadge{
 
 <div id="adminTournament" class="card admin-card">
   <div class="section-toolbar">
-    <div class="admin-section-title"><span class="step">1</span><div><h2>Tournament Controls</h2><div class="section-sub">Course, routing, status, draft rules, team size, golfer count, hole pars, Gator Hole and Final Cargo.</div></div></div>
+    <div class="admin-section-title"><span class="step">1</span><div><h2>Tournament Controls</h2><div class="section-sub">Course, routing, status, team size, golfer count, hole pars, Gator Hole and Final Cargo.</div></div></div>
   </div>
   <div class="admin-grid">
 
@@ -2555,7 +2018,6 @@ html body #app #homeView .home-hero #homeStatusBadge{
     <label><small>Tournament status</small><select id="statusSelect"><option value="setup">Setup</option><option value="live">Live</option><option value="complete">Complete</option><option value="archived">Archived</option></select></label>
     <label><small>Tournament date</small><input id="tournamentDateInput" type="date"></label>
     <label><small>Playing format</small><select id="playFormatSelect"><option value="">Select / keep current</option><option value="standard">Standard EllenG — Front 9 Scramble / Back 9 Shamble</option><option value="split_pair">Split-Pair Scramble — two 2-man pairs per 4-man team</option></select></label>
-    <label><small>Draft eligibility</small><select id="draftRulesSelect"><option value="">Select / keep current</option><option value="banded">Banded Draft — A/B/C/D balancing rules</option><option value="open">Open Draft — unrestricted picks</option></select></label>
     <label><small>Players per team</small><select id="teamSizeSelect"><option value="">Select / keep current</option><option value="2">2-man team</option><option value="3">3-man team</option><option value="4">4-man team</option></select></label>
     <label><small>Number of teams</small><select id="teamCountSelect"><option value="">— Select number of teams —</option><option value="2">2 teams</option><option value="3">3 teams</option><option value="4">4 teams</option><option value="5">5 teams</option><option value="6">6 teams</option><option value="7">7 teams</option><option value="8">8 teams</option><option value="9">9 teams</option></select></label>
     <label><small>Number of golfers</small><select id="golferCountSelect"><option value="">— Select number of golfers —</option><option value="8">8 golfers</option><option value="9">9 golfers</option><option value="10">10 golfers</option><option value="11">11 golfers</option><option value="12">12 golfers</option><option value="13">13 golfers</option><option value="14">14 golfers</option><option value="15">15 golfers</option><option value="16">16 golfers</option><option value="17">17 golfers</option><option value="18">18 golfers</option><option value="19">19 golfers</option><option value="20">20 golfers</option><option value="21">21 golfers</option><option value="22">22 golfers</option><option value="23">23 golfers</option><option value="24">24 golfers</option><option value="25">25 golfers</option><option value="26">26 golfers</option><option value="27">27 golfers</option><option value="28">28 golfers</option><option value="29">29 golfers</option><option value="30">30 golfers</option><option value="31">31 golfers</option><option value="32">32 golfers</option><option value="33">33 golfers</option><option value="34">34 golfers</option><option value="35">35 golfers</option><option value="36">36 golfers</option></select></label>
@@ -2642,9 +2104,8 @@ html body #app #homeView .home-hero #homeStatusBadge{
   <div class="more-sheet" role="dialog" aria-modal="true" aria-label="More options">
     <div class="more-sheet-head"><h3>More</h3><button id="moreMenuClose" class="more-sheet-close" type="button">Close</button></div>
     <div class="more-menu-grid">
-      <button class="more-menu-btn" type="button" data-more-view="course"><span>🗺️</span>Course</button>
-      <button class="more-menu-btn" type="button" data-more-view="progress"><span>✅</span>Hole Progress</button>
-      <button class="more-menu-btn" type="button" data-more-view="clubhouse"><span class="clubhouse-menu-icon" aria-hidden="true"><img src="data:image/png;base64,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" alt=""></span>Clubhouse</button>
+            <button class="more-menu-btn" type="button" data-more-view="progress"><span>✅</span>Hole Progress</button>
+      <button class="more-menu-btn" type="button" data-more-view="clubhouse"><span>🏛️</span>Clubhouse</button>
       <button class="more-menu-btn" type="button" data-more-view="trash"><span>💬</span>Trash Talk</button>
       <button id="moreScoringBtn" class="more-menu-btn hidden" type="button" data-more-view="scoring"><span>✏️</span>Enter Scores</button>
       <button id="moreAdminBtn" class="more-menu-btn admin-link hidden" type="button" data-more-view="admin"><span>⚙️</span>Commissioner</button>
@@ -3365,21 +2826,8 @@ function renderRsvp(){
  const mine=user?rsvps.find(r=>r.user_id===user.id):null;
  controls.innerHTML=user&&Number.isInteger(currentGolferIndex)?["playing","maybe","out","clear"].map(s=>`<button class="rsvp-btn ${mine?.status===s?"active":""}" type="button" data-rsvp="${s}">${s==="playing"?"✅ Playing":s==="maybe"?"🤔 Maybe":s==="out"?"❌ Out":"↺ Clear RSVP"}</button>`).join(""):'<div class="note">Sign in with a linked player account to RSVP.</div>';
  controls.querySelectorAll("[data-rsvp]").forEach(b=>b.addEventListener("click",()=>setMyRsvp(b.dataset.rsvp)));
- const counts={playing:0,maybe:0,out:0},groups={playing:[],maybe:[],out:[]};
- const lastNameKey=name=>{const parts=String(name||"").trim().split(/\s+/).filter(Boolean);return `${(parts[parts.length-1]||"").toLowerCase()}|${String(name||"").toLowerCase()}`};
- (rsvps||[]).forEach(r=>{
-   if(counts[r.status]===undefined)return;
-   counts[r.status]++;
-   const raw=r.golfer_index,gi=(raw===null||raw===undefined||raw==="")?NaN:Number(raw);
-   const g=Number.isInteger(gi)?draftState?.golfers?.[gi]:null,name=String(g?.name||"").trim();
-   if(name)groups[r.status].push(name);
- });
- Object.values(groups).forEach(list=>list.sort((a,b)=>lastNameKey(a).localeCompare(lastNameKey(b))));
- const chips=list=>list.length?list.map(name=>`<span class="rsvp-player-chip">${esc(name)}</span>`).join(""):'<span class="rsvp-player-empty">No players yet</span>';
- summary.innerHTML=`<div class="rsvp-stat"><strong>${counts.playing}</strong><span>PLAYING</span></div><div class="rsvp-stat"><strong>${counts.maybe}</strong><span>MAYBE</span></div><div class="rsvp-stat"><strong>${counts.out}</strong><span>OUT</span></div>`+
- `<div class="rsvp-player-groups"><div class="rsvp-player-group playing"><div class="rsvp-player-group-head"><span>✅ Playing</span><span>${counts.playing}</span></div><div class="rsvp-player-list">${chips(groups.playing)}</div></div>`+
- `<div class="rsvp-player-group maybe"><div class="rsvp-player-group-head"><span>🤔 Maybe</span><span>${counts.maybe}</span></div><div class="rsvp-player-list">${chips(groups.maybe)}</div></div>`+
- `<div class="rsvp-player-group out"><div class="rsvp-player-group-head"><span>❌ Out</span><span>${counts.out}</span></div><div class="rsvp-player-list">${chips(groups.out)}</div></div></div>`;
+ const counts={playing:0,maybe:0,out:0};rsvps.forEach(r=>{if(counts[r.status]!==undefined)counts[r.status]++});
+ summary.innerHTML=`<div class="rsvp-stat"><strong>${counts.playing}</strong><span>PLAYING</span></div><div class="rsvp-stat"><strong>${counts.maybe}</strong><span>MAYBE</span></div><div class="rsvp-stat"><strong>${counts.out}</strong><span>OUT</span></div>`;
 }
 function formatTeeTime(v){if(!v)return "—";const [h,m]=String(v).split(":").map(Number),d=new Date();d.setHours(h,m||0,0,0);return d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}
 function renderGroupAssignments(){
@@ -3473,37 +2921,21 @@ function publicPlayerAvatar(g,cls="player-photo-thumb"){
  const fallback=esc(playerInitials(name));
  return `<div class="${cls}">${photo?`<img src="${esc(photo)}" alt="${esc(name)}" onerror="this.style.display='none';this.parentElement.textContent='${fallback}'">`:fallback}</div>`;
 }
-function playerLastNameSortKey(name){
- const parts=String(name||"").trim().split(/\s+/).filter(Boolean);
- if(!parts.length)return "";
- const last=parts[parts.length-1];
- const first=parts.slice(0,-1).join(" ");
- return `${last} ${first}`.toLowerCase();
-}
-function sortPlayersByLastName(a,b){
- return playerLastNameSortKey(a?.name).localeCompare(playerLastNameSortKey(b?.name))||String(a?.name||"").localeCompare(String(b?.name||""));
-}
-function updatePlayerSortButtons(){
- const mode=$("playerDirectoryMode")?.value||"band";
- document.querySelectorAll("[data-player-sort]").forEach(b=>b.classList.toggle("active",b.dataset.playerSort===mode));
-}
 function renderPlayersDirectory(){
  const root=$("playerDirectory"); if(!root||!draftState)return;
- updatePlayerSortButtons();
  const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>({...(g||{}),index:i,name:(g?.name||"").trim()})).filter(g=>g.name);
- const mode=$("playerDirectoryMode")?.value||"band";
+ const mode=$("playerDirectoryMode")?.value||"team";
  const q=($("playerDirectorySearch")?.value||"").trim().toLowerCase();
  const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Available / Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`),band:playerBandLabel(g),hcpLabel:playerHandicapLabel(g)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q)||g.band.toLowerCase().includes(q)||g.hcpLabel.toLowerCase().includes(q));
  const rowHtml=g=>`<div class="player-row-public" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}</div><div class="player-hcp-public"><span class="status">HCP</span><br><strong>${esc(g.hcpLabel)}</strong></div><div class="player-band-public"><span class="player-band-chip">${esc(g.band)}</span></div><div class="player-team-public">${esc(g.teamName)}</div></div>`;
  if(!rows.length){root.innerHTML='<div class="note">No matching players found.</div>';return}
- if(mode==="all"){root.innerHTML=`<div class="player-team-card"><div class="player-team-head"><h3>All Players</h3><div class="status">${rows.length} golfer${rows.length===1?"":"s"}</div></div>${rows.sort(sortPlayersByLastName).map(rowHtml).join("")}</div>`;return}
+ if(mode==="all"){root.innerHTML=`<div class="player-team-card"><div class="player-team-head"><h3>All Players</h3><div class="status">${rows.length} golfer${rows.length===1?"":"s"}</div></div>${rows.sort((a,b)=>a.name.localeCompare(b.name)).map(rowHtml).join("")}</div>`;return}
  if(mode==="band"){
    const order=["A","B","C","D","—"];
-   const ranges={A:"0–9 HCP",B:"10–17 HCP",C:"18–25 HCP",D:"26+ HCP","—":"Handicap letter not set"};
-   root.innerHTML=order.map(b=>{const list=rows.filter(g=>g.band===b).sort(sortPlayersByLastName);if(!list.length)return "";return `<div class="player-team-card"><div class="player-team-head"><div><h3>${b==="—"?"Band Not Set":`${b} Players`}</h3><div class="player-band-range">${ranges[b]}</div></div><div class="status">${list.length} golfer${list.length===1?"":"s"}</div></div>${list.map(rowHtml).join("")}</div>`}).join("");return
+   root.innerHTML=order.map(b=>{const list=rows.filter(g=>g.band===b).sort((a,c)=>{const ah=Number(a.hcp),ch=Number(c.hcp);if(Number.isFinite(ah)&&Number.isFinite(ch)&&ah!==ch)return ah-ch;return a.name.localeCompare(c.name)});if(!list.length)return "";return `<div class="player-team-card"><div class="player-team-head"><h3>${b==="—"?"Band Not Set":`Band ${b}`}</h3><div class="status">${list.length} golfer${list.length===1?"":"s"}</div></div>${list.map(rowHtml).join("")}</div>`}).join("");return
  }
- const teamGroups=Array.from({length:activeTeamCount()},(_,i)=>({name:draftState?.teams?.[i]?.name||`Team ${i+1}`,captain:draftState?.teams?.[i]?.captain||"",rows:rows.filter(g=>g.teamIndex===i).sort(sortPlayersByLastName)}));
- const unassigned=rows.filter(g=>g.teamIndex==null).sort(sortPlayersByLastName);
+ const teamGroups=Array.from({length:activeTeamCount()},(_,i)=>({name:draftState?.teams?.[i]?.name||`Team ${i+1}`,captain:draftState?.teams?.[i]?.captain||"",rows:rows.filter(g=>g.teamIndex===i).sort((a,b)=>a.name.localeCompare(b.name))}));
+ const unassigned=rows.filter(g=>g.teamIndex==null).sort((a,b)=>a.name.localeCompare(b.name));
  root.innerHTML=teamGroups.map((grp,i)=>`<div class="player-team-card"><div class="player-team-head"><div><h3>${esc(grp.name)}</h3><div class="status">${grp.captain?`Captain: ${esc(grp.captain)}`:"Captain not assigned"}</div></div><div class="status">${grp.rows.length} player${grp.rows.length===1?"":"s"}</div></div>${grp.rows.length?grp.rows.map(rowHtml).join(""):'<div class="note" style="padding:12px 14px">No golfers assigned.</div>'}</div>`).join("")+(unassigned.length?`<div class="player-team-card"><div class="player-team-head"><h3>Available / Unassigned</h3><div class="status">${unassigned.length} player${unassigned.length===1?"":"s"}</div></div>${unassigned.map(rowHtml).join("")}</div>`:"");
 }
 
@@ -4167,7 +3599,7 @@ async function resetGolferPin(i){
  if(!isCommissioner){$("adminTab").classList.add("hidden");return;}
  $("adminTab").classList.remove("hidden"); ensureDraftShape();
  if($("courseSelect"))$("courseSelect").value=""; if($("courseRouteSelect")){const c=activeCourse();$("courseRouteSelect").innerHTML=Object.entries(c.routes).map(([id,r])=>`<option value="${id}">${r.label}</option>`).join("");$("courseRouteSelect").value=activeCourseRouteId();}
- $("statusSelect").value=tournament.status; if($("playFormatSelect"))$("playFormatSelect").value=""; if($("draftRulesSelect"))$("draftRulesSelect").value=""; if($("teamSizeSelect"))$("teamSizeSelect").value=""; if($("golferCountSelect"))$("golferCountSelect").value=""; if($("teamCountSelect"))$("teamCountSelect").value="";
+ $("statusSelect").value=tournament.status; if($("playFormatSelect"))$("playFormatSelect").value=""; if($("teamSizeSelect"))$("teamSizeSelect").value=""; if($("golferCountSelect"))$("golferCountSelect").value=""; if($("teamCountSelect"))$("teamCountSelect").value="";
  const gh=Number(tournament.gator_hole)||0; if($("gatorSide"))$("gatorSide").value="";
  renderHoleParEditor(); populateGatorHoles();
  $("gatorReveal").value=String(!!tournament.gator_revealed);
@@ -4690,7 +4122,6 @@ document.body.classList.remove("login-mode");setGlobalMenuVisible(false);setMobi
     $("app").classList.remove("hidden");$("app").style.display="";
     setMobileNavVisible(true);
     renderAll();
-    showView("home");
     subscribeLive();
     setSyncStatus("saved","Synced");
     if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;
@@ -4736,7 +4167,7 @@ function openHubView(view){
  }
  closeAppHub();
  if(view==="clubhouse"){showView("clubhouse");return}
- if(view==="scoring"){showView("home");return}
+ if(view==="scoring"){showView("leaderboard");return}
 }
 function showView(name){
  if(!user){enterViewer();return}
@@ -4775,7 +4206,7 @@ $("changeAccountPasswordBtn").addEventListener("click",async()=>{
  try{
    const {error}=await db.auth.updateUser({password:p1});if(error)throw error;
    const {data,error:profileError}=await db.functions.invoke("player-profile",{body:{action:"password_changed",draft_id:DRAFT_ID}});if(profileError)throw profileError;if(data?.error)throw new Error(data.error);
-   mustChangePassword=false;$("newAccountPassword").value="";$("confirmAccountPassword").value="";$("passwordChangeCard").classList.add("hidden");$("app").classList.remove("hidden");setMobileNavVisible(true);renderAll();showView("home");subscribeLive();if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;if($("appHub"))$("appHub").classList.remove("hidden");
+   mustChangePassword=false;$("newAccountPassword").value="";$("confirmAccountPassword").value="";$("passwordChangeCard").classList.add("hidden");$("app").classList.remove("hidden");setMobileNavVisible(true);renderAll();subscribeLive();if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;if($("appHub"))$("appHub").classList.remove("hidden");
  }catch(e){msg.textContent=e?.message||"Unable to change password."}
  finally{btn.disabled=false}
 });
@@ -4812,9 +4243,6 @@ if($("closePlayerProfile"))$("closePlayerProfile").addEventListener("click",()=>
  selectedPlayerProfileIndex=null;renderPlayerProfileCards();
 });
 if($("playerDirectoryMode"))$("playerDirectoryMode").addEventListener("change",renderPlayersDirectory);
-document.querySelectorAll("[data-player-sort]").forEach(b=>b.addEventListener("click",()=>{
- const sel=$("playerDirectoryMode");if(!sel)return;sel.value=b.dataset.playerSort;renderPlayersDirectory();
-}));
 if($("playerDirectorySearch"))$("playerDirectorySearch").addEventListener("input",renderPlayersDirectory);
 if($("courseBrowseSelect"))$("courseBrowseSelect").addEventListener("change",()=>{
  const c=COURSE_LIBRARY[$("courseBrowseSelect").value];
@@ -4894,8 +4322,7 @@ function previewTeamBuild(){
    if(isNaN(tc)||tc<2||tc>9){$("teamBuildSummary").innerHTML=`Choose between 2 and 9 teams.`;return}
    if(gc<tc){$("teamBuildSummary").innerHTML=`<strong>${gc} golfers across ${tc} teams.</strong> Some teams would have no golfer assigned.`;return}
    const dist=extra===0?`${tc} teams of ${base}`:`${extra} team${extra===1?"":"s"} of ${base+1} and ${tc-extra} team${tc-extra===1?"":"s"} of ${base}`;
-   const dr=$("draftRulesSelect")?.value||String(draftState?.draftRules||"banded");
-   $("teamBuildSummary").innerHTML=`<strong>${gc} golfers • ${tc} teams • ${size}-man format.</strong> Even distribution: ${dist}. Draft eligibility: <strong>${dr==="open"?"Open Draft — unrestricted picks":"Banded Draft — A/B/C/D balancing"}</strong>.`;
+   $("teamBuildSummary").innerHTML=`<strong>${gc} golfers • ${tc} teams • ${size}-man format.</strong> Even distribution: ${dist}. You can still assign golfers manually in the draft.`;
  }
 }
 
@@ -4911,7 +4338,6 @@ $("teamSizeSelect").addEventListener("change",previewTeamBuild);
 $("teamCountSelect").addEventListener("change",previewTeamBuild);
 $("golferCountSelect").addEventListener("change",previewTeamBuild);
 $("playFormatSelect").addEventListener("change",previewTeamBuild);
-$("draftRulesSelect")?.addEventListener("change",previewTeamBuild);
 
 $("saveAdmin").addEventListener("click",async()=>{
  if(!isCommissioner)return;
@@ -4926,14 +4352,10 @@ $("saveAdmin").addEventListener("click",async()=>{
   const selectedTeamSize=Number($("teamSizeSelect")?.value||draftTeamSize());
   const playFormatSelection=$("playFormatSelect")?.value||"";
   const selectedPlayFormat=playFormatSelection||playFormat();
-  const draftRulesSelection=$("draftRulesSelect")?.value||"";
-  const selectedDraftRules=draftRulesSelection||String(draftState?.draftRules||"banded");
   const teamCountSelection=$("teamCountSelect")?.value||"";
   const newCount=teamCountSelection===""?activeTeamCount():Math.max(2,Math.min(9,Number(teamCountSelection)));
   if(teamCountSelection!=="")draftState.teamCountConfirmed=true;
   if(playFormatSelection!=="")draftState.playFormatConfirmed=true;
-  if(draftRulesSelection!=="")draftState.draftRules=selectedDraftRules;
-  else if(!draftState.draftRules)draftState.draftRules="banded";
   if(selectedPlayFormat==="split_pair"&&(selectedTeamSize!==4||desiredGolfers!==newCount*4)){$("adminMsg").textContent="Split-Pair Scramble requires 4-man teams with exactly 4 golfers on every team. Set golfers to 4 × the number of teams.";return}
   const namedGolfers=(draftState.golfers||[]).filter(g=>(g?.name||"").trim()).length;
   if(desiredGolfers<namedGolfers){$("adminMsg").textContent=`You already have ${namedGolfers} named golfers. Remove golfers first before lowering the setup to ${desiredGolfers}.`;return}
@@ -4973,7 +4395,7 @@ $("saveAdmin").addEventListener("click",async()=>{
   const {error:dateError}=await db.from("elleng_drafts").update({tournament_date:tournamentDate}).eq("id",DRAFT_ID);
   if(dateError)throw dateError;
   await loadBase(); await loadScores(); renderAll();
-  $("adminMsg").textContent=`Tournament controls saved. ${tournamentDate?"Tournament date: "+formatTournamentDate(tournamentDate)+". ":""}${isSplitPair()?"Split-Pair Scramble":draftTeamSize()+"-man Standard EllenG"} format, ${teams.length} teams, ${draftGolferCount()} golfers, and ${(draftState?.draftRules||"banded")==="open"?"Open Draft":"Banded Draft"} eligibility.`;
+  $("adminMsg").textContent=`Tournament controls saved. ${tournamentDate?"Tournament date: "+formatTournamentDate(tournamentDate)+". ":""}${isSplitPair()?"Split-Pair Scramble":draftTeamSize()+"-man Standard EllenG"} format, ${teams.length} teams and ${draftGolferCount()} golfers active.`;
  }catch(e){$("adminMsg").textContent=e?.message||"Unable to save tournament controls."}
 });
 $("reloadAdmin").addEventListener("click",async()=>{if(!isCommissioner)return;$("adminMsg").textContent="Reloading…";try{await loadBase();await loadScores();renderAll();$("adminMsg").textContent="Current data reloaded."}catch(e){$("adminMsg").textContent=e.message}});
