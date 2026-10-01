@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.26">
+<meta name="elleng-app-version" content="2.7.27">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1472,7 +1472,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </style>
 
 <style id="home-cleanup-v2724">
-/* v2.7.26 — CSS-only Home cleanup. No tournament logic changed. */
+/* v2.7.27 — CSS-only Home cleanup. No tournament logic changed. */
 
 #app > .card.row.between,
 #app > .top-tabs-card{
@@ -1599,7 +1599,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 <style id="home-final-override-v2725">
 /*
-  v2.7.26 — FINAL HOME OVERRIDE
+  v2.7.27 — FINAL HOME OVERRIDE
   Intentionally high-specificity selectors so older global !important card rules
   cannot override the Home-page cleanup. CSS only.
 */
@@ -1787,7 +1787,7 @@ body #app #homeView > .card.leader-spotlight-card{
 
 
 <style id="home-contrast-v2726">
-/* v2.7.26 — Home contrast fix only. Layout and app logic unchanged. */
+/* v2.7.27 — Home contrast fix only. Layout and app logic unchanged. */
 
 /* RSVP section typography on the dark page background. */
 body #app #homeView > .card.rsvp-home-card > .premium-label,
@@ -1840,6 +1840,23 @@ body #app #homeView .rsvp-home-card .badge,
 body #app #homeView .rsvp-home-card .pill,
 body #app #homeView .player-essentials-card .badge,
 body #app #homeView .player-essentials-card .pill{
+  color:#d5a72c!important;
+}
+</style>
+
+
+<style id="next-event-contrast-v2727">
+/* v2.7.27 — Fix remaining Next EllenG Cup contrast only. No layout or logic changes. */
+
+body #app #homeView > .card.next-event-card #nextEventName{
+  color:#ffffff!important;
+}
+
+body #app #homeView > .card.next-event-card #nextEventCourse{
+  color:rgba(255,255,255,.74)!important;
+}
+
+body #app #homeView > .card.next-event-card .premium-label{
   color:#d5a72c!important;
 }
 </style>
@@ -1904,7 +1921,7 @@ body #app #homeView .player-essentials-card .pill{
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.26</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.27</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2365,7 +2382,7 @@ body #app #homeView .player-essentials-card .pill{
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.26 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.27 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
