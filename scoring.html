@@ -1750,6 +1750,13 @@ body.login-mode #mobileBottomNav{display:none!important}
   <div class="row between"><div><div class="premium-label">AVAILABILITY</div><h2 style="margin:3px 0 0">Tournament RSVP</h2><div class="status">Players can mark Playing, Maybe or Out.</div></div><span class="badge">PLAYER STATUS</span></div>
   <div id="myRsvpControls" class="rsvp-controls"></div>
   <div id="rsvpSummary" class="rsvp-summary"></div>
+  <div id="commissionerRsvpReset" class="hidden" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(213,167,44,.34)">
+    <div class="row between">
+      <div><strong>Commissioner RSVP Control</strong><div class="status">Clear every RSVP so players can respond again for this tournament.</div></div>
+      <button id="resetAllRsvps" class="danger" type="button">Reset All RSVPs</button>
+    </div>
+    <div id="rsvpAdminMsg" class="status" style="margin-top:8px"></div>
+  </div>
 </div>
 </div>
 
@@ -2032,7 +2039,7 @@ body.login-mode #mobileBottomNav{display:none!important}
   </div>
   <div class="row commissioner-actions" style="margin-top:12px">
     <button id="archiveStartNew" class="danger save-wide" type="button">Archive Current & Start New Tournament</button>
-    <button id="resetCurrentLeader" class="secondary" type="button">Reset Current Leader</button><button id="resetScoringOnly" class="secondary" type="button">Clear Scores Only</button><button id="resetAllRsvps" class="secondary" type="button">Reset All RSVPs</button>
+    <button id="resetCurrentLeader" class="secondary" type="button">Reset Current Leader</button><button id="resetScoringOnly" class="secondary" type="button">Clear Scores Only</button>
   </div>
   <div id="newTournamentMsg" class="status" style="margin-top:9px"></div>
 </div>
@@ -2747,6 +2754,7 @@ async function setMyRsvp(status){
 }
 function renderRsvp(){
  const controls=$("myRsvpControls"),summary=$("rsvpSummary");if(!controls||!summary)return;
+ const adminReset=$("commissionerRsvpReset");if(adminReset)adminReset.classList.toggle("hidden",!isCommissioner);
  const mine=user?rsvps.find(r=>r.user_id===user.id):null;
  controls.innerHTML=user&&Number.isInteger(currentGolferIndex)?["playing","maybe","out","clear"].map(s=>`<button class="rsvp-btn ${mine?.status===s?"active":""}" type="button" data-rsvp="${s}">${s==="playing"?"✅ Playing":s==="maybe"?"🤔 Maybe":s==="out"?"❌ Out":"↺ Clear RSVP"}</button>`).join(""):'<div class="note">Sign in with a linked player account to RSVP.</div>';
  controls.querySelectorAll("[data-rsvp]").forEach(b=>b.addEventListener("click",()=>setMyRsvp(b.dataset.rsvp)));
@@ -3596,7 +3604,7 @@ async function clearScoresOnly(){
 async function resetAllRsvps(){
  if(!isCommissioner)return;
  if(!confirm("Reset every player's RSVP for the current EllenG Cup? This will clear Playing, Maybe and Out responses."))return;
- const msg=$("newTournamentMsg");if(msg)msg.textContent="Resetting RSVPs…";
+ const msg=$("rsvpAdminMsg")||$("newTournamentMsg");if(msg)msg.textContent="Resetting RSVPs…";
  try{
    const {error}=await db.from("elleng_rsvps").delete().eq("draft_id",DRAFT_ID);
    if(error)throw error;
