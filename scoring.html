@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.6">
+<meta name="elleng-app-version" content="2.7.8">
+<meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -1484,7 +1485,7 @@ body.login-mode #mobileBottomNav{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.6</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.8</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -1922,7 +1923,7 @@ body.login-mode #mobileBottomNav{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.8 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -2091,10 +2092,36 @@ if(versionChip)versionChip.textContent=`EllenG Live v${APP_VERSION}`;
 const updateBanner=document.getElementById("updateBanner");
 const updateText=document.getElementById("updateText");
 const refreshAppBtn=document.getElementById("refreshAppBtn");
-if(refreshAppBtn)refreshAppBtn.onclick=()=>{
+let pendingAppUpdate="",autoUpdateStarted=false,autoUpdateRetry=null;
+function reloadWithLatestVersion(){
   try{localStorage.setItem("elleng_last_refresh",Date.now().toString())}catch(_){}
   const u=new URL(window.location.href);u.searchParams.set("v",Date.now().toString());window.location.replace(u.toString());
-};
+}
+function appUserIsEditing(){
+  const a=document.activeElement;
+  if(!a)return false;
+  if(a.matches?.('textarea,[contenteditable="true"]'))return true;
+  if(a.matches?.('input:not([type="button"]):not([type="submit"]):not([type="reset"]),select'))return true;
+  return false;
+}
+function installAppUpdateWhenSafe(latest){
+  if(!latest||autoUpdateStarted)return;
+  pendingAppUpdate=latest;
+  updateBanner?.classList.remove("hidden");
+  if(refreshAppBtn)refreshAppBtn.style.display="none";
+  const attempt=()=>{
+    if(autoUpdateStarted||!pendingAppUpdate)return;
+    if(!navigator.onLine||appUserIsEditing()){
+      if(updateText)updateText.textContent=`Version ${pendingAppUpdate} is ready and will install automatically when you finish editing.`;
+      clearTimeout(autoUpdateRetry);autoUpdateRetry=setTimeout(attempt,2000);return;
+    }
+    autoUpdateStarted=true;
+    if(updateText)updateText.textContent=`Updating automatically to version ${pendingAppUpdate}…`;
+    setTimeout(reloadWithLatestVersion,1500);
+  };
+  attempt();
+}
+if(refreshAppBtn)refreshAppBtn.onclick=reloadWithLatestVersion;
 async function checkForAppUpdate(){
   try{
     const u=new URL(window.location.href);u.searchParams.set("versioncheck",Date.now().toString());
@@ -2103,10 +2130,7 @@ async function checkForAppUpdate(){
     const t=await r.text();
     const m=t.match(/<meta\s+name=["']elleng-app-version["']\s+content=["']([^"']+)["']/i)||t.match(/<meta\s+content=["']([^"']+)["']\s+name=["']elleng-app-version["']/i);
     const latest=m?.[1];
-    if(latest&&latest!==APP_VERSION){
-      if(updateText)updateText.textContent=`Version ${latest} is available. Refresh to stay in sync with everyone else.`;
-      updateBanner?.classList.remove("hidden");
-    }
+    if(latest&&latest!==APP_VERSION)installAppUpdateWhenSafe(latest);
   }catch(_){/* stay quiet if offline */}
 }
 setTimeout(checkForAppUpdate,2500);
