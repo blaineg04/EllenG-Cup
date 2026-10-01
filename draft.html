@@ -667,6 +667,74 @@ input,select,textarea{
   .teamhead{padding:12px 13px!important}
   .slot,.roster-slot,.player{padding:11px 12px!important}
 }
+
+/* v2.7.6 team card cleanup */
+.team{
+  background:linear-gradient(180deg,#fbf8f1,#f4efe5)!important;
+  color:#102a3b!important;
+  border:1px solid rgba(213,167,44,.50)!important;
+  border-radius:18px!important;
+  overflow:hidden!important;
+  box-shadow:0 8px 20px rgba(0,0,0,.11)!important;
+}
+.teamhead{
+  background:linear-gradient(180deg,#fbf8f1,#f4efe5)!important;
+  color:#102a3b!important;
+  border-bottom:1px solid rgba(213,167,44,.42)!important;
+  padding:14px 16px!important;
+}
+.teamhead strong{
+  color:#102a3b!important;
+  font-size:20px!important;
+}
+.teamhead .muted{
+  color:#6f7d86!important;
+}
+.teamhead > div:last-child{
+  color:#6f7d86!important;
+}
+.roster{
+  background:#fffdfa!important;
+}
+.slot,.roster-slot{
+  position:relative!important;
+  background:#fffdfa!important;
+  color:#102a3b!important;
+  border:0!important;
+  border-bottom:1px solid rgba(213,167,44,.24)!important;
+  padding:13px 15px!important;
+  min-height:48px!important;
+}
+.slot:last-child,.roster-slot:last-child{
+  border-bottom:0!important;
+}
+.slot strong,.roster-slot strong{
+  color:#102a3b!important;
+}
+.slot.muted,.roster-slot.muted{
+  color:#8a959b!important;
+  font-style:normal!important;
+}
+.slot .muted,.roster-slot .muted{
+  color:#75838b!important;
+}
+.team .badge{
+  background:#0b2b42!important;
+  color:#f0c75d!important;
+  border:1px solid rgba(213,167,44,.42)!important;
+}
+
+/* Reserved for future team color accents without recoloring the card */
+.team[data-team-color]{
+  border-left-width:5px!important;
+}
+
+@media(max-width:640px){
+  .team{border-radius:16px!important}
+  .teamhead{padding:12px 13px!important}
+  .teamhead strong{font-size:19px!important}
+  .slot,.roster-slot{padding:11px 13px!important;min-height:46px!important}
+}
 </style></head><body><header class="top"><div class="brand">
 <img src="gator.png" alt="EllenG Cup gator logo">
 <div><h1>EllenG Cup</h1><p>LIVE DRAFT • OFFICIAL DRAFT BOARD</p></div>
