@@ -1674,7 +1674,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 
 <style>
-/* v2.7.19 — hard mobile screen isolation + compact in-app chrome */
+/* v2.7.20 — hard mobile screen isolation + compact in-app chrome */
 @media (max-width:650px){
   /* The marketing masthead is useful on sign-in, but wastes most of the screen once inside the app. */
   body:not(.login-mode) > header.top{display:none!important}
@@ -1697,7 +1697,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </style>
 
 <style>
-/* v2.7.19 — player profile screen fix */
+/* v2.7.20 — player profile screen fix */
 @media (max-width:650px){
   body.player-simple-home #playersView{position:relative!important;}
 
@@ -1759,12 +1759,49 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 
 <style>
-/* v2.7.19 — player profile visibility safety */
+/* v2.7.20 — player profile visibility safety */
 @media (max-width:650px){
   body.player-simple-home #playersView #playerProfileCardsSection.hidden{display:none!important;}
 }
 </style>
 
+
+<style>
+/* v2.7.20 — restore EllenG banner on every in-app page without reintroducing page scroll */
+@media (max-width:650px){
+  body:not(.login-mode) > header.top{
+    display:block!important;
+    flex:0 0 auto!important;
+    padding:calc(5px + env(safe-area-inset-top)) 10px 6px!important;
+    border-bottom:3px solid var(--eg-gold)!important;
+  }
+  body:not(.login-mode) > header.top .brand{
+    min-height:54px!important;
+    height:54px!important;
+    gap:8px!important;
+  }
+  body:not(.login-mode) > header.top .brand img{
+    width:72px!important;
+    height:50px!important;
+  }
+  body:not(.login-mode) > header.top .brand h1{
+    font-size:25px!important;
+    line-height:.95!important;
+  }
+  body:not(.login-mode) > header.top .brand p{
+    margin-top:4px!important;
+    font-size:9px!important;
+    line-height:1.05!important;
+    letter-spacing:.06em!important;
+    white-space:nowrap!important;
+  }
+  body:not(.login-mode) .wrap{
+    height:calc(100dvh - 63px - env(safe-area-inset-top))!important;
+    max-height:calc(100dvh - 63px - env(safe-area-inset-top))!important;
+    padding:6px 8px calc(72px + env(safe-area-inset-bottom))!important;
+  }
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -1825,7 +1862,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.19</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.20</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2252,7 +2289,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.19 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.20 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -4861,7 +4898,7 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
 </html>
 
 <style>
-/* v2.7.19 — compact no-scroll Players board */
+/* v2.7.20 — compact no-scroll Players board */
 @media (max-width:650px){
   body.player-simple-home #playersView #playerDirectory{
     overflow:hidden!important;
