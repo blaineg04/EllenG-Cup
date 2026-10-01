@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.3">
+<meta name="elleng-app-version" content="2.7.4">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -1199,6 +1199,10 @@ button.danger,.danger{
   width:0!important;
   height:0!important;
 }
+
+/* v2.7.4 auth-aware mobile navigation */
+#mobileBottomNav.hidden{display:none!important}
+.clubhouse-weather-card .weather-panel{margin-top:14px}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -1578,11 +1582,6 @@ button.danger,.danger{
     <div class="row between"><div><div class="premium-label">HOLE CARD</div><h2 style="margin:3px 0 0">Know the Hole</h2></div><label><small>Hole</small><select id="courseHoleCardSelect"></select></label></div>
     <div id="courseHoleCard" class="hole-card-feature"></div>
   </div>
-  <div class="card">
-    <div class="row between"><div><div class="premium-label">COURSE CONDITIONS</div><h2 style="margin:3px 0 0">Weather & Wind</h2><div class="status">Uses the golfer's current location when requested.</div></div><span class="badge">LIVE</span></div>
-    <div id="weatherPanel" class="weather-panel"><div class="note">Tap below to load live conditions.</div></div>
-    <button id="loadWeatherBtn" class="secondary" type="button" style="margin-top:10px">🌤️ Load Weather</button>
-  </div>
 </div>
 <div class="card">
   <div class="row between"><div><h2 style="margin:0">Course Scorecard</h2><div class="status">Tee yardages, par and handicap information for the selected course.</div></div><span class="badge">COURSE LIBRARY</span></div>
@@ -1596,6 +1595,19 @@ button.danger,.danger{
   <div class="home-kicker">ELLENG CUP • CLUBHOUSE</div>
   <h2 style="margin:5px 0">Tournament Legacy & Extras</h2>
   <div class="status" style="color:rgba(255,255,255,.88)">History, season standings, rivalries, check-in and bragging rights.</div>
+</div>
+
+<div class="card clubhouse-weather-card">
+  <div class="row between">
+    <div>
+      <div class="premium-label">TOURNAMENT CONDITIONS</div>
+      <h2 style="margin:3px 0 0">Weather & Wind</h2>
+      <div class="status">Check current temperature, wind and gusts when you’re ready. Location is only requested when you tap the button.</div>
+    </div>
+    <span class="badge">LIVE</span>
+  </div>
+  <div id="weatherPanel" class="weather-panel"><div class="note">Tap below to load current tournament-day conditions.</div></div>
+  <button id="loadWeatherBtn" class="secondary" type="button" style="margin-top:10px">🌤️ Check Weather & Wind</button>
 </div>
 
 <div class="experience-grid">
@@ -1817,7 +1829,7 @@ button.danger,.danger{
 </section>
 </section>
 
-<nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+<nav id="mobileBottomNav" class="mobile-bottom-nav hidden" aria-label="Mobile navigation">
   <button class="mobile-nav-btn active" type="button" data-mobile-view="home"><span class="nav-icon">⌂</span>Home</button>
   <button class="mobile-nav-btn" type="button" data-mobile-view="leaderboard"><span class="nav-icon">🏆</span>Scores</button>
   <button class="mobile-nav-btn" type="button" data-mobile-view="teams"><span class="nav-icon">👥</span>Teams</button>
@@ -2249,7 +2261,7 @@ async function loadWeather(){
     panel.innerHTML=`<div class="weather-main">${Math.round(c.temperature_2m)}°F</div><div class="status">Feels like ${Math.round(c.apparent_temperature)}°F</div><div class="weather-grid"><div class="weather-stat"><strong>${Math.round(c.wind_speed_10m||0)} mph</strong><div class="status">Wind</div></div><div class="weather-stat"><strong>${Math.round(c.wind_gusts_10m||0)} mph</strong><div class="status">Gusts</div></div><div class="weather-stat"><strong>${Math.round(c.wind_direction_10m||0)}°</strong><div class="status">Direction</div></div></div>`;
    }catch(e){panel.innerHTML=`<div class="note">${esc(e?.message||"Unable to load weather.")}</div>`}
    finally{btn.disabled=false;btn.textContent="🌤️ Refresh Weather"}
- },err=>{panel.innerHTML='<div class="note">Location permission is required to load local weather.</div>';btn.disabled=false;btn.textContent="🌤️ Load Weather"});
+ },err=>{panel.innerHTML='<div class="note">Location permission is required to load local weather.</div>';btn.disabled=false;btn.textContent="🌤️ Check Weather & Wind"});
 }
 function completedArchiveRows(){
  return (tournamentArchives||[]).filter(a=>["complete","archived"].includes(String(a?.tournament?.status||"").toLowerCase()));
@@ -3728,6 +3740,12 @@ function subscribeLive(){
  liveChannel.subscribe();
 }
 
+
+function setMobileNavVisible(show){
+ const nav=$("mobileBottomNav");
+ if(nav)nav.classList.toggle("hidden",!show);
+ if(!show)closeMoreMenu?.();
+}
 function setGlobalMenuVisible(show){
  const bar=$("globalMainMenuBar");if(bar)bar.classList.toggle("hidden",!show);
 }
@@ -3739,16 +3757,16 @@ function clearInternalMenuFlag(){
   sessionStorage.removeItem("elleng_internal_menu");
 }
 async function enterViewer(){
-setGlobalMenuVisible(false);
+setGlobalMenuVisible(false);setMobileNavVisible(false);
  const hub=$("appHub");if(hub)hub.classList.add("hidden");
  $("app").classList.add("hidden");$("app").style.display="none";
  $("passwordChangeCard").classList.add("hidden");
  $("loginCard").classList.remove("hidden");$("loginCard").style.display="block";
- $("loginMsg").innerHTML=`<span class="ok">✓ App connected — live scoring ready.</span>`;
+ $("loginMsg").textContent="Sign in once to continue.";
  setSyncStatus("saved","Connected");
 }
 async function enterApp(){
-setGlobalMenuVisible(false);
+setGlobalMenuVisible(false);setMobileNavVisible(false);
  
  $("loginMsg").textContent="Signed in — loading tournament…";
  try{
@@ -3766,6 +3784,7 @@ setGlobalMenuVisible(false);
   }else{
     $("passwordChangeCard").classList.add("hidden");
     $("app").classList.remove("hidden");$("app").style.display="";
+    setMobileNavVisible(true);
     renderAll();
     subscribeLive();
     setSyncStatus("saved","Synced");
@@ -3794,7 +3813,7 @@ async function signOutFromHub(){
  }catch(e){
    console.warn("Sign out issue",e);
  }
- user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;
+ user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;setMobileNavVisible(false);
  if($("appHub"))$("appHub").classList.add("hidden");
  if($("app"))$("app").classList.add("hidden");
  if($("hubSignOutBtn")){ $("hubSignOutBtn").disabled=false;$("hubSignOutBtn").textContent="Sign Out" }
@@ -3850,14 +3869,14 @@ $("changeAccountPasswordBtn").addEventListener("click",async()=>{
  try{
    const {error}=await db.auth.updateUser({password:p1});if(error)throw error;
    const {data,error:profileError}=await db.functions.invoke("player-profile",{body:{action:"password_changed",draft_id:DRAFT_ID}});if(profileError)throw profileError;if(data?.error)throw new Error(data.error);
-   mustChangePassword=false;$("newAccountPassword").value="";$("confirmAccountPassword").value="";$("passwordChangeCard").classList.add("hidden");$("app").classList.remove("hidden");renderAll();subscribeLive();if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;if($("appHub"))$("appHub").classList.remove("hidden");
+   mustChangePassword=false;$("newAccountPassword").value="";$("confirmAccountPassword").value="";$("passwordChangeCard").classList.add("hidden");$("app").classList.remove("hidden");setMobileNavVisible(true);renderAll();subscribeLive();if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;if($("appHub"))$("appHub").classList.remove("hidden");
  }catch(e){msg.textContent=e?.message||"Unable to change password."}
  finally{btn.disabled=false}
 });
 $("authBtn").addEventListener("click",()=>{$("loginCard").classList.remove("hidden");$("loginMsg").textContent="";$("loginCard").scrollIntoView({behavior:"smooth",block:"start"})});
 
 if($("digitalScorecardTeam"))$("digitalScorecardTeam").addEventListener("change",renderDigitalScorecard);
-$("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;$("passwordChangeCard").classList.add("hidden");showView("home");await enterViewer()});
+$("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;setMobileNavVisible(false);$("passwordChangeCard").classList.add("hidden");showView("home");await enterViewer()});
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
 document.querySelectorAll("[data-home-go]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.homeGo)));
 document.querySelectorAll("[data-mobile-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.mobileView)));
