@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.9">
+<meta name="elleng-app-version" content="2.7.10">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1484,7 +1484,7 @@ body.login-mode #mobileBottomNav{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.9</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.10</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -1534,7 +1534,7 @@ body.login-mode #mobileBottomNav{display:none!important}
   <div class="home-kicker">ELLENG CUP • TOURNAMENT HUB</div>
   <h2 id="homeHeadline">Tournament Day</h2>
   <div id="homeSubline" class="status">Live standings, teams, players and course information in one place.</div>
-  <div class="row" style="margin-top:13px"><span id="homeStatusBadge" class="badge" style="background:#d5a72c;color:#10202c">SETUP</span><span id="homeCourseBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">Course</span></div>
+  <div class="row" style="margin-top:13px"><span id="homeStatusBadge" class="badge" style="background:#d5a72c;color:#10202c">SETUP</span><span id="homeCourseBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">Course</span><span id="homeDateBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">DATE TBD</span></div>
 
 </div>
 
@@ -1922,7 +1922,7 @@ body.login-mode #mobileBottomNav{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.9 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.10 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -1971,6 +1971,7 @@ body.login-mode #mobileBottomNav{display:none!important}
     <label><small>Golf course</small><select id="courseSelect"><option value="">— Select / keep current —</option><option value="bayou-din">Bayou Din Golf Club — Beaumont, TX</option><option value="brentwood">Brentwood Country Club — Beaumont, TX</option><option value="babe-zaharias">Babe Zaharias Golf Course — Port Arthur, TX</option></select></label>
     <label><small>Course routing</small><select id="courseRouteSelect"><option value="front-back">Front → Back</option><option value="links-front">Links → Front</option><option value="links-back">Links → Back</option></select></label>
     <label><small>Tournament status</small><select id="statusSelect"><option value="setup">Setup</option><option value="live">Live</option><option value="complete">Complete</option><option value="archived">Archived</option></select></label>
+    <label><small>Tournament date</small><input id="tournamentDateInput" type="date"></label>
     <label><small>Playing format</small><select id="playFormatSelect"><option value="">Select / keep current</option><option value="standard">Standard EllenG — Front 9 Scramble / Back 9 Shamble</option><option value="split_pair">Split-Pair Scramble — two 2-man pairs per 4-man team</option></select></label>
     <label><small>Players per team</small><select id="teamSizeSelect"><option value="">Select / keep current</option><option value="2">2-man team</option><option value="3">3-man team</option><option value="4">4-man team</option></select></label>
     <label><small>Number of teams</small><select id="teamCountSelect"><option value="">— Select number of teams —</option><option value="2">2 teams</option><option value="3">3 teams</option><option value="4">4 teams</option><option value="5">5 teams</option><option value="6">6 teams</option><option value="7">7 teams</option><option value="8">8 teams</option><option value="9">9 teams</option></select></label>
@@ -3115,9 +3116,12 @@ async function loadBase(){
  const tournamentSource="elleng_tournaments";
  const [{data:t,error:te},{data:d,error:de}]=await Promise.all([
   db.from(tournamentSource).select("*").eq("id",TOURNAMENT_ID).single(),
-  db.from("elleng_drafts").select("owner_id,state,updated_at").eq("id",DRAFT_ID).single()
+  db.from("elleng_drafts").select("owner_id,state,updated_at,tournament_name,tournament_date").eq("id",DRAFT_ID).single()
  ]);
- if(te)throw te;if(de)throw de;tournament=t; draftState=structuredClone(d.state||{});draftUpdatedAt=d.updated_at||null;setSyncStatus("saved","Synced");
+ if(te)throw te;if(de)throw de;tournament=t; draftState=structuredClone(d.state||{});
+ draftState.tournamentDate=draftState?.tournamentDate||d.tournament_date||null;
+ draftState.tournamentName=draftState?.tournamentName||d.tournament_name||tournament?.name||"EllenG Cup";
+ draftUpdatedAt=d.updated_at||null;setSyncStatus("saved","Synced");
  const count=activeTeamCount(), rawTeams=Array.isArray(d.state?.teams)?d.state.teams:[], golfers=Array.isArray(d.state?.golfers)?d.state.golfers:[];
  teams=Array.from({length:count},(_,i)=>{
   const x=rawTeams[i]||{name:`Team ${i+1}`,captain:"",roster:[]};
@@ -3564,6 +3568,7 @@ async function resetGolferPin(i){
  if($("commissionerAssignedCount"))$("commissionerAssignedCount").textContent=assignedCount;
  const gc=draftGolferCount(),tc=activeTeamCount(),size=draftTeamSize(),base=Math.floor(gc/tc),extra=gc%tc;
  if($("teamBuildSummary"))$("teamBuildSummary").innerHTML=extra===0?`<strong>${gc} golfers → ${tc} teams of ${size}.</strong>`:`<strong>${gc} golfers → ${tc} teams using a ${size}-man format.</strong> ${extra} team${extra===1?"":"s"} will have ${base+1} golfers; the other ${tc-extra} will have ${base}.`;
+ if($("tournamentDateInput"))$("tournamentDateInput").value=draftState?.tournamentDate||"";
  if($("newTournamentName")&&!$("newTournamentName").dataset.touched){$("newTournamentName").value=tournament?.name||draftState?.tournamentName||"EllenG Cup";$("newTournamentName").dataset.touched="1"}
  renderTeamEditor(); renderPlayerEditor();
 }
@@ -3781,6 +3786,8 @@ function renderHome(){
  const status=String(tournament?.status||"setup").toUpperCase();
  if($("homeStatusBadge"))$("homeStatusBadge").textContent=status;
  if($("homeCourseBadge"))$("homeCourseBadge").textContent=tournamentCourseLabel()||"—";
+ const eventDate=draftState?.tournamentDate||null;
+ if($("homeDateBadge"))$("homeDateBadge").textContent=eventDate?formatTournamentDate(eventDate):"DATE TBD";
  if($("homeHeadline"))$("homeHeadline").textContent=status==="LIVE"?"The EllenG Cup Is Live":status==="COMPLETE"?"Final Results":"EllenG Cup Tournament Hub";
  if($("homeSubline"))$("homeSubline").textContent=status==="LIVE"?"Follow the leaderboard, check teams, view players and keep up with every hole.":status==="COMPLETE"?"The tournament is complete. Review the final leaderboard and results.":"Everything players need before and during tournament day.";
  const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
@@ -3967,8 +3974,13 @@ async function syncLive(){
   const {data:t,error:te}=await db.from(tournamentSource).select("*").eq("id",TOURNAMENT_ID).single();
   if(te)throw te;
   tournament=t;
-  const {data:d}=await db.from("elleng_drafts").select("state,updated_at").eq("id",DRAFT_ID).single();
-  if(d?.state){draftState=structuredClone(d.state);draftUpdatedAt=d.updated_at||draftUpdatedAt;}
+  const {data:d}=await db.from("elleng_drafts").select("state,updated_at,tournament_name,tournament_date").eq("id",DRAFT_ID).single();
+  if(d?.state){
+   draftState=structuredClone(d.state);
+   draftState.tournamentDate=draftState?.tournamentDate||d.tournament_date||null;
+   draftState.tournamentName=draftState?.tournamentName||d.tournament_name||tournament?.name||"EllenG Cup";
+   draftUpdatedAt=d.updated_at||draftUpdatedAt;
+  }
   if(user){
    const {data:profile}=await db.functions.invoke("player-profile",{body:{draft_id:DRAFT_ID}});
    currentGolferIndex=profile?.linked?Number(profile.golfer_index):null;currentUsername=profile?.linked?String(profile.username||""):"";mustChangePassword=!!profile?.must_change_password;
@@ -4274,6 +4286,8 @@ $("saveAdmin").addEventListener("click",async()=>{
  try{
   const oldCount=activeTeamCount();
   ensureDraftShape();
+  const tournamentDate=$("tournamentDateInput")?.value||null;
+  draftState.tournamentDate=tournamentDate;
   const golferSelection=$("golferCountSelect")?.value||"";
   const desiredGolfers=golferSelection===""?draftGolferCount():Math.max(8,Math.min(36,Number(golferSelection)));
   const selectedTeamSize=Number($("teamSizeSelect")?.value||draftTeamSize());
@@ -4319,8 +4333,10 @@ $("saveAdmin").addEventListener("click",async()=>{
   tournament=data;
   rebuildTeamRosters();
   await saveDraftState(null,false);
+  const {error:dateError}=await db.from("elleng_drafts").update({tournament_date:tournamentDate}).eq("id",DRAFT_ID);
+  if(dateError)throw dateError;
   await loadBase(); await loadScores(); renderAll();
-  $("adminMsg").textContent=`Tournament controls saved. ${isSplitPair()?"Split-Pair Scramble":draftTeamSize()+"-man Standard EllenG"} format, ${teams.length} teams and ${draftGolferCount()} golfers active.`;
+  $("adminMsg").textContent=`Tournament controls saved. ${tournamentDate?"Tournament date: "+formatTournamentDate(tournamentDate)+". ":""}${isSplitPair()?"Split-Pair Scramble":draftTeamSize()+"-man Standard EllenG"} format, ${teams.length} teams and ${draftGolferCount()} golfers active.`;
  }catch(e){$("adminMsg").textContent=e?.message||"Unable to save tournament controls."}
 });
 $("reloadAdmin").addEventListener("click",async()=>{if(!isCommissioner)return;$("adminMsg").textContent="Reloading…";try{await loadBase();await loadScores();renderAll();$("adminMsg").textContent="Current data reloaded."}catch(e){$("adminMsg").textContent=e.message}});
