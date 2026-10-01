@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.4.7">
+<meta name="elleng-app-version" content="2.4.8">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -504,6 +504,27 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   padding:10px 18px;font-weight:950;min-width:120px;box-shadow:0 3px 10px rgba(0,0,0,.06)
 }
 .hub-signout-btn:active{transform:scale(.985)}
+
+.hub-signout-wrap{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin-top:18px;
+  padding-top:2px;
+}
+.hub-signout-btn{
+  min-width:140px;
+  min-height:44px;
+  border:1px solid #cfd9de;
+  background:#e9eef1;
+  color:#17384d;
+  border-radius:999px;
+  padding:10px 20px;
+  font-weight:950;
+  font-size:15px;
+  box-shadow:0 4px 12px rgba(8,37,59,.08);
+}
+.hub-signout-btn:active{transform:scale(.985)}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -531,6 +552,9 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
       <button type="button" class="app-hub-btn" id="hubCaptain"><span class="hub-icon">🧢</span><span><strong>Captain Access</strong><small>Captain-only draft picks and team controls</small></span></button>
       <button type="button" class="app-hub-btn app-hub-primary" id="hubScoring"><span class="hub-icon">🏆</span><span><strong>Live Scoring</strong><small>Scores, leaderboard and live tournament action</small></span></button>
       <button type="button" class="app-hub-btn" id="hubClubhouse"><span class="hub-icon">⛳</span><span><strong>Clubhouse</strong><small>RSVP, tee times, profiles, course and recaps</small></span></button>
+    </div>
+    <div class="hub-signout-wrap">
+      <button type="button" id="hubSignOutBtn" class="hub-signout-btn">Sign Out</button>
     </div>
 </div>
 </div>
@@ -661,10 +685,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   <div class="card wow-card">
     <div class="row between"><div><div class="premium-label">PLAYER SPOTLIGHT</div><h2 style="margin:3px 0 0">Who's Making Noise</h2></div><span class="badge">🔥</span></div>
     <div id="playerSpotlight" class="wow-body"></div>
-    <div class="hub-signout-wrap">
-      <button type="button" id="hubSignOutBtn" class="hub-signout-btn">Sign Out</button>
     </div>
-  </div>
 </div>
 
 <div class="card">
