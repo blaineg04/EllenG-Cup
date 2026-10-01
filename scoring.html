@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.15">
+<meta name="elleng-app-version" content="2.7.16">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1517,7 +1517,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.15</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.16</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -1788,7 +1788,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
     <span class="badge">LIVE DRAFT SYNC</span>
   </div>
   <div class="players-toolbar">
-    <label><small>Organize players</small><select id="playerDirectoryMode"><option value="team">By Team</option><option value="all">All Players A–Z</option><option value="band">By A/B/C/D Band</option></select></label>
+    <label><small>Organize players</small><select id="playerDirectoryMode"><option value="team">By Team</option><option value="all">Alphabetical by Last Name</option><option value="band">Handicap A–D</option></select></label>
     <label><small>Find player</small><input id="playerDirectorySearch" placeholder="Search by player or team"></label>
   </div>
   <div class="note" style="margin-top:10px">Tap a player to open their profile. Handicaps update automatically, and undrafted golfers are shown as Available / Unassigned.</div>
@@ -1969,7 +1969,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.15 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.16 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -2925,6 +2925,16 @@ function publicPlayerAvatar(g,cls="player-photo-thumb"){
  const fallback=esc(playerInitials(name));
  return `<div class="${cls}">${photo?`<img src="${esc(photo)}" alt="${esc(name)}" onerror="this.style.display='none';this.parentElement.textContent='${fallback}'">`:fallback}</div>`;
 }
+function playerLastNameSortKey(name){
+ const parts=String(name||"").trim().split(/\s+/).filter(Boolean);
+ if(!parts.length)return "";
+ const last=parts[parts.length-1];
+ const first=parts.slice(0,-1).join(" ");
+ return `${last} ${first}`.toLowerCase();
+}
+function sortPlayersByLastName(a,b){
+ return playerLastNameSortKey(a?.name).localeCompare(playerLastNameSortKey(b?.name))||String(a?.name||"").localeCompare(String(b?.name||""));
+}
 function renderPlayersDirectory(){
  const root=$("playerDirectory"); if(!root||!draftState)return;
  const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>({...(g||{}),index:i,name:(g?.name||"").trim()})).filter(g=>g.name);
@@ -2933,13 +2943,13 @@ function renderPlayersDirectory(){
  const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Available / Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`),band:playerBandLabel(g),hcpLabel:playerHandicapLabel(g)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q)||g.band.toLowerCase().includes(q)||g.hcpLabel.toLowerCase().includes(q));
  const rowHtml=g=>`<div class="player-row-public" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}</div><div class="player-hcp-public"><span class="status">HCP</span><br><strong>${esc(g.hcpLabel)}</strong></div><div class="player-band-public"><span class="player-band-chip">${esc(g.band)}</span></div><div class="player-team-public">${esc(g.teamName)}</div></div>`;
  if(!rows.length){root.innerHTML='<div class="note">No matching players found.</div>';return}
- if(mode==="all"){root.innerHTML=`<div class="player-team-card"><div class="player-team-head"><h3>All Players</h3><div class="status">${rows.length} golfer${rows.length===1?"":"s"}</div></div>${rows.sort((a,b)=>a.name.localeCompare(b.name)).map(rowHtml).join("")}</div>`;return}
+ if(mode==="all"){root.innerHTML=`<div class="player-team-card"><div class="player-team-head"><h3>All Players</h3><div class="status">${rows.length} golfer${rows.length===1?"":"s"}</div></div>${rows.sort(sortPlayersByLastName).map(rowHtml).join("")}</div>`;return}
  if(mode==="band"){
    const order=["A","B","C","D","—"];
-   root.innerHTML=order.map(b=>{const list=rows.filter(g=>g.band===b).sort((a,c)=>{const ah=Number(a.hcp),ch=Number(c.hcp);if(Number.isFinite(ah)&&Number.isFinite(ch)&&ah!==ch)return ah-ch;return a.name.localeCompare(c.name)});if(!list.length)return "";return `<div class="player-team-card"><div class="player-team-head"><h3>${b==="—"?"Band Not Set":`Band ${b}`}</h3><div class="status">${list.length} golfer${list.length===1?"":"s"}</div></div>${list.map(rowHtml).join("")}</div>`}).join("");return
+   root.innerHTML=order.map(b=>{const list=rows.filter(g=>g.band===b).sort((a,c)=>{const ah=Number(a.hcp),ch=Number(c.hcp);if(Number.isFinite(ah)&&Number.isFinite(ch)&&ah!==ch)return ah-ch;return sortPlayersByLastName(a,c)});if(!list.length)return "";return `<div class="player-team-card"><div class="player-team-head"><h3>${b==="—"?"Band Not Set":`Band ${b}`}</h3><div class="status">${list.length} golfer${list.length===1?"":"s"}</div></div>${list.map(rowHtml).join("")}</div>`}).join("");return
  }
- const teamGroups=Array.from({length:activeTeamCount()},(_,i)=>({name:draftState?.teams?.[i]?.name||`Team ${i+1}`,captain:draftState?.teams?.[i]?.captain||"",rows:rows.filter(g=>g.teamIndex===i).sort((a,b)=>a.name.localeCompare(b.name))}));
- const unassigned=rows.filter(g=>g.teamIndex==null).sort((a,b)=>a.name.localeCompare(b.name));
+ const teamGroups=Array.from({length:activeTeamCount()},(_,i)=>({name:draftState?.teams?.[i]?.name||`Team ${i+1}`,captain:draftState?.teams?.[i]?.captain||"",rows:rows.filter(g=>g.teamIndex===i).sort(sortPlayersByLastName)}));
+ const unassigned=rows.filter(g=>g.teamIndex==null).sort(sortPlayersByLastName);
  root.innerHTML=teamGroups.map((grp,i)=>`<div class="player-team-card"><div class="player-team-head"><div><h3>${esc(grp.name)}</h3><div class="status">${grp.captain?`Captain: ${esc(grp.captain)}`:"Captain not assigned"}</div></div><div class="status">${grp.rows.length} player${grp.rows.length===1?"":"s"}</div></div>${grp.rows.length?grp.rows.map(rowHtml).join(""):'<div class="note" style="padding:12px 14px">No golfers assigned.</div>'}</div>`).join("")+(unassigned.length?`<div class="player-team-card"><div class="player-team-head"><h3>Available / Unassigned</h3><div class="status">${unassigned.length} player${unassigned.length===1?"":"s"}</div></div>${unassigned.map(rowHtml).join("")}</div>`:"");
 }
 
