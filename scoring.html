@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.24">
+<meta name="elleng-app-version" content="2.7.25">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1472,7 +1472,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </style>
 
 <style id="home-cleanup-v2724">
-/* v2.7.24 — CSS-only Home cleanup. No tournament logic changed. */
+/* v2.7.25 — CSS-only Home cleanup. No tournament logic changed. */
 
 #app > .card.row.between,
 #app > .top-tabs-card{
@@ -1596,6 +1596,195 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 }
 </style>
 
+
+<style id="home-final-override-v2725">
+/*
+  v2.7.25 — FINAL HOME OVERRIDE
+  Intentionally high-specificity selectors so older global !important card rules
+  cannot override the Home-page cleanup. CSS only.
+*/
+
+/* Keep these two top utility areas rounded, but slightly lighter. */
+body #app > .card.row.between,
+body #app > .card.top-tabs-card{
+  border-radius:14px!important;
+}
+
+/* Tournament Hub remains the single main hero card. */
+body #app #homeView > .card.home-hero{
+  background:linear-gradient(180deg,#fffdf8,#f7f2e8)!important;
+  border:1px solid rgba(213,167,44,.34)!important;
+  border-radius:18px!important;
+  box-shadow:0 7px 18px rgba(8,37,59,.08)!important;
+  padding:20px 22px!important;
+  margin-bottom:8px!important;
+}
+
+/* NEXT ELLENG CUP = open section, no outer card. */
+body #app #homeView > .card.next-event-card{
+  background:transparent!important;
+  color:var(--eg-ink)!important;
+  border:0!important;
+  border-bottom:1px solid rgba(8,37,59,.18)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:17px 4px 22px!important;
+  margin:0 0 10px!important;
+}
+body #app #homeView > .card.next-event-card h1,
+body #app #homeView > .card.next-event-card h2,
+body #app #homeView > .card.next-event-card h3,
+body #app #homeView > .card.next-event-card strong{
+  color:var(--eg-ink)!important;
+}
+body #app #homeView > .card.next-event-card .status{
+  color:#667782!important;
+}
+
+/* Keep Tournament Date as the one purposeful dark highlight. */
+body #app #homeView .next-event-card .event-date-spotlight{
+  background:linear-gradient(135deg,#08253b,#0b3550)!important;
+  color:#fff!important;
+  border:1px solid rgba(213,167,44,.58)!important;
+  border-radius:14px!important;
+  box-shadow:0 6px 16px rgba(8,37,59,.12)!important;
+  padding:14px 16px!important;
+}
+body #app #homeView .next-event-card .event-date-spotlight *{
+  color:#fff!important;
+}
+
+/* RSVP = open section, no large cream rectangle. */
+body #app #homeView > .card.rsvp-home-card{
+  background:transparent!important;
+  color:var(--eg-ink)!important;
+  border:0!important;
+  border-bottom:1px solid rgba(8,37,59,.18)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:17px 4px 22px!important;
+  margin:0 0 10px!important;
+}
+body #app #homeView > .card.rsvp-home-card h1,
+body #app #homeView > .card.rsvp-home-card h2,
+body #app #homeView > .card.rsvp-home-card h3,
+body #app #homeView > .card.rsvp-home-card strong{
+  color:var(--eg-ink)!important;
+}
+body #app #homeView > .card.rsvp-home-card .status{
+  color:#667782!important;
+}
+
+/* Three totals share one clean strip instead of three separate cards. */
+body #app #homeView .rsvp-home-card .rsvp-summary{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:0!important;
+  background:rgba(255,255,255,.48)!important;
+  border:1px solid rgba(8,37,59,.09)!important;
+  border-radius:14px!important;
+  overflow:hidden!important;
+}
+body #app #homeView .rsvp-home-card .rsvp-stat{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:12px 10px!important;
+}
+body #app #homeView .rsvp-home-card .rsvp-stat + .rsvp-stat{
+  border-left:1px solid rgba(8,37,59,.10)!important;
+}
+
+/* RSVP player lists are open columns with divider lines. */
+body #app #homeView .rsvp-home-card .rsvp-player-groups{
+  gap:0!important;
+  margin-top:12px!important;
+  border-top:1px solid rgba(8,37,59,.10)!important;
+}
+body #app #homeView .rsvp-home-card .rsvp-player-group{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:12px 14px!important;
+}
+body #app #homeView .rsvp-home-card .rsvp-player-group + .rsvp-player-group{
+  border-left:1px solid rgba(8,37,59,.10)!important;
+}
+body #app #homeView .rsvp-home-card .rsvp-player-chip{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+
+/* Player Essentials = open section, while the four action buttons remain rounded. */
+body #app #homeView > .card.player-essentials-card{
+  background:transparent!important;
+  color:var(--eg-ink)!important;
+  border:0!important;
+  border-bottom:1px solid rgba(8,37,59,.18)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:17px 4px 22px!important;
+  margin:0 0 12px!important;
+}
+body #app #homeView > .card.player-essentials-card h1,
+body #app #homeView > .card.player-essentials-card h2,
+body #app #homeView > .card.player-essentials-card h3,
+body #app #homeView > .card.player-essentials-card strong{
+  color:var(--eg-ink)!important;
+}
+body #app #homeView > .card.player-essentials-card .status{
+  color:#667782!important;
+}
+body #app #homeView .player-essentials-card .player-essential-btn{
+  border:1px solid rgba(8,37,59,.10)!important;
+  border-radius:12px!important;
+  background:rgba(255,255,255,.58)!important;
+  box-shadow:0 2px 7px rgba(8,37,59,.05)!important;
+}
+
+/* Keep first below-the-fold highlight from immediately returning to the stacked-card feel. */
+body #app #homeView > .card.leader-spotlight-card{
+  margin-top:12px!important;
+}
+
+@media(max-width:650px){
+  body #app #homeView > .card.home-hero{
+    border-radius:15px!important;
+    padding:17px 15px!important;
+  }
+
+  body #app #homeView > .card.next-event-card,
+  body #app #homeView > .card.rsvp-home-card,
+  body #app #homeView > .card.player-essentials-card{
+    padding-left:1px!important;
+    padding-right:1px!important;
+  }
+
+  body #app #homeView .next-event-card .event-date-spotlight{
+    border-radius:12px!important;
+    padding:13px 14px!important;
+  }
+
+  body #app #homeView .rsvp-home-card .rsvp-player-groups{
+    grid-template-columns:1fr!important;
+  }
+
+  body #app #homeView .rsvp-home-card .rsvp-player-group + .rsvp-player-group{
+    border-left:0!important;
+    border-top:1px solid rgba(8,37,59,.10)!important;
+  }
+
+  body #app #homeView .player-essentials-card .player-essentials-grid{
+    grid-template-columns:1fr 1fr!important;
+    gap:8px!important;
+  }
+}
+</style>
+
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -1656,7 +1845,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.24</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.25</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2117,7 +2306,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.24 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.25 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
