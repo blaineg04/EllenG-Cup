@@ -25,27 +25,46 @@ function totalPicks(){
   const named=S.golfers.filter(g=>g&&g.name).length;
   return named||S.golfers.length;
 }
+
+/*
+ Exact roster capacity from the actual draft order.
+ This works for any team count / golfer count combination, including uneven totals.
+ Example: 27 golfers / 7 snake-draft teams => [3,4,4,4,4,4,4].
+*/
 function teamCapacity(teamIndex){
-  const teams=Math.max(1,S.teams.length);
   const total=totalPicks();
-  const base=Math.floor(total/teams);
-  const extra=total%teams;
-  return base+(teamIndex<extra?1:0);
+  let count=0;
+  for(let n=0;n<total;n++) if(order(n)===teamIndex) count++;
+  return count;
+}
+
+function teamABCount(teamIndex){
+  return (S.teams?.[teamIndex]?.roster||[]).reduce((n,i)=>n+(["A","B"].includes(S.golfers?.[i]?.band)?1:0),0);
 }
 
 /*
- Fair-rank draft rule:
- A team may draft rank A/B/C/D only when its current count of that rank
- is equal to the LOWEST count among all six teams.
- Example: a team with 1 A cannot take a second A while any team has 0 A.
- Once every team has 1 A, second A golfers can be selected if any remain.
- The same rule applies independently to B, C and D.
+ Draft balance penalty.
+ 0 = fully eligible under the normal rank + A/B balancing rules.
+ If no remaining golfer has penalty 0, the lowest-penalty remaining rank is allowed.
+ This preserves the normal balancing rule but prevents an uneven player/rank mix from
+ creating a dead-end where the team on the clock has no legal selection.
 */
+function bandPenalty(t,b){
+  if(!bands.includes(b)||!S.teams?.[t]) return Number.POSITIVE_INFINITY;
+  const bandMin=Math.min(...S.teams.map((_,i)=>tbc(i,b)));
+  let penalty=tbc(t,b)-bandMin;
+  if(b==="A"||b==="B"){
+    const abMin=Math.min(...S.teams.map((_,i)=>teamABCount(i)));
+    penalty+=teamABCount(t)-abMin;
+  }
+  return penalty;
+}
 function canBand(t,b){
- if(!bands.includes(b))return false;
- const myCount=tbc(t,b);
- const lowest=Math.min(...S.teams.map((_,i)=>tbc(i,b)));
- return myCount===lowest;
+  if(!bands.includes(b)||!S.teams?.[t])return false;
+  const remainingBands=[...new Set(S.golfers.filter(g=>g?.name&&g.team==null&&bands.includes(g.band)).map(g=>g.band))];
+  if(!remainingBands.length)return false;
+  const best=Math.min(...remainingBands.map(rb=>bandPenalty(t,rb)));
+  return bandPenalty(t,b)===best;
 }
 
 async function load(){let {data,error}=await db.from("elleng_drafts").select("state").eq("id",cfg.draftId).single();if(error)throw error;S={...fresh(),...data.state};return S}
