@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.33">
+<meta name="elleng-app-version" content="2.7.34">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1472,7 +1472,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </style>
 
 <style id="home-cleanup-v2724">
-/* v2.7.33 — CSS-only Home cleanup. No tournament logic changed. */
+/* v2.7.34 — CSS-only Home cleanup. No tournament logic changed. */
 
 #app > .card.row.between,
 #app > .top-tabs-card{
@@ -1599,7 +1599,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 <style id="home-final-override-v2725">
 /*
-  v2.7.33 — FINAL HOME OVERRIDE
+  v2.7.34 — FINAL HOME OVERRIDE
   Intentionally high-specificity selectors so older global !important card rules
   cannot override the Home-page cleanup. CSS only.
 */
@@ -1787,7 +1787,7 @@ body #app #homeView > .card.leader-spotlight-card{
 
 
 <style id="home-contrast-v2726">
-/* v2.7.33 — Home contrast fix only. Layout and app logic unchanged. */
+/* v2.7.34 — Home contrast fix only. Layout and app logic unchanged. */
 
 /* RSVP section typography on the dark page background. */
 body #app #homeView > .card.rsvp-home-card > .premium-label,
@@ -1846,7 +1846,7 @@ body #app #homeView .player-essentials-card .pill{
 
 
 <style id="next-event-contrast-v2727">
-/* v2.7.33 — Fix remaining Next EllenG Cup contrast only. No layout or logic changes. */
+/* v2.7.34 — Fix remaining Next EllenG Cup contrast only. No layout or logic changes. */
 
 body #app #homeView > .card.next-event-card #nextEventName{
   color:#ffffff!important;
@@ -1863,7 +1863,7 @@ body #app #homeView > .card.next-event-card .premium-label{
 
 
 <style id="next-event-final-contrast-v2728">
-/* v2.7.33 — Restore correct dark/open Home baseline and fix ONLY Next EllenG Cup text contrast. */
+/* v2.7.34 — Restore correct dark/open Home baseline and fix ONLY Next EllenG Cup text contrast. */
 
 html body #app #homeView .next-event-card .premium-label{
   color:#d5a72c!important;
@@ -1885,7 +1885,7 @@ html body #app #homeView .next-event-card #nextEventCourse{
 
 
 <style id="home-cream-panels-v2729">
-/* v2.7.33 — Visual-only panel color refinement.
+/* v2.7.34 — Visual-only panel color refinement.
    Changes gray Home panels/buttons to warm off-white/cream. No layout or app logic changes. */
 
 html body #app #homeView .rsvp-home-card .rsvp-summary,
@@ -1917,7 +1917,7 @@ html body #app #homeView .player-essentials-card .player-essential-btn *{
 
 
 <style id="home-date-dedupe-v2731">
-/* v2.7.33 — Remove duplicate Next EllenG Cup summary and keep one clean tournament-date block. */
+/* v2.7.34 — Remove duplicate Next EllenG Cup summary and keep one clean tournament-date block. */
 html body #app #homeView .next-event-card .event-date-spotlight{
   display:grid!important;
   grid-template-columns:auto minmax(0,1fr) auto!important;
@@ -1946,7 +1946,7 @@ html body #app #homeView .next-event-card .countdown-badge{
 
 
 <style id="home-single-summary-v2732">
-/* v2.7.33 — One tournament summary only.
+/* v2.7.34 — One tournament summary only.
    Date + countdown now live inside the Tournament Hub card; separate date card removed. */
 
 html body #app #homeView .home-hero .home-hero-meta{
@@ -1984,7 +1984,7 @@ html body #app #homeView .home-hero .home-hero-countdown{
 
 
 <style id="home-hero-simplify-v2733">
-/* v2.7.33 — Simplify Tournament Hub header for players.
+/* v2.7.34 — Simplify Tournament Hub header for players.
    Hide the setup/status badge and the small gold kicker only.
    Keep course, date, countdown, and all app logic unchanged. */
 
@@ -2054,7 +2054,7 @@ html body #app #homeView .home-hero #homeStatusBadge{
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.33</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.34</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2415,10 +2415,6 @@ html body #app #homeView .home-hero #homeStatusBadge{
 
 <div class="experience-grid">
   <div class="card">
-    <div class="row between"><div><div class="premium-label">CHECK-IN</div><h2 style="margin:3px 0 0">Tournament QR</h2><div class="status">Scan to open this EllenG Cup app.</div></div><span class="badge">QUICK ACCESS</span></div>
-    <div id="checkinQr" class="qr-wrap"></div>
-  </div>
-  <div class="card">
     <div class="row between"><div><div class="premium-label">RIVALRY WATCH</div><h2 style="margin:3px 0 0">Closest Rivals</h2></div><span class="badge">HEAD-TO-HEAD</span></div>
     <div id="rivalryWatch" class="wow-body"></div>
   </div>
@@ -2508,7 +2504,7 @@ html body #app #homeView .home-hero #homeStatusBadge{
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.33 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.34 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
