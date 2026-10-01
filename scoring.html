@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.31">
+<meta name="elleng-app-version" content="2.7.32">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1472,7 +1472,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </style>
 
 <style id="home-cleanup-v2724">
-/* v2.7.31 — CSS-only Home cleanup. No tournament logic changed. */
+/* v2.7.32 — CSS-only Home cleanup. No tournament logic changed. */
 
 #app > .card.row.between,
 #app > .top-tabs-card{
@@ -1599,7 +1599,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 <style id="home-final-override-v2725">
 /*
-  v2.7.31 — FINAL HOME OVERRIDE
+  v2.7.32 — FINAL HOME OVERRIDE
   Intentionally high-specificity selectors so older global !important card rules
   cannot override the Home-page cleanup. CSS only.
 */
@@ -1787,7 +1787,7 @@ body #app #homeView > .card.leader-spotlight-card{
 
 
 <style id="home-contrast-v2726">
-/* v2.7.31 — Home contrast fix only. Layout and app logic unchanged. */
+/* v2.7.32 — Home contrast fix only. Layout and app logic unchanged. */
 
 /* RSVP section typography on the dark page background. */
 body #app #homeView > .card.rsvp-home-card > .premium-label,
@@ -1846,7 +1846,7 @@ body #app #homeView .player-essentials-card .pill{
 
 
 <style id="next-event-contrast-v2727">
-/* v2.7.31 — Fix remaining Next EllenG Cup contrast only. No layout or logic changes. */
+/* v2.7.32 — Fix remaining Next EllenG Cup contrast only. No layout or logic changes. */
 
 body #app #homeView > .card.next-event-card #nextEventName{
   color:#ffffff!important;
@@ -1863,7 +1863,7 @@ body #app #homeView > .card.next-event-card .premium-label{
 
 
 <style id="next-event-final-contrast-v2728">
-/* v2.7.31 — Restore correct dark/open Home baseline and fix ONLY Next EllenG Cup text contrast. */
+/* v2.7.32 — Restore correct dark/open Home baseline and fix ONLY Next EllenG Cup text contrast. */
 
 html body #app #homeView .next-event-card .premium-label{
   color:#d5a72c!important;
@@ -1885,7 +1885,7 @@ html body #app #homeView .next-event-card #nextEventCourse{
 
 
 <style id="home-cream-panels-v2729">
-/* v2.7.31 — Visual-only panel color refinement.
+/* v2.7.32 — Visual-only panel color refinement.
    Changes gray Home panels/buttons to warm off-white/cream. No layout or app logic changes. */
 
 html body #app #homeView .rsvp-home-card .rsvp-summary,
@@ -1917,7 +1917,7 @@ html body #app #homeView .player-essentials-card .player-essential-btn *{
 
 
 <style id="home-date-dedupe-v2731">
-/* v2.7.31 — Remove duplicate Next EllenG Cup summary and keep one clean tournament-date block. */
+/* v2.7.32 — Remove duplicate Next EllenG Cup summary and keep one clean tournament-date block. */
 html body #app #homeView .next-event-card .event-date-spotlight{
   display:grid!important;
   grid-template-columns:auto minmax(0,1fr) auto!important;
@@ -1940,6 +1940,44 @@ html body #app #homeView .next-event-card .countdown-badge{
     grid-column:2!important;
     justify-self:start!important;
     margin-top:8px!important;
+  }
+}
+</style>
+
+
+<style id="home-single-summary-v2732">
+/* v2.7.32 — One tournament summary only.
+   Date + countdown now live inside the Tournament Hub card; separate date card removed. */
+
+html body #app #homeView .home-hero .home-hero-meta{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:10px!important;
+  align-items:center!important;
+}
+
+html body #app #homeView .home-hero .home-hero-date{
+  background:#08253b!important;
+  color:#f0c75d!important;
+  border:1px solid rgba(213,167,44,.65)!important;
+  font-weight:900!important;
+}
+
+html body #app #homeView .home-hero .home-hero-countdown{
+  background:#0d6b55!important;
+  color:#ffffff!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  font-weight:950!important;
+}
+
+@media(max-width:650px){
+  html body #app #homeView .home-hero .home-hero-meta{
+    gap:8px!important;
+  }
+  html body #app #homeView .home-hero .home-hero-date,
+  html body #app #homeView .home-hero .home-hero-countdown{
+    font-size:11px!important;
+    padding:7px 10px!important;
   }
 }
 </style>
@@ -2004,7 +2042,7 @@ html body #app #homeView .next-event-card .countdown-badge{
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.31</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.32</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2054,18 +2092,11 @@ html body #app #homeView .next-event-card .countdown-badge{
   <div class="home-kicker">ELLENG CUP • TOURNAMENT HUB</div>
   <h2 id="homeHeadline">Tournament Day</h2>
   <div id="homeSubline" class="status">Live standings, teams, players and course information in one place.</div>
-  <div class="row" style="margin-top:13px"><span id="homeStatusBadge" class="badge" style="background:#d5a72c;color:#10202c">SETUP</span><span id="homeCourseBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">Course</span></div>
-
-</div>
-
-<div class="card next-event-card">
-  <div class="event-date-spotlight">
-    <span class="event-date-icon" aria-hidden="true">📅</span>
-    <div class="event-date-main">
-      <div class="event-date-label">TOURNAMENT DATE</div>
-      <div id="nextEventDate" class="countdown-date"></div>
-    </div>
-    <span id="nextEventCountdown" class="countdown-badge">DATE TBD</span>
+  <div class="row home-hero-meta" style="margin-top:13px">
+    <span id="homeStatusBadge" class="badge" style="background:#d5a72c;color:#10202c">SETUP</span>
+    <span id="homeCourseBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">Course</span>
+    <span id="nextEventDate" class="badge home-hero-date">DATE TBD</span>
+    <span id="nextEventCountdown" class="badge home-hero-countdown">DATE TBD</span>
   </div>
 </div>
 
@@ -2465,7 +2496,7 @@ html body #app #homeView .next-event-card .countdown-badge{
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.31 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.32 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
