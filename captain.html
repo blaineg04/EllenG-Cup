@@ -49,6 +49,80 @@
   font-size:14px;
   line-height:1;
 }
+
+/* v2.6.2 unified EllenG premium navy/gold theme */
+:root{
+  --eg-navy:#061b2b;
+  --eg-navy2:#0a2b42;
+  --eg-panel:#0b2437;
+  --eg-panel2:#0d3048;
+  --eg-gold:#d5a72c;
+  --eg-gold2:#f0c75d;
+  --eg-cream:#f7f2e8;
+  --eg-text:#f4f6f7;
+  --eg-muted:#bdc9d0;
+  --eg-line:rgba(213,167,44,.48);
+}
+body{
+  background:
+    radial-gradient(circle at 50% -15%,rgba(213,167,44,.12),transparent 32%),
+    linear-gradient(160deg,var(--eg-navy),#08263a 55%,#061824)!important;
+  color:var(--eg-text)!important;
+}
+.card,.panel,.box,.section,.team,.team-card,.score-card,.profile-card{
+  background:linear-gradient(180deg,rgba(13,48,72,.96),rgba(8,35,54,.98))!important;
+  border:1px solid var(--eg-line)!important;
+  color:var(--eg-text)!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.18)!important;
+}
+h1,h2,h3,h4,strong,label,.title,.team-title{
+  color:var(--eg-text)!important;
+}
+p,.muted,.sub,.subtitle,.meta,.status,.note,small{
+  color:var(--eg-muted)!important;
+}
+input,select,textarea{
+  background:#f6f7f8!important;
+  color:#0a2b42!important;
+  border:1px solid #bccbd2!important;
+}
+button,.btn{
+  border-radius:12px!important;
+  font-weight:900!important;
+}
+button.primary,.primary,.btn-primary{
+  background:var(--eg-gold)!important;
+  color:#102535!important;
+  border-color:var(--eg-gold)!important;
+}
+button.secondary,.secondary,.btn-secondary{
+  background:#173b53!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.18)!important;
+}
+.badge,.pill,.chip{
+  background:#173b53!important;
+  color:#f3cf6d!important;
+  border:1px solid rgba(213,167,44,.32)!important;
+}
+a{color:#f0c75d}
+table,th,td{border-color:rgba(255,255,255,.09)!important}
+th{color:#f1ca61!important}
+hr{border-color:rgba(213,167,44,.24)!important}
+
+header,.hero,.topbar{
+  background:linear-gradient(180deg,#061b2b,#0a2b42)!important;
+  color:#fff!important;
+  border-bottom:3px solid #d5a72c!important;
+}
+.global-main-menu-bar{background:transparent!important}
+.global-main-menu-btn{
+  background:#0b2437!important;color:#fff!important;border:2px solid #d5a72c!important
+}
+#login,#app,.captain-card,.draft-card{
+  background:linear-gradient(180deg,rgba(13,48,72,.97),rgba(8,35,54,.98))!important;
+  border-color:rgba(213,167,44,.48)!important;
+}
 </style></head><body><header class="top"><div class="brand"><img src="gator.png" alt="EllenG Cup gator logo"><div><h1>EllenG Cup</h1><p>CAPTAIN DRAFT • LIVE TEAM SELECTION</p></div><div style="margin-left:auto" id="connection">CONNECTING</div></div></header><div id="globalMainMenuBar" class="global-main-menu-bar">
   <a class="global-main-menu-btn" href="./scoring.html#hub" onclick="sessionStorage.setItem('elleng_internal_menu','1')">← Main Menu</a>
 </div>

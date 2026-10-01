@@ -40,9 +40,174 @@
   font-size:14px;
   line-height:1;
 }
+
+/* v2.6.2 unified EllenG premium navy/gold theme */
+:root{
+  --eg-navy:#061b2b;
+  --eg-navy2:#0a2b42;
+  --eg-panel:#0b2437;
+  --eg-panel2:#0d3048;
+  --eg-gold:#d5a72c;
+  --eg-gold2:#f0c75d;
+  --eg-cream:#f7f2e8;
+  --eg-text:#f4f6f7;
+  --eg-muted:#bdc9d0;
+  --eg-line:rgba(213,167,44,.48);
+}
+body{
+  background:
+    radial-gradient(circle at 50% -15%,rgba(213,167,44,.12),transparent 32%),
+    linear-gradient(160deg,var(--eg-navy),#08263a 55%,#061824)!important;
+  color:var(--eg-text)!important;
+}
+.card,.panel,.box,.section,.team,.team-card,.score-card,.profile-card{
+  background:linear-gradient(180deg,rgba(13,48,72,.96),rgba(8,35,54,.98))!important;
+  border:1px solid var(--eg-line)!important;
+  color:var(--eg-text)!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.18)!important;
+}
+h1,h2,h3,h4,strong,label,.title,.team-title{
+  color:var(--eg-text)!important;
+}
+p,.muted,.sub,.subtitle,.meta,.status,.note,small{
+  color:var(--eg-muted)!important;
+}
+input,select,textarea{
+  background:#f6f7f8!important;
+  color:#0a2b42!important;
+  border:1px solid #bccbd2!important;
+}
+button,.btn{
+  border-radius:12px!important;
+  font-weight:900!important;
+}
+button.primary,.primary,.btn-primary{
+  background:var(--eg-gold)!important;
+  color:#102535!important;
+  border-color:var(--eg-gold)!important;
+}
+button.secondary,.secondary,.btn-secondary{
+  background:#173b53!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.18)!important;
+}
+.badge,.pill,.chip{
+  background:#173b53!important;
+  color:#f3cf6d!important;
+  border:1px solid rgba(213,167,44,.32)!important;
+}
+a{color:#f0c75d}
+table,th,td{border-color:rgba(255,255,255,.09)!important}
+th{color:#f1ca61!important}
+hr{border-color:rgba(213,167,44,.24)!important}
+
+header,.hero,.topbar{
+  background:linear-gradient(180deg,#061b2b,#0a2b42)!important;
+  color:#fff!important;
+  border-bottom:3px solid #d5a72c!important;
+}
+.global-main-menu-bar{background:transparent!important}
+.global-main-menu-btn{
+  background:#0b2437!important;color:#fff!important;border:2px solid #d5a72c!important
+}
+#soundBox,#clockBox,#draftBoard,.sound-wrap,.clock-card{
+  background:linear-gradient(180deg,rgba(13,48,72,.96),rgba(8,35,54,.98))!important;
+  border:1px solid rgba(213,167,44,.48)!important;
+}
+.team{
+  background:#0b2437!important;
+  border:1px solid rgba(213,167,44,.48)!important;
+}
+.team h3,.team .head{
+  background:#081f31!important;
+  color:#fff!important;
+  border-bottom:1px solid rgba(213,167,44,.28)!important;
+}
+.team .slot,.roster-slot{
+  background:#0f3148!important;
+  color:#d6e0e5!important;
+  border-color:rgba(255,255,255,.08)!important;
+}
+
+/* v2.6.3 Draft banner matches the rest of EllenG Cup */
+.top{
+  padding-top:calc(14px + env(safe-area-inset-top))!important;
+  padding-bottom:14px!important;
+  padding-left:18px!important;
+  padding-right:18px!important;
+  background:linear-gradient(180deg,#061b2b,#0a2b42)!important;
+  border-bottom:3px solid #d5a72c!important;
+}
+.top .brand{
+  display:flex!important;
+  align-items:center!important;
+  gap:16px!important;
+}
+.top .brand img{
+  width:118px!important;
+  height:82px!important;
+  object-fit:contain!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  padding:0!important;
+  box-shadow:none!important;
+}
+.top .brand h1{
+  margin:0!important;
+  color:#f0c75d!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:42px!important;
+  line-height:1!important;
+  text-shadow:0 2px 0 #71531a!important;
+}
+.top .brand p{
+  margin:7px 0 0!important;
+  color:#f4f6f7!important;
+  font-size:15px!important;
+  letter-spacing:.06em!important;
+  font-weight:700!important;
+}
+.draft-status-strip{
+  width:max-content;
+  max-width:calc(100% - 24px);
+  margin:12px auto 4px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:7px 12px;
+  border:1px solid rgba(213,167,44,.38);
+  border-radius:999px;
+  background:#0b2437;
+  color:#fff;
+  font-size:12px;
+  font-weight:900;
+}
+.draft-live-dot{
+  width:8px;height:8px;border-radius:50%;background:#3fd27b;
+  box-shadow:0 0 0 3px rgba(63,210,123,.12)
+}
+@media(max-width:640px){
+  .top{
+    padding-top:calc(10px + env(safe-area-inset-top))!important;
+    padding-left:14px!important;
+    padding-right:14px!important;
+    padding-bottom:12px!important;
+  }
+  .top .brand img{width:92px!important;height:70px!important}
+  .top .brand h1{font-size:34px!important}
+  .top .brand p{font-size:12px!important;letter-spacing:.04em!important}
+}
 </style></head><body><div id="globalMainMenuBar" class="global-main-menu-bar">
   <a class="global-main-menu-btn" href="./scoring.html#hub" onclick="sessionStorage.setItem('elleng_internal_menu','1')">← Main Menu</a>
-</div><div class="top"><img src="gator.jpeg" style="width:118px;height:82px;object-fit:contain;object-position:center;background:#fff;padding:6px;border-radius:16px;border:3px solid #d5a72c;box-shadow:0 5px 16px rgba(0,0,0,.16)"><div><h1>EllenG Cup — Live Draft</h1><div>Official Live Draft Board</div></div><div style="margin-left:auto" id="connection">CONNECTING</div></div>
+</div><header class="top"><div class="brand">
+<img src="gator.png" alt="EllenG Cup gator logo">
+<div><h1>EllenG Cup</h1><p>LIVE DRAFT • OFFICIAL DRAFT BOARD</p></div>
+</div></header>
+<div class="draft-status-strip">
+  <span class="draft-live-dot"></span>
+  <span id="connection">CONNECTING</span>
+</div>
 <div class="wrap"><div class="card" style="margin-bottom:12px"><button id="soundToggle" class="gold">🔊 Enable Draft Sounds</button><span id="soundStatus" class="muted" style="margin-left:10px">Sound off</span></div><div class="card"><div class="bar"><div><strong id="onclock">Loading draft…</strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div class="muted">LIVE PICK CLOCK</div></div></div></div><div id="teams" class="teams"></div><div class="card" style="margin-top:12px"><h3>Available Golfers</h3><div style="overflow:auto"><table><thead><tr><th>Golfer</th><th>Rank</th><th>Handicap Range</th><th>Status</th></tr></thead><tbody id="publicPool"></tbody></table></div></div><div class="card" style="margin-top:12px"><h3>Draft Log</h3><div id="log" class="muted"></div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script>
 let draftSoundEnabled=false,lastSoundPickCount=null,audioCtx=null;
