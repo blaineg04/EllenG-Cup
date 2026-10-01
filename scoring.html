@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.23">
+<meta name="elleng-app-version" content="2.7.28">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -379,8 +379,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .captain-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px}
 .captain-stat{background:#f7fafb;border:1px solid var(--line);border-radius:11px;padding:11px}.captain-stat strong{display:block;font-size:22px}.captain-stat span{font-size:11px;color:var(--muted)}
 .rsvp-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.rsvp-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;font-weight:900}.rsvp-btn.active{background:#0b6b50;color:#fff;border-color:#0b6b50}
-.rsvp-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.rsvp-stat{border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}.rsvp-stat strong{display:block;font-size:22px}
-.rsvp-player-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}.rsvp-player-group{border:1px solid rgba(213,167,44,.34);border-radius:12px;background:#fffdfa;padding:11px;min-width:0}.rsvp-player-group-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px;font-weight:950;color:#102a3b}.rsvp-player-list{display:flex;flex-wrap:wrap;gap:6px}.rsvp-player-chip{display:inline-flex;align-items:center;min-height:30px;padding:5px 9px;border-radius:999px;background:#e8edef;border:1px solid #d0d9dd;color:#17384d;font-size:12px;font-weight:850}.rsvp-player-empty{font-size:12px;color:#6d7d87;font-style:italic}.rsvp-player-group.playing{border-top:4px solid #0a7b43}.rsvp-player-group.maybe{border-top:4px solid #d5a72c}.rsvp-player-group.out{border-top:4px solid #8e2734}@media(max-width:650px){.rsvp-player-groups{grid-template-columns:1fr}.rsvp-player-group{padding:10px}}
+.rsvp-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.rsvp-stat{border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}.rsvp-stat strong{display:block;font-size:22px}.rsvp-player-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px;grid-column:1/-1}.rsvp-player-group{border:1px solid rgba(213,167,44,.34);border-radius:12px;background:#fffdfa;padding:11px;min-width:0}.rsvp-player-group-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px;font-weight:950;color:#102a3b}.rsvp-player-list{display:flex;flex-wrap:wrap;gap:6px}.rsvp-player-chip{display:inline-flex;align-items:center;min-height:30px;padding:5px 9px;border-radius:999px;background:#e8edef;border:1px solid #d0d9dd;color:#17384d;font-size:12px;font-weight:850}.rsvp-player-empty{font-size:12px;color:#6d7d87;font-style:italic}.rsvp-player-group.playing{border-top:4px solid #0a7b43}.rsvp-player-group.maybe{border-top:4px solid #d5a72c}.rsvp-player-group.out{border-top:4px solid #8e2734}@media(max-width:650px){.rsvp-player-groups{grid-template-columns:1fr}.rsvp-player-group{padding:10px}}
 .group-assignment-list,.admin-group-list{display:grid;gap:8px;margin-top:12px}.group-row{display:grid;grid-template-columns:minmax(140px,1fr) 120px 100px 130px 120px;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:9px;background:#fff}
 .group-row input{width:100%}
 .player-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.achievement-badge{font-size:11px;font-weight:900;border-radius:999px;padding:5px 8px;background:#fff5ce;border:1px solid #ead28a}
@@ -1472,296 +1471,416 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 }
 </style>
 
-<style id="home-cleanup-v2720">
-/* v2.7.23: cleaner home-page hierarchy; all existing logo/branding markup is intentionally untouched. */
-#homeView{display:block}
-#homeView>.card{margin-bottom:14px}
+<style id="home-cleanup-v2724">
+/* v2.7.28 — CSS-only Home cleanup. No tournament logic changed. */
 
-/* One integrated tournament panel instead of a card-inside-a-card look. */
-#homeView .next-event-card{
-  background:linear-gradient(135deg,#08253b,#0b3550)!important;
-  color:#fff!important;
-  border:1px solid rgba(213,167,44,.55)!important;
-  border-left:5px solid var(--gold)!important;
-  box-shadow:0 8px 20px rgba(8,37,59,.10)!important;
-}
-#homeView .next-event-card h2,#homeView .next-event-card .status{color:#fff}
-#homeView .next-event-card .premium-label{color:#e7c45b}
-#homeView .next-event-card .countdown-badge{background:#f4e0a2;color:#08253b;border-color:#d5a72c}
-#homeView .event-date-spotlight{
-  margin-top:12px;
-  padding:12px 0 0;
-  border-radius:0;
-  background:transparent;
-  border:0;
-  border-top:1px solid rgba(213,167,44,.42);
-  box-shadow:none;
-}
-#homeView .event-date-label{color:#e7c45b}
-
-/* RSVP reads as one section, with columns instead of nested cards. */
-#homeView .rsvp-home-card{
-  background:transparent!important;
-  border:0!important;
-  border-top:1px solid rgba(213,167,44,.38)!important;
-  border-bottom:1px solid rgba(213,167,44,.38)!important;
-  border-radius:0!important;
-  box-shadow:none!important;
-  padding-left:4px!important;
-  padding-right:4px!important;
-}
-#homeView .rsvp-summary{gap:0;margin-top:14px}
-#homeView .rsvp-stat{border:0;border-radius:0;background:transparent;padding:8px 10px}
-#homeView .rsvp-stat+.rsvp-stat{border-left:1px solid rgba(16,42,59,.12)}
-#homeView .rsvp-player-groups{gap:0;border-top:1px solid rgba(16,42,59,.10);padding-top:10px}
-#homeView .rsvp-player-group{
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  padding:10px 16px!important;
-}
-#homeView .rsvp-player-group+.rsvp-player-group{border-left:1px solid rgba(213,167,44,.45)!important}
-#homeView .rsvp-player-group.playing .rsvp-player-group-head{color:#0a7b43}
-#homeView .rsvp-player-group.maybe .rsvp-player-group-head{color:#9a7410}
-#homeView .rsvp-player-group.out .rsvp-player-group-head{color:#8e2734}
-#homeView .rsvp-player-chip{
-  min-height:auto;padding:2px 0;border:0;border-radius:0;background:transparent;
-  color:#17384d;font-size:12px;font-weight:800;
-}
-#homeView .rsvp-player-list{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
-
-/* Essentials becomes a clean section divider rather than another large card. */
-#homeView .player-essentials-card{
-  background:transparent!important;
-  border:0!important;
-  border-radius:0!important;
-  border-bottom:1px solid rgba(213,167,44,.30)!important;
-  box-shadow:none!important;
-  padding-left:4px!important;
-  padding-right:4px!important;
-}
-#homeView .player-essentials-card .badge{background:transparent;border:1px solid rgba(213,167,44,.55)}
-#homeView .player-essential-btn{box-shadow:none!important;border-color:rgba(16,42,59,.10)!important;background:rgba(255,255,255,.55)!important}
-
-@media(max-width:650px){
-  #homeView .rsvp-player-groups{grid-template-columns:1fr}
-  #homeView .rsvp-player-group{padding:10px 4px!important}
-  #homeView .rsvp-player-group+.rsvp-player-group{border-left:0!important;border-top:1px solid rgba(213,167,44,.32)!important}
-  #homeView .rsvp-stat+.rsvp-stat{border-left:1px solid rgba(16,42,59,.10)}
-}
-</style>
-
-
-<style id="home-responsive-v2721">
-/* v2.7.23: desktop + mobile responsive polish. Existing EllenG alligator logo assets/markup are untouched. */
-#homeView .home-hero{
-  border-radius:18px!important;
-  padding:22px 24px!important;
-  box-shadow:0 10px 26px rgba(8,37,59,.13)!important;
-}
-#homeView .home-hero h2{font-size:32px;line-height:1.05}
-#homeView .next-event-card{padding:18px 22px!important}
-#homeView .event-date-spotlight{display:flex;align-items:center;gap:14px}
-#homeView .countdown-date{font-size:clamp(21px,2.2vw,34px);font-weight:950;line-height:1.08}
-#homeView .rsvp-home-card{padding-top:18px!important;padding-bottom:18px!important}
-#homeView .rsvp-controls{justify-content:flex-end;align-items:center}
-#homeView .rsvp-player-groups{grid-template-columns:repeat(3,minmax(0,1fr));}
-#homeView .rsvp-player-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:18px;row-gap:4px}
-#homeView .rsvp-player-chip{white-space:normal}
-#homeView .player-essentials-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-top:16px}
-#homeView .player-essential-btn{border-radius:0!important;border-width:0 0 0 1px!important;background:transparent!important;min-height:72px!important}
-#homeView .player-essential-btn:first-child{border-left:0!important}
-#homeView .player-essential-btn span{font-size:26px}
-
-@media (min-width:761px){
-  #homeView .next-event-card>.row:first-child{align-items:center}
-  #homeView .rsvp-home-card>.row:first-child{align-items:flex-end}
-  #homeView .rsvp-summary{max-width:620px;margin-left:auto;margin-right:auto}
-}
-
-@media (max-width:760px){
-  #homeView>.card{margin-bottom:10px}
-  #homeView .home-hero{padding:16px!important;border-radius:14px!important}
-  #homeView .home-hero h2{font-size:25px!important;padding-right:34px}
-  #homeView .home-hero .row{gap:6px;overflow-x:auto;padding-bottom:2px;flex-wrap:nowrap}
-  #homeView .home-hero .badge{white-space:nowrap;font-size:10px}
-
-  #homeView .next-event-card{padding:15px!important;border-left-width:4px!important;border-radius:14px!important}
-  #homeView .next-event-card>.row:first-child{align-items:flex-start;gap:10px}
-  #homeView .next-event-card h2{font-size:25px}
-  #homeView .countdown-badge{flex:0 0 auto}
-  #homeView .event-date-spotlight{gap:10px;padding-top:11px}
-  #homeView .event-date-icon{font-size:25px}
-  #homeView .countdown-date{font-size:21px}
-
-  #homeView .rsvp-home-card{padding:14px 0!important}
-  #homeView .rsvp-home-card>.row:first-child{align-items:flex-start}
-  #homeView .rsvp-home-card>.row:first-child>.badge{display:none}
-  #homeView .rsvp-controls{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
-  #homeView .rsvp-btn{width:100%;min-height:44px;border-radius:10px}
-  #homeView .rsvp-summary{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:12px}
-  #homeView .rsvp-stat{padding:7px 3px}
-  #homeView .rsvp-stat strong{font-size:19px}
-  #homeView .rsvp-player-groups{grid-template-columns:1fr!important;padding-top:4px;margin-top:8px}
-  #homeView .rsvp-player-group{padding:12px 4px!important}
-  #homeView .rsvp-player-group+.rsvp-player-group{border-left:0!important;border-top:1px solid rgba(213,167,44,.32)!important}
-  #homeView .rsvp-player-list{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px}
-  #homeView .rsvp-player-chip{font-size:12px}
-
-  #homeView .player-essentials-card{padding:14px 0!important}
-  #homeView .player-essentials-card>.row:first-child>.badge{display:none}
-  #homeView .player-essentials-grid{grid-template-columns:1fr 1fr!important;gap:8px!important;margin-top:12px}
-  #homeView .player-essential-btn{border:1px solid rgba(16,42,59,.10)!important;border-radius:12px!important;background:rgba(255,255,255,.55)!important;min-height:68px!important}
-}
-
-@media (max-width:430px){
-  #homeView .home-hero h2{font-size:23px!important}
-  #homeView .next-event-card>.row:first-child{display:block}
-  #homeView .next-event-card .countdown-badge{display:inline-block;margin-top:9px}
-  #homeView .event-date-spotlight{align-items:flex-start}
-  #homeView .countdown-date{font-size:19px}
-  #homeView .rsvp-player-list{grid-template-columns:1fr}
-  #homeView .player-essentials-grid{grid-template-columns:1fr 1fr!important}
-}
-</style>
-
-
-<style id="home-flat-v2722">
-/* v2.7.23: intentionally flatter tournament-home layout. Branding and application logic are untouched. */
-
-/* Account and navigation read as clean page strips instead of floating cards. */
 #app > .card.row.between,
 #app > .top-tabs-card{
-  border-radius:0!important;
-  box-shadow:none!important;
-  border-left:0!important;
-  border-right:0!important;
-}
-#app > .card.row.between{
-  border-top:0!important;
-  border-bottom:1px solid rgba(213,167,44,.55)!important;
-}
-#app > .top-tabs-card{
-  border-top:0!important;
-  border-bottom:1px solid rgba(16,42,59,.16)!important;
-  padding-left:10px!important;
-  padding-right:10px!important;
+  border-radius:14px!important;
 }
 
-/* Keep the Tournament Hub introduction branded, but remove the floating-card silhouette. */
 #homeView .home-hero{
-  border-radius:4px!important;
-  box-shadow:none!important;
-  border-left:0!important;
-  border-right:0!important;
-  border-top:0!important;
-  border-bottom:3px solid var(--gold)!important;
+  border-radius:16px!important;
+  margin-bottom:10px!important;
 }
 
-/* Next EllenG Cup becomes an open section with simple divider lines. */
 #homeView .next-event-card{
   background:transparent!important;
-  color:#102a3b!important;
   border:0!important;
-  border-top:1px solid rgba(213,167,44,.55)!important;
-  border-bottom:1px solid rgba(16,42,59,.16)!important;
+  border-bottom:1px solid rgba(8,37,59,.16)!important;
   border-radius:0!important;
   box-shadow:none!important;
-  padding:18px 4px!important;
-}
-#homeView .next-event-card h2,
-#homeView .next-event-card .status{color:#102a3b!important}
-#homeView .next-event-card .premium-label{color:#9a7413!important}
-#homeView .next-event-card .countdown-badge{
-  background:transparent!important;
-  color:#08253b!important;
-  border:1px solid rgba(213,167,44,.70)!important;
-  box-shadow:none!important;
+  padding:13px 5px 20px!important;
+  margin-bottom:12px!important;
 }
 
-/* The tournament date is the one deliberate strong navy/gold highlight. */
 #homeView .event-date-spotlight{
-  margin-top:14px!important;
-  padding:13px 14px!important;
-  border-radius:10px!important;
-  background:#08253b!important;
-  color:#fff!important;
-  border:1px solid #d5a72c!important;
-  box-shadow:none!important;
+  border-radius:14px!important;
+  box-shadow:0 5px 14px rgba(8,37,59,.10)!important;
 }
-#homeView .event-date-label{color:#f0c75d!important}
-#homeView .countdown-date{color:#fff!important}
 
-/* RSVP sits directly on the page; status groups read like columns, not more cards. */
 #homeView .rsvp-home-card{
   background:transparent!important;
   border:0!important;
-  border-bottom:1px solid rgba(213,167,44,.42)!important;
+  border-bottom:1px solid rgba(8,37,59,.16)!important;
   border-radius:0!important;
   box-shadow:none!important;
-  padding:18px 4px!important;
+  padding:13px 5px 20px!important;
+  margin-bottom:12px!important;
 }
-#homeView .rsvp-stat,
-#homeView .rsvp-player-group{
-  background:transparent!important;
-  border-radius:0!important;
-  box-shadow:none!important;
-}
-#homeView .rsvp-stat + .rsvp-stat{border-left:1px solid rgba(16,42,59,.14)!important}
-#homeView .rsvp-player-group + .rsvp-player-group{border-left:1px solid rgba(213,167,44,.45)!important}
 
-/* Player Essentials uses open, separated columns instead of another large rectangle. */
+#homeView .rsvp-summary{
+  gap:0!important;
+  background:rgba(255,255,255,.54)!important;
+  border-radius:14px!important;
+  overflow:hidden!important;
+  border:1px solid rgba(8,37,59,.08)!important;
+}
+
+#homeView .rsvp-stat{
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  padding:12px 8px!important;
+}
+
+#homeView .rsvp-stat:not(:last-child){
+  border-right:1px solid rgba(8,37,59,.10)!important;
+}
+
+#homeView .rsvp-player-groups{
+  gap:0!important;
+  border-top:1px solid rgba(8,37,59,.10)!important;
+  margin-top:12px!important;
+}
+
+#homeView .rsvp-player-group{
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  padding:12px 14px!important;
+}
+
+#homeView .rsvp-player-group:not(:last-child){
+  border-right:1px solid rgba(8,37,59,.10)!important;
+}
+
 #homeView .player-essentials-card{
   background:transparent!important;
   border:0!important;
-  border-bottom:1px solid rgba(16,42,59,.14)!important;
+  border-left:0!important;
   border-radius:0!important;
   box-shadow:none!important;
-  padding:18px 4px!important;
-}
-#homeView .player-essential-btn{
-  background:transparent!important;
-  border-radius:0!important;
-  box-shadow:none!important;
-}
-@media (min-width:761px){
-  #homeView .player-essential-btn{
-    border:0!important;
-    border-left:1px solid rgba(16,42,59,.12)!important;
-  }
-  #homeView .player-essential-btn:first-child{border-left:0!important}
+  padding:13px 5px 18px!important;
+  margin-bottom:16px!important;
 }
 
-/* Mobile keeps the same flat hierarchy while remaining easy to tap. */
-@media (max-width:760px){
-  #app > .card.row.between,
-  #app > .top-tabs-card{border-radius:0!important}
-  #homeView .home-hero{border-radius:4px!important}
-  #homeView .next-event-card{border-radius:0!important;padding:15px 2px!important}
-  #homeView .event-date-spotlight{border-radius:9px!important;padding:12px!important}
+#homeView .player-essential-btn{
+  border-radius:12px!important;
+  box-shadow:0 2px 7px rgba(8,37,59,.05)!important;
+}
+
+@media(max-width:650px){
+  #homeView .home-hero{
+    border-radius:14px!important;
+  }
+
+  #homeView .next-event-card,
   #homeView .rsvp-home-card,
-  #homeView .player-essentials-card{padding-left:2px!important;padding-right:2px!important}
-  #homeView .player-essentials-grid{
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
-    gap:0!important;
+  #homeView .player-essentials-card{
+    padding-left:2px!important;
+    padding-right:2px!important;
   }
+
+  #homeView .event-date-spotlight{
+    border-radius:12px!important;
+  }
+
+  #homeView .rsvp-player-groups{
+    grid-template-columns:1fr!important;
+    border-top:1px solid rgba(8,37,59,.10)!important;
+  }
+
+  #homeView .rsvp-player-group{
+    padding:12px 4px!important;
+  }
+
+  #homeView .rsvp-player-group:not(:last-child){
+    border-right:0!important;
+    border-bottom:1px solid rgba(8,37,59,.10)!important;
+  }
+
   #homeView .player-essential-btn{
-    border:0!important;
-    border-top:1px solid rgba(16,42,59,.10)!important;
-    border-left:1px solid rgba(16,42,59,.10)!important;
-    border-radius:0!important;
-    background:transparent!important;
+    border-radius:12px!important;
   }
-  #homeView .player-essential-btn:nth-child(odd){border-left:0!important}
 }
 </style>
 
 
-<style id="next-event-contrast-v2723">
-/* v2.7.23: contrast-only fix for the Next EllenG Cup heading/course area. */
-#app #homeView .next-event-card .premium-label{color:#d5a72c!important;opacity:1!important}
-#app #homeView .next-event-card h2#nextEventName{color:#ffffff!important;opacity:1!important}
-#app #homeView .next-event-card #nextEventCourse.status{color:#e9eef2!important;opacity:1!important}
+<style id="home-final-override-v2725">
+/*
+  v2.7.28 — FINAL HOME OVERRIDE
+  Intentionally high-specificity selectors so older global !important card rules
+  cannot override the Home-page cleanup. CSS only.
+*/
+
+/* Keep these two top utility areas rounded, but slightly lighter. */
+body #app > .card.row.between,
+body #app > .card.top-tabs-card{
+  border-radius:14px!important;
+}
+
+/* Tournament Hub remains the single main hero card. */
+body #app #homeView > .card.home-hero{
+  background:linear-gradient(180deg,#fffdf8,#f7f2e8)!important;
+  border:1px solid rgba(213,167,44,.34)!important;
+  border-radius:18px!important;
+  box-shadow:0 7px 18px rgba(8,37,59,.08)!important;
+  padding:20px 22px!important;
+  margin-bottom:8px!important;
+}
+
+/* NEXT ELLENG CUP = open section, no outer card. */
+body #app #homeView > .card.next-event-card{
+  background:transparent!important;
+  color:var(--eg-ink)!important;
+  border:0!important;
+  border-bottom:1px solid rgba(8,37,59,.18)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:17px 4px 22px!important;
+  margin:0 0 10px!important;
+}
+body #app #homeView > .card.next-event-card h1,
+body #app #homeView > .card.next-event-card h2,
+body #app #homeView > .card.next-event-card h3,
+body #app #homeView > .card.next-event-card strong{
+  color:var(--eg-ink)!important;
+}
+body #app #homeView > .card.next-event-card .status{
+  color:#667782!important;
+}
+
+/* Keep Tournament Date as the one purposeful dark highlight. */
+body #app #homeView .next-event-card .event-date-spotlight{
+  background:linear-gradient(135deg,#08253b,#0b3550)!important;
+  color:#fff!important;
+  border:1px solid rgba(213,167,44,.58)!important;
+  border-radius:14px!important;
+  box-shadow:0 6px 16px rgba(8,37,59,.12)!important;
+  padding:14px 16px!important;
+}
+body #app #homeView .next-event-card .event-date-spotlight *{
+  color:#fff!important;
+}
+
+/* RSVP = open section, no large cream rectangle. */
+body #app #homeView > .card.rsvp-home-card{
+  background:transparent!important;
+  color:var(--eg-ink)!important;
+  border:0!important;
+  border-bottom:1px solid rgba(8,37,59,.18)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:17px 4px 22px!important;
+  margin:0 0 10px!important;
+}
+body #app #homeView > .card.rsvp-home-card h1,
+body #app #homeView > .card.rsvp-home-card h2,
+body #app #homeView > .card.rsvp-home-card h3,
+body #app #homeView > .card.rsvp-home-card strong{
+  color:var(--eg-ink)!important;
+}
+body #app #homeView > .card.rsvp-home-card .status{
+  color:#667782!important;
+}
+
+/* Three totals share one clean strip instead of three separate cards. */
+body #app #homeView .rsvp-home-card .rsvp-summary{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:0!important;
+  background:rgba(255,255,255,.48)!important;
+  border:1px solid rgba(8,37,59,.09)!important;
+  border-radius:14px!important;
+  overflow:hidden!important;
+}
+body #app #homeView .rsvp-home-card .rsvp-stat{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:12px 10px!important;
+}
+body #app #homeView .rsvp-home-card .rsvp-stat + .rsvp-stat{
+  border-left:1px solid rgba(8,37,59,.10)!important;
+}
+
+/* RSVP player lists are open columns with divider lines. */
+body #app #homeView .rsvp-home-card .rsvp-player-groups{
+  gap:0!important;
+  margin-top:12px!important;
+  border-top:1px solid rgba(8,37,59,.10)!important;
+}
+body #app #homeView .rsvp-home-card .rsvp-player-group{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:12px 14px!important;
+}
+body #app #homeView .rsvp-home-card .rsvp-player-group + .rsvp-player-group{
+  border-left:1px solid rgba(8,37,59,.10)!important;
+}
+body #app #homeView .rsvp-home-card .rsvp-player-chip{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+
+/* Player Essentials = open section, while the four action buttons remain rounded. */
+body #app #homeView > .card.player-essentials-card{
+  background:transparent!important;
+  color:var(--eg-ink)!important;
+  border:0!important;
+  border-bottom:1px solid rgba(8,37,59,.18)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:17px 4px 22px!important;
+  margin:0 0 12px!important;
+}
+body #app #homeView > .card.player-essentials-card h1,
+body #app #homeView > .card.player-essentials-card h2,
+body #app #homeView > .card.player-essentials-card h3,
+body #app #homeView > .card.player-essentials-card strong{
+  color:var(--eg-ink)!important;
+}
+body #app #homeView > .card.player-essentials-card .status{
+  color:#667782!important;
+}
+body #app #homeView .player-essentials-card .player-essential-btn{
+  border:1px solid rgba(8,37,59,.10)!important;
+  border-radius:12px!important;
+  background:rgba(255,255,255,.58)!important;
+  box-shadow:0 2px 7px rgba(8,37,59,.05)!important;
+}
+
+/* Keep first below-the-fold highlight from immediately returning to the stacked-card feel. */
+body #app #homeView > .card.leader-spotlight-card{
+  margin-top:12px!important;
+}
+
+@media(max-width:650px){
+  body #app #homeView > .card.home-hero{
+    border-radius:15px!important;
+    padding:17px 15px!important;
+  }
+
+  body #app #homeView > .card.next-event-card,
+  body #app #homeView > .card.rsvp-home-card,
+  body #app #homeView > .card.player-essentials-card{
+    padding-left:1px!important;
+    padding-right:1px!important;
+  }
+
+  body #app #homeView .next-event-card .event-date-spotlight{
+    border-radius:12px!important;
+    padding:13px 14px!important;
+  }
+
+  body #app #homeView .rsvp-home-card .rsvp-player-groups{
+    grid-template-columns:1fr!important;
+  }
+
+  body #app #homeView .rsvp-home-card .rsvp-player-group + .rsvp-player-group{
+    border-left:0!important;
+    border-top:1px solid rgba(8,37,59,.10)!important;
+  }
+
+  body #app #homeView .player-essentials-card .player-essentials-grid{
+    grid-template-columns:1fr 1fr!important;
+    gap:8px!important;
+  }
+}
+</style>
+
+
+<style id="home-contrast-v2726">
+/* v2.7.28 — Home contrast fix only. Layout and app logic unchanged. */
+
+/* RSVP section typography on the dark page background. */
+body #app #homeView > .card.rsvp-home-card > .premium-label,
+body #app #homeView > .card.rsvp-home-card .premium-label{
+  color:#d5a72c!important;
+}
+
+body #app #homeView > .card.rsvp-home-card h1,
+body #app #homeView > .card.rsvp-home-card h2,
+body #app #homeView > .card.rsvp-home-card h3{
+  color:#ffffff!important;
+}
+
+body #app #homeView > .card.rsvp-home-card .status,
+body #app #homeView > .card.rsvp-home-card .muted,
+body #app #homeView > .card.rsvp-home-card p{
+  color:rgba(255,255,255,.76)!important;
+}
+
+/* Player Essentials typography on the dark page background. */
+body #app #homeView > .card.player-essentials-card > .premium-label,
+body #app #homeView > .card.player-essentials-card .premium-label{
+  color:#d5a72c!important;
+}
+
+body #app #homeView > .card.player-essentials-card h1,
+body #app #homeView > .card.player-essentials-card h2,
+body #app #homeView > .card.player-essentials-card h3{
+  color:#ffffff!important;
+}
+
+body #app #homeView > .card.player-essentials-card .status,
+body #app #homeView > .card.player-essentials-card .muted,
+body #app #homeView > .card.player-essentials-card p{
+  color:rgba(255,255,255,.76)!important;
+}
+
+/* Keep white cards/buttons readable. */
+body #app #homeView .rsvp-home-card .rsvp-summary,
+body #app #homeView .rsvp-home-card .rsvp-summary *,
+body #app #homeView .rsvp-home-card .rsvp-player-groups,
+body #app #homeView .rsvp-home-card .rsvp-player-groups *,
+body #app #homeView .player-essentials-card .player-essential-btn,
+body #app #homeView .player-essentials-card .player-essential-btn *{
+  color:#102a3b!important;
+}
+
+/* Preserve gold utility badges. */
+body #app #homeView .rsvp-home-card .badge,
+body #app #homeView .rsvp-home-card .pill,
+body #app #homeView .player-essentials-card .badge,
+body #app #homeView .player-essentials-card .pill{
+  color:#d5a72c!important;
+}
+</style>
+
+
+<style id="next-event-contrast-v2727">
+/* v2.7.28 — Fix remaining Next EllenG Cup contrast only. No layout or logic changes. */
+
+body #app #homeView > .card.next-event-card #nextEventName{
+  color:#ffffff!important;
+}
+
+body #app #homeView > .card.next-event-card #nextEventCourse{
+  color:rgba(255,255,255,.74)!important;
+}
+
+body #app #homeView > .card.next-event-card .premium-label{
+  color:#d5a72c!important;
+}
+</style>
+
+
+<style id="next-event-final-contrast-v2728">
+/* v2.7.28 — Restore correct dark/open Home baseline and fix ONLY Next EllenG Cup text contrast. */
+
+html body #app #homeView .next-event-card .premium-label{
+  color:#d5a72c!important;
+  opacity:1!important;
+}
+
+html body #app #homeView .next-event-card #nextEventName{
+  color:#ffffff!important;
+  opacity:1!important;
+  -webkit-text-fill-color:#ffffff!important;
+}
+
+html body #app #homeView .next-event-card #nextEventCourse{
+  color:rgba(255,255,255,.78)!important;
+  opacity:1!important;
+  -webkit-text-fill-color:rgba(255,255,255,.78)!important;
+}
 </style>
 
 </head>
@@ -1824,7 +1943,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.23</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.28</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2285,7 +2404,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.23 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.28 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -3146,22 +3265,21 @@ function renderRsvp(){
  const mine=user?rsvps.find(r=>r.user_id===user.id):null;
  controls.innerHTML=user&&Number.isInteger(currentGolferIndex)?["playing","maybe","out","clear"].map(s=>`<button class="rsvp-btn ${mine?.status===s?"active":""}" type="button" data-rsvp="${s}">${s==="playing"?"✅ Playing":s==="maybe"?"🤔 Maybe":s==="out"?"❌ Out":"↺ Clear RSVP"}</button>`).join(""):'<div class="note">Sign in with a linked player account to RSVP.</div>';
  controls.querySelectorAll("[data-rsvp]").forEach(b=>b.addEventListener("click",()=>setMyRsvp(b.dataset.rsvp)));
- const groups={playing:[],maybe:[],out:[]};
+ const counts={playing:0,maybe:0,out:0},groups={playing:[],maybe:[],out:[]};
+ const lastNameKey=name=>{const parts=String(name||"").trim().split(/\s+/).filter(Boolean);return `${(parts[parts.length-1]||"").toLowerCase()}|${String(name||"").toLowerCase()}`};
  (rsvps||[]).forEach(r=>{
-   if(!groups[r.status])return;
-   const gi=Number(r.golfer_index),g=Number.isInteger(gi)?draftState?.golfers?.[gi]:null;
-   const name=String(g?.name||"").trim();
+   if(counts[r.status]===undefined)return;
+   counts[r.status]++;
+   const raw=r.golfer_index,gi=(raw===null||raw===undefined||raw==="")?NaN:Number(raw);
+   const g=Number.isInteger(gi)?draftState?.golfers?.[gi]:null,name=String(g?.name||"").trim();
    if(name)groups[r.status].push(name);
  });
- Object.values(groups).forEach(list=>list.sort((a,b)=>playerLastNameSortKey(a).localeCompare(playerLastNameSortKey(b))||a.localeCompare(b)));
- const counts={playing:groups.playing.length,maybe:groups.maybe.length,out:groups.out.length};
+ Object.values(groups).forEach(list=>list.sort((a,b)=>lastNameKey(a).localeCompare(lastNameKey(b))));
  const chips=list=>list.length?list.map(name=>`<span class="rsvp-player-chip">${esc(name)}</span>`).join(""):'<span class="rsvp-player-empty">No players yet</span>';
  summary.innerHTML=`<div class="rsvp-stat"><strong>${counts.playing}</strong><span>PLAYING</span></div><div class="rsvp-stat"><strong>${counts.maybe}</strong><span>MAYBE</span></div><div class="rsvp-stat"><strong>${counts.out}</strong><span>OUT</span></div>`+
- `<div class="rsvp-player-groups" style="grid-column:1/-1">`+
- `<div class="rsvp-player-group playing"><div class="rsvp-player-group-head"><span>✅ Playing</span><span>${counts.playing}</span></div><div class="rsvp-player-list">${chips(groups.playing)}</div></div>`+
+ `<div class="rsvp-player-groups"><div class="rsvp-player-group playing"><div class="rsvp-player-group-head"><span>✅ Playing</span><span>${counts.playing}</span></div><div class="rsvp-player-list">${chips(groups.playing)}</div></div>`+
  `<div class="rsvp-player-group maybe"><div class="rsvp-player-group-head"><span>🤔 Maybe</span><span>${counts.maybe}</span></div><div class="rsvp-player-list">${chips(groups.maybe)}</div></div>`+
- `<div class="rsvp-player-group out"><div class="rsvp-player-group-head"><span>❌ Out</span><span>${counts.out}</span></div><div class="rsvp-player-list">${chips(groups.out)}</div></div>`+
- `</div>`;
+ `<div class="rsvp-player-group out"><div class="rsvp-player-group-head"><span>❌ Out</span><span>${counts.out}</span></div><div class="rsvp-player-list">${chips(groups.out)}</div></div></div>`;
 }
 function formatTeeTime(v){if(!v)return "—";const [h,m]=String(v).split(":").map(Number),d=new Date();d.setHours(h,m||0,0,0);return d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}
 function renderGroupAssignments(){
@@ -4419,7 +4537,6 @@ function subscribeLive(){
  if(user)liveChannel=liveChannel
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_player_hole_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e)}})
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_pair_hole_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e)}})
-  .on("postgres_changes",{event:"*",schema:"public",table:"elleng_rsvps",filter:`draft_id=eq.${DRAFT_ID}`},async()=>{try{await loadRsvps();renderRsvp()}catch(e){console.error(e)}})
   .on("postgres_changes",{event:"UPDATE",schema:"public",table:"elleng_tournaments",filter:`id=eq.${TOURNAMENT_ID}`},async p=>{tournament=p.new;renderAll()});
  liveChannel.subscribe();
 }
