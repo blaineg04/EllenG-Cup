@@ -1,18 +1,26 @@
-EllenG Cup v2.7.7 FULL RECOVERY
+EllenG Cup v2.7.8 CLEAN VERIFIED RECOVERY
 
-Baseline restored from v2.7.6 Team Card Color Cleanup.
+SOURCE:
+Built directly from the saved EllenG Cup v2.7.6 Team Card Color Cleanup baseline,
+not from the accidentally reverted v2.1.0 scoring file.
 
-Preserved:
-- v2.7.0 visual standard/mobile pass
-- v2.7.1 off-white content theme
-- v2.7.2 clean hub background
-- v2.7.3 off-white Draft/Captain fix
-- v2.7.4 Clubhouse weather/auth navigation
-- v2.7.5 cache/login navigation fix
-- v2.7.6 team card color cleanup
+RESTORED / PRESERVED:
+- Newer "Sign In to EllenG Cup" login flow
+- Main Menu / hub return path
+- Auth-aware navigation
+- Live scoring, player/captain/commissioner roles
+- Draft and Captain pages
+- Off-white / navy / gold visual system
+- Clubhouse and Weather & Wind section
+- Team-card cleanup
+- v2.7.5 auth/cache navigation fixes
+- Captain Sign In readability
+- Off-white Captain roster slots
+- Clubhouse label color consistency
 
-Additional recovery fixes:
-- Clubhouse label color matches Tournament Conditions label
-- Captain Sign In card is off-white with readable navy heading/text
-- Captain roster slots are locked to off-white/navy scheme
-- Cache/version advanced to v2.7.7 to prevent stale older pages from persisting
+CACHE:
+Version and service worker advanced to v2.7.8 to force phones away from stale v2.1.0 pages.
+
+IMPORTANT:
+This package replaces the app code files only. Keep existing site media assets such as
+gator.png, course photos, and the growl WAV already in the repository.

@@ -1,14 +1,756 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EllenG Cup Captain Draft</title><link rel="stylesheet" href="style.css"></head><body>
-<div class="top"><img src="gator.jpeg"><div><h1>EllenG Cup — Captain Draft</h1><div>Live Team Selection</div></div><div style="margin-left:auto" id="connection">CONNECTING</div></div>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EllenG Cup Captain Draft</title><link rel="stylesheet" href="style.css"><style>
+.top{background:linear-gradient(90deg,#08253b 0%,#08253b 68%,#0b304b 100%)!important;color:white!important;padding:14px 16px!important;border-bottom:4px solid #d5a72c!important;overflow:hidden!important;display:block!important}
+.brand{max-width:1100px;margin:auto;display:flex;align-items:center;gap:18px;min-height:92px;position:relative}
+.brand img{width:150px!important;height:92px!important;object-fit:contain!important;object-position:left center!important;border:0!important;border-radius:0!important;background:transparent!important;padding:0!important;box-shadow:none!important;filter:drop-shadow(0 6px 10px rgba(0,0,0,.22))!important;flex:0 0 auto}
+.brand h1{margin:0;font-size:27px;line-height:1.05}.brand p{margin:6px 0 0;opacity:.86;font-size:13px;letter-spacing:.02em}
+@media(max-width:560px){.top{padding:10px 10px 11px!important}.brand{gap:10px;min-height:76px}.brand img{width:112px!important;height:76px!important}.brand h1{font-size:22px}}
+
+}
+
+.main-menu-link{padding:8px 11px;font-size:12px}}
+
+
+.auth-boot{
+  min-height:calc(100vh - 20px);display:grid;place-items:center;text-align:center;
+  background:linear-gradient(160deg,#061824,#0a2b42 58%,#071e2f);color:#fff;padding:24px
+}
+.auth-boot.hidden{display:none}
+.auth-boot-inner{display:grid;gap:10px;justify-items:center}
+.auth-boot-logo{width:92px;height:92px;object-fit:contain}
+.auth-boot strong{font-size:20px}
+.auth-boot span{font-size:13px;opacity:.75}
+
+.global-main-menu-bar{
+  position:relative;
+  z-index:20;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:12px 16px 8px;
+  background:transparent;
+  border:0;
+  min-height:auto;
+}
+
+.global-main-menu-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:150px;
+  min-height:40px;
+  background:#08253b;
+  color:#fff!important;
+  border:2px solid #d5a72c;
+  border-radius:999px;
+  padding:8px 18px;
+  font-weight:950;
+  text-decoration:none;
+  box-shadow:0 5px 13px rgba(0,0,0,.12);
+  font-size:14px;
+  line-height:1;
+}
+
+/* v2.6.2 unified EllenG premium navy/gold theme */
+:root{
+  --eg-navy:#061b2b;
+  --eg-navy2:#0a2b42;
+  --eg-panel:#0b2437;
+  --eg-panel2:#0d3048;
+  --eg-gold:#d5a72c;
+  --eg-gold2:#f0c75d;
+  --eg-cream:#f7f2e8;
+  --eg-text:#f4f6f7;
+  --eg-muted:#bdc9d0;
+  --eg-line:rgba(213,167,44,.48);
+}
+body{
+  background:
+    radial-gradient(circle at 50% -15%,rgba(213,167,44,.12),transparent 32%),
+    linear-gradient(160deg,var(--eg-navy),#08263a 55%,#061824)!important;
+  color:var(--eg-text)!important;
+}
+.card,.panel,.box,.section,.team,.team-card,.score-card,.profile-card{
+  background:linear-gradient(180deg,rgba(13,48,72,.96),rgba(8,35,54,.98))!important;
+  border:1px solid var(--eg-line)!important;
+  color:var(--eg-text)!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.18)!important;
+}
+h1,h2,h3,h4,strong,label,.title,.team-title{
+  color:var(--eg-text)!important;
+}
+p,.muted,.sub,.subtitle,.meta,.status,.note,small{
+  color:var(--eg-muted)!important;
+}
+input,select,textarea{
+  background:#f6f7f8!important;
+  color:#0a2b42!important;
+  border:1px solid #bccbd2!important;
+}
+button,.btn{
+  border-radius:12px!important;
+  font-weight:900!important;
+}
+button.primary,.primary,.btn-primary{
+  background:var(--eg-gold)!important;
+  color:#102535!important;
+  border-color:var(--eg-gold)!important;
+}
+button.secondary,.secondary,.btn-secondary{
+  background:#173b53!important;
+  color:#fff!important;
+  border:1px solid rgba(255,255,255,.18)!important;
+}
+.badge,.pill,.chip{
+  background:#173b53!important;
+  color:#f3cf6d!important;
+  border:1px solid rgba(213,167,44,.32)!important;
+}
+a{color:#f0c75d}
+table,th,td{border-color:rgba(255,255,255,.09)!important}
+th{color:#f1ca61!important}
+hr{border-color:rgba(213,167,44,.24)!important}
+
+header,.hero,.topbar{
+  background:linear-gradient(180deg,#061b2b,#0a2b42)!important;
+  color:#fff!important;
+  border-bottom:3px solid #d5a72c!important;
+}
+.global-main-menu-bar{background:transparent!important}
+.global-main-menu-btn{
+  background:#0b2437!important;color:#fff!important;border:2px solid #d5a72c!important
+}
+#login,#app,.captain-card,.draft-card{
+  background:linear-gradient(180deg,rgba(13,48,72,.97),rgba(8,35,54,.98))!important;
+  border-color:rgba(213,167,44,.48)!important;
+}
+
+/* v2.6.5 readability fix for draft/captain clock card */
+.bar{
+  display:flex!important;
+  justify-content:space-between!important;
+  align-items:center!important;
+  gap:18px!important;
+  background:linear-gradient(180deg,#f7f2e8,#efe7d7)!important;
+  border:1px solid rgba(10,43,66,.10)!important;
+  border-radius:24px!important;
+  padding:22px 26px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45)!important;
+}
+.bar strong,
+.bar #onclock,
+.bar #clock{
+  color:#08253b!important;
+  text-shadow:none!important;
+}
+#onclock{
+  display:block;
+  font-size:clamp(24px,4.4vw,34px)!important;
+  line-height:1.05!important;
+  font-weight:950!important;
+  margin-bottom:6px!important;
+}
+#meta,
+#clocktxt,
+.bar .muted{
+  color:#667786!important;
+  font-weight:700!important;
+}
+#clock{
+  font-size:clamp(34px,6vw,54px)!important;
+  line-height:1!important;
+  font-weight:950!important;
+  min-width:120px;
+}
+#clocktxt{
+  letter-spacing:.04em!important;
+}
+#notice{
+  margin-top:18px!important;
+  padding:16px 18px!important;
+  border-radius:16px!important;
+  background:rgba(255,255,255,.06)!important;
+  border:1px solid rgba(213,167,44,.26)!important;
+  color:#f4f6f7!important;
+  font-size:18px!important;
+  line-height:1.4!important;
+}
+@media(max-width:640px){
+  .bar{padding:18px 18px!important;align-items:flex-start!important}
+  #clock{min-width:auto}
+}
+
+
+/* EllenG Cup v2.7.0 shared visual system + mobile pass */
+:root{
+  --eg-navy:#061b2b;--eg-navy-2:#0a2b42;--eg-panel:#0c2b40;--eg-panel-2:#12384f;
+  --eg-gold:#d5a72c;--eg-gold-2:#f0c75d;--eg-cream:#f7f2e8;--eg-paper:#fbfaf6;
+  --eg-ink:#102a3b;--eg-muted:#6e7e89;--eg-line:rgba(213,167,44,.42);--eg-radius:18px;
+}
+html{-webkit-text-size-adjust:100%;background:var(--eg-navy)}
+body{min-height:100dvh;margin:0;background:radial-gradient(circle at 50% -10%,rgba(213,167,44,.12),transparent 30%),linear-gradient(160deg,var(--eg-navy),#08263a 55%,#061824)!important}
+.top{background:linear-gradient(90deg,#061b2b 0%,#082941 70%,#0b304b 100%)!important;border-bottom:4px solid var(--eg-gold)!important;padding:calc(12px + env(safe-area-inset-top)) 16px 13px!important;overflow:visible!important}
+.top .brand,.brand{max-width:1100px!important;margin:0 auto!important;min-height:78px!important;display:flex!important;align-items:center!important;gap:16px!important}
+.top .brand img,.brand img{width:118px!important;height:78px!important;object-fit:contain!important;object-position:left center!important;border:0!important;border-radius:0!important;background:transparent!important;padding:0!important;box-shadow:none!important;filter:drop-shadow(0 5px 9px rgba(0,0,0,.22))!important;flex:0 0 auto!important}
+.top .brand h1,.brand h1{margin:0!important;color:var(--eg-gold-2)!important;font-family:Georgia,"Times New Roman",serif!important;font-size:clamp(30px,5vw,43px)!important;line-height:1!important;font-weight:900!important;letter-spacing:.01em!important;text-shadow:0 2px 0 #70531a!important;-webkit-text-stroke:0!important}
+.top .brand p,.brand p{margin:7px 0 0!important;color:#f4f6f7!important;font-size:13px!important;font-weight:700!important;letter-spacing:.07em!important;line-height:1.25!important}
+.global-main-menu-bar{position:relative!important;top:auto!important;left:auto!important;bottom:auto!important;z-index:50!important;width:100%!important;display:flex!important;justify-content:center!important;align-items:center!important;padding:11px 14px 5px!important;background:transparent!important;border:0!important;box-sizing:border-box!important}
+.global-main-menu-bar.hidden{display:none!important}
+.global-main-menu-btn{min-width:154px!important;min-height:44px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#0b2437!important;color:#fff!important;border:2px solid var(--eg-gold)!important;border-radius:999px!important;padding:9px 18px!important;font-size:14px!important;line-height:1!important;font-weight:950!important;text-decoration:none!important;box-shadow:0 5px 13px rgba(0,0,0,.15)!important}
+.wrap{max-width:1100px!important;margin:0 auto!important;padding:14px!important;box-sizing:border-box!important}
+.card,.panel,.box,.section,.admin-card,.editor-card,.team,.team-card,.score-card,.profile-card{border-radius:var(--eg-radius)!important}
+.card{margin-bottom:14px!important;box-shadow:0 9px 24px rgba(0,0,0,.16)!important}
+input,select,textarea{min-height:46px!important;border-radius:11px!important;padding:10px 12px!important;box-sizing:border-box!important;font-size:16px!important;line-height:1.2!important}
+textarea{min-height:92px!important}
+button,.btn,a.primary,a.secondary{min-height:44px;border-radius:11px!important;padding:10px 14px!important;font-size:15px;font-weight:900!important;touch-action:manipulation}
+button:disabled{opacity:.45!important}
+.course-table-wrap,.scorecard-wrap,[style*="overflow:auto"]{-webkit-overflow-scrolling:touch}
+table{font-size:14px}
+th,td{padding:10px 9px!important}
+h1,h2,h3{line-height:1.12}
+h2{font-size:clamp(24px,4.8vw,32px)}
+h3{font-size:clamp(19px,4vw,24px)}
+.note,.status,.muted,.section-sub{line-height:1.45!important}
+@media(max-width:640px){
+  body{overflow-x:hidden!important}
+  .top{padding:calc(9px + env(safe-area-inset-top)) 12px 11px!important}
+  .top .brand,.brand{min-height:68px!important;gap:10px!important}
+  .top .brand img,.brand img{width:88px!important;height:64px!important}
+  .top .brand h1,.brand h1{font-size:30px!important}
+  .top .brand p,.brand p{font-size:11px!important;letter-spacing:.035em!important;margin-top:5px!important}
+  .global-main-menu-bar{padding:9px 10px 3px!important}
+  .global-main-menu-btn{min-height:42px!important;min-width:148px!important;font-size:13px!important}
+  .wrap{padding:10px!important}.card{padding:13px!important;margin-bottom:11px!important}
+  button,.btn,a.primary,a.secondary{min-height:46px!important}
+  .row{gap:8px!important}.tabs{gap:6px!important;padding-bottom:5px!important}.tab{min-height:42px!important;padding:9px 11px!important}
+  table{font-size:13px!important}
+}
+
+body{padding-bottom:calc(24px + env(safe-area-inset-bottom))!important}
+.card,.team{background:linear-gradient(180deg,rgba(13,48,72,.98),rgba(8,35,54,.99))!important;border:1px solid rgba(213,167,44,.46)!important;color:#f4f6f7!important}
+.card h1,.card h2,.card h3,.card strong,.team strong{color:#f4f6f7!important}
+.card .muted,.team .muted{color:#bdc9d0!important}
+.teamhead{background:#081f31!important;color:#fff!important;border-bottom:1px solid rgba(213,167,44,.28)!important}
+.slot,.roster-slot,.player{background:#0f3148!important;color:#e7edf0!important;border-color:rgba(255,255,255,.08)!important}
+.badge{background:#173b53!important;color:#f3cf6d!important;border:1px solid rgba(213,167,44,.30)!important}
+button.gold,.gold{background:var(--eg-gold)!important;color:#102535!important;border-color:var(--eg-gold)!important}
+.bar{display:flex!important;justify-content:space-between!important;align-items:center!important;gap:18px!important;background:linear-gradient(180deg,#fffdf8,#f0e9da)!important;border:1px solid rgba(213,167,44,.32)!important;border-radius:18px!important;padding:20px 22px!important}
+.bar #onclock,.bar strong,#clock{color:#08253b!important;text-shadow:none!important}
+#onclock{font-size:clamp(22px,4.2vw,32px)!important;line-height:1.05!important;font-weight:950!important}
+#clock{font-size:clamp(36px,6vw,54px)!important;line-height:1!important;font-weight:950!important;min-width:112px!important}
+#meta,#clocktxt,.bar .muted{color:#667786!important;font-weight:700!important}
+#notice{margin-top:14px!important;padding:14px 16px!important;border-radius:14px!important;background:rgba(255,255,255,.06)!important;border:1px solid rgba(213,167,44,.25)!important;color:#f4f6f7!important;font-size:16px!important;line-height:1.4!important}
+.draft-status-strip,#connection{font-weight:900!important;letter-spacing:.02em!important}
+@media(max-width:640px){
+  .bar{padding:16px!important;gap:10px!important}
+  #onclock{font-size:20px!important}#meta{font-size:13px!important}#clock{font-size:38px!important;min-width:90px!important}#clocktxt{font-size:11px!important}
+  #notice{font-size:15px!important;padding:12px 13px!important}
+  .player{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:7px!important;align-items:center!important}
+  .player button{grid-column:1/-1!important;width:100%!important}
+}
+
+/* =========================================================
+   v2.7.1 — off-white content / navy text / gold accents
+   ========================================================= */
+:root{
+  --eg-offwhite:#fbf8f1;
+  --eg-offwhite-2:#f4efe5;
+  --eg-navy:#061b2b;
+  --eg-navy-2:#0a2b42;
+  --eg-ink:#102a3b;
+  --eg-muted:#6d7d87;
+  --eg-gold:#d5a72c;
+  --eg-gold-soft:rgba(213,167,44,.34);
+}
+
+/* Keep the outer shell dark and premium */
+body{
+  background:
+    radial-gradient(circle at 50% -12%,rgba(213,167,44,.10),transparent 30%),
+    linear-gradient(160deg,#061b2b,#08263a 55%,#061824)!important;
+}
+
+/* Universal content surfaces */
+.card,
+.panel,
+.box,
+.section,
+.team,
+.team-card,
+.score-card,
+.profile-card,
+.home-tile,
+.leader-row,
+.self-score-box,
+.more-sheet,
+.player-team-head,
+.mobile-hole-guide,
+.mobile-hole-guide .guide-item,
+.pulse-item,
+.admin-card,
+.editor-card{
+  background:linear-gradient(180deg,var(--eg-offwhite),var(--eg-offwhite-2))!important;
+  color:var(--eg-ink)!important;
+  border:1px solid var(--eg-gold-soft)!important;
+  box-shadow:0 9px 24px rgba(0,0,0,.14)!important;
+}
+
+/* Navy writing across light content */
+.card h1,.card h2,.card h3,.card h4,.card strong,.card label,
+.panel h1,.panel h2,.panel h3,.panel strong,
+.team h1,.team h2,.team h3,.team strong,
+.team-card strong,.score-card strong,.profile-card strong,
+.home-tile strong,.leader-row strong,.self-score-box strong,
+.player-team-head strong,.mobile-hole-guide strong,
+.admin-card h1,.admin-card h2,.admin-card h3,.admin-card strong,
+.editor-card h1,.editor-card h2,.editor-card h3,.editor-card strong{
+  color:var(--eg-ink)!important;
+}
+.card p,.card small,.card .muted,.card .note,.card .status,
+.panel p,.panel .muted,.team .muted,.team-card .muted,
+.profile-card .muted,.home-tile .status,.leader-row .status,
+.self-score-box small,.player-team-head .muted,.mobile-hole-guide .muted,
+.admin-card .muted,.editor-card .muted{
+  color:var(--eg-muted)!important;
+}
+
+/* Gold section labels and badges */
+.badge,.pill,.chip{
+  background:#0e3148!important;
+  color:#f0c75d!important;
+  border:1px solid rgba(213,167,44,.40)!important;
+}
+
+/* Team headers stay navy, body goes off-white */
+.teamhead,
+.team .head{
+  background:linear-gradient(90deg,#061b2b,#0a2b42)!important;
+  color:#fff!important;
+  border-bottom:2px solid var(--eg-gold)!important;
+}
+.teamhead strong,.team .head strong{
+  color:#fff!important;
+}
+.teamhead .muted,.team .head .muted{
+  color:#d3dde2!important;
+}
+.slot,.roster-slot,.player{
+  background:#fffdfa!important;
+  color:var(--eg-ink)!important;
+  border-color:#e2d8c3!important;
+}
+.slot strong,.roster-slot strong,.player strong{color:var(--eg-ink)!important}
+.slot .muted,.roster-slot .muted,.player .muted{color:var(--eg-muted)!important}
+
+/* Draft / captain clock card */
+.bar{
+  background:linear-gradient(180deg,#fffdfa,#f3ecdf)!important;
+  border:1px solid rgba(213,167,44,.42)!important;
+}
+.bar strong,.bar #onclock,#clock{
+  color:#08253b!important;
+}
+#meta,#clocktxt,.bar .muted{
+  color:#667786!important;
+}
+#notice{
+  background:#fffdfa!important;
+  color:#17384d!important;
+  border:1px solid rgba(213,167,44,.34)!important;
+}
+
+/* Available golfer / tables */
+table{
+  background:transparent!important;
+  color:var(--eg-ink)!important;
+}
+thead th{
+  background:#0b2b42!important;
+  color:#f0c75d!important;
+}
+tbody td{
+  color:var(--eg-ink)!important;
+  background:#fffdfa!important;
+}
+tbody tr:nth-child(even) td{
+  background:#f7f2e8!important;
+}
+
+/* Forms */
+input,select,textarea{
+  background:#fff!important;
+  color:var(--eg-ink)!important;
+  border:1px solid #bcc8ce!important;
+}
+input:disabled,select:disabled,textarea:disabled{
+  background:#eef1f2!important;
+  color:#6e7c84!important;
+}
+
+/* Buttons */
+button.primary,.primary{
+  background:#078746!important;
+  color:#fff!important;
+  border-color:#078746!important;
+}
+button.secondary,.secondary{
+  background:#e8edef!important;
+  color:#17384d!important;
+  border:1px solid #d0d9dd!important;
+}
+button.gold,.gold{
+  background:var(--eg-gold)!important;
+  color:#102535!important;
+  border-color:var(--eg-gold)!important;
+}
+button.danger,.danger{
+  background:#8e2734!important;
+  color:#fff!important;
+}
+
+/* Off-white commissioner/setup sections too */
+.setup-grid > div,
+.admin-grid > div,
+.control-room-grid > div,
+.awards-grid > div,
+.summary-grid > div{
+  background:linear-gradient(180deg,#fffdfa,#f4efe5)!important;
+  color:var(--eg-ink)!important;
+  border-color:rgba(213,167,44,.30)!important;
+}
+
+/* Keep outer navigation/header dark */
+.top,
+.mobile-bottom-nav,
+.global-main-menu-btn{
+  background-color:#061b2b!important;
+}
+.mobile-bottom-nav{
+  border-top:1px solid rgba(213,167,44,.55)!important;
+}
+.mobile-nav-btn{color:#b6c2c8!important}
+.mobile-nav-btn.active{
+  color:#f0c75d!important;
+  background:rgba(213,167,44,.10)!important;
+}
+
+/* Main menu / hub stays dark-premium; only content pages go light */
+.app-hub-card,
+.tour-hub-card,
+.app-hub-btn,
+.tour-card{
+  color:#fff!important;
+}
+.tour-hub-card h1,.tour-copy strong,.tour-copy em,.tour-hub-card .app-hub-sub{
+  color:inherit!important;
+}
+
+/* Mobile spacing */
+@media(max-width:640px){
+  .card,.panel,.box,.section,.team,.team-card,.score-card,.profile-card{
+    border-radius:16px!important;
+  }
+  .slot,.roster-slot,.player{
+    padding:11px!important;
+  }
+  thead th,tbody td{
+    padding:9px 8px!important;
+  }
+}
+
+/* v2.7.3 FORCE off-white content theme for Draft/Captain */
+.wrap > .card,
+#app > .card,
+.card,
+.team,
+.player,
+.slot,
+.roster-slot{
+  background:#fbf8f1!important;
+  color:#102a3b!important;
+  border-color:rgba(213,167,44,.48)!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.12)!important;
+}
+
+/* All body copy on light cards */
+.card h1,.card h2,.card h3,.card h4,.card strong,.card label,
+.team h1,.team h2,.team h3,.team h4,.team strong,
+.player strong,.slot strong,.roster-slot strong{
+  color:#102a3b!important;
+}
+.card .muted,.card p,.card small,.card .status,.card .note,
+.team .muted,.player .muted,.slot .muted,.roster-slot .muted{
+  color:#6d7d87!important;
+}
+
+/* Team headers are also light now */
+.teamhead,
+.team .head{
+  background:#f4efe5!important;
+  color:#102a3b!important;
+  border-bottom:1px solid rgba(213,167,44,.42)!important;
+}
+.teamhead strong,.team .head strong{
+  color:#102a3b!important;
+}
+.teamhead .muted,.team .head .muted{
+  color:#6d7d87!important;
+}
+
+/* Roster rows */
+.slot,.roster-slot,.player{
+  background:#fffdfa!important;
+  border-bottom:1px solid #e4dac5!important;
+}
+.slot:last-child,.roster-slot:last-child,.player:last-child{
+  border-bottom-color:transparent!important;
+}
+
+/* Clock + sound sections */
+.bar{
+  background:#fffdfa!important;
+  color:#102a3b!important;
+  border:1px solid rgba(213,167,44,.38)!important;
+}
+#onclock,#clock,.bar strong{
+  color:#102a3b!important;
+}
+#meta,#clocktxt,.bar .muted{
+  color:#6d7d87!important;
+}
+#notice{
+  background:#f4efe5!important;
+  color:#17384d!important;
+  border:1px solid rgba(213,167,44,.32)!important;
+}
+
+/* Available golfer and log tables */
+table{
+  background:#fffdfa!important;
+  color:#102a3b!important;
+  border-radius:12px!important;
+  overflow:hidden!important;
+}
+thead th{
+  background:#f0e9dc!important;
+  color:#102a3b!important;
+  border-bottom:2px solid rgba(213,167,44,.45)!important;
+}
+tbody td{
+  background:#fffdfa!important;
+  color:#102a3b!important;
+}
+tbody tr:nth-child(even) td{
+  background:#f8f3ea!important;
+}
+
+/* Pills remain branded */
+.badge,.pill,.chip{
+  background:#0b2b42!important;
+  color:#f0c75d!important;
+  border:1px solid rgba(213,167,44,.40)!important;
+}
+
+/* Form controls */
+input,select,textarea{
+  background:#fff!important;
+  color:#102a3b!important;
+  border:1px solid #bdc9ce!important;
+}
+
+/* Keep only these dark */
+.top,
+.global-main-menu-btn,
+.draft-status-strip{
+  background-color:#061b2b!important;
+  color:#fff!important;
+}
+.top .brand h1{color:#f0c75d!important}
+.top .brand p{color:#f4f6f7!important}
+
+/* Sound button remains gold */
+#soundToggle,.gold{
+  background:#d5a72c!important;
+  color:#102535!important;
+}
+
+/* Captain draft action buttons */
+.player button{
+  background:#0b2b42!important;
+  color:#fff!important;
+  border:1px solid #d5a72c!important;
+}
+.player button:disabled{
+  background:#e5eaec!important;
+  color:#88959c!important;
+  border-color:#ccd5d9!important;
+}
+
+@media(max-width:640px){
+  .wrap > .card,#app > .card,.card,.team{
+    border-radius:16px!important;
+  }
+  .teamhead{padding:12px 13px!important}
+  .slot,.roster-slot,.player{padding:11px 12px!important}
+}
+
+/* v2.7.6 team card cleanup */
+.team{
+  background:linear-gradient(180deg,#fbf8f1,#f4efe5)!important;
+  color:#102a3b!important;
+  border:1px solid rgba(213,167,44,.50)!important;
+  border-radius:18px!important;
+  overflow:hidden!important;
+  box-shadow:0 8px 20px rgba(0,0,0,.11)!important;
+}
+.teamhead{
+  background:linear-gradient(180deg,#fbf8f1,#f4efe5)!important;
+  color:#102a3b!important;
+  border-bottom:1px solid rgba(213,167,44,.42)!important;
+  padding:14px 16px!important;
+}
+.teamhead strong{
+  color:#102a3b!important;
+  font-size:20px!important;
+}
+.teamhead .muted{
+  color:#6f7d86!important;
+}
+.teamhead > div:last-child{
+  color:#6f7d86!important;
+}
+.roster{
+  background:#fffdfa!important;
+}
+.slot,.roster-slot{
+  position:relative!important;
+  background:#fffdfa!important;
+  color:#102a3b!important;
+  border:0!important;
+  border-bottom:1px solid rgba(213,167,44,.24)!important;
+  padding:13px 15px!important;
+  min-height:48px!important;
+}
+.slot:last-child,.roster-slot:last-child{
+  border-bottom:0!important;
+}
+.slot strong,.roster-slot strong{
+  color:#102a3b!important;
+}
+.slot.muted,.roster-slot.muted{
+  color:#8a959b!important;
+  font-style:normal!important;
+}
+.slot .muted,.roster-slot .muted{
+  color:#75838b!important;
+}
+.team .badge{
+  background:#0b2b42!important;
+  color:#f0c75d!important;
+  border:1px solid rgba(213,167,44,.42)!important;
+}
+
+/* Reserved for future team color accents without recoloring the card */
+.team[data-team-color]{
+  border-left-width:5px!important;
+}
+
+@media(max-width:640px){
+  .team{border-radius:16px!important}
+  .teamhead{padding:12px 13px!important}
+  .teamhead strong{font-size:19px!important}
+  .slot,.roster-slot{padding:11px 13px!important;min-height:46px!important}
+}
+</style>
+<style id="v278-captain-readability-lock">
+#login{
+  background:linear-gradient(180deg,#fffdfa,#f7f1e3)!important;
+  color:#102a3b!important;
+  border:1px solid rgba(213,167,44,.62)!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.12)!important;
+}
+#login h2{
+  background:transparent!important;
+  color:#102a3b!important;
+  border:0!important;
+  padding:0!important;
+  margin:0 0 14px 0!important;
+  text-shadow:none!important;
+}
+#login .muted,#login #msg{color:#667782!important;opacity:1!important;}
+#login input{background:#fff!important;color:#102a3b!important;border:1px solid #c8b66f!important;}
+#login input::placeholder{color:#87949c!important;opacity:1!important;}
+.roster,.roster .slot,.slot,.roster-slot{
+  background:#fffdfa!important;
+  color:#102a3b!important;
+}
+.slot.muted,.roster-slot.muted{color:#7b888f!important;}
+</style>
+</head><body><header class="top"><div class="brand"><img src="gator.png" alt="EllenG Cup gator logo"><div><h1>EllenG Cup</h1><p>CAPTAIN ACCESS • LIVE TEAM SELECTION</p></div><div style="margin-left:auto" id="connection">CONNECTING</div></div></header><div id="globalMainMenuBar" class="global-main-menu-bar">
+  <a class="global-main-menu-btn" href="./scoring.html#hub" onclick="sessionStorage.setItem('elleng_internal_menu','1')">← Main Menu</a>
+</div>
 <div class="wrap"><div id="login" class="card"><h2>Captain Sign In</h2><div class="actions" style="justify-content:flex-start"><input id="email" type="email" placeholder="Email"><input id="pw" type="password" placeholder="Password"><button id="signin" class="gold">Sign In</button></div><div id="msg" class="muted"></div></div>
-<div id="app" style="display:none"><div class="card"><div class="bar"><div><strong id="onclock"></strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div id="clocktxt" class="muted">LIVE PICK CLOCK</div></div></div><div id="notice" class="muted"></div></div>
+<div id="app" style="display:none"><div class="card" style="margin-bottom:12px"><button id="soundToggle" class="gold">🔊 Enable Draft Sounds</button><span id="soundStatus" class="muted" style="margin-left:10px">Sound off</span></div><div class="card"><div class="bar"><div><strong id="onclock"></strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div id="clocktxt" class="muted">LIVE PICK CLOCK</div></div></div><div id="notice" class="muted"></div></div>
 <div class="grid"><div class="card"><h2>Available Golfers</h2><div id="pool"></div></div><div class="card"><h2>Live Rosters</h2><div id="teams" class="teams"></div></div></div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script>
 let myTeam=null;
-async function whoami(){const {data:{user}}=await db.auth.getUser();if(!user)return false;const {data,error}=await db.from("elleng_captains").select("team_index").eq("draft_id",cfg.draftId).eq("user_id",user.id).single();if(error){document.getElementById("msg").textContent="This account is not assigned to a team.";return false}myTeam=data.team_index;return true}
-function render(){let done=S.picks.length>=24,t=order(S.picks.length),mine=t===myTeam&&!done;document.getElementById("onclock").textContent=done?"DRAFT COMPLETE":"ON THE CLOCK: "+S.teams[t].name;document.getElementById("meta").textContent=done?"All rosters complete":`Round ${Math.floor(S.picks.length/6)+1} • Pick ${S.picks.length+1}`;document.getElementById("notice").textContent=done?"":mine?"YOUR PICK — select an eligible golfer below.":"Waiting for "+S.teams[t].name+" to pick…";document.getElementById("pool").innerHTML=S.golfers.map((g,i)=>({...g,i})).filter(g=>g.name&&g.team==null).map(g=>{let ok=mine&&canBand(t,g.band);return `<div class="player"><strong>${esc(g.name)}</strong><span class="badge">${g.band}</span><span class="muted">${esc(g.hcp||"—")}</span><button data-p="${g.i}" ${ok?"":"disabled"}>${mine?(ok?"DRAFT":"Band Limit"):"Waiting"}</button></div>`}).join("");document.getElementById("teams").innerHTML=S.teams.map((tm,i)=>`<div class="team"><div class="teamhead"><strong>${esc(tm.name)}</strong>${i===myTeam?" • YOUR TEAM":""}<div class="muted" style="color:#ddd">${esc(tm.captain||"")}</div><div style="font-size:11px">${bands.map(b=>b+" "+tbc(i,b)).join(" • ")}</div></div><div class="roster">${Array.from({length:4},(_,j)=>{let g=S.golfers[tm.roster[j]];return g?`<div class="slot"><strong>${esc(g.name)}</strong> <span class="badge">${g.band}</span><div class="muted">HCP ${esc(g.hcp||"—")}</div></div>`:`<div class="slot muted">Open roster spot</div>`}).join("")}</div></div>`).join("");document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>pick(+b.dataset.p));draw()}
+async function whoami(){const {data:{user}}=await db.auth.getUser();if(!user)return false;const {data,error}=await db.from("elleng_captains").select("team_index,captain_name,captain_email").eq("draft_id",cfg.draftId).eq("user_id",user.id).single();if(error){document.getElementById("msg").textContent="This account is not assigned to a team. Ask the commissioner to assign your captain account.";return false}myTeam=Number(data.team_index);return true}
+let draftSoundEnabled=false,lastSoundPickCount=null,audioCtx=null;
+async function enableDraftSound(){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")await audioCtx.resume();draftSoundEnabled=!draftSoundEnabled;document.getElementById("soundToggle").textContent=draftSoundEnabled?"🔇 Mute Draft Sounds":"🔊 Enable Draft Sounds";document.getElementById("soundStatus").textContent=draftSoundEnabled?"Sound ON — test growl played":"Sound off";if(draftSoundEnabled){gatorGrowl(true);setTimeout(()=>{if(draftSoundEnabled)document.getElementById("soundStatus").textContent="Gator sound ON"},1400)}}catch(e){draftSoundEnabled=false;document.getElementById("soundStatus").textContent="Audio blocked — tap again"}}
+function gatorGrowl(force=false){if((!draftSoundEnabled&&!force)||!audioCtx)return;try{let now=audioCtx.currentTime,dur=1.25,osc=audioCtx.createOscillator(),gain=audioCtx.createGain(),filter=audioCtx.createBiquadFilter(),lfo=audioCtx.createOscillator(),lfoGain=audioCtx.createGain();osc.type="sawtooth";osc.frequency.setValueAtTime(92,now);osc.frequency.exponentialRampToValueAtTime(48,now+dur);filter.type="lowpass";filter.frequency.setValueAtTime(520,now);filter.Q.value=7;lfo.type="sine";lfo.frequency.value=18;lfoGain.gain.value=15;lfo.connect(lfoGain);lfoGain.connect(osc.frequency);gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.32,now+.08);gain.gain.setValueAtTime(.32,now+.55);gain.gain.exponentialRampToValueAtTime(.0001,now+dur);osc.connect(filter);filter.connect(gain);gain.connect(audioCtx.destination);osc.start(now);lfo.start(now);osc.stop(now+dur);lfo.stop(now+dur)}catch(e){}}
+function checkDraftSound(){let n=S.picks.length;if(lastSoundPickCount===null){lastSoundPickCount=n;return}if(n>lastSoundPickCount)gatorGrowl();lastSoundPickCount=n}
+function render(){checkDraftSound();let total=totalPicks(),done=S.picks.length>=total,t=done?0:order(S.picks.length),mine=!done&&t===myTeam&&!S.timerPaused;document.getElementById("onclock").textContent=done?"DRAFT COMPLETE":"ON THE CLOCK: "+(S.teams[t]?.name||"Team");document.getElementById("meta").textContent=done?`All ${total} golfers drafted`:`${S.teams.length} teams • ${total} golfers • Round ${Math.floor(S.picks.length/S.teams.length)+1} • Pick ${S.picks.length+1} of ${total}`;document.getElementById("notice").textContent=done?"":S.timerPaused?"Draft is paused. Waiting for the Commissioner to start or resume.":mine?"YOUR PICK — select an eligible golfer below.":"Waiting for "+(S.teams[t]?.name||"Team")+" to pick…";document.getElementById("pool").innerHTML=S.golfers.map((g,i)=>({...g,i})).filter(g=>g.name&&g.team==null).map(g=>{let ok=mine&&canBand(t,g.band);return `<div class="player"><strong>${esc(g.name)}</strong><span class="badge">${g.band}</span><span class="muted">${bandRange(g.band)}</span><button data-p="${g.i}" ${ok?"":"disabled"}>${mine?(ok?"DRAFT":"Band Limit"):"Waiting"}</button></div>`}).join("")||'<div class="muted">No available golfers.</div>';document.getElementById("teams").innerHTML=S.teams.map((tm,i)=>`<div class="team"><div class="teamhead"><strong>${esc(tm.name)}</strong>${i===myTeam?" • YOUR TEAM":""}<div class="muted" style="color:#ddd">${esc(tm.captain||"")}</div><div style="font-size:11px">${bands.map(b=>b+" "+tbc(i,b)).join(" • ")}</div></div><div class="roster">${Array.from({length:teamCapacity(i)},(_,j)=>{let g=S.golfers[tm.roster[j]];return g?`<div class="slot"><strong>${esc(g.name)}</strong> <span class="badge">${g.band}</span><div class="muted">${bandRange(g.band)}</div></div>`:`<div class="slot muted">Open roster spot</div>`}).join("")}</div></div>`).join("");document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>pick(+b.dataset.p));draw()}
 function draw(){let x=remaining();document.getElementById("clock").textContent=Math.floor(x/60)+":"+String(x%60).padStart(2,"0");document.getElementById("clock").style.color=x<=10?"#9b2f2f":""}
-async function pick(i){await load();let t=order(S.picks.length);if(t!==myTeam){render();return}let g=S.golfers[i];if(!g||g.team!=null||!canBand(t,g.band))return;g.team=t;S.teams[t].roster.push(i);S.picks.push({golfer:i,team:t});S.timerPaused=false;S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();try{await save();render()}catch(e){alert("Pick could not be saved. Refresh and try again.")}}
-document.getElementById("signin").onclick=async()=>{let {error}=await db.auth.signInWithPassword({email:document.getElementById("email").value.trim(),password:document.getElementById("pw").value});if(error){document.getElementById("msg").textContent=error.message;return}if(await whoami()){document.getElementById("login").style.display="none";document.getElementById("app").style.display="block";await load();render();subscribe(render);setInterval(draw,500)}};
-(async()=>{const {data:{session}}=await db.auth.getSession();if(session&&await whoami()){document.getElementById("login").style.display="none";document.getElementById("app").style.display="block";await load();render();subscribe(render);setInterval(draw,500)}})();
+async function pick(i){if(S.timerPaused){alert("The draft is paused. Wait for the Commissioner to start or resume it.");return}if(!confirm("Draft "+(S.golfers[i]?.name||"this golfer")+" for "+(S.teams[myTeam]?.name||"your team")+"?"))return;try{const {data,error}=await db.rpc("elleng_make_pick",{p_draft_id:cfg.draftId,p_golfer_index:i});if(error)throw error;S={...fresh(),...data};if(draftSoundEnabled){gatorGrowl();lastSoundPickCount=S.picks.length}render()}catch(e){await load();render();alert(e.message||"Pick could not be saved. Refresh and try again.")}}
+document.getElementById("signin").onclick=async()=>{
+  const msg=document.getElementById("msg");
+  const status=document.getElementById("connection");
+  try{
+    if(status)status.textContent="CONNECTING";
+    let {error}=await db.auth.signInWithPassword({
+      email:document.getElementById("email").value.trim(),
+      password:document.getElementById("pw").value
+    });
+    if(error)throw error;
+    if(!(await whoami())){if(status)status.textContent="READY";return}
+    document.getElementById("login").style.display="none";
+    document.getElementById("app").style.display="block";
+    await load();
+    render();
+    if(status)status.textContent="LIVE";
+    subscribe(render);
+    setInterval(draw,500);
+  }catch(e){
+    console.error("Captain sign-in/load error:",e);
+    if(status)status.textContent="ERROR";
+    msg.textContent=e?.message||"Captain page could not load.";
+  }
+};
+document.getElementById("soundToggle").onclick=enableDraftSound;
+(async()=>{
+  const status=document.getElementById("connection");
+  try{
+    if(status)status.textContent="CONNECTING";
+    const {data:{user}}=await db.auth.getUser();
+    if(user && await whoami()){
+      document.getElementById("login").style.display="none";
+      document.getElementById("app").style.display="block";
+      await load();
+      render();
+      if(status)status.textContent="LIVE";
+      subscribe(render);
+      setInterval(draw,500);
+    }else{
+      document.getElementById("login").style.display="block";
+      document.getElementById("app").style.display="none";
+      if(status)status.textContent="READY";
+      if(user)document.getElementById("msg").textContent="This signed-in account is not assigned as a captain for this tournament.";
+    }
+  }catch(e){
+    console.error("Captain page startup error:",e);
+    if(status)status.textContent="ERROR";
+    document.getElementById("login").style.display="block";
+    document.getElementById("app").style.display="none";
+    document.getElementById("msg").textContent=e?.message||"Captain page could not load.";
+  }
+})();
 </script></body></html>
