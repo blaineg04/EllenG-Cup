@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.13">
+<meta name="elleng-app-version" content="2.7.14">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -135,6 +135,9 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .more-menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .more-menu-btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:14px 10px;border-radius:12px;text-align:left;font-weight:850;min-height:62px}
 .more-menu-btn span{display:block;font-size:21px;margin-bottom:4px}
+.more-menu-btn .clubhouse-menu-icon{display:block;width:26px;height:26px;margin-bottom:6px;color:#0e2d44}
+.more-menu-btn .clubhouse-menu-icon svg{display:block;width:100%;height:100%}
+.more-menu-btn .clubhouse-menu-icon svg *{stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .more-menu-btn.admin-link{background:#fff8df;border-color:#e2bd54}
 @media(max-width:420px){.more-menu-grid{grid-template-columns:1fr}}
 
@@ -1515,7 +1518,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.13</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.14</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -1967,7 +1970,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.13 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.14 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -2107,7 +2110,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
     <div class="more-menu-grid">
       <button class="more-menu-btn" type="button" data-more-view="course"><span>🗺️</span>Course</button>
       <button class="more-menu-btn" type="button" data-more-view="progress"><span>✅</span>Hole Progress</button>
-      <button class="more-menu-btn" type="button" data-more-view="clubhouse"><span>🏛️</span>Clubhouse</button>
+      <button class="more-menu-btn" type="button" data-more-view="clubhouse"><span class="clubhouse-menu-icon" aria-hidden="true"><svg viewBox="0 0 32 32" role="img" focusable="false"><path d="M5 14.5 16 6l11 8.5"></path><path d="M8 13.5V25h16V13.5"></path><path d="M13 25v-6h6v6"></path><path d="M22.5 10V5.5l3 1.5v5"></path><path d="M24 5.5v-2"></path><path d="M24 3.5l3 1.2-3 1.2"></path><path d="M10 17h2.5"></path><path d="M19.5 17H22"></path></svg></span>Clubhouse</button>
       <button class="more-menu-btn" type="button" data-more-view="trash"><span>💬</span>Trash Talk</button>
       <button id="moreScoringBtn" class="more-menu-btn hidden" type="button" data-more-view="scoring"><span>✏️</span>Enter Scores</button>
       <button id="moreAdminBtn" class="more-menu-btn admin-link hidden" type="button" data-more-view="admin"><span>⚙️</span>Commissioner</button>
