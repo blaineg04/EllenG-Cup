@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.4">
+<meta name="elleng-app-version" content="2.7.5">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -1203,6 +1203,9 @@ button.danger,.danger{
 /* v2.7.4 auth-aware mobile navigation */
 #mobileBottomNav.hidden{display:none!important}
 .clubhouse-weather-card .weather-panel{margin-top:14px}
+
+/* v2.7.5 hard auth guard */
+body.login-mode #mobileBottomNav{display:none!important}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -1215,7 +1218,7 @@ button.danger,.danger{
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" sizes="180x180" href="app-icon-180.png">
 </head>
-<body>
+<body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
 <div id="appHub" class="app-hub hidden">
   <div class="app-hub-card tour-hub-card">
@@ -3757,7 +3760,7 @@ function clearInternalMenuFlag(){
   sessionStorage.removeItem("elleng_internal_menu");
 }
 async function enterViewer(){
-setGlobalMenuVisible(false);setMobileNavVisible(false);
+document.body.classList.add("login-mode");setGlobalMenuVisible(false);setMobileNavVisible(false);
  const hub=$("appHub");if(hub)hub.classList.add("hidden");
  $("app").classList.add("hidden");$("app").style.display="none";
  $("passwordChangeCard").classList.add("hidden");
@@ -3766,7 +3769,7 @@ setGlobalMenuVisible(false);setMobileNavVisible(false);
  setSyncStatus("saved","Connected");
 }
 async function enterApp(){
-setGlobalMenuVisible(false);setMobileNavVisible(false);
+document.body.classList.remove("login-mode");setGlobalMenuVisible(false);setMobileNavVisible(false);
  
  $("loginMsg").textContent="Signed in — loading tournament…";
  try{
@@ -3813,7 +3816,7 @@ async function signOutFromHub(){
  }catch(e){
    console.warn("Sign out issue",e);
  }
- user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;setMobileNavVisible(false);
+ user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;document.body.classList.add("login-mode");setMobileNavVisible(false);
  if($("appHub"))$("appHub").classList.add("hidden");
  if($("app"))$("app").classList.add("hidden");
  if($("hubSignOutBtn")){ $("hubSignOutBtn").disabled=false;$("hubSignOutBtn").textContent="Sign Out" }
@@ -3876,7 +3879,7 @@ $("changeAccountPasswordBtn").addEventListener("click",async()=>{
 $("authBtn").addEventListener("click",()=>{$("loginCard").classList.remove("hidden");$("loginMsg").textContent="";$("loginCard").scrollIntoView({behavior:"smooth",block:"start"})});
 
 if($("digitalScorecardTeam"))$("digitalScorecardTeam").addEventListener("change",renderDigitalScorecard);
-$("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;setMobileNavVisible(false);$("passwordChangeCard").classList.add("hidden");showView("home");await enterViewer()});
+$("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;document.body.classList.add("login-mode");setMobileNavVisible(false);$("passwordChangeCard").classList.add("hidden");showView("home");await enterViewer()});
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
 document.querySelectorAll("[data-home-go]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.homeGo)));
 document.querySelectorAll("[data-mobile-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.mobileView)));
