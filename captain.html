@@ -456,6 +456,142 @@ button.danger,.danger{
     padding:9px 8px!important;
   }
 }
+
+/* v2.7.3 FORCE off-white content theme for Draft/Captain */
+.wrap > .card,
+#app > .card,
+.card,
+.team,
+.player,
+.slot,
+.roster-slot{
+  background:#fbf8f1!important;
+  color:#102a3b!important;
+  border-color:rgba(213,167,44,.48)!important;
+  box-shadow:0 8px 22px rgba(0,0,0,.12)!important;
+}
+
+/* All body copy on light cards */
+.card h1,.card h2,.card h3,.card h4,.card strong,.card label,
+.team h1,.team h2,.team h3,.team h4,.team strong,
+.player strong,.slot strong,.roster-slot strong{
+  color:#102a3b!important;
+}
+.card .muted,.card p,.card small,.card .status,.card .note,
+.team .muted,.player .muted,.slot .muted,.roster-slot .muted{
+  color:#6d7d87!important;
+}
+
+/* Team headers are also light now */
+.teamhead,
+.team .head{
+  background:#f4efe5!important;
+  color:#102a3b!important;
+  border-bottom:1px solid rgba(213,167,44,.42)!important;
+}
+.teamhead strong,.team .head strong{
+  color:#102a3b!important;
+}
+.teamhead .muted,.team .head .muted{
+  color:#6d7d87!important;
+}
+
+/* Roster rows */
+.slot,.roster-slot,.player{
+  background:#fffdfa!important;
+  border-bottom:1px solid #e4dac5!important;
+}
+.slot:last-child,.roster-slot:last-child,.player:last-child{
+  border-bottom-color:transparent!important;
+}
+
+/* Clock + sound sections */
+.bar{
+  background:#fffdfa!important;
+  color:#102a3b!important;
+  border:1px solid rgba(213,167,44,.38)!important;
+}
+#onclock,#clock,.bar strong{
+  color:#102a3b!important;
+}
+#meta,#clocktxt,.bar .muted{
+  color:#6d7d87!important;
+}
+#notice{
+  background:#f4efe5!important;
+  color:#17384d!important;
+  border:1px solid rgba(213,167,44,.32)!important;
+}
+
+/* Available golfer and log tables */
+table{
+  background:#fffdfa!important;
+  color:#102a3b!important;
+  border-radius:12px!important;
+  overflow:hidden!important;
+}
+thead th{
+  background:#f0e9dc!important;
+  color:#102a3b!important;
+  border-bottom:2px solid rgba(213,167,44,.45)!important;
+}
+tbody td{
+  background:#fffdfa!important;
+  color:#102a3b!important;
+}
+tbody tr:nth-child(even) td{
+  background:#f8f3ea!important;
+}
+
+/* Pills remain branded */
+.badge,.pill,.chip{
+  background:#0b2b42!important;
+  color:#f0c75d!important;
+  border:1px solid rgba(213,167,44,.40)!important;
+}
+
+/* Form controls */
+input,select,textarea{
+  background:#fff!important;
+  color:#102a3b!important;
+  border:1px solid #bdc9ce!important;
+}
+
+/* Keep only these dark */
+.top,
+.global-main-menu-btn,
+.draft-status-strip{
+  background-color:#061b2b!important;
+  color:#fff!important;
+}
+.top .brand h1{color:#f0c75d!important}
+.top .brand p{color:#f4f6f7!important}
+
+/* Sound button remains gold */
+#soundToggle,.gold{
+  background:#d5a72c!important;
+  color:#102535!important;
+}
+
+/* Captain draft action buttons */
+.player button{
+  background:#0b2b42!important;
+  color:#fff!important;
+  border:1px solid #d5a72c!important;
+}
+.player button:disabled{
+  background:#e5eaec!important;
+  color:#88959c!important;
+  border-color:#ccd5d9!important;
+}
+
+@media(max-width:640px){
+  .wrap > .card,#app > .card,.card,.team{
+    border-radius:16px!important;
+  }
+  .teamhead{padding:12px 13px!important}
+  .slot,.roster-slot,.player{padding:11px 12px!important}
+}
 </style></head><body><header class="top"><div class="brand"><img src="gator.png" alt="EllenG Cup gator logo"><div><h1>EllenG Cup</h1><p>CAPTAIN ACCESS • LIVE TEAM SELECTION</p></div><div style="margin-left:auto" id="connection">CONNECTING</div></div></header><div id="globalMainMenuBar" class="global-main-menu-bar">
   <a class="global-main-menu-btn" href="./scoring.html#hub" onclick="sessionStorage.setItem('elleng_internal_menu','1')">← Main Menu</a>
 </div>
