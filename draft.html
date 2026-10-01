@@ -322,6 +322,215 @@ button.gold,.gold{background:var(--eg-gold)!important;color:#102535!important;bo
   .player{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:7px!important;align-items:center!important}
   .player button{grid-column:1/-1!important;width:100%!important}
 }
+
+/* =========================================================
+   v2.7.1 — off-white content / navy text / gold accents
+   ========================================================= */
+:root{
+  --eg-offwhite:#fbf8f1;
+  --eg-offwhite-2:#f4efe5;
+  --eg-navy:#061b2b;
+  --eg-navy-2:#0a2b42;
+  --eg-ink:#102a3b;
+  --eg-muted:#6d7d87;
+  --eg-gold:#d5a72c;
+  --eg-gold-soft:rgba(213,167,44,.34);
+}
+
+/* Keep the outer shell dark and premium */
+body{
+  background:
+    radial-gradient(circle at 50% -12%,rgba(213,167,44,.10),transparent 30%),
+    linear-gradient(160deg,#061b2b,#08263a 55%,#061824)!important;
+}
+
+/* Universal content surfaces */
+.card,
+.panel,
+.box,
+.section,
+.team,
+.team-card,
+.score-card,
+.profile-card,
+.home-tile,
+.leader-row,
+.self-score-box,
+.more-sheet,
+.player-team-head,
+.mobile-hole-guide,
+.mobile-hole-guide .guide-item,
+.pulse-item,
+.admin-card,
+.editor-card{
+  background:linear-gradient(180deg,var(--eg-offwhite),var(--eg-offwhite-2))!important;
+  color:var(--eg-ink)!important;
+  border:1px solid var(--eg-gold-soft)!important;
+  box-shadow:0 9px 24px rgba(0,0,0,.14)!important;
+}
+
+/* Navy writing across light content */
+.card h1,.card h2,.card h3,.card h4,.card strong,.card label,
+.panel h1,.panel h2,.panel h3,.panel strong,
+.team h1,.team h2,.team h3,.team strong,
+.team-card strong,.score-card strong,.profile-card strong,
+.home-tile strong,.leader-row strong,.self-score-box strong,
+.player-team-head strong,.mobile-hole-guide strong,
+.admin-card h1,.admin-card h2,.admin-card h3,.admin-card strong,
+.editor-card h1,.editor-card h2,.editor-card h3,.editor-card strong{
+  color:var(--eg-ink)!important;
+}
+.card p,.card small,.card .muted,.card .note,.card .status,
+.panel p,.panel .muted,.team .muted,.team-card .muted,
+.profile-card .muted,.home-tile .status,.leader-row .status,
+.self-score-box small,.player-team-head .muted,.mobile-hole-guide .muted,
+.admin-card .muted,.editor-card .muted{
+  color:var(--eg-muted)!important;
+}
+
+/* Gold section labels and badges */
+.badge,.pill,.chip{
+  background:#0e3148!important;
+  color:#f0c75d!important;
+  border:1px solid rgba(213,167,44,.40)!important;
+}
+
+/* Team headers stay navy, body goes off-white */
+.teamhead,
+.team .head{
+  background:linear-gradient(90deg,#061b2b,#0a2b42)!important;
+  color:#fff!important;
+  border-bottom:2px solid var(--eg-gold)!important;
+}
+.teamhead strong,.team .head strong{
+  color:#fff!important;
+}
+.teamhead .muted,.team .head .muted{
+  color:#d3dde2!important;
+}
+.slot,.roster-slot,.player{
+  background:#fffdfa!important;
+  color:var(--eg-ink)!important;
+  border-color:#e2d8c3!important;
+}
+.slot strong,.roster-slot strong,.player strong{color:var(--eg-ink)!important}
+.slot .muted,.roster-slot .muted,.player .muted{color:var(--eg-muted)!important}
+
+/* Draft / captain clock card */
+.bar{
+  background:linear-gradient(180deg,#fffdfa,#f3ecdf)!important;
+  border:1px solid rgba(213,167,44,.42)!important;
+}
+.bar strong,.bar #onclock,#clock{
+  color:#08253b!important;
+}
+#meta,#clocktxt,.bar .muted{
+  color:#667786!important;
+}
+#notice{
+  background:#fffdfa!important;
+  color:#17384d!important;
+  border:1px solid rgba(213,167,44,.34)!important;
+}
+
+/* Available golfer / tables */
+table{
+  background:transparent!important;
+  color:var(--eg-ink)!important;
+}
+thead th{
+  background:#0b2b42!important;
+  color:#f0c75d!important;
+}
+tbody td{
+  color:var(--eg-ink)!important;
+  background:#fffdfa!important;
+}
+tbody tr:nth-child(even) td{
+  background:#f7f2e8!important;
+}
+
+/* Forms */
+input,select,textarea{
+  background:#fff!important;
+  color:var(--eg-ink)!important;
+  border:1px solid #bcc8ce!important;
+}
+input:disabled,select:disabled,textarea:disabled{
+  background:#eef1f2!important;
+  color:#6e7c84!important;
+}
+
+/* Buttons */
+button.primary,.primary{
+  background:#078746!important;
+  color:#fff!important;
+  border-color:#078746!important;
+}
+button.secondary,.secondary{
+  background:#e8edef!important;
+  color:#17384d!important;
+  border:1px solid #d0d9dd!important;
+}
+button.gold,.gold{
+  background:var(--eg-gold)!important;
+  color:#102535!important;
+  border-color:var(--eg-gold)!important;
+}
+button.danger,.danger{
+  background:#8e2734!important;
+  color:#fff!important;
+}
+
+/* Off-white commissioner/setup sections too */
+.setup-grid > div,
+.admin-grid > div,
+.control-room-grid > div,
+.awards-grid > div,
+.summary-grid > div{
+  background:linear-gradient(180deg,#fffdfa,#f4efe5)!important;
+  color:var(--eg-ink)!important;
+  border-color:rgba(213,167,44,.30)!important;
+}
+
+/* Keep outer navigation/header dark */
+.top,
+.mobile-bottom-nav,
+.global-main-menu-btn{
+  background-color:#061b2b!important;
+}
+.mobile-bottom-nav{
+  border-top:1px solid rgba(213,167,44,.55)!important;
+}
+.mobile-nav-btn{color:#b6c2c8!important}
+.mobile-nav-btn.active{
+  color:#f0c75d!important;
+  background:rgba(213,167,44,.10)!important;
+}
+
+/* Main menu / hub stays dark-premium; only content pages go light */
+.app-hub-card,
+.tour-hub-card,
+.app-hub-btn,
+.tour-card{
+  color:#fff!important;
+}
+.tour-hub-card h1,.tour-copy strong,.tour-copy em,.tour-hub-card .app-hub-sub{
+  color:inherit!important;
+}
+
+/* Mobile spacing */
+@media(max-width:640px){
+  .card,.panel,.box,.section,.team,.team-card,.score-card,.profile-card{
+    border-radius:16px!important;
+  }
+  .slot,.roster-slot,.player{
+    padding:11px!important;
+  }
+  thead th,tbody td{
+    padding:9px 8px!important;
+  }
+}
 </style></head><body><header class="top"><div class="brand">
 <img src="gator.png" alt="EllenG Cup gator logo">
 <div><h1>EllenG Cup</h1><p>LIVE DRAFT • OFFICIAL DRAFT BOARD</p></div>
