@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.6.0">
+<meta name="elleng-app-version" content="2.6.1">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -812,6 +812,20 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   .tour-icon{width:46px;height:46px;font-size:22px}
   .tour-copy strong{font-size:20px!important}
   .tour-copy em{font-size:11px!important}
+}
+
+/* v2.6.1 sunset course background on hub only */
+.app-hub{
+  background:
+    linear-gradient(180deg,rgba(3,18,29,.38),rgba(4,22,34,.72) 45%,rgba(3,18,29,.90)),
+    radial-gradient(circle at 50% 0%,rgba(218,171,56,.16),transparent 32%),
+    url("elleng-hub-background.jpg") center center / cover no-repeat fixed!important;
+}
+.tour-hub-card{
+  background:
+    linear-gradient(180deg,rgba(4,24,37,.88),rgba(4,27,42,.93))!important;
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
 }
 </style>
 
