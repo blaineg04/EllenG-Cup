@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.13">
+<meta name="elleng-app-version" content="2.7.18">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -2163,10 +2163,6 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 <div class="experience-grid">
   <div class="card">
-    <div class="row between"><div><div class="premium-label">CHECK-IN</div><h2 style="margin:3px 0 0">Tournament QR</h2><div class="status">Scan to open this EllenG Cup app.</div></div><span class="badge">QUICK ACCESS</span></div>
-    <div id="checkinQr" class="qr-wrap"></div>
-  </div>
-  <div class="card">
     <div class="row between"><div><div class="premium-label">RIVALRY WATCH</div><h2 style="margin:3px 0 0">Closest Rivals</h2></div><span class="badge">HEAD-TO-HEAD</span></div>
     <div id="rivalryWatch" class="wow-body"></div>
   </div>
@@ -2256,7 +2252,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.13 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.18 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -2865,13 +2861,8 @@ function renderRivalryWatch(){
  if(!c){el.innerHTML='<div class="note">Rivalry Watch will appear once official Cup points begin posting.</div>';return}
  el.innerHTML=`<div class="wow-main">${esc(teams[c.a.team]?.name||`Team ${c.a.team+1}`)} vs ${esc(teams[c.b.team]?.name||`Team ${c.b.team+1}`)}</div><div class="wow-sub">${c.diff===0?"Dead even":`${fmt(c.diff)} points apart`} • The closest rivalry on the board right now.</div>`;
 }
-function renderCheckinQr(){
- const el=$("checkinQr");if(!el)return;
- const url=location.href.split("#")[0],src=`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
- el.innerHTML=`<img src="${src}" alt="EllenG Cup check-in QR code"><div class="status" style="text-align:center;margin-top:8px">Scan to open the tournament app</div>`;
-}
 function renderClubhouse(){
- renderCheckinQr();renderRivalryWatch();renderSeasonStandings();renderTrophyRoom();
+ renderRivalryWatch();renderSeasonStandings();renderTrophyRoom();
 }
 function renderTournamentAwards(){
  const root=$("tournamentAwards");if(!root)return;const front=bestByRel(1,9),back=bestByRel(10,18);let birds=null,eagles=null;teams.forEach((_,ti)=>{const s=teamRoundStats(ti);if(!birds||s.birdies>birds.value)birds={ti,value:s.birdies};if(!eagles||s.eagles>eagles.value)eagles={ti,value:s.eagles}});
@@ -4578,7 +4569,7 @@ document.querySelectorAll(".global-main-menu-btn").forEach(a=>a.addEventListener
 
 window.addEventListener("online",()=>{renderOfflineState();flushOfflineScores()});
 window.addEventListener("offline",renderOfflineState);
-if("serviceWorker" in navigator){window.addEventListener("load",async()=>{try{const reg=await navigator.serviceWorker.register("./service-worker.js",{scope:"./"});reg.update().catch(()=>{})}catch(e){console.warn("Service worker registration skipped",e)}})}
+if("serviceWorker" in navigator){window.addEventListener("load",async()=>{try{const reg=await navigator.serviceWorker.register("./service-worker.js",{scope:"./",updateViaCache:"none"});reg.update().catch(()=>{})}catch(e){console.warn("Service worker registration skipped",e)}})}
 
 
 $("selfGolferSelect").addEventListener("change",renderSelfHandicap);
