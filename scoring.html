@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.4.8">
+<meta name="elleng-app-version" content="2.4.9">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -525,6 +525,44 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   box-shadow:0 4px 12px rgba(8,37,59,.08);
 }
 .hub-signout-btn:active{transform:scale(.985)}
+
+/* v2.4.9 iPhone safe-area header fix */
+.top{
+  padding-top:calc(14px + env(safe-area-inset-top))!important;
+  padding-bottom:14px!important;
+  min-height:auto!important;
+}
+.top .brand{
+  align-items:center!important;
+}
+.top .logo,.top img{
+  max-height:82px!important;
+}
+.top h1{
+  line-height:1!important;
+  margin-top:0!important;
+}
+.top .subtitle{
+  margin-top:5px!important;
+}
+@media(max-width:640px){
+  .top{
+    padding-top:calc(10px + env(safe-area-inset-top))!important;
+    padding-left:14px!important;
+    padding-right:14px!important;
+    padding-bottom:12px!important;
+  }
+  .top .logo,.top img{
+    max-height:70px!important;
+  }
+  .top h1{
+    font-size:34px!important;
+  }
+  .top .subtitle{
+    font-size:14px!important;
+    letter-spacing:.04em!important;
+  }
+}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
