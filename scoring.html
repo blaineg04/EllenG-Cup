@@ -1217,6 +1217,84 @@ body.login-mode #mobileBottomNav{display:none!important}
 <meta name="apple-mobile-web-app-title" content="EllenG Cup">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" sizes="180x180" href="app-icon-180.png">
+
+<style id="mobile-tee-sheet-fix">
+/* Mobile commissioner tee sheet cleanup */
+.group-field{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+}
+.group-field-label{
+  display:none;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:#667782;
+  line-height:1;
+}
+@media(max-width:760px){
+  /* Keep the commissioner jump buttons away from the iPhone status area */
+  .commissioner-hero{
+    scroll-margin-top:calc(92px + env(safe-area-inset-top))!important;
+  }
+  .commissioner-hero .admin-jumps{
+    margin-top:16px!important;
+  }
+
+  /* Compact each golfer to a clean 2x2 field grid */
+  #adminGroupAssignments{
+    gap:10px!important;
+    margin-top:12px!important;
+  }
+  #adminGroupAssignments .group-row{
+    grid-template-columns:1fr 1fr!important;
+    gap:8px!important;
+    padding:10px!important;
+    border-radius:12px!important;
+    align-items:end!important;
+    background:#fffdfa!important;
+  }
+  #adminGroupAssignments .group-name-cell{
+    grid-column:1/-1!important;
+    padding-bottom:1px!important;
+  }
+  #adminGroupAssignments .group-name-cell strong{
+    font-size:17px!important;
+    line-height:1.15!important;
+  }
+  #adminGroupAssignments .group-field-label{
+    display:block!important;
+  }
+  #adminGroupAssignments input{
+    min-height:42px!important;
+    height:42px!important;
+    padding:8px 10px!important;
+    font-size:16px!important;
+    border-radius:10px!important;
+    box-sizing:border-box!important;
+  }
+
+  /* Keep the public tee-sheet compact too */
+  #groupAssignments .group-row{
+    grid-template-columns:1fr 1fr!important;
+    gap:7px!important;
+    padding:9px 10px!important;
+  }
+  #groupAssignments .group-name-cell{
+    grid-column:1/-1!important;
+  }
+}
+
+/* Extra top breathing room when jumping to commissioner dashboard on iPhone */
+@media(max-width:640px){
+  #adminView{
+    scroll-padding-top:calc(24px + env(safe-area-inset-top))!important;
+  }
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -1277,7 +1355,7 @@ body.login-mode #mobileBottomNav{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v1.1.5</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.6</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2546,7 +2624,13 @@ function renderGroupAssignments(){
 function renderAdminGroupAssignments(){
  const root=$("adminGroupAssignments");if(!root||!isCommissioner)return;
  const map=new Map(groupAssignments.map(x=>[Number(x.golfer_index),x]));
- root.innerHTML=(draftState?.golfers||[]).map((g,i)=>{if(!g?.name)return"";const a=map.get(i)||{};return `<div class="group-row" data-group-row="${i}"><div class="group-name-cell"><strong>${esc(g.name)}</strong></div><input data-group-time="${i}" type="time" value="${esc(String(a.tee_time||"").slice(0,5))}"><input data-group-hole="${i}" type="number" min="1" max="18" placeholder="Hole" value="${a.starting_hole||""}"><input data-group-name="${i}" placeholder="Group" value="${esc(a.group_name||"")}"><input data-group-cart="${i}" placeholder="Cart" value="${esc(a.cart_name||"")}"></div>`}).join("");
+ root.innerHTML=(draftState?.golfers||[]).map((g,i)=>{if(!g?.name)return"";const a=map.get(i)||{};return `<div class="group-row" data-group-row="${i}">
+<div class="group-name-cell"><strong>${esc(g.name)}</strong></div>
+<label class="group-field"><span class="group-field-label">Tee Time</span><input data-group-time="${i}" type="time" aria-label="Tee Time for ${esc(g.name)}" value="${esc(String(a.tee_time||"").slice(0,5))}"></label>
+<label class="group-field"><span class="group-field-label">Starting Hole</span><input data-group-hole="${i}" type="number" min="1" max="18" inputmode="numeric" aria-label="Starting Hole for ${esc(g.name)}" placeholder="Hole" value="${a.starting_hole||""}"></label>
+<label class="group-field"><span class="group-field-label">Group</span><input data-group-name="${i}" aria-label="Group for ${esc(g.name)}" placeholder="Group" value="${esc(a.group_name||"")}"></label>
+<label class="group-field"><span class="group-field-label">Cart</span><input data-group-cart="${i}" aria-label="Cart for ${esc(g.name)}" placeholder="Cart" value="${esc(a.cart_name||"")}"></label>
+</div>`}).join("");
 }
 async function saveGroupAssignments(){
  if(!isCommissioner)return;const msg=$("groupAssignmentMsg");msg.textContent="Saving…";
