@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.4.1">
+<meta name="elleng-app-version" content="2.4.2">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -459,6 +459,13 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   #loginCard .row{display:grid;grid-template-columns:1fr}
   #loginBtn{width:100%}
 }
+
+.floating-main-menu{
+ position:fixed;left:12px;top:12px;z-index:9000;border:1px solid #d6e0e4;background:#fff;color:#0a2b42;
+ border-radius:999px;padding:9px 13px;font-weight:950;box-shadow:0 6px 18px rgba(0,0,0,.14)
+}
+.floating-main-menu.hidden{display:none}
+@media(max-width:620px){.floating-main-menu{top:8px;left:8px;padding:8px 11px;font-size:12px}}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -518,6 +525,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 </section>
 
 <section id="app" class="hidden">
+<button id="floatingMainMenuBtn" class="floating-main-menu hidden" type="button">← Main Menu</button>
 <div class="card row between">
 <div class="top-account-wrap">
   <div id="topAccountAvatar" class="top-account-avatar">—</div>
@@ -2977,7 +2985,7 @@ async function enterApp(){
     renderAll();
     subscribeLive();
     if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;
-    const hub=$("appHub");if(hub)hub.classList.remove("hidden");
+    const hub=$("appHub");if(hub)hub.classList.remove("hidden");if($("floatingMainMenuBtn"))$("floatingMainMenuBtn").classList.add("hidden");
   }
  }catch(e){
   console.error("Tournament load failed:",e);
@@ -2986,11 +2994,11 @@ async function enterApp(){
  }
 }
 
-function closeAppHub(){const h=$("appHub");if(h)h.classList.add("hidden")}
+function closeAppHub(){const h=$("appHub");if(h)h.classList.add("hidden");if($("floatingMainMenuBtn"))$("floatingMainMenuBtn").classList.remove("hidden")}
 function openAppHub(){
  if(!user){enterViewer();return}
  if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;
- const h=$("appHub");if(h)h.classList.remove("hidden");
+ const h=$("appHub");if(h)h.classList.remove("hidden");if($("floatingMainMenuBtn"))$("floatingMainMenuBtn").classList.add("hidden");
 }
 function openHubView(view){
  if(!user){enterViewer();return}
@@ -2999,7 +3007,7 @@ function openHubView(view){
    return;
  }
  if(view==="captain"){
-   window.location.href="./draft.html#captain";
+   window.location.href="./captain.html";
    return;
  }
  closeAppHub();
@@ -3042,7 +3050,7 @@ $("changeAccountPasswordBtn").addEventListener("click",async()=>{
  try{
    const {error}=await db.auth.updateUser({password:p1});if(error)throw error;
    const {data,error:profileError}=await db.functions.invoke("player-profile",{body:{action:"password_changed",draft_id:DRAFT_ID}});if(profileError)throw profileError;if(data?.error)throw new Error(data.error);
-   mustChangePassword=false;$("newAccountPassword").value="";$("confirmAccountPassword").value="";$("passwordChangeCard").classList.add("hidden");$("app").classList.remove("hidden");renderAll();subscribeLive();if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;if($("appHub"))$("appHub").classList.remove("hidden");
+   mustChangePassword=false;$("newAccountPassword").value="";$("confirmAccountPassword").value="";$("passwordChangeCard").classList.add("hidden");$("app").classList.remove("hidden");renderAll();subscribeLive();if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;if($("appHub"))$("appHub").classList.remove("hidden");if($("floatingMainMenuBtn"))$("floatingMainMenuBtn").classList.add("hidden");
  }catch(e){msg.textContent=e?.message||"Unable to change password."}
  finally{btn.disabled=false}
 });
@@ -3098,6 +3106,7 @@ if($("hubCaptain"))$("hubCaptain").addEventListener("click",()=>openHubView("cap
 if($("hubScoring"))$("hubScoring").addEventListener("click",()=>openHubView("scoring"));
 if($("hubClubhouse"))$("hubClubhouse").addEventListener("click",()=>openHubView("clubhouse"));
 if($("mainMenuBtn"))$("mainMenuBtn").addEventListener("click",openAppHub);
+if($("floatingMainMenuBtn"))$("floatingMainMenuBtn").addEventListener("click",openAppHub);
 window.addEventListener("online",()=>{renderOfflineState();flushOfflineScores()});
 window.addEventListener("offline",renderOfflineState);
 if("serviceWorker" in navigator){window.addEventListener("load",async()=>{try{const reg=await navigator.serviceWorker.register("./service-worker.js",{scope:"./"});reg.update().catch(()=>{})}catch(e){console.warn("Service worker registration skipped",e)}})}
