@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.12">
+<meta name="elleng-app-version" content="2.7.13">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1505,6 +1505,77 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   #homeView #playerExtrasToggle{font-size:16px!important;min-height:42px!important}
 }
 </style>
+
+<style>
+/* v2.7.13 — mobile app-shell / no-page-scroll experience */
+@media (max-width:650px){
+  html,body{height:100%;min-height:100%;overscroll-behavior:none}
+  body:not(.login-mode){height:100dvh!important;overflow:hidden!important;padding-bottom:0!important}
+  body:not(.login-mode) .app-version-bar{display:none!important}
+  body:not(.login-mode) .global-main-menu-bar{display:none!important}
+  body:not(.login-mode) .wrap{
+    height:100dvh!important;max-height:100dvh!important;overflow:hidden!important;
+    padding:calc(6px + env(safe-area-inset-top)) 8px calc(72px + env(safe-area-inset-bottom))!important;
+    box-sizing:border-box!important;max-width:none!important;
+  }
+  body:not(.login-mode) #app{
+    height:100%!important;min-height:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;
+  }
+  body:not(.login-mode) #app.hidden{display:none!important}
+  body:not(.login-mode) #app > .card:first-child{
+    flex:0 0 auto!important;margin:0 0 6px!important;padding:7px 9px!important;border-radius:16px!important;min-height:0!important;
+  }
+  body:not(.login-mode) #app > .card:first-child .top-account-avatar{width:42px!important;height:42px!important;min-width:42px!important}
+  body:not(.login-mode) #app > .card:first-child .top-account-text strong{font-size:17px!important}
+  body:not(.login-mode) #app > .card:first-child .top-account-text .status{font-size:11px!important;line-height:1.15!important}
+  body:not(.login-mode) #app > .card:first-child button{min-height:38px!important;padding:7px 10px!important;font-size:12px!important}
+  body:not(.login-mode) #app > .view{
+    flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none;padding-bottom:4px!important;
+  }
+  body:not(.login-mode) #app > .view::-webkit-scrollbar{display:none}
+  body.player-simple-home #homeView{
+    overflow:hidden!important;display:flex!important;flex-direction:column!important;gap:6px!important;padding-bottom:0!important;
+  }
+  body.player-simple-home #homeView > *{margin-bottom:0!important;flex:0 0 auto!important}
+  body.player-simple-home #homeView .home-hero{padding:9px 11px!important;border-radius:15px!important}
+  body.player-simple-home #homeView .home-kicker{font-size:9px!important}
+  body.player-simple-home #homeView .home-hero h2{font-size:19px!important;line-height:1.05!important;margin:2px 0 3px!important;padding-right:38px!important}
+  body.player-simple-home #homeView .home-hero .status{font-size:11px!important;line-height:1.2!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body.player-simple-home #homeView .home-hero .row{margin-top:5px!important;gap:4px!important;flex-wrap:nowrap!important;overflow:hidden}
+  body.player-simple-home #homeView .home-hero .badge{font-size:9px!important;padding:3px 6px!important;white-space:nowrap}
+  body.player-simple-home #homeView .home-hero:after{font-size:54px!important;right:8px!important;bottom:-12px!important}
+  body.player-simple-home #homeView .next-event-card{padding:8px 10px!important;border-radius:14px!important}
+  body.player-simple-home #homeView .next-event-card h2{font-size:18px!important;line-height:1.05!important}
+  body.player-simple-home #homeView .next-event-card .status{font-size:11px!important;line-height:1.15!important}
+  body.player-simple-home #homeView .countdown-badge{font-size:11px!important;padding:6px 9px!important}
+  body.player-simple-home #homeView .countdown-date{font-size:15px!important;margin-top:4px!important;line-height:1.05!important}
+  body.player-simple-home #leaderSpotlightCard{padding:8px 10px!important;border-radius:14px!important}
+  body.player-simple-home #leaderSpotlightCard h2{font-size:18px!important;line-height:1.05!important}
+  body.player-simple-home #leaderSpotlightCard .status{font-size:10px!important;line-height:1.15!important}
+  body.player-simple-home #leaderSpotlightCard .leader-rank{font-size:18px!important;min-width:42px!important}
+  body.player-simple-home #leaderSpotlightBody{max-height:34px!important;overflow:hidden!important;margin-top:4px!important}
+  body.player-simple-home #homeView .home-grid{gap:5px!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  body.player-simple-home #homeView .home-grid .home-tile{padding:6px 7px!important;border-radius:11px!important;min-width:0!important}
+  body.player-simple-home #homeView .home-grid .home-tile .status{font-size:8px!important;line-height:1.05!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body.player-simple-home #homeView .home-grid .home-tile strong.big{font-size:18px!important;line-height:1!important;margin-top:2px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body.player-simple-home #homeView #homeFormat{font-size:11px!important}
+  body.player-simple-home #homeSpecialCard{padding:7px 9px!important;border-radius:13px!important}
+  body.player-simple-home #homeSpecialCard strong{font-size:13px!important}
+  body.player-simple-home #homeSpecialCard .badge{font-size:8px!important;padding:3px 5px!important}
+  body.player-simple-home #homeSpecialCard .note{font-size:10px!important;line-height:1.15!important;margin-top:4px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body.player-simple-home #playerExtrasToggleCard{padding:6px 8px!important;border-radius:13px!important}
+  body.player-simple-home #playerExtrasToggle{min-height:36px!important;font-size:13px!important;padding:6px 10px!important}
+  body.player-simple-home #playerExtrasToggleCard .status{display:none!important}
+  body.player-simple-home:not(.player-extras-open) #teamMomentumCard{display:none!important}
+  body.player-simple-home:not(.player-extras-open) #leaderSpotlightCard{display:block!important}
+  body.player-simple-home.player-extras-open #homeView{overflow-y:auto!important}
+  body.player-simple-home.player-extras-open #teamMomentumCard{display:block!important}
+  body.player-simple-home.player-extras-open #playerExtrasToggleCard{position:sticky;bottom:0;z-index:4}
+  .mobile-bottom-nav{height:auto!important;min-height:64px!important}
+}
+</style>
+
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -1565,7 +1636,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.12</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.13</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -1627,16 +1698,6 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div id="nextEventDate" class="countdown-date"></div>
 </div>
 
-<div class="card player-essentials-card" id="playerEssentialsCard">
-  <div class="row between"><div><div class="premium-label">PLAYER ESSENTIALS</div><h2 style="margin:3px 0 0">What Do You Need?</h2><div class="status">The four things players use most during tournament day.</div></div><span class="badge">QUICK START</span></div>
-  <div class="player-essentials-grid">
-    <button class="player-essential-btn" type="button" data-home-go="leaderboard"><span>✏️</span><strong>My Score</strong></button>
-    <button class="player-essential-btn" type="button" data-home-go="leaderboard"><span>🏆</span><strong>Standings</strong></button>
-    <button class="player-essential-btn" type="button" data-home-go="teams"><span>👥</span><strong>My Team</strong></button>
-    <button class="player-essential-btn" type="button" data-home-go="clubhouse"><span>⏰</span><strong>Tee Time</strong></button>
-  </div>
-</div>
-
 <div id="inAppAlertStack" class="alert-stack"></div>
 <div id="leaderSpotlightCard" class="card leader-spotlight-card">
   <div class="row between">
@@ -1646,7 +1707,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div id="leaderSpotlightBody" class="leader-spotlight-body"></div>
 </div>
 
-<div class="card">
+<div class="card" id="teamMomentumCard">
   <div class="row between">
     <div><div class="premium-label">TEAM MOMENTUM</div><h2 style="margin:3px 0 0">Who’s Heating Up?</h2><div class="status">Based on each team’s most recent completed holes.</div></div>
     <span class="badge">LIVE</span>
@@ -1660,17 +1721,6 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div class="home-tile"><div class="status">HOLES COMPLETE</div><strong id="homeHolesComplete" class="big">0 / 18</strong><div class="status" style="margin-top:5px">Updates automatically</div></div>
   <div class="home-tile"><div class="status">TEAMS</div><strong id="homeTeamCount" class="big">—</strong><div id="homePlayerCount" class="status" style="margin-top:5px">Players loaded</div></div>
   <div class="home-tile"><div class="status">FORMAT</div><strong id="homeFormat" class="big" style="font-size:18px">EllenG</strong><div id="homeFormatSub" class="status" style="margin-top:5px">Front 9 / Back 9</div></div>
-</div>
-
-<div class="card">
-  <div class="row between"><div><h2 style="margin:0">Quick Access</h2><div class="status">Everything players need during the tournament.</div></div><span class="badge">LIVE</span></div>
-  <div class="home-actions" style="margin-top:12px">
-    <button class="home-action" type="button" data-home-go="leaderboard"><span>🏆</span>Leaderboard</button>
-    <button class="home-action" type="button" data-home-go="teams"><span>👥</span>Teams</button>
-    <button class="home-action" type="button" data-home-go="players"><span>⛳</span>Players</button>
-    <button class="home-action" type="button" data-home-go="course"><span>🗺️</span>Course</button>
-    <button class="home-action broadcast-launch" type="button" id="openBroadcast"><span>📺</span>Broadcast Mode</button>
-  </div>
 </div>
 
 <div id="homeSpecialCard" class="card home-highlight">
@@ -2017,7 +2067,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.12 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.13 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
