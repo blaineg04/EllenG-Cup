@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.10">
+<meta name="elleng-app-version" content="2.7.11">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1484,7 +1484,7 @@ body.login-mode #mobileBottomNav{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.10</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.11</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -1922,7 +1922,7 @@ body.login-mode #mobileBottomNav{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.10 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.11 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -3995,15 +3995,17 @@ async function syncLive(){
     return {name:x.name||`Team ${i+1}`,captain:x.captain||"",roster:rosterNames};
    });
   }
-  await loadScores();setSyncStatus("saved","Synced");
-  if(user&&(!tournamentArchives.length))await loadTournamentArchives();
-  await loadRsvps();await loadGroupAssignments();
+  const refreshTasks=[loadScores(),loadRsvps(),loadGroupAssignments()];
+  if(user&&(!tournamentArchives.length))refreshTasks.push(loadTournamentArchives());
+  await Promise.all(refreshTasks);
+  setSyncStatus("saved","Synced");
   const adminOpen=isCommissioner&&document.querySelector('.tab.active')?.dataset.view==='admin';
   if(!adminOpen)renderAll();
  }catch(e){console.error("Live data sync failed:",e);setSyncStatus("error","Sync issue")}
  finally{syncBusy=false}
 }
-setInterval(syncLive,5000);
+// Realtime handles live scoring; this slower visible-tab poll is only a safety fallback for non-score data.
+setInterval(()=>{if(!document.hidden)syncLive()},20000);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")syncLive()});
 window.addEventListener("focus",syncLive);
 let liveChannel=null;
@@ -4050,11 +4052,14 @@ document.body.classList.remove("login-mode");setGlobalMenuVisible(false);setMobi
  $("loginMsg").textContent="Signed in — loading tournament…";
  try{
   await loadBase();
-  await loadScores();setSyncStatus("saved","Synced");
-  await loadTournamentArchives();
-  await loadRsvps();
-  await loadGroupAssignments();
-  await loadTrashTalk();
+  await Promise.all([
+    loadScores(),
+    loadTournamentArchives(),
+    loadRsvps(),
+    loadGroupAssignments(),
+    loadTrashTalk()
+  ]);
+  setSyncStatus("saved","Synced");
   $("loginCard").classList.add("hidden");
   if(mustChangePassword&&!isCommissioner){
     $("app").classList.add("hidden");
@@ -4121,6 +4126,7 @@ function showView(name){
  document.querySelectorAll(".mobile-nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.mobileView===name));
  document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));
  target.classList.remove("hidden");
+ if(name==="trash")loadTrashTalk().then(renderTrashTalk).catch(e=>console.warn("Trash Talk refresh skipped",e));
  window.scrollTo({top:0,behavior:"smooth"});
 }
 $("loginBtn").addEventListener("click",async()=>{
@@ -4438,9 +4444,9 @@ document.querySelectorAll("[data-trash-emoji]").forEach(b=>b.addEventListener("c
 
 // Reliable cross-phone Trash Talk refresh. Realtime remains enabled; this is a fallback for mobile connections.
 setInterval(async()=>{
- if(!user||document.hidden)return;
+ if(!user||document.hidden||document.querySelector('.tab.active')?.dataset.view!=="trash")return;
  try{await loadTrashTalk();renderTrashTalk()}catch(e){console.error("Trash Talk refresh failed",e)}
-},3000);
+},12000);
 $("clearTrashTalk").addEventListener("click",clearTrashTalkFeed);
 $("archiveStartNew").addEventListener("click",archiveAndStartNew);
 $("resetCurrentLeader").addEventListener("click",()=>{
