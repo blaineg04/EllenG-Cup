@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.19">
+<meta name="elleng-app-version" content="2.7.21">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1471,6 +1471,160 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
  .player-essential-btn{min-height:70px!important}
 }
 </style>
+
+<style id="home-cleanup-v2720">
+/* v2.7.21: cleaner home-page hierarchy; all existing logo/branding markup is intentionally untouched. */
+#homeView{display:block}
+#homeView>.card{margin-bottom:14px}
+
+/* One integrated tournament panel instead of a card-inside-a-card look. */
+#homeView .next-event-card{
+  background:linear-gradient(135deg,#08253b,#0b3550)!important;
+  color:#fff!important;
+  border:1px solid rgba(213,167,44,.55)!important;
+  border-left:5px solid var(--gold)!important;
+  box-shadow:0 8px 20px rgba(8,37,59,.10)!important;
+}
+#homeView .next-event-card h2,#homeView .next-event-card .status{color:#fff}
+#homeView .next-event-card .premium-label{color:#e7c45b}
+#homeView .next-event-card .countdown-badge{background:#f4e0a2;color:#08253b;border-color:#d5a72c}
+#homeView .event-date-spotlight{
+  margin-top:12px;
+  padding:12px 0 0;
+  border-radius:0;
+  background:transparent;
+  border:0;
+  border-top:1px solid rgba(213,167,44,.42);
+  box-shadow:none;
+}
+#homeView .event-date-label{color:#e7c45b}
+
+/* RSVP reads as one section, with columns instead of nested cards. */
+#homeView .rsvp-home-card{
+  background:transparent!important;
+  border:0!important;
+  border-top:1px solid rgba(213,167,44,.38)!important;
+  border-bottom:1px solid rgba(213,167,44,.38)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding-left:4px!important;
+  padding-right:4px!important;
+}
+#homeView .rsvp-summary{gap:0;margin-top:14px}
+#homeView .rsvp-stat{border:0;border-radius:0;background:transparent;padding:8px 10px}
+#homeView .rsvp-stat+.rsvp-stat{border-left:1px solid rgba(16,42,59,.12)}
+#homeView .rsvp-player-groups{gap:0;border-top:1px solid rgba(16,42,59,.10);padding-top:10px}
+#homeView .rsvp-player-group{
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  padding:10px 16px!important;
+}
+#homeView .rsvp-player-group+.rsvp-player-group{border-left:1px solid rgba(213,167,44,.45)!important}
+#homeView .rsvp-player-group.playing .rsvp-player-group-head{color:#0a7b43}
+#homeView .rsvp-player-group.maybe .rsvp-player-group-head{color:#9a7410}
+#homeView .rsvp-player-group.out .rsvp-player-group-head{color:#8e2734}
+#homeView .rsvp-player-chip{
+  min-height:auto;padding:2px 0;border:0;border-radius:0;background:transparent;
+  color:#17384d;font-size:12px;font-weight:800;
+}
+#homeView .rsvp-player-list{display:flex;flex-direction:column;align-items:flex-start;gap:4px}
+
+/* Essentials becomes a clean section divider rather than another large card. */
+#homeView .player-essentials-card{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  border-bottom:1px solid rgba(213,167,44,.30)!important;
+  box-shadow:none!important;
+  padding-left:4px!important;
+  padding-right:4px!important;
+}
+#homeView .player-essentials-card .badge{background:transparent;border:1px solid rgba(213,167,44,.55)}
+#homeView .player-essential-btn{box-shadow:none!important;border-color:rgba(16,42,59,.10)!important;background:rgba(255,255,255,.55)!important}
+
+@media(max-width:650px){
+  #homeView .rsvp-player-groups{grid-template-columns:1fr}
+  #homeView .rsvp-player-group{padding:10px 4px!important}
+  #homeView .rsvp-player-group+.rsvp-player-group{border-left:0!important;border-top:1px solid rgba(213,167,44,.32)!important}
+  #homeView .rsvp-stat+.rsvp-stat{border-left:1px solid rgba(16,42,59,.10)}
+}
+</style>
+
+
+<style id="home-responsive-v2721">
+/* v2.7.21: desktop + mobile responsive polish. Existing EllenG alligator logo assets/markup are untouched. */
+#homeView .home-hero{
+  border-radius:18px!important;
+  padding:22px 24px!important;
+  box-shadow:0 10px 26px rgba(8,37,59,.13)!important;
+}
+#homeView .home-hero h2{font-size:32px;line-height:1.05}
+#homeView .next-event-card{padding:18px 22px!important}
+#homeView .event-date-spotlight{display:flex;align-items:center;gap:14px}
+#homeView .countdown-date{font-size:clamp(21px,2.2vw,34px);font-weight:950;line-height:1.08}
+#homeView .rsvp-home-card{padding-top:18px!important;padding-bottom:18px!important}
+#homeView .rsvp-controls{justify-content:flex-end;align-items:center}
+#homeView .rsvp-player-groups{grid-template-columns:repeat(3,minmax(0,1fr));}
+#homeView .rsvp-player-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:18px;row-gap:4px}
+#homeView .rsvp-player-chip{white-space:normal}
+#homeView .player-essentials-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-top:16px}
+#homeView .player-essential-btn{border-radius:0!important;border-width:0 0 0 1px!important;background:transparent!important;min-height:72px!important}
+#homeView .player-essential-btn:first-child{border-left:0!important}
+#homeView .player-essential-btn span{font-size:26px}
+
+@media (min-width:761px){
+  #homeView .next-event-card>.row:first-child{align-items:center}
+  #homeView .rsvp-home-card>.row:first-child{align-items:flex-end}
+  #homeView .rsvp-summary{max-width:620px;margin-left:auto;margin-right:auto}
+}
+
+@media (max-width:760px){
+  #homeView>.card{margin-bottom:10px}
+  #homeView .home-hero{padding:16px!important;border-radius:14px!important}
+  #homeView .home-hero h2{font-size:25px!important;padding-right:34px}
+  #homeView .home-hero .row{gap:6px;overflow-x:auto;padding-bottom:2px;flex-wrap:nowrap}
+  #homeView .home-hero .badge{white-space:nowrap;font-size:10px}
+
+  #homeView .next-event-card{padding:15px!important;border-left-width:4px!important;border-radius:14px!important}
+  #homeView .next-event-card>.row:first-child{align-items:flex-start;gap:10px}
+  #homeView .next-event-card h2{font-size:25px}
+  #homeView .countdown-badge{flex:0 0 auto}
+  #homeView .event-date-spotlight{gap:10px;padding-top:11px}
+  #homeView .event-date-icon{font-size:25px}
+  #homeView .countdown-date{font-size:21px}
+
+  #homeView .rsvp-home-card{padding:14px 0!important}
+  #homeView .rsvp-home-card>.row:first-child{align-items:flex-start}
+  #homeView .rsvp-home-card>.row:first-child>.badge{display:none}
+  #homeView .rsvp-controls{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+  #homeView .rsvp-btn{width:100%;min-height:44px;border-radius:10px}
+  #homeView .rsvp-summary{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:12px}
+  #homeView .rsvp-stat{padding:7px 3px}
+  #homeView .rsvp-stat strong{font-size:19px}
+  #homeView .rsvp-player-groups{grid-template-columns:1fr!important;padding-top:4px;margin-top:8px}
+  #homeView .rsvp-player-group{padding:12px 4px!important}
+  #homeView .rsvp-player-group+.rsvp-player-group{border-left:0!important;border-top:1px solid rgba(213,167,44,.32)!important}
+  #homeView .rsvp-player-list{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px}
+  #homeView .rsvp-player-chip{font-size:12px}
+
+  #homeView .player-essentials-card{padding:14px 0!important}
+  #homeView .player-essentials-card>.row:first-child>.badge{display:none}
+  #homeView .player-essentials-grid{grid-template-columns:1fr 1fr!important;gap:8px!important;margin-top:12px}
+  #homeView .player-essential-btn{border:1px solid rgba(16,42,59,.10)!important;border-radius:12px!important;background:rgba(255,255,255,.55)!important;min-height:68px!important}
+}
+
+@media (max-width:430px){
+  #homeView .home-hero h2{font-size:23px!important}
+  #homeView .next-event-card>.row:first-child{display:block}
+  #homeView .next-event-card .countdown-badge{display:inline-block;margin-top:9px}
+  #homeView .event-date-spotlight{align-items:flex-start}
+  #homeView .countdown-date{font-size:19px}
+  #homeView .rsvp-player-list{grid-template-columns:1fr}
+  #homeView .player-essentials-grid{grid-template-columns:1fr 1fr!important}
+}
+</style>
+
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -1531,7 +1685,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.19</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.21</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -1992,7 +2146,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.19 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.21 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
