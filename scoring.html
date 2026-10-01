@@ -1535,7 +1535,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   }
   body:not(.login-mode) #app > .view::-webkit-scrollbar{display:none}
   body.player-simple-home #homeView{
-    overflow:hidden!important;display:flex!important;flex-direction:column!important;gap:6px!important;padding-bottom:0!important;
+    overflow:hidden!important;flex-direction:column!important;gap:6px!important;padding-bottom:0!important;
   }
   body.player-simple-home #homeView > *{margin-bottom:0!important;flex:0 0 auto!important}
   body.player-simple-home #homeView .home-hero{padding:9px 11px!important;border-radius:15px!important}
@@ -1591,7 +1591,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   }
 
   /* MY SCORE — tournament-day essentials only, sized to the viewport. */
-  body.player-simple-home #leaderboardView{display:flex!important;flex-direction:column!important;gap:6px!important}
+  body.player-simple-home #leaderboardView{flex-direction:column!important;gap:6px!important}
   body.player-simple-home #leaderboardView > *{margin:0!important;flex:0 0 auto!important}
   body.player-simple-home #leaderboardView > .card:nth-of-type(1){display:none!important}
   body.player-simple-home #leaderboardView > details{display:none!important}
@@ -1625,7 +1625,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   body.player-simple-home #leaderboardView > .card:nth-of-type(n+4){display:none!important}
 
   /* TEAMS — header and selector stay fixed; roster cards scroll inside the screen. */
-  body.player-simple-home #teamsView{display:flex!important;flex-direction:column!important}
+  body.player-simple-home #teamsView{flex-direction:column!important}
   body.player-simple-home #teamsView > .card:first-child{
     flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;
     display:flex!important;flex-direction:column!important;padding:9px 10px!important;border-radius:14px!important;
@@ -1643,7 +1643,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   body.player-simple-home #teamsView > .card:first-child > .card:last-child{display:none!important}
 
   /* PLAYERS — controls stay fixed; player directory becomes the internal app list. */
-  body.player-simple-home #playersView{display:flex!important;flex-direction:column!important}
+  body.player-simple-home #playersView{flex-direction:column!important}
   body.player-simple-home #playersView > .card:first-child{
     flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;
     display:flex!important;flex-direction:column!important;padding:9px 10px!important;border-radius:14px!important;
@@ -1674,18 +1674,25 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 
 <style>
-/* v2.7.15 — prevent app-screen flex rules from overriding hidden views */
+/* v2.7.16 — hard mobile screen isolation + compact in-app chrome */
 @media (max-width:650px){
-  body.player-simple-home #homeView.hidden,
-  body.player-simple-home #leaderboardView.hidden,
-  body.player-simple-home #teamsView.hidden,
-  body.player-simple-home #playersView.hidden{display:none!important}
+  /* The marketing masthead is useful on sign-in, but wastes most of the screen once inside the app. */
+  body:not(.login-mode) > header.top{display:none!important}
 
-  /* Only the selected primary screen gets the app-style flex layout. */
-  body.player-simple-home #homeView:not(.hidden){display:flex!important}
-  body.player-simple-home #leaderboardView:not(.hidden){display:flex!important}
-  body.player-simple-home #teamsView:not(.hidden){display:flex!important}
-  body.player-simple-home #playersView:not(.hidden){display:flex!important}
+  /* Hidden views must always stay hidden, regardless of layout rules elsewhere. */
+  body:not(.login-mode) #app > .view.hidden{display:none!important}
+
+  /* Only the selected primary view is rendered as the current app screen. */
+  body.player-simple-home #app > #homeView:not(.hidden),
+  body.player-simple-home #app > #leaderboardView:not(.hidden),
+  body.player-simple-home #app > #teamsView:not(.hidden),
+  body.player-simple-home #app > #playersView:not(.hidden){display:flex!important}
+
+  /* Non-primary screens continue to use their normal block layout when selected. */
+  body:not(.login-mode) #app > .view:not(.hidden):not(#homeView):not(#leaderboardView):not(#teamsView):not(#playersView){display:block!important}
+
+  /* Keep the account strip compact and fixed within the app shell. */
+  body:not(.login-mode) #app > .card:first-child{position:relative!important;z-index:3!important}
 }
 </style>
 </head>
@@ -1748,7 +1755,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.14</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.16</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
