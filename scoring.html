@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.17">
+<meta name="elleng-app-version" content="2.7.18">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -363,9 +363,15 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   cursor:not-allowed!important;
 }
 
-.next-event-card{border-left:5px solid var(--gold)}
+.next-event-card{border:2px solid var(--gold)!important;border-left:7px solid var(--gold)!important;background:linear-gradient(135deg,#fff8df,#fffdf8)!important;box-shadow:0 10px 26px rgba(8,37,59,.12)!important}
 .countdown-badge{background:#0d5f4c;color:white;border-radius:999px;padding:8px 12px;font-weight:950;white-space:nowrap}
-.countdown-date{font-size:18px;font-weight:900;margin-top:10px}
+.event-date-spotlight{display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 14px;border-radius:12px;background:#08253b;color:#fff;border:1px solid #d5a72c;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.event-date-icon{font-size:28px;line-height:1}
+.event-date-label{font-size:10px;font-weight:1000;letter-spacing:.14em;color:#f0c75d}
+.countdown-date{font-family:Georgia,"Times New Roman",serif;font-size:clamp(22px,5vw,30px);line-height:1.1;font-weight:900;margin-top:3px;color:#fff}
+.home-date-badge{background:#d5a72c!important;color:#10202c!important;border:1px solid #f0c75d!important;font-weight:1000!important;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.rsvp-home-card{border:2px solid rgba(213,167,44,.55)!important}
+@media(max-width:560px){.event-date-spotlight{padding:12px}.event-date-icon{font-size:25px}.countdown-badge{font-size:11px;padding:7px 10px}.rsvp-home-card .rsvp-controls{display:grid;grid-template-columns:1fr 1fr}.rsvp-home-card .rsvp-btn{width:100%}}
 .alert-stack{position:fixed;top:110px;right:16px;z-index:5000;display:grid;gap:8px;max-width:min(360px,calc(100vw - 32px));pointer-events:none}
 .app-alert{background:#0b2b42;color:white;border-left:5px solid var(--gold);border-radius:12px;padding:11px 13px;box-shadow:0 10px 28px rgba(0,0,0,.18);animation:alertIn .25s ease}
 .app-alert strong{display:block}.app-alert span{font-size:12px;opacity:.86}
@@ -1524,7 +1530,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.17</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.18</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -1574,16 +1580,32 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div class="home-kicker">ELLENG CUP • TOURNAMENT HUB</div>
   <h2 id="homeHeadline">Tournament Day</h2>
   <div id="homeSubline" class="status">Live standings, teams, players and course information in one place.</div>
-  <div class="row" style="margin-top:13px"><span id="homeStatusBadge" class="badge" style="background:#d5a72c;color:#10202c">SETUP</span><span id="homeCourseBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">Course</span><span id="homeDateBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">DATE TBD</span></div>
+  <div class="row" style="margin-top:13px"><span id="homeStatusBadge" class="badge" style="background:#d5a72c;color:#10202c">SETUP</span><span id="homeCourseBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">Course</span><span id="homeDateBadge" class="badge home-date-badge">DATE TBD</span></div>
 
 </div>
 
 <div class="card next-event-card">
   <div class="row between">
-    <div><div class="premium-label">NEXT EVENT</div><h2 id="nextEventName" style="margin:3px 0 0">EllenG Cup</h2><div id="nextEventCourse" class="status">Course TBD</div></div>
+    <div><div class="premium-label">NEXT ELLENG CUP</div><h2 id="nextEventName" style="margin:3px 0 0">EllenG Cup</h2><div id="nextEventCourse" class="status">Course TBD</div></div>
     <span id="nextEventCountdown" class="countdown-badge">DATE TBD</span>
   </div>
-  <div id="nextEventDate" class="countdown-date"></div>
+  <div class="event-date-spotlight">
+    <span class="event-date-icon" aria-hidden="true">📅</span>
+    <div><div class="event-date-label">TOURNAMENT DATE</div><div id="nextEventDate" class="countdown-date"></div></div>
+  </div>
+</div>
+
+<div class="card rsvp-home-card" id="rsvpCard">
+  <div class="row between"><div><div class="premium-label">AVAILABILITY</div><h2 style="margin:3px 0 0">Tournament RSVP</h2><div class="status">Players can mark Playing, Maybe or Out.</div></div><span class="badge">PLAYER STATUS</span></div>
+  <div id="myRsvpControls" class="rsvp-controls"></div>
+  <div id="rsvpSummary" class="rsvp-summary"></div>
+  <div id="commissionerRsvpReset" class="hidden" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(213,167,44,.34)">
+    <div class="row between">
+      <div><strong>Commissioner RSVP Control</strong><div class="status">Clear every RSVP so players can respond again for this tournament.</div></div>
+      <button id="resetAllRsvps" class="danger" type="button">Reset All RSVPs</button>
+    </div>
+    <div id="rsvpAdminMsg" class="status" style="margin-top:8px"></div>
+  </div>
 </div>
 
 <div class="card player-essentials-card" id="playerEssentialsCard">
@@ -1805,18 +1827,6 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   </div>
   <div class="note" style="margin-top:10px">A–D groups players by handicap letter and lists each group alphabetically by last name. Tap A–Z Last Name anytime to return to one alphabetical list.</div>
   <div id="playerDirectory" class="player-list"></div>
-<div class="card" id="rsvpCard" style="margin-top:14px">
-  <div class="row between"><div><div class="premium-label">AVAILABILITY</div><h2 style="margin:3px 0 0">Tournament RSVP</h2><div class="status">Players can mark Playing, Maybe or Out.</div></div><span class="badge">PLAYER STATUS</span></div>
-  <div id="myRsvpControls" class="rsvp-controls"></div>
-  <div id="rsvpSummary" class="rsvp-summary"></div>
-  <div id="commissionerRsvpReset" class="hidden" style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(213,167,44,.34)">
-    <div class="row between">
-      <div><strong>Commissioner RSVP Control</strong><div class="status">Clear every RSVP so players can respond again for this tournament.</div></div>
-      <button id="resetAllRsvps" class="danger" type="button">Reset All RSVPs</button>
-    </div>
-    <div id="rsvpAdminMsg" class="status" style="margin-top:8px"></div>
-  </div>
-</div>
 </div>
 
 <div class="card hidden" id="playerProfileCardsSection">
@@ -1981,7 +1991,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.17 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.18 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
