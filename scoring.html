@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.8">
+<meta name="elleng-app-version" content="2.7.9">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -461,7 +461,6 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   #loginBtn{width:100%}
 }
 
-}
 
 .auth-boot{max-width:720px;margin:34px auto;text-align:center;padding:34px 18px;color:#18394d}
 .auth-boot-logo{width:78px;height:78px;object-fit:contain;display:block;margin:0 auto 10px}
@@ -1485,7 +1484,7 @@ body.login-mode #mobileBottomNav{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.8</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.9</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -1923,7 +1922,7 @@ body.login-mode #mobileBottomNav{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.8 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.9 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -3808,7 +3807,7 @@ function renderHoleMatchup(){
  const root=$("holeMatchup"),sel=$("matchupHoleSelect");if(!root||!sel)return;
  if(!sel.options.length){sel.innerHTML=Array.from({length:18},(_,i)=>`<option value="${i+1}">Hole ${i+1}</option>`).join("");}
  const h=Number(sel.value||1);sel.value=String(h);
- const par=Number((tournament?.pars||draftState?.holePars||[])[h-1]||4);
+ const par=parForHole(h);
  const pts=pointsForHole(h);
  const complete=teams.length>0&&teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null));
  root.innerHTML=teams.map((t,ti)=>{
@@ -3837,7 +3836,7 @@ function renderPlayerProfileCards(){
  if(!Number.isInteger(ti)){ti=(draftState?.teams||[]).findIndex(t=>(t.roster||[]).map(Number).includes(gi));if(ti<0)ti=null}
  const own=(playerScores||[]).filter(x=>Number(x.golfer_index)===gi&&x.score!=null);
  let birdies=0,eagles=0;
- own.forEach(x=>{const h=Number(x.hole),par=Number((tournament?.pars||draftState?.holePars||[])[h-1]||4),d=Number(x.score)-par;if(d===-1)birdies++;if(d<=-2)eagles++;});
+ own.forEach(x=>{const h=Number(x.hole),par=parForHole(h),d=Number(x.score)-par;if(d===-1)birdies++;if(d<=-2)eagles++;});
  const teamName=ti==null?"Unassigned":(teams?.[ti]?.name||`Team ${ti+1}`);
  const accent=ti==null?"#d5a72c":teamAccent(ti);
  const teamPts=ti==null?0:Number(official?.[ti]?.pts||0);
