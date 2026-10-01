@@ -1215,7 +1215,7 @@ body.login-mode #mobileBottomNav{display:none!important}
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="application-name" content="EllenG Cup">
 <meta name="apple-mobile-web-app-title" content="EllenG Cup">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="apple-touch-icon" sizes="180x180" href="app-icon-180.png">
 
 <style id="mobile-tee-sheet-fix">
@@ -1292,6 +1292,85 @@ body.login-mode #mobileBottomNav{display:none!important}
 @media(max-width:640px){
   #adminView{
     scroll-padding-top:calc(24px + env(safe-area-inset-top))!important;
+  }
+}
+</style>
+
+<style id="mobile-tee-sheet-ios-fix">
+@media(max-width:760px){
+  #adminGroupAssignments .group-row{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    column-gap:10px!important;
+    row-gap:10px!important;
+    overflow:hidden!important;
+  }
+
+  #adminGroupAssignments .group-field{
+    display:grid!important;
+    grid-template-rows:auto 46px!important;
+    gap:5px!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    overflow:hidden!important;
+  }
+
+  #adminGroupAssignments .group-field-label{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:0 2px!important;
+    font-size:10px!important;
+    line-height:1.1!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+
+  #adminGroupAssignments .group-field input{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    height:46px!important;
+    min-height:46px!important;
+    max-height:46px!important;
+    margin:0!important;
+    padding:8px 10px!important;
+    box-sizing:border-box!important;
+    border-radius:10px!important;
+    line-height:1.2!important;
+    overflow:hidden!important;
+  }
+
+  /* iOS Safari gives time inputs a large intrinsic width unless constrained */
+  #adminGroupAssignments input[type="time"]{
+    -webkit-appearance:none!important;
+    appearance:none!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    height:46px!important;
+    min-height:46px!important;
+    max-height:46px!important;
+    padding:8px 10px!important;
+  }
+
+  #adminGroupAssignments input[type="time"]::-webkit-date-and-time-value{
+    text-align:left!important;
+    min-height:0!important;
+    line-height:28px!important;
+  }
+
+  #adminGroupAssignments input[type="time"]::-webkit-calendar-picker-indicator{
+    margin:0!important;
+    padding:0!important;
+  }
+
+  #adminGroupAssignments .group-name-cell{
+    grid-column:1/-1!important;
+    min-width:0!important;
   }
 }
 </style>
