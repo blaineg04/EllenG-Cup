@@ -1455,6 +1455,56 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
  .player-essential-btn{min-height:70px!important}
 }
 </style>
+
+<style id="compact-home-boxes-fix">
+/* Compact the Home summary cards without changing their content or behavior */
+#homeView .home-grid{gap:8px!important}
+#homeView .home-grid .home-tile{
+  min-height:0!important;
+  height:auto!important;
+  padding:10px 12px!important;
+  border-radius:12px!important;
+}
+#homeView .home-grid .home-tile .status{
+  line-height:1.2!important;
+}
+#homeView .home-grid .home-tile strong.big{
+  margin-top:2px!important;
+  line-height:1!important;
+}
+#homeView #homeSpecialCard{
+  min-height:0!important;
+  height:auto!important;
+  padding:11px 13px!important;
+}
+#homeView #homeSpecialCard .note{
+  margin-top:5px!important;
+  line-height:1.3!important;
+}
+#homeView #playerExtrasToggleCard{
+  min-height:0!important;
+  height:auto!important;
+  padding:10px 12px!important;
+}
+#homeView #playerExtrasToggle{
+  min-height:44px!important;
+  padding:10px 12px!important;
+}
+#homeView #playerExtrasToggleCard .status{
+  margin-top:6px!important;
+  line-height:1.25!important;
+}
+@media(max-width:650px){
+  #homeView .home-grid .home-tile{padding:9px 11px!important}
+  #homeView .home-grid .home-tile strong.big{font-size:24px!important}
+  #homeView #homeFormat{font-size:17px!important}
+  #homeView #homeSpecialCard{padding:10px 12px!important}
+  #homeView #homeSpecialCard .row{gap:7px!important;align-items:center!important}
+  #homeView #homeSpecialCard .badge{font-size:10px!important;padding:4px 7px!important}
+  #homeView #playerExtrasToggleCard{padding:9px 11px!important}
+  #homeView #playerExtrasToggle{font-size:16px!important;min-height:42px!important}
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -1577,6 +1627,15 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div id="nextEventDate" class="countdown-date"></div>
 </div>
 
+<div class="card player-essentials-card" id="playerEssentialsCard">
+  <div class="row between"><div><div class="premium-label">PLAYER ESSENTIALS</div><h2 style="margin:3px 0 0">What Do You Need?</h2><div class="status">The four things players use most during tournament day.</div></div><span class="badge">QUICK START</span></div>
+  <div class="player-essentials-grid">
+    <button class="player-essential-btn" type="button" data-home-go="leaderboard"><span>✏️</span><strong>My Score</strong></button>
+    <button class="player-essential-btn" type="button" data-home-go="leaderboard"><span>🏆</span><strong>Standings</strong></button>
+    <button class="player-essential-btn" type="button" data-home-go="teams"><span>👥</span><strong>My Team</strong></button>
+    <button class="player-essential-btn" type="button" data-home-go="clubhouse"><span>⏰</span><strong>Tee Time</strong></button>
+  </div>
+</div>
 
 <div id="inAppAlertStack" class="alert-stack"></div>
 <div id="leaderSpotlightCard" class="card leader-spotlight-card">
@@ -1601,6 +1660,17 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div class="home-tile"><div class="status">HOLES COMPLETE</div><strong id="homeHolesComplete" class="big">0 / 18</strong><div class="status" style="margin-top:5px">Updates automatically</div></div>
   <div class="home-tile"><div class="status">TEAMS</div><strong id="homeTeamCount" class="big">—</strong><div id="homePlayerCount" class="status" style="margin-top:5px">Players loaded</div></div>
   <div class="home-tile"><div class="status">FORMAT</div><strong id="homeFormat" class="big" style="font-size:18px">EllenG</strong><div id="homeFormatSub" class="status" style="margin-top:5px">Front 9 / Back 9</div></div>
+</div>
+
+<div class="card">
+  <div class="row between"><div><h2 style="margin:0">Quick Access</h2><div class="status">Everything players need during the tournament.</div></div><span class="badge">LIVE</span></div>
+  <div class="home-actions" style="margin-top:12px">
+    <button class="home-action" type="button" data-home-go="leaderboard"><span>🏆</span>Leaderboard</button>
+    <button class="home-action" type="button" data-home-go="teams"><span>👥</span>Teams</button>
+    <button class="home-action" type="button" data-home-go="players"><span>⛳</span>Players</button>
+    <button class="home-action" type="button" data-home-go="course"><span>🗺️</span>Course</button>
+    <button class="home-action broadcast-launch" type="button" id="openBroadcast"><span>📺</span>Broadcast Mode</button>
+  </div>
 </div>
 
 <div id="homeSpecialCard" class="card home-highlight">
