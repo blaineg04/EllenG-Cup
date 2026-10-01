@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.25">
+<meta name="elleng-app-version" content="2.7.26">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1472,7 +1472,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </style>
 
 <style id="home-cleanup-v2724">
-/* v2.7.25 — CSS-only Home cleanup. No tournament logic changed. */
+/* v2.7.26 — CSS-only Home cleanup. No tournament logic changed. */
 
 #app > .card.row.between,
 #app > .top-tabs-card{
@@ -1599,7 +1599,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 <style id="home-final-override-v2725">
 /*
-  v2.7.25 — FINAL HOME OVERRIDE
+  v2.7.26 — FINAL HOME OVERRIDE
   Intentionally high-specificity selectors so older global !important card rules
   cannot override the Home-page cleanup. CSS only.
 */
@@ -1785,6 +1785,65 @@ body #app #homeView > .card.leader-spotlight-card{
 }
 </style>
 
+
+<style id="home-contrast-v2726">
+/* v2.7.26 — Home contrast fix only. Layout and app logic unchanged. */
+
+/* RSVP section typography on the dark page background. */
+body #app #homeView > .card.rsvp-home-card > .premium-label,
+body #app #homeView > .card.rsvp-home-card .premium-label{
+  color:#d5a72c!important;
+}
+
+body #app #homeView > .card.rsvp-home-card h1,
+body #app #homeView > .card.rsvp-home-card h2,
+body #app #homeView > .card.rsvp-home-card h3{
+  color:#ffffff!important;
+}
+
+body #app #homeView > .card.rsvp-home-card .status,
+body #app #homeView > .card.rsvp-home-card .muted,
+body #app #homeView > .card.rsvp-home-card p{
+  color:rgba(255,255,255,.76)!important;
+}
+
+/* Player Essentials typography on the dark page background. */
+body #app #homeView > .card.player-essentials-card > .premium-label,
+body #app #homeView > .card.player-essentials-card .premium-label{
+  color:#d5a72c!important;
+}
+
+body #app #homeView > .card.player-essentials-card h1,
+body #app #homeView > .card.player-essentials-card h2,
+body #app #homeView > .card.player-essentials-card h3{
+  color:#ffffff!important;
+}
+
+body #app #homeView > .card.player-essentials-card .status,
+body #app #homeView > .card.player-essentials-card .muted,
+body #app #homeView > .card.player-essentials-card p{
+  color:rgba(255,255,255,.76)!important;
+}
+
+/* Keep white cards/buttons readable. */
+body #app #homeView .rsvp-home-card .rsvp-summary,
+body #app #homeView .rsvp-home-card .rsvp-summary *,
+body #app #homeView .rsvp-home-card .rsvp-player-groups,
+body #app #homeView .rsvp-home-card .rsvp-player-groups *,
+body #app #homeView .player-essentials-card .player-essential-btn,
+body #app #homeView .player-essentials-card .player-essential-btn *{
+  color:#102a3b!important;
+}
+
+/* Preserve gold utility badges. */
+body #app #homeView .rsvp-home-card .badge,
+body #app #homeView .rsvp-home-card .pill,
+body #app #homeView .player-essentials-card .badge,
+body #app #homeView .player-essentials-card .pill{
+  color:#d5a72c!important;
+}
+</style>
+
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -1845,7 +1904,7 @@ body #app #homeView > .card.leader-spotlight-card{
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.25</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.26</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2306,7 +2365,7 @@ body #app #homeView > .card.leader-spotlight-card{
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.25 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.26 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
