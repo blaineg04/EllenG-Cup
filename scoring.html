@@ -1576,6 +1576,102 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 }
 </style>
 
+
+<style>
+/* v2.7.14 — native-style full mobile screens: My Score, Teams, Players */
+@media (max-width:650px){
+  /* Keep the outer app stationary; each primary tab becomes a screen. */
+  body:not(.login-mode) #leaderboardView,
+  body:not(.login-mode) #teamsView,
+  body:not(.login-mode) #playersView{
+    overflow:hidden!important;
+    height:100%!important;
+    min-height:0!important;
+    padding-bottom:0!important;
+  }
+
+  /* MY SCORE — tournament-day essentials only, sized to the viewport. */
+  body.player-simple-home #leaderboardView{display:flex!important;flex-direction:column!important;gap:6px!important}
+  body.player-simple-home #leaderboardView > *{margin:0!important;flex:0 0 auto!important}
+  body.player-simple-home #leaderboardView > .card:nth-of-type(1){display:none!important}
+  body.player-simple-home #leaderboardView > details{display:none!important}
+  body.player-simple-home #leaderboardView > .card:nth-of-type(2){
+    display:flex!important;flex-direction:column!important;min-height:0!important;
+    padding:8px 10px!important;border-radius:14px!important;
+  }
+  body.player-simple-home #leaderboardView > .card:nth-of-type(2) h2{font-size:18px!important}
+  body.player-simple-home #leaderboardView > .card:nth-of-type(2) .status,
+  body.player-simple-home #leaderboardView > .card:nth-of-type(2) .note{font-size:10px!important;line-height:1.15!important}
+  body.player-simple-home #leaderboardView > .card:nth-of-type(2) .admin-grid{grid-template-columns:1fr 1fr 1fr!important;gap:5px!important;margin-top:7px!important}
+  body.player-simple-home #leaderboardView > .card:nth-of-type(2) label small{font-size:9px!important}
+  body.player-simple-home #leaderboardView > .card:nth-of-type(2) select,
+  body.player-simple-home #leaderboardView > .card:nth-of-type(2) input{min-height:36px!important;padding:6px 7px!important;font-size:13px!important}
+  body.player-simple-home #leaderboardView .self-score-summary{margin-top:6px!important}
+  body.player-simple-home #leaderboardView .self-score-box{padding:6px 8px!important}
+  body.player-simple-home #leaderboardView .self-score-box strong{font-size:22px!important}
+  body.player-simple-home #leaderboardView > .card:nth-of-type(2) .row{margin-top:7px!important;gap:6px!important}
+  body.player-simple-home #leaderboardView > .card:nth-of-type(2) button{min-height:36px!important;padding:6px 9px!important;font-size:12px!important}
+  body.player-simple-home #leaderboardView > .card:nth-of-type(3){
+    flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;padding:8px 10px!important;border-radius:14px!important;
+    display:flex!important;flex-direction:column!important;
+  }
+  body.player-simple-home #leaderboardView > .card:nth-of-type(3) h2{font-size:17px!important}
+  body.player-simple-home #leaderboardView > .card:nth-of-type(3) .status{font-size:10px!important}
+  body.player-simple-home #leaderboardView #leaderboard{
+    flex:1 1 auto!important;min-height:0!important;overflow:auto!important;margin-top:6px!important;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  }
+  body.player-simple-home #leaderboardView #leaderboard::-webkit-scrollbar{display:none}
+  body.player-simple-home #leaderboardView > .card:nth-of-type(n+4){display:none!important}
+
+  /* TEAMS — header and selector stay fixed; roster cards scroll inside the screen. */
+  body.player-simple-home #teamsView{display:flex!important;flex-direction:column!important}
+  body.player-simple-home #teamsView > .card:first-child{
+    flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;
+    display:flex!important;flex-direction:column!important;padding:9px 10px!important;border-radius:14px!important;
+  }
+  body.player-simple-home #teamsView h2{font-size:18px!important}
+  body.player-simple-home #teamsView .status{font-size:10px!important;line-height:1.15!important}
+  body.player-simple-home #teamsView #teamRosterSelect{min-height:38px!important;padding:6px 8px!important}
+  body.player-simple-home #teamsView #teamCards{
+    flex:1 1 auto!important;min-height:0!important;overflow:auto!important;align-content:start!important;
+    margin-top:8px!important;gap:6px!important;grid-template-columns:1fr!important;padding-bottom:2px!important;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  }
+  body.player-simple-home #teamsView #teamCards::-webkit-scrollbar{display:none}
+  body.player-simple-home #teamsView #captainDashboardCard{margin-top:6px!important;padding:7px 8px!important}
+  body.player-simple-home #teamsView > .card:first-child > .card:last-child{display:none!important}
+
+  /* PLAYERS — controls stay fixed; player directory becomes the internal app list. */
+  body.player-simple-home #playersView{display:flex!important;flex-direction:column!important}
+  body.player-simple-home #playersView > .card:first-child{
+    flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;
+    display:flex!important;flex-direction:column!important;padding:9px 10px!important;border-radius:14px!important;
+  }
+  body.player-simple-home #playersView h2{font-size:18px!important}
+  body.player-simple-home #playersView .status,
+  body.player-simple-home #playersView .note{font-size:10px!important;line-height:1.15!important}
+  body.player-simple-home #playersView .players-toolbar{grid-template-columns:1fr 1fr!important;gap:5px!important;margin-top:7px!important}
+  body.player-simple-home #playersView .players-toolbar select,
+  body.player-simple-home #playersView .players-toolbar input{min-height:36px!important;padding:6px 7px!important;font-size:12px!important}
+  body.player-simple-home #playersView #playerDirectory{
+    flex:1 1 auto!important;min-height:0!important;overflow:auto!important;margin-top:6px!important;padding-bottom:2px!important;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+  }
+  body.player-simple-home #playersView #playerDirectory::-webkit-scrollbar{display:none}
+  body.player-simple-home #playersView #rsvpCard{display:none!important}
+  body.player-simple-home #playersView #playerProfileCardsSection{
+    position:absolute!important;inset:6px 8px 6px 8px!important;z-index:20!important;overflow:auto!important;
+    box-shadow:0 10px 35px rgba(0,0,0,.22)!important;border-radius:16px!important;
+  }
+
+  /* Preserve scrollable admin/commissioner screens; player-facing primary tabs stay app-like. */
+  body:not(.player-simple-home) #leaderboardView,
+  body:not(.player-simple-home) #teamsView,
+  body:not(.player-simple-home) #playersView{overflow-y:auto!important}
+}
+</style>
+
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -1636,7 +1732,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.13</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.14</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
