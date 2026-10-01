@@ -1,4 +1,4 @@
-const CACHE="elleng-cup-v2.7.8";
+const CACHE="elleng-cup-v2.7.6";
 const STATIC=[
   "./config.js",
   "./common.js",
