@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.16">
+<meta name="elleng-app-version" content="2.7.17">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -82,6 +82,13 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 
 /* Public Players directory */
 .players-toolbar{display:grid;grid-template-columns:minmax(180px,260px) minmax(180px,1fr);gap:10px;margin-top:12px}
+
+.player-sort-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.player-sort-btn{background:#e8edef!important;color:#17384d!important;border:1px solid #d0d9dd!important;min-height:42px!important;padding:9px 12px!important}
+.player-sort-btn.active{background:#08253b!important;color:#f0c75d!important;border:2px solid #d5a72c!important}
+.player-sort-btn .sort-arrow{font-weight:1000;margin-right:5px}
+.player-band-range{font-size:12px;font-weight:800;color:#667782;margin-top:3px}
+@media(max-width:650px){.player-sort-controls{display:grid;grid-template-columns:1fr 1fr}.player-sort-btn{width:100%;font-size:13px!important}.player-sort-btn[data-player-sort="team"]{grid-column:1/-1}}
 .player-list{display:grid;gap:10px;margin-top:14px}
 .player-team-card{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
 .player-team-head{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px 14px;background:#f8fafb;border-bottom:1px solid var(--line)}
@@ -1517,7 +1524,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.16</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.17</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -1788,10 +1795,15 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
     <span class="badge">LIVE DRAFT SYNC</span>
   </div>
   <div class="players-toolbar">
-    <label><small>Organize players</small><select id="playerDirectoryMode"><option value="team">By Team</option><option value="all">Alphabetical by Last Name</option><option value="band">Handicap A–D</option></select></label>
     <label><small>Find player</small><input id="playerDirectorySearch" placeholder="Search by player or team"></label>
   </div>
-  <div class="note" style="margin-top:10px">Tap a player to open their profile. Handicaps update automatically, and undrafted golfers are shown as Available / Unassigned.</div>
+  <select id="playerDirectoryMode" class="hidden" aria-hidden="true"><option value="band" selected>Handicap A–D</option><option value="all">Alphabetical by Last Name</option><option value="team">By Team</option></select>
+  <div class="player-sort-controls" aria-label="Sort players">
+    <button class="player-sort-btn active" type="button" data-player-sort="band"><span class="sort-arrow">↕</span>A–D Handicap</button>
+    <button class="player-sort-btn" type="button" data-player-sort="all"><span class="sort-arrow">↕</span>A–Z Last Name</button>
+    <button class="player-sort-btn" type="button" data-player-sort="team">👥 By Team</button>
+  </div>
+  <div class="note" style="margin-top:10px">A–D groups players by handicap letter and lists each group alphabetically by last name. Tap A–Z Last Name anytime to return to one alphabetical list.</div>
   <div id="playerDirectory" class="player-list"></div>
 <div class="card" id="rsvpCard" style="margin-top:14px">
   <div class="row between"><div><div class="premium-label">AVAILABILITY</div><h2 style="margin:3px 0 0">Tournament RSVP</h2><div class="status">Players can mark Playing, Maybe or Out.</div></div><span class="badge">PLAYER STATUS</span></div>
@@ -1969,7 +1981,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.16 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.17 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -2935,10 +2947,15 @@ function playerLastNameSortKey(name){
 function sortPlayersByLastName(a,b){
  return playerLastNameSortKey(a?.name).localeCompare(playerLastNameSortKey(b?.name))||String(a?.name||"").localeCompare(String(b?.name||""));
 }
+function updatePlayerSortButtons(){
+ const mode=$("playerDirectoryMode")?.value||"band";
+ document.querySelectorAll("[data-player-sort]").forEach(b=>b.classList.toggle("active",b.dataset.playerSort===mode));
+}
 function renderPlayersDirectory(){
  const root=$("playerDirectory"); if(!root||!draftState)return;
+ updatePlayerSortButtons();
  const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>({...(g||{}),index:i,name:(g?.name||"").trim()})).filter(g=>g.name);
- const mode=$("playerDirectoryMode")?.value||"team";
+ const mode=$("playerDirectoryMode")?.value||"band";
  const q=($("playerDirectorySearch")?.value||"").trim().toLowerCase();
  const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Available / Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`),band:playerBandLabel(g),hcpLabel:playerHandicapLabel(g)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q)||g.band.toLowerCase().includes(q)||g.hcpLabel.toLowerCase().includes(q));
  const rowHtml=g=>`<div class="player-row-public" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}</div><div class="player-hcp-public"><span class="status">HCP</span><br><strong>${esc(g.hcpLabel)}</strong></div><div class="player-band-public"><span class="player-band-chip">${esc(g.band)}</span></div><div class="player-team-public">${esc(g.teamName)}</div></div>`;
@@ -2946,7 +2963,8 @@ function renderPlayersDirectory(){
  if(mode==="all"){root.innerHTML=`<div class="player-team-card"><div class="player-team-head"><h3>All Players</h3><div class="status">${rows.length} golfer${rows.length===1?"":"s"}</div></div>${rows.sort(sortPlayersByLastName).map(rowHtml).join("")}</div>`;return}
  if(mode==="band"){
    const order=["A","B","C","D","—"];
-   root.innerHTML=order.map(b=>{const list=rows.filter(g=>g.band===b).sort((a,c)=>{const ah=Number(a.hcp),ch=Number(c.hcp);if(Number.isFinite(ah)&&Number.isFinite(ch)&&ah!==ch)return ah-ch;return sortPlayersByLastName(a,c)});if(!list.length)return "";return `<div class="player-team-card"><div class="player-team-head"><h3>${b==="—"?"Band Not Set":`Band ${b}`}</h3><div class="status">${list.length} golfer${list.length===1?"":"s"}</div></div>${list.map(rowHtml).join("")}</div>`}).join("");return
+   const ranges={A:"0–9 HCP",B:"10–17 HCP",C:"18–25 HCP",D:"26+ HCP","—":"Handicap letter not set"};
+   root.innerHTML=order.map(b=>{const list=rows.filter(g=>g.band===b).sort(sortPlayersByLastName);if(!list.length)return "";return `<div class="player-team-card"><div class="player-team-head"><div><h3>${b==="—"?"Band Not Set":`${b} Players`}</h3><div class="player-band-range">${ranges[b]}</div></div><div class="status">${list.length} golfer${list.length===1?"":"s"}</div></div>${list.map(rowHtml).join("")}</div>`}).join("");return
  }
  const teamGroups=Array.from({length:activeTeamCount()},(_,i)=>({name:draftState?.teams?.[i]?.name||`Team ${i+1}`,captain:draftState?.teams?.[i]?.captain||"",rows:rows.filter(g=>g.teamIndex===i).sort(sortPlayersByLastName)}));
  const unassigned=rows.filter(g=>g.teamIndex==null).sort(sortPlayersByLastName);
@@ -4257,6 +4275,9 @@ if($("closePlayerProfile"))$("closePlayerProfile").addEventListener("click",()=>
  selectedPlayerProfileIndex=null;renderPlayerProfileCards();
 });
 if($("playerDirectoryMode"))$("playerDirectoryMode").addEventListener("change",renderPlayersDirectory);
+document.querySelectorAll("[data-player-sort]").forEach(b=>b.addEventListener("click",()=>{
+ const sel=$("playerDirectoryMode");if(!sel)return;sel.value=b.dataset.playerSort;renderPlayersDirectory();
+}));
 if($("playerDirectorySearch"))$("playerDirectorySearch").addEventListener("input",renderPlayersDirectory);
 if($("courseBrowseSelect"))$("courseBrowseSelect").addEventListener("change",()=>{
  const c=COURSE_LIBRARY[$("courseBrowseSelect").value];
