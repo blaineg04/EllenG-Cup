@@ -2493,8 +2493,12 @@ function renderSeasonStandings(){
  root.innerHTML=live.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div class="status">Current tournament</div></div><div class="pts">${fmt(x.pts)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("")||'<div class="note">Season standings begin with the current tournament.</div>';
 }
 function renderRivalryWatch(){
- const el=$("rivalryWatch");if(!el)return;const c=closestTeams();
- if(!c){el.innerHTML='<div class="note">Rivalry Watch activates after Cup points begin posting.</div>';return}
+ const el=$("rivalryWatch");if(!el)return;
+ const official=totals();
+ const hasOfficialPoints=official.some(x=>Number(x?.pts)>0);
+ if(!hasOfficialPoints){el.innerHTML='<div class="note">Rivalry Watch will appear once official Cup points begin posting.</div>';return}
+ const c=closestTeams();
+ if(!c){el.innerHTML='<div class="note">Rivalry Watch will appear once official Cup points begin posting.</div>';return}
  el.innerHTML=`<div class="wow-main">${esc(teams[c.a.team]?.name||`Team ${c.a.team+1}`)} vs ${esc(teams[c.b.team]?.name||`Team ${c.b.team+1}`)}</div><div class="wow-sub">${c.diff===0?"Dead even":`${fmt(c.diff)} points apart`} • The closest rivalry on the board right now.</div>`;
 }
 function renderCheckinQr(){
