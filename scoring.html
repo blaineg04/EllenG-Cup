@@ -2032,7 +2032,7 @@ body.login-mode #mobileBottomNav{display:none!important}
   </div>
   <div class="row commissioner-actions" style="margin-top:12px">
     <button id="archiveStartNew" class="danger save-wide" type="button">Archive Current & Start New Tournament</button>
-    <button id="resetCurrentLeader" class="secondary" type="button">Reset Current Leader</button><button id="resetScoringOnly" class="secondary" type="button">Clear Scores Only</button>
+    <button id="resetCurrentLeader" class="secondary" type="button">Reset Current Leader</button><button id="resetScoringOnly" class="secondary" type="button">Clear Scores Only</button><button id="resetAllRsvps" class="secondary" type="button">Reset All RSVPs</button>
   </div>
   <div id="newTournamentMsg" class="status" style="margin-top:9px"></div>
 </div>
@@ -2737,13 +2737,18 @@ function renderCaptainDashboard(){
 }
 async function setMyRsvp(status){
  if(!user||!Number.isInteger(currentGolferIndex))return;
+ if(status==="clear"){
+   const {error}=await db.from("elleng_rsvps").delete().eq("draft_id",DRAFT_ID).eq("user_id",user.id);
+   if(error){pushInAppAlert("RSVP reset failed",error.message);return}
+   await loadRsvps();renderRsvp();pushInAppAlert("RSVP cleared","Your tournament response has been reset.");return;
+ }
  const {error}=await db.from("elleng_rsvps").upsert({draft_id:DRAFT_ID,user_id:user.id,golfer_index:currentGolferIndex,status,updated_at:new Date().toISOString()},{onConflict:"draft_id,user_id"});
  if(error){pushInAppAlert("RSVP failed",error.message);return}await loadRsvps();renderRsvp();
 }
 function renderRsvp(){
  const controls=$("myRsvpControls"),summary=$("rsvpSummary");if(!controls||!summary)return;
  const mine=user?rsvps.find(r=>r.user_id===user.id):null;
- controls.innerHTML=user&&Number.isInteger(currentGolferIndex)?["playing","maybe","out"].map(s=>`<button class="rsvp-btn ${mine?.status===s?"active":""}" type="button" data-rsvp="${s}">${s==="playing"?"✅ Playing":s==="maybe"?"🤔 Maybe":"❌ Out"}</button>`).join(""):'<div class="note">Sign in with a linked player account to RSVP.</div>';
+ controls.innerHTML=user&&Number.isInteger(currentGolferIndex)?["playing","maybe","out","clear"].map(s=>`<button class="rsvp-btn ${mine?.status===s?"active":""}" type="button" data-rsvp="${s}">${s==="playing"?"✅ Playing":s==="maybe"?"🤔 Maybe":s==="out"?"❌ Out":"↺ Clear RSVP"}</button>`).join(""):'<div class="note">Sign in with a linked player account to RSVP.</div>';
  controls.querySelectorAll("[data-rsvp]").forEach(b=>b.addEventListener("click",()=>setMyRsvp(b.dataset.rsvp)));
  const counts={playing:0,maybe:0,out:0};rsvps.forEach(r=>{if(counts[r.status]!==undefined)counts[r.status]++});
  summary.innerHTML=`<div class="rsvp-stat"><strong>${counts.playing}</strong><span>PLAYING</span></div><div class="rsvp-stat"><strong>${counts.maybe}</strong><span>MAYBE</span></div><div class="rsvp-stat"><strong>${counts.out}</strong><span>OUT</span></div>`;
@@ -3588,6 +3593,17 @@ async function clearScoresOnly(){
   scores=[]; playerScores=[]; pairScores=[]; renderAll(); if(msg)msg.textContent="All live scores were cleared, including Back 9 individual shamble scores. Teams and golfers were left unchanged.";
  }catch(e){if(msg)msg.textContent=e?.message||"Unable to clear scores."}
 }
+async function resetAllRsvps(){
+ if(!isCommissioner)return;
+ if(!confirm("Reset every player's RSVP for the current EllenG Cup? This will clear Playing, Maybe and Out responses."))return;
+ const msg=$("newTournamentMsg");if(msg)msg.textContent="Resetting RSVPs…";
+ try{
+   const {error}=await db.from("elleng_rsvps").delete().eq("draft_id",DRAFT_ID);
+   if(error)throw error;
+   await loadRsvps();renderRsvp();
+   if(msg)msg.textContent="All RSVPs have been reset. Players can submit a new response.";
+ }catch(e){if(msg)msg.textContent=e?.message||"Unable to reset RSVPs."}
+}
 async function archiveAndStartNew(){
  if(!isCommissioner)return;
  const name=($("newTournamentName")?.value||"EllenG Cup").trim()||"EllenG Cup";
@@ -4391,6 +4407,7 @@ $("resetCurrentLeader").addEventListener("click",()=>{
  $("newTournamentMsg").textContent="Current leader display reset. No team will show as the leader until official Cup points are posted.";
 });
 $("resetScoringOnly").addEventListener("click",clearScoresOnly);
+if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps);
 (async()=>{
  const internal=enteredFromInternalMenu();
 
