@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.18">
+<meta name="elleng-app-version" content="2.7.19">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -380,6 +380,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .captain-stat{background:#f7fafb;border:1px solid var(--line);border-radius:11px;padding:11px}.captain-stat strong{display:block;font-size:22px}.captain-stat span{font-size:11px;color:var(--muted)}
 .rsvp-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.rsvp-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;font-weight:900}.rsvp-btn.active{background:#0b6b50;color:#fff;border-color:#0b6b50}
 .rsvp-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.rsvp-stat{border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}.rsvp-stat strong{display:block;font-size:22px}
+.rsvp-player-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}.rsvp-player-group{border:1px solid rgba(213,167,44,.34);border-radius:12px;background:#fffdfa;padding:11px;min-width:0}.rsvp-player-group-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px;font-weight:950;color:#102a3b}.rsvp-player-list{display:flex;flex-wrap:wrap;gap:6px}.rsvp-player-chip{display:inline-flex;align-items:center;min-height:30px;padding:5px 9px;border-radius:999px;background:#e8edef;border:1px solid #d0d9dd;color:#17384d;font-size:12px;font-weight:850}.rsvp-player-empty{font-size:12px;color:#6d7d87;font-style:italic}.rsvp-player-group.playing{border-top:4px solid #0a7b43}.rsvp-player-group.maybe{border-top:4px solid #d5a72c}.rsvp-player-group.out{border-top:4px solid #8e2734}@media(max-width:650px){.rsvp-player-groups{grid-template-columns:1fr}.rsvp-player-group{padding:10px}}
 .group-assignment-list,.admin-group-list{display:grid;gap:8px;margin-top:12px}.group-row{display:grid;grid-template-columns:minmax(140px,1fr) 120px 100px 130px 120px;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:9px;background:#fff}
 .group-row input{width:100%}
 .player-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.achievement-badge{font-size:11px;font-weight:900;border-radius:999px;padding:5px 8px;background:#fff5ce;border:1px solid #ead28a}
@@ -1530,7 +1531,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.18</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.19</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -1991,7 +1992,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.18 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.19 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -2852,8 +2853,22 @@ function renderRsvp(){
  const mine=user?rsvps.find(r=>r.user_id===user.id):null;
  controls.innerHTML=user&&Number.isInteger(currentGolferIndex)?["playing","maybe","out","clear"].map(s=>`<button class="rsvp-btn ${mine?.status===s?"active":""}" type="button" data-rsvp="${s}">${s==="playing"?"✅ Playing":s==="maybe"?"🤔 Maybe":s==="out"?"❌ Out":"↺ Clear RSVP"}</button>`).join(""):'<div class="note">Sign in with a linked player account to RSVP.</div>';
  controls.querySelectorAll("[data-rsvp]").forEach(b=>b.addEventListener("click",()=>setMyRsvp(b.dataset.rsvp)));
- const counts={playing:0,maybe:0,out:0};rsvps.forEach(r=>{if(counts[r.status]!==undefined)counts[r.status]++});
- summary.innerHTML=`<div class="rsvp-stat"><strong>${counts.playing}</strong><span>PLAYING</span></div><div class="rsvp-stat"><strong>${counts.maybe}</strong><span>MAYBE</span></div><div class="rsvp-stat"><strong>${counts.out}</strong><span>OUT</span></div>`;
+ const groups={playing:[],maybe:[],out:[]};
+ (rsvps||[]).forEach(r=>{
+   if(!groups[r.status])return;
+   const gi=Number(r.golfer_index),g=Number.isInteger(gi)?draftState?.golfers?.[gi]:null;
+   const name=String(g?.name||"").trim();
+   if(name)groups[r.status].push(name);
+ });
+ Object.values(groups).forEach(list=>list.sort((a,b)=>playerLastNameSortKey(a).localeCompare(playerLastNameSortKey(b))||a.localeCompare(b)));
+ const counts={playing:groups.playing.length,maybe:groups.maybe.length,out:groups.out.length};
+ const chips=list=>list.length?list.map(name=>`<span class="rsvp-player-chip">${esc(name)}</span>`).join(""):'<span class="rsvp-player-empty">No players yet</span>';
+ summary.innerHTML=`<div class="rsvp-stat"><strong>${counts.playing}</strong><span>PLAYING</span></div><div class="rsvp-stat"><strong>${counts.maybe}</strong><span>MAYBE</span></div><div class="rsvp-stat"><strong>${counts.out}</strong><span>OUT</span></div>`+
+ `<div class="rsvp-player-groups" style="grid-column:1/-1">`+
+ `<div class="rsvp-player-group playing"><div class="rsvp-player-group-head"><span>✅ Playing</span><span>${counts.playing}</span></div><div class="rsvp-player-list">${chips(groups.playing)}</div></div>`+
+ `<div class="rsvp-player-group maybe"><div class="rsvp-player-group-head"><span>🤔 Maybe</span><span>${counts.maybe}</span></div><div class="rsvp-player-list">${chips(groups.maybe)}</div></div>`+
+ `<div class="rsvp-player-group out"><div class="rsvp-player-group-head"><span>❌ Out</span><span>${counts.out}</span></div><div class="rsvp-player-list">${chips(groups.out)}</div></div>`+
+ `</div>`;
 }
 function formatTeeTime(v){if(!v)return "—";const [h,m]=String(v).split(":").map(Number),d=new Date();d.setHours(h,m||0,0,0);return d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}
 function renderGroupAssignments(){
@@ -4111,6 +4126,7 @@ function subscribeLive(){
  if(user)liveChannel=liveChannel
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_player_hole_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e)}})
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_pair_hole_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e)}})
+  .on("postgres_changes",{event:"*",schema:"public",table:"elleng_rsvps",filter:`draft_id=eq.${DRAFT_ID}`},async()=>{try{await loadRsvps();renderRsvp()}catch(e){console.error(e)}})
   .on("postgres_changes",{event:"UPDATE",schema:"public",table:"elleng_tournaments",filter:`id=eq.${TOURNAMENT_ID}`},async p=>{tournament=p.new;renderAll()});
  liveChannel.subscribe();
 }
