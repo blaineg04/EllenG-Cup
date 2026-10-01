@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.21">
+<meta name="elleng-app-version" content="2.7.22">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1473,7 +1473,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </style>
 
 <style id="home-cleanup-v2720">
-/* v2.7.21: cleaner home-page hierarchy; all existing logo/branding markup is intentionally untouched. */
+/* v2.7.22: cleaner home-page hierarchy; all existing logo/branding markup is intentionally untouched. */
 #homeView{display:block}
 #homeView>.card{margin-bottom:14px}
 
@@ -1553,7 +1553,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 
 <style id="home-responsive-v2721">
-/* v2.7.21: desktop + mobile responsive polish. Existing EllenG alligator logo assets/markup are untouched. */
+/* v2.7.22: desktop + mobile responsive polish. Existing EllenG alligator logo assets/markup are untouched. */
 #homeView .home-hero{
   border-radius:18px!important;
   padding:22px 24px!important;
@@ -1625,6 +1625,137 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 }
 </style>
 
+
+<style id="home-flat-v2722">
+/* v2.7.22: intentionally flatter tournament-home layout. Branding and application logic are untouched. */
+
+/* Account and navigation read as clean page strips instead of floating cards. */
+#app > .card.row.between,
+#app > .top-tabs-card{
+  border-radius:0!important;
+  box-shadow:none!important;
+  border-left:0!important;
+  border-right:0!important;
+}
+#app > .card.row.between{
+  border-top:0!important;
+  border-bottom:1px solid rgba(213,167,44,.55)!important;
+}
+#app > .top-tabs-card{
+  border-top:0!important;
+  border-bottom:1px solid rgba(16,42,59,.16)!important;
+  padding-left:10px!important;
+  padding-right:10px!important;
+}
+
+/* Keep the Tournament Hub introduction branded, but remove the floating-card silhouette. */
+#homeView .home-hero{
+  border-radius:4px!important;
+  box-shadow:none!important;
+  border-left:0!important;
+  border-right:0!important;
+  border-top:0!important;
+  border-bottom:3px solid var(--gold)!important;
+}
+
+/* Next EllenG Cup becomes an open section with simple divider lines. */
+#homeView .next-event-card{
+  background:transparent!important;
+  color:#102a3b!important;
+  border:0!important;
+  border-top:1px solid rgba(213,167,44,.55)!important;
+  border-bottom:1px solid rgba(16,42,59,.16)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:18px 4px!important;
+}
+#homeView .next-event-card h2,
+#homeView .next-event-card .status{color:#102a3b!important}
+#homeView .next-event-card .premium-label{color:#9a7413!important}
+#homeView .next-event-card .countdown-badge{
+  background:transparent!important;
+  color:#08253b!important;
+  border:1px solid rgba(213,167,44,.70)!important;
+  box-shadow:none!important;
+}
+
+/* The tournament date is the one deliberate strong navy/gold highlight. */
+#homeView .event-date-spotlight{
+  margin-top:14px!important;
+  padding:13px 14px!important;
+  border-radius:10px!important;
+  background:#08253b!important;
+  color:#fff!important;
+  border:1px solid #d5a72c!important;
+  box-shadow:none!important;
+}
+#homeView .event-date-label{color:#f0c75d!important}
+#homeView .countdown-date{color:#fff!important}
+
+/* RSVP sits directly on the page; status groups read like columns, not more cards. */
+#homeView .rsvp-home-card{
+  background:transparent!important;
+  border:0!important;
+  border-bottom:1px solid rgba(213,167,44,.42)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:18px 4px!important;
+}
+#homeView .rsvp-stat,
+#homeView .rsvp-player-group{
+  background:transparent!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+#homeView .rsvp-stat + .rsvp-stat{border-left:1px solid rgba(16,42,59,.14)!important}
+#homeView .rsvp-player-group + .rsvp-player-group{border-left:1px solid rgba(213,167,44,.45)!important}
+
+/* Player Essentials uses open, separated columns instead of another large rectangle. */
+#homeView .player-essentials-card{
+  background:transparent!important;
+  border:0!important;
+  border-bottom:1px solid rgba(16,42,59,.14)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:18px 4px!important;
+}
+#homeView .player-essential-btn{
+  background:transparent!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+@media (min-width:761px){
+  #homeView .player-essential-btn{
+    border:0!important;
+    border-left:1px solid rgba(16,42,59,.12)!important;
+  }
+  #homeView .player-essential-btn:first-child{border-left:0!important}
+}
+
+/* Mobile keeps the same flat hierarchy while remaining easy to tap. */
+@media (max-width:760px){
+  #app > .card.row.between,
+  #app > .top-tabs-card{border-radius:0!important}
+  #homeView .home-hero{border-radius:4px!important}
+  #homeView .next-event-card{border-radius:0!important;padding:15px 2px!important}
+  #homeView .event-date-spotlight{border-radius:9px!important;padding:12px!important}
+  #homeView .rsvp-home-card,
+  #homeView .player-essentials-card{padding-left:2px!important;padding-right:2px!important}
+  #homeView .player-essentials-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:0!important;
+  }
+  #homeView .player-essential-btn{
+    border:0!important;
+    border-top:1px solid rgba(16,42,59,.10)!important;
+    border-left:1px solid rgba(16,42,59,.10)!important;
+    border-radius:0!important;
+    background:transparent!important;
+  }
+  #homeView .player-essential-btn:nth-child(odd){border-left:0!important}
+}
+</style>
+
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -1685,7 +1816,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.21</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.22</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2146,7 +2277,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.21 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.22 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
