@@ -10,7 +10,7 @@ function fresh(){
  const golferCount=Number(cfg?.defaultGolferCount||27);
  return {golfers:Array.from({length:golferCount},()=>({name:"",hcp:"",band:"",team:null})),
  teams:Array.from({length:teamCount},(_,i)=>({name:"Team "+(i+1),captain:"",roster:[]})),
- picks:[],draftType:"snake",timerLength:60,timerEndsAt:null,timerPaused:true,tournamentName:"EllenG Cup",tournamentDate:null};
+ picks:[],draftType:"snake",draftRules:"banded",timerLength:60,timerEndsAt:null,timerPaused:true,tournamentName:"EllenG Cup",tournamentDate:null};
 }
 let S=fresh();
 function order(n){
@@ -60,6 +60,7 @@ function bandPenalty(t,b){
   return penalty;
 }
 function canBand(t,b){
+  if(String(S?.draftRules||"banded")==="open") return !!S.teams?.[t];
   if(!bands.includes(b)||!S.teams?.[t])return false;
   const remainingBands=[...new Set(S.golfers.filter(g=>g?.name&&g.team==null&&bands.includes(g.band)).map(g=>g.band))];
   if(!remainingBands.length)return false;
