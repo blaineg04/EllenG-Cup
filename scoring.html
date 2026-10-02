@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.52">
+<meta name="elleng-app-version" content="2.7.53">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -2739,6 +2739,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   .broadcast-overlay .broadcast-brand{font-size:22px!important}
   .broadcast-overlay .broadcast-sub{font-size:7.5px!important}
 }
+.broadcast-overlay .broadcast-gator-logo{display:block!important;background-repeat:no-repeat!important;background-position:center!important;background-size:contain!important}
 </style>
 </head>
 <body class="login-mode">
@@ -2800,7 +2801,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.52</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.53</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -3399,7 +3400,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <script src="config.js"></script>
 <div id="broadcastOverlay" class="broadcast-overlay" aria-hidden="true">
   <div class="broadcast-shell">
-    <div class="broadcast-top"><div class="broadcast-brand-lockup"><img src="gator.png" alt="EllenG Cup gator logo" class="broadcast-gator-logo"><div class="broadcast-brand-copy"><div class="broadcast-brand">EllenG Cup</div><div class="broadcast-sub">Live Tournament Broadcast</div></div></div><button type="button" id="closeBroadcast" class="broadcast-close">← Menu</button></div>
+    <div class="broadcast-top"><div class="broadcast-brand-lockup"><span class="broadcast-gator-logo" id="broadcastGatorLogo" aria-hidden="true"></span><div class="broadcast-brand-copy"><div class="broadcast-brand">EllenG Cup</div><div class="broadcast-sub">Live Tournament Broadcast</div></div></div><button type="button" id="closeBroadcast" class="broadcast-close">← Menu</button></div>
     <div id="broadcastTicker" class="broadcast-ticker">Waiting for tournament action…</div>
     <div class="broadcast-grid">
       <div class="broadcast-panel"><h2>Live Standings</h2><div id="broadcastStandings" class="broadcast-rows"></div></div>
@@ -3410,6 +3411,16 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 <script>
 (()=>{
+
+// v2.7.53 — BROADCAST ONLY: force the broadcast gator to use the exact logo already loaded by the app header.
+function syncBroadcastGatorLogo(){
+  const slot=document.getElementById('broadcastGatorLogo');
+  if(!slot)return;
+  const appLogo=document.querySelector('header.top .brand img');
+  const src=appLogo?.currentSrc||appLogo?.src||'gator.png';
+  slot.style.backgroundImage=`url("${src}")`;
+}
+window.addEventListener('load',syncBroadcastGatorLogo);
 const APP_VERSION=document.querySelector('meta[name="elleng-app-version"]')?.content||"1.0.0";
 const versionChip=document.getElementById("appVersionChip");
 if(versionChip)versionChip.textContent=`EllenG Live v${APP_VERSION}`;
@@ -3693,7 +3704,7 @@ function renderBroadcast(){
  let complete=0;for(let h=1;h<=18;h++){if(teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null)))complete++}$("broadcastHoles").textContent=`${complete} / 18`;
  const g=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Gator: Hole ${Number(tournament.gator_hole)}`:'Gator: Secret';const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`Cargo: ${teams[Number(tournament.final_cargo_team)]?.name||'Awarded'}`:'Cargo: Not awarded';$("broadcastSpecial").textContent=`${g} • ${cargo}`;
 }
-async function openBroadcastMode(){const ov=$("broadcastOverlay");if(!ov)return;document.documentElement.classList.add("broadcast-active");document.body.classList.add("broadcast-active");ov.classList.add('open');ov.setAttribute('aria-hidden','false');renderBroadcast();try{await ov.requestFullscreen?.()}catch(e){}}
+async function openBroadcastMode(){const ov=$("broadcastOverlay");if(!ov)return;syncBroadcastGatorLogo();document.documentElement.classList.add("broadcast-active");document.body.classList.add("broadcast-active");ov.classList.add('open');ov.setAttribute('aria-hidden','false');renderBroadcast();try{await ov.requestFullscreen?.()}catch(e){}}
 async function closeBroadcastMode(){const ov=$("broadcastOverlay");if(!ov)return;ov.classList.remove('open');ov.setAttribute('aria-hidden','true');document.documentElement.classList.remove("broadcast-active");document.body.classList.remove("broadcast-active");try{if(document.fullscreenElement)await document.exitFullscreen()}catch(e){}}
 function allHolesComplete(){return teams.length>0&&Array.from({length:18},(_,i)=>i+1).every(h=>teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null)))}
 async function createWinnerGraphic(){
