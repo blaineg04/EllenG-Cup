@@ -1590,9 +1590,9 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   body.player-simple-home #playerExtrasToggleCard .status{display:none!important}
   body.player-simple-home:not(.player-extras-open) #teamMomentumCard{display:none!important}
   body.player-simple-home:not(.player-extras-open) #leaderSpotlightCard{display:block!important}
-  body.player-simple-home.player-extras-open #homeView{overflow-y:auto!important}
+  body.player-simple-home.player-extras-open #homeView{overflow:hidden!important}
   body.player-simple-home.player-extras-open #teamMomentumCard{display:block!important}
-  body.player-simple-home.player-extras-open #playerExtrasToggleCard{position:sticky;bottom:0;z-index:4}
+  body.player-simple-home.player-extras-open #playerExtrasToggleCard{position:static!important}
   .mobile-bottom-nav{height:auto!important;min-height:64px!important}
 }
 </style>
@@ -2177,6 +2177,17 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   body:not(.login-mode) #leaderboardView:not(.hidden) > .card:not(#myScoreEntryCard):not(#myScoreLeaderboardCard){display:none!important}
 }
 </style>
+
+<style>
+/* v2.7.27 — hard stop Tournament Extras from re-enabling Home page scrolling */
+@media (max-width:650px){
+  body.player-simple-home.player-extras-open #homeView,
+  body.player-simple-home #homeView{overflow:hidden!important;overflow-y:hidden!important;}
+  body.player-simple-home.player-extras-open #playerExtrasToggleCard{position:static!important;bottom:auto!important;}
+  #extrasView{overflow:hidden!important;min-height:0!important;height:100%!important;}
+  #extrasView .extras-shell{overflow:hidden!important;min-height:0!important;height:100%!important;}
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -2237,7 +2248,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.26</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.27</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2682,7 +2693,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.26 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.27 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
