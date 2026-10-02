@@ -2590,7 +2590,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 
 <style id="v2748-broadcast-only-mobile-fix">
-/* v2.7.49 — BROADCAST PAGE ONLY. No other screen selectors are changed. */
+/* v2.7.50 — BROADCAST PAGE ONLY. Adds iPhone safe-area top spacing; no other screen selectors are changed. */
 @media (max-width:800px){
   .broadcast-overlay,
   .broadcast-overlay.open{
@@ -2606,13 +2606,13 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
     height:100dvh!important;
     max-height:100dvh!important;
     box-sizing:border-box!important;
-    padding:8px 10px calc(8px + env(safe-area-inset-bottom))!important;
+    padding:calc(10px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom))!important;
     display:grid!important;
     grid-template-rows:auto auto minmax(0,1fr)!important;
     gap:5px!important;
     overflow:hidden!important;
   }
-  .broadcast-top{align-items:center!important;gap:8px!important;min-height:0!important;}
+  .broadcast-top{align-items:center!important;gap:8px!important;min-height:0!important;padding-top:2px!important;}
   .broadcast-brand{font-size:28px!important;line-height:.95!important;}
   .broadcast-sub{font-size:9px!important;line-height:1!important;letter-spacing:.06em!important;margin-top:3px!important;}
   .broadcast-close{height:34px!important;min-height:34px!important;padding:4px 10px!important;font-size:11px!important;border-radius:9px!important;white-space:nowrap!important;}
@@ -2684,7 +2684,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   #broadcastSpecial{grid-column:4!important;grid-row:3!important;font-size:8px!important;line-height:1.05!important;margin:0!important;display:block!important;overflow:hidden!important;max-height:20px!important;}
 }
 @media (max-width:360px){
-  .broadcast-shell{padding-left:7px!important;padding-right:7px!important;}
+  .broadcast-shell{padding-left:7px!important;padding-right:7px!important;padding-top:calc(8px + env(safe-area-inset-top))!important;}
   .broadcast-brand{font-size:24px!important;}
   .broadcast-rows{grid-template-rows:repeat(9,clamp(38px,5.25vh,47px))!important;}
   .broadcast-row{grid-template-columns:17px minmax(0,1fr) 45px!important;padding:3px 4px!important;}
