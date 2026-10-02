@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.36">
+<meta name="elleng-app-version" content="2.7.38">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -2507,7 +2507,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.37</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.38</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2953,7 +2953,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.37 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.38 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -5866,5 +5866,227 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
     white-space:normal!important;overflow:hidden!important;
     -webkit-box-orient:vertical!important;-webkit-line-clamp:2!important;
   }
+}
+</style>
+
+
+<style id="extras-v2738-compact-detail-boards">
+/* v2.7.38 — Tournament Extras detail pages use a Teams-style compact board.
+   The selected extra stays inside the app viewport with no page/internal scrolling. */
+@media(max-width:760px){
+  body:not(.login-mode).extras-screen-active #extrasView.extras-detail-open,
+  body:not(.login-mode).extras-screen-active #extrasView.extras-detail-open .extras-shell,
+  body:not(.login-mode).extras-screen-active #extrasView.extras-detail-open .extras-scroll,
+  body:not(.login-mode).extras-screen-active #extrasView.extras-detail-open #tournamentExtrasContent,
+  body:not(.login-mode).extras-screen-active #extrasView.extras-detail-open #tournamentExtrasContent > .extras-active-card{
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  body:not(.login-mode).extras-screen-active #extrasView.extras-detail-open #tournamentExtrasContent > .extras-active-card{
+    display:flex!important;
+    flex-direction:column!important;
+    height:100%!important;
+    max-height:100%!important;
+    padding:7px 8px!important;
+    border-radius:14px!important;
+    background:#fffdf7!important;
+  }
+  /* compact detail header */
+  #extrasView.extras-detail-open .extras-active-card > .row:first-child{
+    flex:0 0 auto!important;
+    min-height:0!important;
+    margin:0 0 5px!important;
+    align-items:center!important;
+  }
+  #extrasView.extras-detail-open .extras-active-card > .row:first-child h2{
+    margin:1px 0 0!important;
+    font-size:18px!important;
+    line-height:1!important;
+  }
+  #extrasView.extras-detail-open .extras-active-card > .row:first-child .premium-label{
+    font-size:8px!important;
+    line-height:1!important;
+  }
+  #extrasView.extras-detail-open .extras-active-card > .row:first-child .status{
+    display:none!important;
+  }
+  #extrasView.extras-detail-open .extras-active-card > .row:first-child .badge{
+    font-size:8px!important;
+    padding:3px 6px!important;
+  }
+
+  /* Team Momentum — 2-column team board */
+  #extrasView.extras-detail-open #teamMomentumMeter{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-auto-rows:minmax(0,1fr)!important;
+    gap:5px!important;
+    margin:0!important;
+    overflow:hidden!important;
+  }
+  #extrasView.extras-detail-open #teamMomentumMeter .momentum-row{
+    min-height:0!important;
+    height:100%!important;
+    margin:0!important;
+    padding:5px 6px!important;
+    border:1px solid var(--line)!important;
+    border-top:4px solid var(--gold)!important;
+    border-radius:10px!important;
+    background:#fff!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    grid-template-rows:auto auto!important;
+    gap:2px 5px!important;
+    align-content:center!important;
+    overflow:hidden!important;
+  }
+  #extrasView.extras-detail-open #teamMomentumMeter .momentum-name{font-size:10px!important;font-weight:900!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  #extrasView.extras-detail-open #teamMomentumMeter .momentum-track{grid-column:1/-1!important;height:5px!important;margin:0!important}
+  #extrasView.extras-detail-open #teamMomentumMeter .momentum-hot{font-size:8px!important;white-space:nowrap!important}
+
+  /* Live feed / pace / momentum / awards / pulse all become two-column compact cards */
+  #extrasView.extras-detail-open #whatChangedFeed,
+  #extrasView.extras-detail-open #paceTracker,
+  #extrasView.extras-detail-open #momentumTracker,
+  #extrasView.extras-detail-open #tournamentAwards,
+  #extrasView.extras-detail-open #tournamentPulse{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-auto-rows:minmax(0,1fr)!important;
+    gap:5px!important;
+    margin:0!important;
+    overflow:hidden!important;
+  }
+  #extrasView.extras-detail-open .event-item,
+  #extrasView.extras-detail-open .pace-row,
+  #extrasView.extras-detail-open .momentum-card,
+  #extrasView.extras-detail-open .award-card,
+  #extrasView.extras-detail-open .pulse-item{
+    min-width:0!important;
+    min-height:0!important;
+    height:100%!important;
+    margin:0!important;
+    padding:5px 6px!important;
+    border:1px solid var(--line)!important;
+    border-radius:10px!important;
+    background:#fff!important;
+    align-content:center!important;
+    overflow:hidden!important;
+  }
+  #extrasView.extras-detail-open .event-item{grid-template-columns:22px minmax(0,1fr)!important;gap:5px!important}
+  #extrasView.extras-detail-open .event-icon{width:22px!important;height:22px!important;font-size:11px!important}
+  #extrasView.extras-detail-open .event-item strong{font-size:8.5px!important;line-height:1.05!important}
+  #extrasView.extras-detail-open .event-item small{font-size:7px!important;line-height:1.05!important;display:block!important}
+  #extrasView.extras-detail-open .pace-row{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:4px!important;border-bottom:1px solid var(--line)!important}
+  #extrasView.extras-detail-open .pace-row strong{font-size:9px!important}
+  #extrasView.extras-detail-open .pace-row .status{font-size:7px!important}
+  #extrasView.extras-detail-open .pace-row .badge{font-size:6.5px!important;padding:2px 4px!important}
+  #extrasView.extras-detail-open .momentum-card strong,
+  #extrasView.extras-detail-open .award-card strong{font-size:11px!important;line-height:1.05!important;margin:2px 0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  #extrasView.extras-detail-open .momentum-card span,
+  #extrasView.extras-detail-open .award-card span,
+  #extrasView.extras-detail-open .award-kicker{font-size:7px!important;line-height:1.05!important}
+  #extrasView.extras-detail-open .momentum-card .status{font-size:7px!important;line-height:1.05!important;margin-top:2px!important}
+  #extrasView.extras-detail-open .pulse-item{display:grid!important;grid-template-columns:22px minmax(0,1fr) auto!important;gap:5px!important;align-items:center!important}
+  #extrasView.extras-detail-open .pulse-icon{width:22px!important;height:22px!important;font-size:11px!important}
+  #extrasView.extras-detail-open .pulse-main strong{font-size:8px!important;line-height:1.05!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  #extrasView.extras-detail-open .pulse-main .status{font-size:6.5px!important;line-height:1.05!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  #extrasView.extras-detail-open .pulse-score{font-size:7px!important;white-space:nowrap!important;grid-column:auto!important}
+
+  /* Tournament Pulse: Team-style 2-column Hole Matchup plus compact latest moments. */
+  #extrasView.extras-detail-open #tournamentPulseCard > .card{
+    flex:1 1 65%!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:5px 6px!important;
+    border:1px solid #e2d39a!important;
+    border-radius:11px!important;
+    overflow:hidden!important;
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  #extrasView.extras-detail-open #tournamentPulseCard > .card > .row{
+    flex:0 0 auto!important;
+    margin:0 0 4px!important;
+    align-items:center!important;
+  }
+  #extrasView.extras-detail-open #tournamentPulseCard > .card > .row > div > div:first-child,
+  #extrasView.extras-detail-open #tournamentPulseCard > .card > .row .status{display:none!important}
+  #extrasView.extras-detail-open #tournamentPulseCard > .card h2{font-size:14px!important;line-height:1!important;margin:0!important}
+  #extrasView.extras-detail-open #tournamentPulseCard > .card label small{font-size:7px!important}
+  #extrasView.extras-detail-open #matchupHoleSelect{height:25px!important;min-height:25px!important;padding:1px 22px 1px 6px!important;font-size:9px!important;border-radius:8px!important}
+  #extrasView.extras-detail-open #holeMatchup{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-auto-rows:minmax(0,1fr)!important;
+    gap:4px!important;
+    margin:0!important;
+    overflow:hidden!important;
+  }
+  #extrasView.extras-detail-open #holeMatchup .matchup-row{
+    min-width:0!important;
+    min-height:0!important;
+    height:100%!important;
+    margin:0!important;
+    padding:4px 5px!important;
+    border-radius:9px!important;
+    display:grid!important;
+    grid-template-columns:10px minmax(0,1fr) auto!important;
+    grid-template-areas:"dot team score" "dot cup cup"!important;
+    gap:1px 4px!important;
+    align-content:center!important;
+    overflow:hidden!important;
+  }
+  #extrasView.extras-detail-open #holeMatchup .matchup-row > div:nth-child(1){grid-area:dot!important}
+  #extrasView.extras-detail-open #holeMatchup .matchup-row > div:nth-child(2){grid-area:team!important;min-width:0!important}
+  #extrasView.extras-detail-open #holeMatchup .matchup-row > div:nth-child(3){grid-area:score!important;text-align:right!important}
+  #extrasView.extras-detail-open #holeMatchup .matchup-row > div:nth-child(4){display:none!important}
+  #extrasView.extras-detail-open #holeMatchup .matchup-row > div:nth-child(5){grid-area:cup!important;text-align:right!important}
+  #extrasView.extras-detail-open #holeMatchup .team-color-dot{width:8px!important;height:8px!important;margin:0!important}
+  #extrasView.extras-detail-open #holeMatchup .teamname{font-size:9px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  #extrasView.extras-detail-open #holeMatchup .muted{display:none!important}
+  #extrasView.extras-detail-open #holeMatchup strong{font-size:9px!important;line-height:1!important}
+  #extrasView.extras-detail-open #holeMatchup .cup{font-size:7px!important;line-height:1!important;white-space:nowrap!important}
+  #extrasView.extras-detail-open #tournamentPulseCard > #tournamentPulse{
+    flex:0 0 29%!important;
+    min-height:0!important;
+    margin-top:5px!important;
+  }
+
+  /* Single-feature pages stay centered and compact instead of stretching. */
+  #extrasView.extras-detail-open #featuredMatchupCard,
+  #extrasView.extras-detail-open #playerSpotlightCard,
+  #extrasView.extras-detail-open #onTheClockCard,
+  #extrasView.extras-detail-open #leadChangeAlert{
+    justify-content:center!important;
+  }
+  #extrasView.extras-detail-open .wow-body{min-height:0!important;margin:6px 0 0!important;padding:10px!important;border:1px solid var(--line)!important;border-radius:11px!important;background:#fff!important}
+  #extrasView.extras-detail-open .wow-main{font-size:15px!important;line-height:1.05!important}
+  #extrasView.extras-detail-open .wow-sub{font-size:9px!important;line-height:1.15!important}
+  #extrasView.extras-detail-open #leadChangeAlert{display:flex!important;flex-direction:column!important;height:100%!important;margin:0!important;padding:12px!important;border-radius:14px!important;background:#fff!important}
+  #extrasView.extras-detail-open #leadChangeAlert .lead-main{font-size:18px!important}
+  #extrasView.extras-detail-open #leadChangeAlert .lead-sub{font-size:10px!important}
+
+  /* Recap: podium and stats as small board cards; keep actions in one compact row. */
+  #extrasView.extras-detail-open #postRoundRecapCard #postRoundRecap{flex:1 1 auto!important;min-height:0!important;overflow:hidden!important}
+  #extrasView.extras-detail-open #postRoundRecapCard .recap-podium{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;margin:5px 0!important}
+  #extrasView.extras-detail-open #postRoundRecapCard .recap-place{padding:6px 4px!important;border-radius:9px!important;min-height:0!important}
+  #extrasView.extras-detail-open #postRoundRecapCard .recap-place .medal{font-size:16px!important;margin:0!important}
+  #extrasView.extras-detail-open #postRoundRecapCard .recap-place strong{font-size:9px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  #extrasView.extras-detail-open #postRoundRecapCard .recap-place .status{font-size:7px!important;line-height:1!important}
+  #extrasView.extras-detail-open #postRoundRecapCard .recap-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;margin:5px 0!important}
+  #extrasView.extras-detail-open #postRoundRecapCard .recap-stat{padding:6px 4px!important;border-radius:9px!important;min-height:0!important}
+  #extrasView.extras-detail-open #postRoundRecapCard .recap-stat .status{font-size:6.5px!important}
+  #extrasView.extras-detail-open #postRoundRecapCard .recap-stat strong{font-size:8px!important;line-height:1.05!important}
+  #extrasView.extras-detail-open #postRoundRecapCard > .row:not(:first-child),
+  #extrasView.extras-detail-open #postRoundRecapCard .winner-tools{flex:0 0 auto!important;margin:4px 0 0!important;gap:4px!important}
+  #extrasView.extras-detail-open #postRoundRecapCard button{height:27px!important;min-height:27px!important;padding:3px 6px!important;font-size:7.5px!important}
+  #extrasView.extras-detail-open #winnerGraphicPreview{display:none!important}
 }
 </style>
