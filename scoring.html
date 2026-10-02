@@ -2179,7 +2179,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </style>
 
 <style>
-/* v2.7.28 — hard stop Tournament Extras from re-enabling Home page scrolling */
+/* v2.7.29 — hard stop Tournament Extras from re-enabling Home page scrolling */
 @media (max-width:650px){
   body.player-simple-home.player-extras-open #homeView,
   body.player-simple-home #homeView{overflow:hidden!important;overflow-y:hidden!important;}
@@ -2190,7 +2190,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </style>
 
 <style>
-/* v2.7.28 — Tournament Extras menu is a fixed no-scroll app screen. */
+/* v2.7.29 — Tournament Extras menu is a fixed no-scroll app screen. */
 @media (max-width:650px){
   body:not(.login-mode) #extrasView:not(.hidden){
     display:flex!important;
@@ -2270,6 +2270,62 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 }
 </style>
 
+
+<style>
+/* v2.7.29 — Tournament Extras true no-scroll mobile board */
+@media (max-width:650px){
+  body:not(.login-mode) #extrasView:not(.hidden){
+    overflow:hidden!important;
+    overflow-y:hidden!important;
+    padding:0!important;
+  }
+  body:not(.login-mode) #extrasView:not(.hidden) .extras-shell{
+    display:grid!important;
+    grid-template-rows:auto minmax(0,1fr)!important;
+    height:100%!important;
+    max-height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    gap:5px!important;
+  }
+  body:not(.login-mode) #extrasView:not(.hidden) .extras-header{
+    margin:0!important;
+    padding:6px 8px!important;
+    min-height:0!important;
+  }
+  body:not(.login-mode) #extrasView:not(.hidden) .extras-header .premium-label,
+  body:not(.login-mode) #extrasView:not(.hidden) .extras-header .status{display:none!important}
+  body:not(.login-mode) #extrasView:not(.hidden) .extras-title-row h2{font-size:16px!important;margin:0!important}
+  body:not(.login-mode) #extrasView:not(.hidden) #closeTournamentExtras,
+  body:not(.login-mode) #extrasView:not(.hidden) #extrasBackButton{height:28px!important;min-height:28px!important;padding:3px 8px!important;font-size:10px!important}
+  body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) #extrasMenuGrid{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:repeat(4,minmax(0,1fr))!important;
+    grid-auto-rows:minmax(0,1fr)!important;
+    gap:5px!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:100%!important;
+    overflow:hidden!important;
+    align-content:stretch!important;
+  }
+  body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) #extrasMenuGrid .extras-menu-tile{
+    min-height:0!important;
+    height:100%!important;
+    margin:0!important;
+    padding:4px 5px!important;
+    border-radius:10px!important;
+    justify-content:center!important;
+    overflow:hidden!important;
+  }
+  body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) #extrasMenuGrid .extras-menu-icon{font-size:15px!important}
+  body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) #extrasMenuGrid strong{font-size:9px!important;line-height:1!important}
+  body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) #extrasMenuGrid small{display:none!important}
+  body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) .extras-scroll{display:none!important}
+}
+</style>
+
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -2330,7 +2386,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.28</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.29</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2776,7 +2832,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.28 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.29 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
