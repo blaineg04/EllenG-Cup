@@ -1227,6 +1227,48 @@ body.player-simple-home.player-extras-open #homeView{overflow:hidden!important}
   #extrasView .extras-grid{gap:8px}
 }
 
+
+/* v2.7.45 — Broadcast is a fixed app-style live board on phones; no page scrolling. */
+.broadcast-overlay{overflow:hidden!important}
+.broadcast-overlay.open{display:block!important}
+.broadcast-shell{height:100dvh;box-sizing:border-box;display:grid;grid-template-rows:auto auto minmax(0,1fr);overflow:hidden!important}
+.broadcast-grid{min-height:0;height:100%;overflow:hidden!important}
+.broadcast-panel{min-height:0;overflow:hidden!important}
+.broadcast-rows{min-height:0;overflow:hidden!important}
+@media(max-width:800px){
+  .broadcast-shell{padding:10px!important;gap:7px!important}
+  .broadcast-top{align-items:center!important;gap:8px!important}
+  .broadcast-brand{font-size:27px!important;line-height:1!important}
+  .broadcast-sub{font-size:9px!important;line-height:1.1!important;letter-spacing:.06em!important;margin-top:3px!important}
+  .broadcast-close{min-height:34px!important;height:34px!important;padding:5px 9px!important;font-size:11px!important;border-radius:9px!important;white-space:nowrap!important}
+  .broadcast-ticker{margin:0!important;padding:6px 8px!important;font-size:10px!important;line-height:1.15!important;min-height:26px!important;box-sizing:border-box!important}
+  .broadcast-grid{grid-template-columns:minmax(0,1.7fr) minmax(112px,.8fr)!important;gap:7px!important;margin-top:0!important;align-items:stretch!important}
+  .broadcast-panel{padding:7px!important;border-radius:12px!important}
+  .broadcast-panel h2{font-size:13px!important;line-height:1.05!important;margin:0 0 5px!important}
+  .broadcast-rows{display:grid!important;grid-template-rows:repeat(9,minmax(0,1fr))!important;gap:3px!important;height:calc(100% - 18px)!important}
+  .broadcast-row{grid-template-columns:18px minmax(0,1fr) 50px!important;gap:4px!important;padding:3px 4px!important;border-radius:7px!important;min-height:0!important}
+  .broadcast-row .b-rank{font-size:12px!important;line-height:1!important}
+  .broadcast-row strong{display:block!important;font-size:9px!important;line-height:1.05!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  .broadcast-row strong + div{font-size:7px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;margin-top:1px!important}
+  .broadcast-row .b-pts{font-size:9px!important;line-height:1!important;white-space:nowrap!important}
+  .broadcast-row .b-thru{display:none!important}
+  .broadcast-leader{font-size:18px!important;line-height:1.05!important;margin-top:1px!important;word-break:break-word!important}
+  #broadcastLeaderSub{font-size:8px!important;line-height:1.1!important;margin-top:2px!important}
+  #broadcastCourse{font-size:10px!important;line-height:1.1!important;margin-top:1px!important}
+  #broadcastHoles{font-size:17px!important;line-height:1!important;margin-top:1px!important}
+  #broadcastSpecial{font-size:9px!important;line-height:1.15!important;margin-top:1px!important}
+  .broadcast-panel .status{font-size:7px!important;line-height:1!important;letter-spacing:.04em!important}
+  #broadcastLeaderSub + div{margin-top:9px!important}
+  #broadcastCourse + div{margin-top:8px!important}
+  #broadcastHoles + div{margin-top:8px!important}
+}
+@media(max-width:360px){
+  .broadcast-grid{grid-template-columns:minmax(0,1.75fr) 104px!important;gap:5px!important}
+  .broadcast-shell{padding:7px!important}
+  .broadcast-brand{font-size:23px!important}
+  .broadcast-row{grid-template-columns:16px minmax(0,1fr) 44px!important}
+  .broadcast-row strong{font-size:8px!important}.broadcast-row .b-pts{font-size:8px!important}
+}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -2600,7 +2642,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.43</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.45</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -3046,7 +3088,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.43 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.45 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
