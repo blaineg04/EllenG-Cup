@@ -2590,7 +2590,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 
 <style id="v2748-broadcast-only-mobile-fix">
-/* v2.7.48 — BROADCAST PAGE ONLY. No other screen selectors are changed. */
+/* v2.7.49 — BROADCAST PAGE ONLY. No other screen selectors are changed. */
 @media (max-width:800px){
   .broadcast-overlay,
   .broadcast-overlay.open{
@@ -2671,10 +2671,12 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   }
   .broadcast-grid > .broadcast-panel:last-child h2{grid-column:1/-1!important;margin:0 0 3px!important;}
   .broadcast-grid > .broadcast-panel:last-child > .status{font-size:6.5px!important;line-height:1!important;letter-spacing:.03em!important;margin:0!important;align-self:end!important;}
-  .broadcast-grid > .broadcast-panel:last-child > .status:nth-of-type(1){grid-column:1!important;grid-row:2!important;}
-  .broadcast-grid > .broadcast-panel:last-child > .status:nth-of-type(2){grid-column:2!important;grid-row:2!important;}
-  .broadcast-grid > .broadcast-panel:last-child > .status:nth-of-type(3){grid-column:3!important;grid-row:2!important;}
-  .broadcast-grid > .broadcast-panel:last-child > .status:nth-of-type(4){grid-column:4!important;grid-row:2!important;}
+  /* Place the four Tournament Now labels by their actual child positions.
+     Using nth-of-type() here was wrong because the hidden leader-sub DIV is also counted. */
+  .broadcast-grid > .broadcast-panel:last-child > .status:nth-child(2){grid-column:1!important;grid-row:2!important;}
+  .broadcast-grid > .broadcast-panel:last-child > .status:nth-child(5){grid-column:2!important;grid-row:2!important;}
+  .broadcast-grid > .broadcast-panel:last-child > .status:nth-child(7){grid-column:3!important;grid-row:2!important;}
+  .broadcast-grid > .broadcast-panel:last-child > .status:nth-child(9){grid-column:4!important;grid-row:2!important;}
   #broadcastLeader{grid-column:1!important;grid-row:3!important;font-size:12px!important;line-height:1.05!important;margin:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
   #broadcastLeaderSub{display:none!important;}
   #broadcastCourse{grid-column:2!important;grid-row:3!important;font-size:8.5px!important;line-height:1.05!important;margin:0!important;display:block!important;overflow:hidden!important;max-height:20px!important;}
@@ -2753,7 +2755,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.48</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.49</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -3199,7 +3201,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.48 • UPDATED OCT 2, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.49 • UPDATED OCT 2, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
