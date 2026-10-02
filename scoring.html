@@ -1974,6 +1974,94 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 }
 </style>
 
+
+<style>
+/* v2.7.24 — My Score becomes a true no-scroll mobile board. Teams/Players untouched. */
+@media (max-width:650px){
+  #leaderboardView:not(.hidden){
+    display:flex!important;
+    flex-direction:column!important;
+    gap:6px!important;
+    height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  #leaderboardView:not(.hidden) > .card:nth-of-type(2){
+    flex:0 0 auto!important;
+    padding:7px 9px!important;
+    border-radius:14px!important;
+    overflow:hidden!important;
+  }
+  #leaderboardView:not(.hidden) > .card:nth-of-type(2) h2{font-size:17px!important;line-height:1!important}
+  #leaderboardView:not(.hidden) > .card:nth-of-type(2) > .row:first-child .status{font-size:9px!important;line-height:1.05!important;max-width:430px!important}
+  #leaderboardView:not(.hidden) > .card:nth-of-type(2) .badge{font-size:8px!important;padding:3px 6px!important}
+  #leaderboardView:not(.hidden) #selfScoreContext{
+    margin-top:6px!important;padding:6px 8px!important;font-size:9px!important;line-height:1.1!important;
+  }
+  #leaderboardView:not(.hidden) > .card:nth-of-type(2) .admin-grid{
+    grid-template-columns:1fr 1fr 1fr!important;gap:5px!important;margin-top:6px!important;
+  }
+  #leaderboardView:not(.hidden) > .card:nth-of-type(2) label small{font-size:8px!important}
+  #leaderboardView:not(.hidden) > .card:nth-of-type(2) select,
+  #leaderboardView:not(.hidden) > .card:nth-of-type(2) input{
+    min-height:31px!important;height:31px!important;padding:3px 6px!important;font-size:12px!important;
+  }
+  #leaderboardView:not(.hidden) .self-score-summary{margin-top:5px!important}
+  #leaderboardView:not(.hidden) .self-score-box{padding:4px 7px!important;min-height:48px!important}
+  #leaderboardView:not(.hidden) .self-score-box small{font-size:8px!important}
+  #leaderboardView:not(.hidden) .self-score-box strong{font-size:20px!important;line-height:1!important}
+  #leaderboardView:not(.hidden) .self-score-box .term{font-size:9px!important;line-height:1!important}
+  #leaderboardView:not(.hidden) > .card:nth-of-type(2) > .note:not(#selfScoreContext){display:none!important}
+  #leaderboardView:not(.hidden) > .card:nth-of-type(2) > .row:last-of-type{margin-top:5px!important;gap:5px!important}
+  #leaderboardView:not(.hidden) > .card:nth-of-type(2) button{
+    min-height:31px!important;height:31px!important;padding:4px 8px!important;font-size:10px!important;
+  }
+  #leaderboardView:not(.hidden) #selfScoreMsg{display:none!important}
+
+  #leaderboardView:not(.hidden) > .card:nth-of-type(3){
+    flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;
+    display:flex!important;flex-direction:column!important;padding:7px 9px!important;border-radius:14px!important;
+  }
+  #leaderboardView:not(.hidden) > .card:nth-of-type(3) h2{font-size:16px!important;line-height:1!important}
+  #leaderboardView:not(.hidden) > .card:nth-of-type(3) .status{font-size:8px!important;line-height:1.05!important}
+  #leaderboardView:not(.hidden) > .card:nth-of-type(3) .badge{font-size:8px!important;padding:3px 6px!important}
+  #leaderboardView:not(.hidden) #leaderboard{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    grid-auto-rows:minmax(0,1fr)!important;
+    gap:5px!important;
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    margin-top:5px!important;
+    align-items:stretch!important;
+    align-content:stretch!important;
+  }
+  #leaderboardView:not(.hidden) #leaderboard[data-team-count="1"],
+  #leaderboardView:not(.hidden) #leaderboard[data-team-count="2"],
+  #leaderboardView:not(.hidden) #leaderboard[data-team-count="3"]{grid-template-columns:repeat(1,minmax(0,1fr))!important}
+  #leaderboardView:not(.hidden) #leaderboard[data-team-count="4"],
+  #leaderboardView:not(.hidden) #leaderboard[data-team-count="5"],
+  #leaderboardView:not(.hidden) #leaderboard[data-team-count="6"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #leaderboardView:not(.hidden) #leaderboard[data-team-count="10"],
+  #leaderboardView:not(.hidden) #leaderboard[data-team-count="11"],
+  #leaderboardView:not(.hidden) #leaderboard[data-team-count="12"]{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  #leaderboardView:not(.hidden) #leaderboard .leader-row{
+    min-height:0!important;height:100%!important;margin:0!important;padding:5px 6px!important;
+    border-radius:9px!important;display:grid!important;
+    grid-template-columns:auto minmax(0,1fr)!important;
+    grid-template-areas:"place team" "pts thru"!important;
+    grid-template-rows:auto auto!important;gap:2px 5px!important;align-content:center!important;
+  }
+  #leaderboardView:not(.hidden) #leaderboard .leader-row .place{grid-area:place!important;font-size:13px!important;min-width:16px!important}
+  #leaderboardView:not(.hidden) #leaderboard .leader-row > div:nth-child(2){grid-area:team!important;min-width:0!important;overflow:hidden!important}
+  #leaderboardView:not(.hidden) #leaderboard .leader-row strong{font-size:9px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;display:block!important}
+  #leaderboardView:not(.hidden) #leaderboard .leader-row .pts{grid-area:pts!important;font-size:9px!important;white-space:nowrap!important}
+  #leaderboardView:not(.hidden) #leaderboard .leader-row .thru{grid-area:thru!important;font-size:8px!important;white-space:nowrap!important;text-align:right!important}
+  #leaderboardView:not(.hidden) #leaderboard .leader-row .badge{display:none!important}
+  #leaderboardView:not(.hidden) > .card:nth-of-type(n+4){display:none!important}
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -2034,7 +2122,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.23</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.24</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2461,7 +2549,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.23 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.24 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -3186,7 +3274,9 @@ function renderLeaderboard(){
  if($("pointScaleBadge"))$("pointScaleBadge").textContent=pointScaleText();
  if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • 18 HOLES`;
  const arr=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
- $("leaderboard").innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===x.team?` <span class="badge">+6 Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
+ const board=$("leaderboard");
+ if(board) board.dataset.teamCount=String(arr.length);
+ board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===x.team?` <span class="badge">+6 Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
  renderLiveHoleScores();
 }
 function trashTime(ts){
