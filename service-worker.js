@@ -1,13 +1,17 @@
-const CACHE="elleng-cup-v2.7.40";
+const CACHE="elleng-cup-v2.7.41";
 const STATIC=[
-  "./config.js",
-  "./common.js",
-  "./manifest.webmanifest",
+  "./config.js?v=2.7.41",
+  "./common.js?v=2.7.41",
+  "./manifest.webmanifest?v=2.7.41",
   "./app-icon-180.png",
   "./app-icon-192.png",
   "./app-icon-512.png",
   "./gator.png"
 ];
+
+self.addEventListener("message",event=>{
+  if(event.data && event.data.type==="SKIP_WAITING") self.skipWaiting();
+});
 
 self.addEventListener("install",event=>{
   self.skipWaiting();
@@ -31,27 +35,20 @@ self.addEventListener("fetch",event=>{
 
   const url=new URL(req.url);
 
-  if(req.mode==="navigate"){
-    event.respondWith(
-      fetch(req,{cache:"no-store"}).then(resp=>{
-        const copy=resp.clone();
-        caches.open(CACHE).then(cache=>cache.put(url.pathname,copy)).catch(()=>{});
-        return resp;
-      }).catch(async()=>{
-        return (await caches.match(url.pathname)) ||
-               (url.pathname.endsWith("/draft.html") ? caches.match("/draft.html") : null) ||
-               (url.pathname.endsWith("/captain.html") ? caches.match("/captain.html") : null) ||
-               caches.match("/scoring.html");
-      })
-    );
+  // HTML/navigation is always fetched fresh. Never save HTML in the app cache.
+  if(req.mode==="navigate" || url.pathname.endsWith(".html") || url.pathname==="/"){
+    event.respondWith(fetch(req,{cache:"no-store"}));
     return;
   }
 
-  if(["script","style","image","font"].includes(req.destination)){
+  // Static assets are network-first, with cache only as an offline fallback.
+  if(["script","style","image","font"].includes(req.destination) || url.pathname.endsWith(".js") || url.pathname.endsWith(".css")){
     event.respondWith(
       fetch(req,{cache:"no-store"}).then(resp=>{
-        const copy=resp.clone();
-        caches.open(CACHE).then(cache=>cache.put(req,copy)).catch(()=>{});
+        if(resp && resp.ok){
+          const copy=resp.clone();
+          caches.open(CACHE).then(cache=>cache.put(req,copy)).catch(()=>{});
+        }
         return resp;
       }).catch(()=>caches.match(req))
     );
