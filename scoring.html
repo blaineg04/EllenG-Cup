@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.54">
+<meta name="elleng-app-version" content="2.7.55">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -6585,5 +6585,37 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
     padding-bottom:8px!important;
   }
   body.player-simple-home #playersView #playerDirectory::-webkit-scrollbar{display:none!important;}
+}
+</style>
+
+<style id="v2755-players-only-fix">
+/* v2.7.55 — PLAYERS & HANDICAPS ONLY. No other page selectors are touched. */
+@media (max-width:650px){
+  body.player-simple-home #playersView{
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  body.player-simple-home #playersView > .card:first-child{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  body.player-simple-home #playersView #playerDirectory{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior:contain!important;
+    scrollbar-width:none!important;
+    padding-bottom:18px!important;
+  }
+  body.player-simple-home #playersView #playerDirectory::-webkit-scrollbar{display:none!important;}
+  body.player-simple-home #playersView #playerDirectory .player-team-card{
+    overflow:visible!important;
+  }
 }
 </style>
