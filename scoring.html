@@ -2402,8 +2402,8 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </style>
 
 
-<style id="v2731-extras-detail-isolation">
-/* v2.7.31 — isolate the selected Tournament Extras detail card.
+<style id="v2732-extras-detail-isolation">
+/* v2.7.32 — isolate the selected Tournament Extras detail card.
    Older ID-specific display:block rules were overpowering the generic detail rules. */
 @media (max-width:650px){
   body:not(.login-mode).extras-screen-active #extrasView.extras-detail-open #tournamentExtrasContent > *{
@@ -2425,6 +2425,21 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
     height:100%!important;
     min-height:0!important;
   }
+}
+</style>
+
+<style id="v2732-extras-inline-isolation">
+/* v2.7.32 — JS now hard-isolates the selected Extras card; this is the final visual guard. */
+@media (max-width:650px){
+  #extrasView.extras-detail-open #extrasMenuGrid{display:none!important}
+  #extrasView.extras-detail-open .extras-scroll{display:block!important;overflow:hidden!important;min-height:0!important;flex:1 1 auto!important}
+  #extrasView.extras-detail-open #tournamentExtrasContent{height:100%!important;min-height:0!important;overflow:hidden!important}
+  #extrasView.extras-detail-open #tournamentExtrasContent > .extras-active-card{
+    display:block!important;height:100%!important;max-height:100%!important;overflow:hidden!important;margin:0!important;padding:10px 12px!important;box-sizing:border-box!important
+  }
+  #extrasView.extras-detail-open #teamMomentumCard .momentum-row{margin:0!important;padding:3px 0!important;min-height:0!important}
+  #extrasView.extras-detail-open #teamMomentumCard h2{font-size:23px!important;margin:2px 0!important}
+  #extrasView.extras-detail-open #teamMomentumCard .status{font-size:12px!important;line-height:1.1!important}
 }
 </style>
 </head>
@@ -2487,7 +2502,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.31</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.32</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2933,7 +2948,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.31 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.32 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -5226,12 +5241,46 @@ function initTournamentExtrasScreen(){
   ["awardsCard","🏆","Awards","EllenG awards"]
  ];
  items.forEach(([id,icon,title,sub])=>{const el=$(id);if(el)dest.appendChild(el);const b=document.createElement("button");b.type="button";b.className="extras-menu-tile";b.dataset.extrasCard=id;b.innerHTML=`<span class="extras-menu-icon">${icon}</span><strong>${title}</strong><small>${sub}</small>`;menu.appendChild(b)});
- menu.addEventListener("click",e=>{const b=e.target.closest("[data-extras-card]");if(!b)return;dest.querySelectorAll(".extras-active-card").forEach(x=>x.classList.remove("extras-active-card"));const card=$(b.dataset.extrasCard);if(card){card.classList.add("extras-active-card");view.classList.add("extras-detail-open")}});
+ function resetExtrasDetail(){
+   view.classList.remove("extras-detail-open");
+   menu.style.setProperty("display","grid","important");
+   const scroll=view.querySelector(".extras-scroll");
+   if(scroll)scroll.style.setProperty("display","none","important");
+   [...dest.children].forEach(card=>{
+     card.classList.remove("extras-active-card");
+     card.style.removeProperty("display");
+     card.style.removeProperty("height");
+     card.style.removeProperty("max-height");
+     card.style.removeProperty("overflow");
+   });
+ }
+ function openExtrasDetail(id){
+   const card=$(id);if(!card)return;
+   view.classList.add("extras-detail-open");
+   menu.style.setProperty("display","none","important");
+   const scroll=view.querySelector(".extras-scroll");
+   if(scroll){
+     scroll.style.setProperty("display","block","important");
+     scroll.style.setProperty("overflow","hidden","important");
+   }
+   [...dest.children].forEach(el=>{
+     const active=el===card;
+     el.classList.toggle("extras-active-card",active);
+     el.style.setProperty("display",active?"block":"none","important");
+     if(active){
+       el.style.setProperty("height","100%","important");
+       el.style.setProperty("max-height","100%","important");
+       el.style.setProperty("overflow","hidden","important");
+     }
+   });
+ }
+ menu.addEventListener("click",e=>{const b=e.target.closest("[data-extras-card]");if(!b)return;openExtrasDetail(b.dataset.extrasCard)});
+ view._resetExtrasDetail=resetExtrasDetail;
 }
 initTournamentExtrasScreen();
-if($("playerExtrasToggle"))$("playerExtrasToggle").addEventListener("click",()=>{$("extrasView")?.classList.remove("extras-detail-open");showView("extras")});
-if($("extrasBackButton"))$("extrasBackButton").addEventListener("click",()=>{$("extrasView")?.classList.remove("extras-detail-open")});
-if($("closeTournamentExtras"))$("closeTournamentExtras").addEventListener("click",()=>{$("extrasView")?.classList.remove("extras-detail-open");showView("home")});
+if($("playerExtrasToggle"))$("playerExtrasToggle").addEventListener("click",()=>{const v=$("extrasView");if(v?._resetExtrasDetail)v._resetExtrasDetail();showView("extras")});
+if($("extrasBackButton"))$("extrasBackButton").addEventListener("click",()=>{const v=$("extrasView");if(v?._resetExtrasDetail)v._resetExtrasDetail()});
+if($("closeTournamentExtras"))$("closeTournamentExtras").addEventListener("click",()=>{const v=$("extrasView");if(v?._resetExtrasDetail)v._resetExtrasDetail();showView("home")});
 document.querySelectorAll("[data-mobile-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.mobileView)));
 const moreBackdrop=$("moreMenuBackdrop"), moreBtn=$("mobileMoreBtn");
 function closeMoreMenu(){if(moreBackdrop){moreBackdrop.classList.remove("open");moreBackdrop.setAttribute("aria-hidden","true")}}
