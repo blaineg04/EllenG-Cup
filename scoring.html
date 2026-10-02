@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.47">
+<meta name="elleng-app-version" content="2.7.48">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -2588,6 +2588,111 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 }
 </style>
 
+
+<style id="v2748-broadcast-only-mobile-fix">
+/* v2.7.48 — BROADCAST PAGE ONLY. No other screen selectors are changed. */
+@media (max-width:800px){
+  .broadcast-overlay,
+  .broadcast-overlay.open{
+    position:fixed!important;
+    inset:0!important;
+    width:100%!important;
+    height:100dvh!important;
+    max-height:100dvh!important;
+    overflow:hidden!important;
+  }
+  .broadcast-shell{
+    width:100%!important;
+    height:100dvh!important;
+    max-height:100dvh!important;
+    box-sizing:border-box!important;
+    padding:8px 10px calc(8px + env(safe-area-inset-bottom))!important;
+    display:grid!important;
+    grid-template-rows:auto auto minmax(0,1fr)!important;
+    gap:5px!important;
+    overflow:hidden!important;
+  }
+  .broadcast-top{align-items:center!important;gap:8px!important;min-height:0!important;}
+  .broadcast-brand{font-size:28px!important;line-height:.95!important;}
+  .broadcast-sub{font-size:9px!important;line-height:1!important;letter-spacing:.06em!important;margin-top:3px!important;}
+  .broadcast-close{height:34px!important;min-height:34px!important;padding:4px 10px!important;font-size:11px!important;border-radius:9px!important;white-space:nowrap!important;}
+  .broadcast-ticker{margin:0!important;padding:6px 8px!important;min-height:28px!important;box-sizing:border-box!important;font-size:10px!important;line-height:1.15!important;}
+
+  /* Stack the two broadcast sections vertically on a phone. */
+  .broadcast-grid{
+    min-height:0!important;
+    height:100%!important;
+    margin:0!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:auto auto!important;
+    align-content:start!important;
+    gap:6px!important;
+    overflow:hidden!important;
+  }
+  .broadcast-panel{padding:7px!important;border-radius:12px!important;min-height:0!important;overflow:hidden!important;}
+  .broadcast-panel h2{font-size:14px!important;line-height:1!important;margin:0 0 5px!important;}
+
+  /* Live standings: nine compact rows, all visible, no page scroll. */
+  .broadcast-grid > .broadcast-panel:first-child{height:auto!important;}
+  .broadcast-rows{
+    display:grid!important;
+    grid-template-rows:repeat(9,clamp(42px,5.6vh,54px))!important;
+    gap:3px!important;
+    height:auto!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  .broadcast-row{
+    min-height:0!important;
+    height:100%!important;
+    box-sizing:border-box!important;
+    grid-template-columns:20px minmax(0,1fr) 52px!important;
+    gap:5px!important;
+    padding:4px 6px!important;
+    border-radius:8px!important;
+  }
+  .broadcast-row .b-rank{font-size:13px!important;line-height:1!important;}
+  .broadcast-row strong{display:block!important;font-size:10px!important;line-height:1.05!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  .broadcast-row strong + div{font-size:7.5px!important;line-height:1.05!important;margin-top:2px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  .broadcast-row .b-pts{font-size:10px!important;line-height:1!important;white-space:nowrap!important;}
+  .broadcast-row .b-thru{display:none!important;}
+  .broadcast-row .mini-team-dot{width:8px!important;height:8px!important;margin-right:5px!important;}
+
+  /* Tournament Now becomes a compact four-column status strip instead of a tall empty sidebar. */
+  .broadcast-grid > .broadcast-panel:last-child{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    grid-template-rows:auto auto auto!important;
+    column-gap:6px!important;
+    row-gap:2px!important;
+    padding:7px 8px!important;
+    min-height:82px!important;
+  }
+  .broadcast-grid > .broadcast-panel:last-child h2{grid-column:1/-1!important;margin:0 0 3px!important;}
+  .broadcast-grid > .broadcast-panel:last-child > .status{font-size:6.5px!important;line-height:1!important;letter-spacing:.03em!important;margin:0!important;align-self:end!important;}
+  .broadcast-grid > .broadcast-panel:last-child > .status:nth-of-type(1){grid-column:1!important;grid-row:2!important;}
+  .broadcast-grid > .broadcast-panel:last-child > .status:nth-of-type(2){grid-column:2!important;grid-row:2!important;}
+  .broadcast-grid > .broadcast-panel:last-child > .status:nth-of-type(3){grid-column:3!important;grid-row:2!important;}
+  .broadcast-grid > .broadcast-panel:last-child > .status:nth-of-type(4){grid-column:4!important;grid-row:2!important;}
+  #broadcastLeader{grid-column:1!important;grid-row:3!important;font-size:12px!important;line-height:1.05!important;margin:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;}
+  #broadcastLeaderSub{display:none!important;}
+  #broadcastCourse{grid-column:2!important;grid-row:3!important;font-size:8.5px!important;line-height:1.05!important;margin:0!important;display:block!important;overflow:hidden!important;max-height:20px!important;}
+  #broadcastHoles{grid-column:3!important;grid-row:3!important;font-size:13px!important;line-height:1!important;margin:0!important;}
+  #broadcastSpecial{grid-column:4!important;grid-row:3!important;font-size:8px!important;line-height:1.05!important;margin:0!important;display:block!important;overflow:hidden!important;max-height:20px!important;}
+}
+@media (max-width:360px){
+  .broadcast-shell{padding-left:7px!important;padding-right:7px!important;}
+  .broadcast-brand{font-size:24px!important;}
+  .broadcast-rows{grid-template-rows:repeat(9,clamp(38px,5.25vh,47px))!important;}
+  .broadcast-row{grid-template-columns:17px minmax(0,1fr) 45px!important;padding:3px 4px!important;}
+  .broadcast-row strong{font-size:9px!important;}
+  .broadcast-row .b-pts{font-size:9px!important;}
+  .broadcast-grid > .broadcast-panel:last-child{column-gap:3px!important;padding:6px!important;}
+  #broadcastCourse,#broadcastSpecial{font-size:7.5px!important;}
+}
+</style>
+
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -2648,7 +2753,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.47</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.48</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -3094,7 +3199,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.47 • UPDATED OCT 2, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.48 • UPDATED OCT 2, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
