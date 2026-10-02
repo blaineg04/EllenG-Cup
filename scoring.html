@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.38">
+<meta name="elleng-app-version" content="2.7.39">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -2507,7 +2507,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.38</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.39</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2953,7 +2953,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.38 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.39 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -5235,19 +5235,46 @@ document.querySelectorAll("[data-home-go]").forEach(b=>b.addEventListener("click
 function initTournamentExtrasScreen(){
  const dest=$("tournamentExtrasContent"),menu=$("extrasMenuGrid"),view=$("extrasView");if(!dest||!menu||!view)return;
  const items=[
-  ["teamMomentumCard","📈","Team Momentum","See which teams are heating up"],
-  ["featuredMatchupCard","⚔️","Matchups","Compare teams hole by hole"],
-  ["playerSpotlightCard","⭐","Player Spotlight","See who is playing best right now"],
-  ["whatChangedCard","🔔","Live Feed","Follow lead changes and big moments"],
-  ["onTheClockCard","⏱️","On the Clock","See upcoming pressure moments"],
-  ["paceTrackerCard","🏃","Pace Tracker","See how quickly teams are moving"],
-  ["leadChangeAlert","🚨","Lead Changes","Track when the tournament lead changes"],
-  ["momentumCard","🔥","Momentum Meter","See recent team performance trends"],
-  ["tournamentPulseCard","📡","Tournament Pulse","View the overall live state of the tournament"],
-  ["postRoundRecapCard","📖","Tournament Recap","Review the biggest moments after the round"],
-  ["awardsCard","🏆","Awards","See MVPs and tournament honors"]
+  ["teamMomentumCard","TEAM MOMENTUM","Who’s Heating Up","See which teams are heating up","teamMomentumMeter"],
+  ["featuredMatchupCard","MATCHUPS","Closest Battle","Compare teams hole by hole","featuredMatchup"],
+  ["playerSpotlightCard","PLAYER SPOTLIGHT","Who’s Making Noise","See who is playing best right now","playerSpotlight"],
+  ["whatChangedCard","LIVE FEED","What Changed?","Follow lead changes and big moments","whatChangedFeed"],
+  ["onTheClockCard","ON THE CLOCK","Next Big Moment","See upcoming pressure moments","onTheClock"],
+  ["paceTrackerCard","PACE OF PLAY","Group Tracker","See how quickly teams are moving","paceTracker"],
+  ["leadChangeAlert","LEAD CHANGES","Tournament Lead","Track when the tournament lead changes","leadChangeMain"],
+  ["momentumCard","MOMENTUM METER","Recent Form","See recent team performance trends","momentumTracker"],
+  ["tournamentPulseCard","TOURNAMENT PULSE","Live Tournament State","View the overall live state of the tournament","tournamentPulse"],
+  ["postRoundRecapCard","TOURNAMENT RECAP","Round Story","Review the biggest moments after the round","postRoundRecap"],
+  ["awardsCard","AWARDS","EllenG Awards","See MVPs and tournament honors","tournamentAwards"]
  ];
- items.forEach(([id,icon,title,sub])=>{const el=$(id);if(el)dest.appendChild(el);const b=document.createElement("button");b.type="button";b.className="extras-menu-tile";b.dataset.extrasCard=id;b.innerHTML=`<span class="extras-menu-icon">${icon}</span><strong>${title}</strong><small>${sub}</small>`;menu.appendChild(b)});
+ const cleanText=(el,fallback)=>{
+   let t=(el?.innerText||el?.textContent||"").replace(/\s+/g," ").trim();
+   if(!t||t==="—")t=fallback||"Waiting for tournament data";
+   if(t.length>105)t=t.slice(0,102).trim()+"…";
+   return t;
+ };
+ const refreshExtrasDashboard=()=>{
+   menu.querySelectorAll("[data-extras-summary]").forEach(out=>{
+     const sourceId=out.dataset.extrasSummary;
+     const fallback=out.dataset.fallback||"Waiting for tournament data";
+     let el=$(sourceId);
+     let text=cleanText(el,fallback);
+     if(sourceId==="leadChangeMain"){
+       const sub=cleanText($("leadChangeSub"),"");
+       if(sub&&sub!==text)text=(text+" "+sub).trim();
+     }
+     if(sourceId==="tournamentPulse" && (!el || !el.textContent.trim())) text=cleanText($("holeMatchup"),fallback);
+     if(sourceId==="postRoundRecap" && (!el || !el.textContent.trim())) text=cleanText($("recapSub"),fallback);
+     out.textContent=text;
+   });
+ };
+ items.forEach(([id,kicker,title,sub,sourceId])=>{
+   const el=$(id);if(el)dest.appendChild(el);
+   const b=document.createElement("button");
+   b.type="button";b.className="extras-data-card";b.dataset.extrasCard=id;
+   b.innerHTML=`<span class="extras-data-kicker">${kicker}</span><span class="extras-data-title">${title}</span><span class="extras-data-summary" data-extras-summary="${sourceId}" data-fallback="${sub}">${sub}</span>`;
+   menu.appendChild(b);
+ });
  function resetExtrasDetail(){
    view.classList.remove("extras-detail-open");
    menu.style.setProperty("display","grid","important");
@@ -5260,29 +5287,26 @@ function initTournamentExtrasScreen(){
      card.style.removeProperty("max-height");
      card.style.removeProperty("overflow");
    });
+   requestAnimationFrame(refreshExtrasDashboard);
  }
  function openExtrasDetail(id){
    const card=$(id);if(!card)return;
    view.classList.add("extras-detail-open");
    menu.style.setProperty("display","none","important");
    const scroll=view.querySelector(".extras-scroll");
-   if(scroll){
-     scroll.style.setProperty("display","block","important");
-     scroll.style.setProperty("overflow","hidden","important");
-   }
+   if(scroll){scroll.style.setProperty("display","block","important");scroll.style.setProperty("overflow","hidden","important")}
    [...dest.children].forEach(el=>{
-     const active=el===card;
-     el.classList.toggle("extras-active-card",active);
+     const active=el===card;el.classList.toggle("extras-active-card",active);
      el.style.setProperty("display",active?"block":"none","important");
-     if(active){
-       el.style.setProperty("height","100%","important");
-       el.style.setProperty("max-height","100%","important");
-       el.style.setProperty("overflow","hidden","important");
-     }
+     if(active){el.style.setProperty("height","100%","important");el.style.setProperty("max-height","100%","important");el.style.setProperty("overflow","hidden","important")}
    });
  }
  menu.addEventListener("click",e=>{const b=e.target.closest("[data-extras-card]");if(!b)return;openExtrasDetail(b.dataset.extrasCard)});
+ const observer=new MutationObserver(()=>{if(!view.classList.contains("extras-detail-open"))refreshExtrasDashboard()});
+ observer.observe(dest,{subtree:true,childList:true,characterData:true,attributes:true});
  view._resetExtrasDetail=resetExtrasDetail;
+ view._refreshExtrasDashboard=refreshExtrasDashboard;
+ refreshExtrasDashboard();
 }
 initTournamentExtrasScreen();
 if($("playerExtrasToggle"))$("playerExtrasToggle").addEventListener("click",()=>{const v=$("extrasView");if(v?._resetExtrasDetail)v._resetExtrasDetail();showView("extras")});
@@ -6088,5 +6112,44 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
   #extrasView.extras-detail-open #postRoundRecapCard .winner-tools{flex:0 0 auto!important;margin:4px 0 0!important;gap:4px!important}
   #extrasView.extras-detail-open #postRoundRecapCard button{height:27px!important;min-height:27px!important;padding:3px 6px!important;font-size:7.5px!important}
   #extrasView.extras-detail-open #winnerGraphicPreview{display:none!important}
+}
+
+/* v2.7.39 — Tournament Extras opens as a live-data dashboard, not a grid of empty square tiles. */
+@media (max-width: 900px){
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open){overflow:hidden!important}
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) .extras-shell{
+    height:100%!important;min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;gap:7px!important
+  }
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) .extras-header{
+    flex:0 0 52px!important;min-height:52px!important;height:52px!important;padding:7px 10px!important;margin:0!important;border-radius:14px!important
+  }
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) .extras-header .premium-label,
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) .extras-header .status{display:none!important}
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) .extras-header h2{font-size:18px!important;line-height:1!important;margin:0!important}
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) #extrasBackButton{display:none!important}
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) #closeTournamentExtras{height:34px!important;min-height:34px!important;padding:4px 10px!important;font-size:11px!important;border-radius:11px!important}
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) #extrasMenuGrid{
+    flex:1 1 auto!important;min-height:0!important;height:auto!important;display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-rows:repeat(6,minmax(0,1fr))!important;
+    gap:6px!important;padding:0!important;margin:0!important;overflow:hidden!important;align-content:stretch!important
+  }
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) #extrasMenuGrid .extras-menu-tile{display:none!important}
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) #extrasMenuGrid .extras-data-card{
+    appearance:none!important;-webkit-appearance:none!important;min-width:0!important;min-height:0!important;height:100%!important;width:100%!important;
+    margin:0!important;padding:6px 8px!important;border:1px solid #e3d49d!important;border-radius:13px!important;background:linear-gradient(180deg,#fffefa,#fbf7ea)!important;
+    box-shadow:0 1px 3px rgba(7,38,56,.08)!important;text-align:left!important;display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:flex-start!important;gap:1px!important;
+    color:var(--navy)!important;overflow:hidden!important
+  }
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) .extras-data-kicker{
+    display:block!important;font-size:6.5px!important;line-height:1!important;font-weight:900!important;letter-spacing:.12em!important;color:#9a7307!important;text-transform:uppercase!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:100%!important
+  }
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) .extras-data-title{
+    display:block!important;font-size:10.5px!important;line-height:1.05!important;font-weight:900!important;color:var(--navy)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:100%!important
+  }
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) .extras-data-summary{
+    display:-webkit-box!important;-webkit-box-orient:vertical!important;-webkit-line-clamp:2!important;overflow:hidden!important;max-width:100%!important;
+    font-size:7.5px!important;line-height:1.08!important;font-weight:700!important;color:#687a86!important;text-align:left!important
+  }
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) .extras-scroll{display:none!important}
 }
 </style>
