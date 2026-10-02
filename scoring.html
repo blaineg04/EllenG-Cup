@@ -2695,6 +2695,33 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 }
 </style>
 
+
+<style id="v2751-broadcast-fill-remaining-screen">
+/* v2.7.51 — BROADCAST ONLY: use the full remaining phone height; no other page selectors touched. */
+@media (max-width:800px){
+  .broadcast-grid{
+    grid-template-rows:minmax(0,1fr) auto!important;
+    align-content:stretch!important;
+    height:100%!important;
+    min-height:0!important;
+  }
+  .broadcast-grid > .broadcast-panel:first-child{
+    height:100%!important;
+    min-height:0!important;
+    display:grid!important;
+    grid-template-rows:auto minmax(0,1fr)!important;
+  }
+  .broadcast-rows{
+    height:100%!important;
+    min-height:0!important;
+    grid-template-rows:repeat(9,minmax(0,1fr))!important;
+  }
+  .broadcast-grid > .broadcast-panel:last-child{
+    min-height:84px!important;
+    height:auto!important;
+  }
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
