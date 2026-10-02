@@ -2485,7 +2485,7 @@ body.player-simple-home #openBroadcast{display:block!important}
 
 
 <style>
-/* v2.7.37 — Hole Progress full-app screen: all 18 holes visible, no scrolling */
+/* v2.7.38 — Hole Progress full-app screen: all 18 holes visible, no scrolling */
 @media (max-width:650px){
   body:not(.login-mode) #progressView{
     overflow:hidden!important;
@@ -2624,7 +2624,7 @@ body.player-simple-home #openBroadcast{display:block!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.37</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.38</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -3070,7 +3070,7 @@ body.player-simple-home #openBroadcast{display:block!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.37 • UPDATED OCT 2, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.38 • UPDATED OCT 2, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -5934,5 +5934,31 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
     -webkit-box-orient:vertical!important;
     -webkit-line-clamp:2!important;
   }
+}
+</style>
+
+<style>
+/* v2.7.38 — Players directory: fixed app shell with an internally scrollable roster */
+@media (max-width:650px){
+  body.player-simple-home #playersView{
+    overflow:hidden!important;
+  }
+  body.player-simple-home #playersView > .card:first-child{
+    min-height:0!important;
+    overflow:hidden!important;
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  body.player-simple-home #playersView #playerDirectory{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior:contain!important;
+    padding-bottom:18px!important;
+    scrollbar-width:none!important;
+  }
+  body.player-simple-home #playersView #playerDirectory::-webkit-scrollbar{display:none!important;}
 }
 </style>
