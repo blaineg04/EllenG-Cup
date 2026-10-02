@@ -1804,48 +1804,173 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </style>
 
 <style>
-/* v2.7.21 — Teams screen: show the whole field without vertical scrolling. */
+/* v2.7.22 — Teams screen: compact all-team board without vertical scrolling. */
 @media (max-width:650px){
-  body.player-simple-home #teamsView{overflow:hidden!important}
-  body.player-simple-home #teamsView > .card:first-child{
+  body:not(.login-mode) #teamsView{overflow:hidden!important}
+  body:not(.login-mode) #teamsView > .card:first-child{
     overflow:hidden!important;padding:8px 9px!important;gap:0!important;
   }
-  body.player-simple-home #teamsView > .card:first-child > h2{font-size:18px!important;line-height:1!important;margin:0!important}
-  body.player-simple-home #teamsView > .card:first-child > .status{font-size:9px!important;line-height:1.05!important;margin-top:2px!important}
-  body.player-simple-home #teamsView > .card:first-child > .badge{margin-top:5px!important;font-size:9px!important;padding:4px 7px!important}
-  body.player-simple-home #teamsView label{font-size:10px!important;margin-top:5px!important}
-  body.player-simple-home #teamsView #teamRosterSelect{min-height:32px!important;height:32px!important;padding:3px 7px!important;font-size:12px!important;max-width:150px!important}
-  body.player-simple-home #teamsView #teamCards{
+  body:not(.login-mode) #teamsView > .card:first-child > .row:first-child{align-items:flex-start!important}
+  body:not(.login-mode) #teamsView h2{font-size:18px!important;line-height:1!important;margin:0!important}
+  body:not(.login-mode) #teamsView .status{font-size:9px!important;line-height:1.05!important}
+  body:not(.login-mode) #teamsView .badge{font-size:8px!important;padding:3px 6px!important}
+  body:not(.login-mode) #teamsView label{font-size:10px!important;margin-top:4px!important}
+  body:not(.login-mode) #teamsView #teamRosterSelect{min-height:30px!important;height:30px!important;padding:2px 7px!important;font-size:12px!important;max-width:140px!important}
+  body:not(.login-mode) #teamsView #teamCards{
     flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;
     display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
     grid-auto-rows:minmax(0,1fr)!important;align-items:stretch!important;align-content:stretch!important;
-    gap:5px!important;margin-top:6px!important;padding:0!important;
+    gap:5px!important;margin-top:5px!important;padding:0!important;
   }
-  body.player-simple-home #teamsView #teamCards > .team-accent{
+  body:not(.login-mode) #teamsView #teamCards.teams-dense{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+  body:not(.login-mode) #teamsView #teamCards > .team-accent{
     min-height:0!important;height:100%!important;overflow:hidden!important;
-    padding:6px 7px!important;border-radius:10px!important;border-top-width:4px!important;
+    padding:5px 6px!important;border-radius:9px!important;border-top-width:4px!important;
     display:flex!important;flex-direction:column!important;justify-content:flex-start!important;
   }
-  body.player-simple-home #teamsView #teamCards > .team-accent .row{gap:4px!important;min-width:0!important;flex-wrap:nowrap!important}
-  body.player-simple-home #teamsView #teamCards > .team-accent .row strong{
-    font-size:12px!important;line-height:1.05!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  body:not(.login-mode) #teamsView #teamCards > .team-accent .row{gap:3px!important;min-width:0!important;flex-wrap:nowrap!important}
+  body:not(.login-mode) #teamsView #teamCards > .team-accent .row strong{
+    font-size:10px!important;line-height:1.05!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
   }
-  body.player-simple-home #teamsView #teamCards > .team-accent .mini-team-dot{width:7px!important;height:7px!important;margin-right:3px!important}
-  body.player-simple-home #teamsView #teamCards > .team-accent .badge{font-size:8px!important;padding:2px 5px!important;white-space:nowrap!important;flex:0 0 auto!important}
-  body.player-simple-home #teamsView #teamCards > .team-accent > .status{
-    font-size:8px!important;line-height:1!important;margin:2px 0 3px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  body:not(.login-mode) #teamsView #teamCards > .team-accent .mini-team-dot{width:6px!important;height:6px!important;margin-right:2px!important}
+  body:not(.login-mode) #teamsView #teamCards > .team-accent .badge{font-size:7px!important;padding:2px 4px!important;white-space:nowrap!important;flex:0 0 auto!important}
+  body:not(.login-mode) #teamsView #teamCards > .team-accent > .status{
+    font-size:7px!important;line-height:1!important;margin:2px 0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
   }
-  body.player-simple-home #teamsView #teamCards > .team-accent > div[style*="padding:7px 0"]{
-    padding:1px 0!important;font-size:9px!important;line-height:1.05!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  body:not(.login-mode) #teamsView #teamCards > .team-accent > .compact-roster{
+    font-size:7px!important;line-height:1.15!important;margin-top:2px!important;overflow:hidden!important;display:-webkit-box!important;-webkit-box-orient:vertical!important;-webkit-line-clamp:3!important;
   }
-  body.player-simple-home #teamsView #teamCards > .team-accent > .note{
-    padding-top:2px!important;font-size:8px!important;line-height:1.05!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  body:not(.login-mode) #teamsView #captainDashboardCard{display:none!important}
+  body:not(.login-mode) #teamsView > .card:first-child > .card:last-child{display:none!important}
+}
+</style>
+
+
+<style>
+/* v2.7.23 — hard Teams board layout. Applies to every signed-in account, including test accounts. */
+@media (max-width:650px){
+  #teamsView:not(.hidden){
+    display:flex!important;
+    flex-direction:column!important;
+    min-height:0!important;
+    height:100%!important;
+    overflow:hidden!important;
   }
-  /* Very large team fields switch to three columns rather than introducing a vertical scroller. */
-  body.player-simple-home #teamsView #teamCards.teams-super-dense{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important}
-  body.player-simple-home #teamsView #teamCards.teams-super-dense > .team-accent{padding:5px!important}
-  body.player-simple-home #teamsView #teamCards.teams-super-dense > .team-accent .row strong{font-size:10px!important}
-  body.player-simple-home #teamsView #teamCards.teams-super-dense > .team-accent .badge{display:none!important}
+  #teamsView:not(.hidden) > .card:first-child{
+    display:flex!important;
+    flex-direction:column!important;
+    flex:1 1 auto!important;
+    min-height:0!important;
+    height:100%!important;
+    overflow:hidden!important;
+    padding:8px!important;
+  }
+  #teamsView:not(.hidden) > .card:first-child > .row:first-child{
+    flex:0 0 auto!important;
+    margin:0!important;
+  }
+  #teamsView:not(.hidden) > .card:first-child > div:nth-child(2){
+    flex:0 0 auto!important;
+    margin-top:5px!important;
+  }
+  #teamsView:not(.hidden) #teamRosterSelect{
+    height:30px!important;
+    min-height:30px!important;
+    width:132px!important;
+    max-width:132px!important;
+    padding:2px 6px!important;
+    font-size:11px!important;
+  }
+  #teamsView:not(.hidden) #teamCards{
+    display:grid!important;
+    flex:1 1 auto!important;
+    min-height:0!important;
+    width:100%!important;
+    overflow:hidden!important;
+    gap:5px!important;
+    margin-top:5px!important;
+    padding:0!important;
+    align-content:stretch!important;
+    align-items:stretch!important;
+  }
+  #teamsView:not(.hidden) #teamCards[data-team-count="7"],
+  #teamsView:not(.hidden) #teamCards[data-team-count="8"],
+  #teamsView:not(.hidden) #teamCards[data-team-count="9"]{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:repeat(3,minmax(0,1fr))!important;
+  }
+  #teamsView:not(.hidden) #teamCards[data-team-count="4"],
+  #teamsView:not(.hidden) #teamCards[data-team-count="5"],
+  #teamsView:not(.hidden) #teamCards[data-team-count="6"]{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-template-rows:repeat(3,minmax(0,1fr))!important;
+  }
+  #teamsView:not(.hidden) #teamCards[data-team-count="1"],
+  #teamsView:not(.hidden) #teamCards[data-team-count="2"],
+  #teamsView:not(.hidden) #teamCards[data-team-count="3"]{
+    grid-template-columns:repeat(1,minmax(0,1fr))!important;
+    grid-template-rows:repeat(3,minmax(0,1fr))!important;
+  }
+  #teamsView:not(.hidden) #teamCards[data-team-count="10"],
+  #teamsView:not(.hidden) #teamCards[data-team-count="11"],
+  #teamsView:not(.hidden) #teamCards[data-team-count="12"]{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:repeat(4,minmax(0,1fr))!important;
+  }
+  #teamsView:not(.hidden) #teamCards > .team-accent{
+    box-sizing:border-box!important;
+    min-width:0!important;
+    min-height:0!important;
+    height:100%!important;
+    overflow:hidden!important;
+    padding:5px 6px!important;
+    border-radius:8px!important;
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  #teamsView:not(.hidden) #teamCards > .team-accent .row{
+    min-width:0!important;
+    flex-wrap:nowrap!important;
+    gap:2px!important;
+  }
+  #teamsView:not(.hidden) #teamCards > .team-accent strong{
+    min-width:0!important;
+    font-size:10px!important;
+    line-height:1.05!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+  #teamsView:not(.hidden) #teamCards > .team-accent .badge{
+    flex:0 0 auto!important;
+    font-size:7px!important;
+    padding:2px 4px!important;
+  }
+  #teamsView:not(.hidden) #teamCards > .team-accent > .status{
+    font-size:7px!important;
+    line-height:1.05!important;
+    margin:2px 0!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+  #teamsView:not(.hidden) #teamCards > .team-accent > .compact-roster{
+    min-height:0!important;
+    overflow:hidden!important;
+    font-size:7px!important;
+    line-height:1.12!important;
+    display:-webkit-box!important;
+    -webkit-box-orient:vertical!important;
+    -webkit-line-clamp:4!important;
+  }
+  #teamsView:not(.hidden) #captainDashboardCard,
+  #teamsView:not(.hidden) > .card:first-child > .card:last-child{
+    display:none!important;
+  }
+  #teamsView:not(.hidden) h2{font-size:18px!important;line-height:1!important}
+  #teamsView:not(.hidden) .status{font-size:9px!important;line-height:1.05!important}
 }
 </style>
 
@@ -1909,7 +2034,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.21</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.23</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2336,7 +2461,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.21 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.23 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -3249,14 +3374,19 @@ function renderTeams(){
  const list=chosen==="all"?teams.map((t,i)=>({t,i})):[{t:teams[Number(chosen)],i:Number(chosen)}].filter(x=>x.t);
  const teamCardsRoot=$("teamCards");
  if(teamCardsRoot){
-  teamCardsRoot.classList.toggle("teams-dense",list.length>6);
-  teamCardsRoot.classList.toggle("teams-super-dense",list.length>10);
+  teamCardsRoot.classList.toggle("teams-dense",chosen==="all"&&list.length>=7);
+  teamCardsRoot.classList.toggle("teams-super-dense",chosen==="all"&&list.length>12);
   teamCardsRoot.dataset.teamCount=String(list.length);
+  teamCardsRoot.dataset.teamMode=(chosen==="all"?"all":"single");
  }
  $("teamCards").innerHTML=list.map(({t,i})=>{
   const roster=Array.isArray(t.roster)?t.roster:[];
-  const captain=t.captain||"Captain not assigned";
-  const players=roster.length?roster.map((n,j)=>`<div style="padding:7px 0;border-top:1px solid var(--line)"><strong>${j+1}.</strong> ${esc(n)}</div>`).join(""):`<div class="note" style="padding-top:9px;border-top:1px solid var(--line)">No golfers assigned yet.</div>`;
+  const captain=t.captain||"Not assigned";
+  if(chosen==="all"){
+   const rosterText=roster.length?roster.map(n=>esc(typeof n==="object"?(n.name||n.player||""):n)).filter(Boolean).join(" • "):"No golfers yet";
+   return `<div class="team-accent" style="--team-accent:${teamAccent(i)};border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff"><div class="row between"><strong><span class="mini-team-dot" style="background:${teamAccent(i)}"></span>${esc(t.name)}</strong><span class="badge">T${i+1}</span></div><div class="status">Capt: ${esc(captain)}</div><div class="compact-roster">${rosterText}</div></div>`;
+  }
+  const players=roster.length?roster.map((n,j)=>`<div style="padding:7px 0;border-top:1px solid var(--line)"><strong>${j+1}.</strong> ${esc(typeof n==="object"?(n.name||n.player||""):n)}</div>`).join(""):`<div class="note" style="padding-top:9px;border-top:1px solid var(--line)">No golfers assigned yet.</div>`;
   return `<div class="team-accent" style="--team-accent:${teamAccent(i)};border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff"><div class="row between"><strong style="font-size:17px"><span class="mini-team-dot" style="background:${teamAccent(i)}"></span>${esc(t.name)}</strong><span class="badge">Team ${i+1}</span></div><div class="status" style="margin:5px 0 10px">Captain: ${esc(captain)}</div>${players}</div>`;
  }).join("");
 }
