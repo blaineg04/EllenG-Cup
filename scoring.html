@@ -2507,7 +2507,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.36</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.37</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2953,7 +2953,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.36 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.37 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -5756,7 +5756,7 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
 </style>
 
 <style id="extras-v2736-original-card-look">
-/* v2.7.36 — restore the original rounded-square card feel for Tournament Extras. */
+/* v2.7.37 — restore the original rounded-square card feel for Tournament Extras. */
 @media(max-width:760px){
   body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) #extrasMenuGrid,
   body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) #extrasMenuGrid{
@@ -5815,6 +5815,56 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
     overflow:hidden!important;
     -webkit-box-orient:vertical!important;
     -webkit-line-clamp:2!important;
+  }
+}
+</style>
+
+<style id="extras-v2737-compact-original-tiles">
+/* v2.7.37 — compact original-style Tournament Extras tiles. Keep the separate screen, but remove oversized vertical cards. */
+@media(max-width:760px){
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) #extrasMenuGrid,
+  body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) #extrasMenuGrid{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:none!important;
+    grid-auto-rows:96px!important;
+    gap:7px!important;
+    align-content:start!important;
+    height:auto!important;
+    max-height:100%!important;
+    overflow:hidden!important;
+    padding:2px!important;
+  }
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) #extrasMenuGrid .extras-menu-tile,
+  body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) #extrasMenuGrid .extras-menu-tile{
+    height:96px!important;
+    min-height:96px!important;
+    max-height:96px!important;
+    padding:6px 5px!important;
+    border:1.5px solid #dfc36b!important;
+    border-radius:14px!important;
+    background:linear-gradient(180deg,#fffdf8 0%,#faf7ee 100%)!important;
+    box-shadow:0 2px 5px rgba(18,52,72,.09)!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:center!important;
+    text-align:center!important;
+    gap:3px!important;
+    overflow:hidden!important;
+  }
+  body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) #extrasMenuGrid .extras-menu-icon{
+    font-size:20px!important;line-height:1!important;margin:0!important;
+  }
+  body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) #extrasMenuGrid strong{
+    font-size:10px!important;line-height:1.05!important;font-weight:900!important;
+    white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
+  }
+  body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) #extrasMenuGrid small{
+    display:-webkit-box!important;
+    font-size:7.5px!important;line-height:1.08!important;color:#667984!important;
+    white-space:normal!important;overflow:hidden!important;
+    -webkit-box-orient:vertical!important;-webkit-line-clamp:2!important;
   }
 }
 </style>
