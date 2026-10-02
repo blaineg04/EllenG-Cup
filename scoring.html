@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.39">
+<meta name="elleng-app-version" content="2.7.40">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -2507,7 +2507,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.39</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.40</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2953,7 +2953,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.39 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.40 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -5234,79 +5234,26 @@ document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>show
 document.querySelectorAll("[data-home-go]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.homeGo)));
 function initTournamentExtrasScreen(){
  const dest=$("tournamentExtrasContent"),menu=$("extrasMenuGrid"),view=$("extrasView");if(!dest||!menu||!view)return;
- const items=[
-  ["teamMomentumCard","TEAM MOMENTUM","Who’s Heating Up","See which teams are heating up","teamMomentumMeter"],
-  ["featuredMatchupCard","MATCHUPS","Closest Battle","Compare teams hole by hole","featuredMatchup"],
-  ["playerSpotlightCard","PLAYER SPOTLIGHT","Who’s Making Noise","See who is playing best right now","playerSpotlight"],
-  ["whatChangedCard","LIVE FEED","What Changed?","Follow lead changes and big moments","whatChangedFeed"],
-  ["onTheClockCard","ON THE CLOCK","Next Big Moment","See upcoming pressure moments","onTheClock"],
-  ["paceTrackerCard","PACE OF PLAY","Group Tracker","See how quickly teams are moving","paceTracker"],
-  ["leadChangeAlert","LEAD CHANGES","Tournament Lead","Track when the tournament lead changes","leadChangeMain"],
-  ["momentumCard","MOMENTUM METER","Recent Form","See recent team performance trends","momentumTracker"],
-  ["tournamentPulseCard","TOURNAMENT PULSE","Live Tournament State","View the overall live state of the tournament","tournamentPulse"],
-  ["postRoundRecapCard","TOURNAMENT RECAP","Round Story","Review the biggest moments after the round","postRoundRecap"],
-  ["awardsCard","AWARDS","EllenG Awards","See MVPs and tournament honors","tournamentAwards"]
- ];
- const cleanText=(el,fallback)=>{
-   let t=(el?.innerText||el?.textContent||"").replace(/\s+/g," ").trim();
-   if(!t||t==="—")t=fallback||"Waiting for tournament data";
-   if(t.length>105)t=t.slice(0,102).trim()+"…";
-   return t;
- };
- const refreshExtrasDashboard=()=>{
-   menu.querySelectorAll("[data-extras-summary]").forEach(out=>{
-     const sourceId=out.dataset.extrasSummary;
-     const fallback=out.dataset.fallback||"Waiting for tournament data";
-     let el=$(sourceId);
-     let text=cleanText(el,fallback);
-     if(sourceId==="leadChangeMain"){
-       const sub=cleanText($("leadChangeSub"),"");
-       if(sub&&sub!==text)text=(text+" "+sub).trim();
-     }
-     if(sourceId==="tournamentPulse" && (!el || !el.textContent.trim())) text=cleanText($("holeMatchup"),fallback);
-     if(sourceId==="postRoundRecap" && (!el || !el.textContent.trim())) text=cleanText($("recapSub"),fallback);
-     out.textContent=text;
-   });
- };
- items.forEach(([id,kicker,title,sub,sourceId])=>{
-   const el=$(id);if(el)dest.appendChild(el);
-   const b=document.createElement("button");
-   b.type="button";b.className="extras-data-card";b.dataset.extrasCard=id;
-   b.innerHTML=`<span class="extras-data-kicker">${kicker}</span><span class="extras-data-title">${title}</span><span class="extras-data-summary" data-extras-summary="${sourceId}" data-fallback="${sub}">${sub}</span>`;
-   menu.appendChild(b);
- });
- function resetExtrasDetail(){
+ const ids=["teamMomentumCard","featuredMatchupCard","playerSpotlightCard","whatChangedCard","onTheClockCard","paceTrackerCard","leadChangeAlert","momentumCard","tournamentPulseCard","postRoundRecapCard","awardsCard"];
+ ids.forEach(id=>{const el=$(id);if(el)dest.appendChild(el)});
+ menu.innerHTML="";
+ menu.style.setProperty("display","none","important");
+ const scroll=view.querySelector(".extras-scroll");
+ function showExtrasDashboard(){
    view.classList.remove("extras-detail-open");
-   menu.style.setProperty("display","grid","important");
-   const scroll=view.querySelector(".extras-scroll");
-   if(scroll)scroll.style.setProperty("display","none","important");
+   menu.style.setProperty("display","none","important");
+   if(scroll){scroll.style.setProperty("display","block","important");scroll.style.setProperty("overflow-y","auto","important");scroll.style.setProperty("overflow-x","hidden","important")}
    [...dest.children].forEach(card=>{
      card.classList.remove("extras-active-card");
-     card.style.removeProperty("display");
+     card.style.setProperty("display","block","important");
      card.style.removeProperty("height");
      card.style.removeProperty("max-height");
      card.style.removeProperty("overflow");
    });
-   requestAnimationFrame(refreshExtrasDashboard);
  }
- function openExtrasDetail(id){
-   const card=$(id);if(!card)return;
-   view.classList.add("extras-detail-open");
-   menu.style.setProperty("display","none","important");
-   const scroll=view.querySelector(".extras-scroll");
-   if(scroll){scroll.style.setProperty("display","block","important");scroll.style.setProperty("overflow","hidden","important")}
-   [...dest.children].forEach(el=>{
-     const active=el===card;el.classList.toggle("extras-active-card",active);
-     el.style.setProperty("display",active?"block":"none","important");
-     if(active){el.style.setProperty("height","100%","important");el.style.setProperty("max-height","100%","important");el.style.setProperty("overflow","hidden","important")}
-   });
- }
- menu.addEventListener("click",e=>{const b=e.target.closest("[data-extras-card]");if(!b)return;openExtrasDetail(b.dataset.extrasCard)});
- const observer=new MutationObserver(()=>{if(!view.classList.contains("extras-detail-open"))refreshExtrasDashboard()});
- observer.observe(dest,{subtree:true,childList:true,characterData:true,attributes:true});
- view._resetExtrasDetail=resetExtrasDetail;
- view._refreshExtrasDashboard=refreshExtrasDashboard;
- refreshExtrasDashboard();
+ view._resetExtrasDetail=showExtrasDashboard;
+ view._refreshExtrasDashboard=showExtrasDashboard;
+ showExtrasDashboard();
 }
 initTournamentExtrasScreen();
 if($("playerExtrasToggle"))$("playerExtrasToggle").addEventListener("click",()=>{const v=$("extrasView");if(v?._resetExtrasDetail)v._resetExtrasDetail();showView("extras")});
@@ -6151,5 +6098,97 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
     font-size:7.5px!important;line-height:1.08!important;font-weight:700!important;color:#687a86!important;text-align:left!important
   }
   body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) .extras-scroll{display:none!important}
+}
+
+/* v2.7.40 — Tournament Extras is the original live-data dashboard: no icon/tile menu. */
+@media (max-width: 900px){
+  body:not(.login-mode).extras-screen-active #extrasView:not(.hidden){
+    overflow:hidden!important;
+  }
+  body:not(.login-mode).extras-screen-active #extrasView .extras-shell{
+    height:100%!important;min-height:0!important;overflow:hidden!important;
+    display:flex!important;flex-direction:column!important;gap:6px!important;
+  }
+  body:not(.login-mode).extras-screen-active #extrasView .extras-header{
+    flex:0 0 46px!important;min-height:46px!important;height:46px!important;
+    padding:6px 9px!important;margin:0!important;border-radius:13px!important;
+  }
+  body:not(.login-mode).extras-screen-active #extrasView .extras-header .premium-label,
+  body:not(.login-mode).extras-screen-active #extrasView .extras-header .status{display:none!important}
+  body:not(.login-mode).extras-screen-active #extrasView .extras-header h2{font-size:17px!important;line-height:1!important;margin:0!important}
+  body:not(.login-mode).extras-screen-active #extrasView #extrasMenuGrid{display:none!important}
+  body:not(.login-mode).extras-screen-active #extrasView #extrasBackButton{display:none!important}
+  body:not(.login-mode).extras-screen-active #extrasView #closeTournamentExtras{
+    display:inline-flex!important;height:30px!important;min-height:30px!important;padding:3px 9px!important;font-size:10px!important;border-radius:10px!important;
+  }
+  body:not(.login-mode).extras-screen-active #extrasView .extras-scroll{
+    display:block!important;flex:1 1 auto!important;min-height:0!important;
+    overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;
+    padding:0 1px 8px!important;scrollbar-width:none!important;
+  }
+  body:not(.login-mode).extras-screen-active #extrasView .extras-scroll::-webkit-scrollbar{display:none!important}
+  body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent{
+    display:flex!important;flex-direction:column!important;gap:6px!important;
+    height:auto!important;min-height:0!important;overflow:visible!important;padding:0!important;margin:0!important;
+  }
+  body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent > *{
+    display:block!important;position:relative!important;inset:auto!important;
+    width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;
+    margin:0!important;overflow:hidden!important;
+  }
+  body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent > .card,
+  body:not(.login-mode).extras-screen-active #extrasView #leadChangeAlert{
+    padding:8px 10px!important;border-radius:13px!important;
+  }
+  body:not(.login-mode).extras-screen-active #extrasView .premium-label{font-size:7.5px!important;line-height:1!important;letter-spacing:.12em!important}
+  body:not(.login-mode).extras-screen-active #extrasView h2{font-size:16px!important;line-height:1.02!important;margin:2px 0 0!important}
+  body:not(.login-mode).extras-screen-active #extrasView .status,
+  body:not(.login-mode).extras-screen-active #extrasView .note{font-size:8.5px!important;line-height:1.12!important}
+  body:not(.login-mode).extras-screen-active #extrasView .badge{font-size:7.5px!important;padding:3px 7px!important;white-space:nowrap!important}
+
+  /* Match the original dashboard proportions shown in the reference screenshot. */
+  body:not(.login-mode).extras-screen-active #extrasView #teamMomentumCard{padding:9px 10px!important}
+  body:not(.login-mode).extras-screen-active #extrasView #teamMomentumMeter{margin-top:5px!important}
+  body:not(.login-mode).extras-screen-active #extrasView #teamMomentumCard .momentum-row{min-height:0!important;margin:0!important;padding:2px 0!important;gap:5px!important}
+  body:not(.login-mode).extras-screen-active #extrasView #teamMomentumCard .momentum-row strong{font-size:9px!important}
+  body:not(.login-mode).extras-screen-active #extrasView #teamMomentumCard .momentum-row .status{font-size:7.5px!important}
+  body:not(.login-mode).extras-screen-active #extrasView #teamMomentumCard .momentum-track{height:8px!important}
+
+  body:not(.login-mode).extras-screen-active #extrasView #featuredMatchupCard,
+  body:not(.login-mode).extras-screen-active #extrasView #playerSpotlightCard,
+  body:not(.login-mode).extras-screen-active #extrasView #onTheClockCard,
+  body:not(.login-mode).extras-screen-active #extrasView #paceTrackerCard{
+    display:block!important;
+  }
+  body:not(.login-mode).extras-screen-active #extrasView .wow-body{margin-top:4px!important;padding:0!important;border:0!important;background:transparent!important;min-height:0!important}
+  body:not(.login-mode).extras-screen-active #extrasView .wow-main{font-size:10px!important;line-height:1.05!important}
+  body:not(.login-mode).extras-screen-active #extrasView .wow-sub{font-size:8px!important;line-height:1.08!important}
+  body:not(.login-mode).extras-screen-active #extrasView #whatChangedFeed,
+  body:not(.login-mode).extras-screen-active #extrasView #paceTracker,
+  body:not(.login-mode).extras-screen-active #extrasView #momentumTracker,
+  body:not(.login-mode).extras-screen-active #extrasView #tournamentPulse,
+  body:not(.login-mode).extras-screen-active #extrasView #postRoundRecap,
+  body:not(.login-mode).extras-screen-active #extrasView #tournamentAwards{margin-top:4px!important}
+
+  body:not(.login-mode).extras-screen-active #extrasView #leadChangeAlert{background:linear-gradient(180deg,#fffefa,#fbf7ea)!important;color:var(--navy)!important;border:1px solid #e3d49d!important}
+  body:not(.login-mode).extras-screen-active #extrasView #leadChangeAlert .lead-title{font-size:7px!important;color:#9a7307!important}
+  body:not(.login-mode).extras-screen-active #extrasView #leadChangeAlert .lead-main{font-size:14px!important;color:var(--navy)!important}
+  body:not(.login-mode).extras-screen-active #extrasView #leadChangeAlert .lead-sub{font-size:8px!important;color:#687a86!important}
+
+  /* Tournament Pulse stays readable without giant team cards. */
+  body:not(.login-mode).extras-screen-active #extrasView #tournamentPulseCard > .card{margin-top:5px!important;padding:7px!important;border-radius:11px!important}
+  body:not(.login-mode).extras-screen-active #extrasView #tournamentPulseCard > .card .row{gap:6px!important;align-items:center!important}
+  body:not(.login-mode).extras-screen-active #extrasView #tournamentPulseCard > .card .status{display:none!important}
+  body:not(.login-mode).extras-screen-active #extrasView #matchupHoleSelect{height:26px!important;min-height:26px!important;font-size:9px!important;padding:2px 20px 2px 5px!important}
+  body:not(.login-mode).extras-screen-active #extrasView #holeMatchup{
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;margin-top:5px!important;
+  }
+  body:not(.login-mode).extras-screen-active #extrasView #holeMatchup .matchup-row{
+    min-height:0!important;margin:0!important;padding:4px 5px!important;border-radius:8px!important;
+  }
+  body:not(.login-mode).extras-screen-active #extrasView #holeMatchup .teamname{font-size:8.5px!important}
+  body:not(.login-mode).extras-screen-active #extrasView #holeMatchup .muted{font-size:7px!important}
+  body:not(.login-mode).extras-screen-active #extrasView #holeMatchup strong{font-size:8.5px!important}
+  body:not(.login-mode).extras-screen-active #extrasView #postRoundRecapCard #winnerGraphicPreview{display:none!important}
 }
 </style>
