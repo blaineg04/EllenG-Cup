@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.55">
+<meta name="elleng-app-version" content="2.7.56">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -2757,6 +2757,17 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   }
 }
 </style>
+
+<style id="v2756-trash-talk-icon-only">
+/* v2.7.56 — TRASH TALK ICON ONLY. No other page/layout selectors changed. */
+.more-menu-btn[data-more-view="trash"] .trash-talk-menu-icon{
+  width:42px;height:42px;display:flex;align-items:center;justify-content:center;
+  flex:0 0 42px;overflow:hidden;border-radius:10px;background:#fff;
+}
+.more-menu-btn[data-more-view="trash"] .trash-talk-menu-icon img{
+  width:42px;height:42px;display:block;object-fit:cover;border-radius:10px;
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -3402,7 +3413,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
     <div class="more-menu-grid">
             <button class="more-menu-btn" type="button" data-more-view="progress"><span>✅</span>Hole Progress</button>
       <button class="more-menu-btn" type="button" data-more-view="clubhouse"><span>🏛️</span>Clubhouse</button>
-      <button class="more-menu-btn" type="button" data-more-view="trash"><span>💬</span>Trash Talk</button>
+      <button class="more-menu-btn" type="button" data-more-view="trash"><span class="trash-talk-menu-icon"><img src="trash-talk-icon.png" alt="" aria-hidden="true"></span>Trash Talk</button>
       <button id="openBroadcast" class="more-menu-btn" type="button"><span>📺</span>Broadcast</button>
       <button id="moreScoringBtn" class="more-menu-btn hidden" type="button" data-more-view="scoring"><span>✏️</span>Enter Scores</button>
       <button id="moreAdminBtn" class="more-menu-btn admin-link hidden" type="button" data-more-view="admin"><span>⚙️</span>Commissioner</button>
