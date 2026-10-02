@@ -1206,6 +1206,27 @@ button.danger,.danger{
 
 /* v2.7.5 hard auth guard */
 body.login-mode #mobileBottomNav{display:none!important}
+
+/* v2.7.26 — Tournament Extras is a dedicated app screen, not a dropdown */
+#extrasView{min-height:0!important;height:100%!important;overflow:hidden!important}
+#extrasView .extras-shell{height:100%;min-height:0;display:flex;flex-direction:column;gap:10px}
+#extrasView .extras-header{flex:0 0 auto;padding:12px 14px!important}
+#extrasView .extras-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#extrasView .extras-title-row h2{margin:0}
+#extrasView .extras-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 2px 10px}
+#extrasView .extras-grid{display:grid;grid-template-columns:1fr;gap:10px}
+#extrasView #teamMomentumCard,#extrasView #featuredMatchupCard,#extrasView #playerSpotlightCard,#extrasView #whatChangedCard,#extrasView #onTheClockCard,#extrasView #paceTrackerCard,#extrasView #leadChangeAlert,#extrasView #momentumCard,#extrasView #tournamentPulseCard,#extrasView #postRoundRecapCard,#extrasView #awardsCard{display:block!important}
+#extrasView .card{margin:0!important}
+body.player-simple-home #homeView{overflow:hidden!important}
+body.player-simple-home.player-extras-open #homeView{overflow:hidden!important}
+@media(max-width:760px){
+  #extrasView .extras-header{padding:9px 11px!important}
+  #extrasView .extras-title-row h2{font-size:22px!important}
+  #extrasView .extras-header .status{font-size:12px!important}
+  #extrasView .extras-scroll{padding-bottom:8px}
+  #extrasView .extras-grid{gap:8px}
+}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -2064,7 +2085,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </style>
 
 <style>
-/* v2.7.25 — hard My Score no-scroll layout. Teams and Players intentionally untouched. */
+/* v2.7.26 — hard My Score no-scroll layout. Teams and Players intentionally untouched. */
 @media (max-width:650px){
   body:not(.login-mode) #leaderboardView:not(.hidden){
     display:flex!important;
@@ -2216,7 +2237,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.25</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.26</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2370,6 +2391,24 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div class="row between"><div><div class="premium-label">TOURNAMENT AWARDS</div><h2 style="margin:3px 0 0">EllenG Awards</h2><div class="status">Updates automatically as the round develops.</div></div><span id="awardsStatus" class="badge">LIVE</span></div>
   <div id="tournamentAwards" class="awards-grid"></div>
 </div>
+</section>
+
+<section id="extrasView" class="view hidden">
+  <div class="extras-shell">
+    <div class="card extras-header">
+      <div class="extras-title-row">
+        <div>
+          <div class="premium-label">ELLENG CUP</div>
+          <h2>Tournament Extras</h2>
+          <div class="status">Matchups, momentum, live feed, awards and tournament recap.</div>
+        </div>
+        <button id="closeTournamentExtras" class="secondary" type="button">← Home</button>
+      </div>
+    </div>
+    <div class="extras-scroll">
+      <div id="tournamentExtrasContent" class="extras-grid"></div>
+    </div>
+  </div>
 </section>
 
 <section id="leaderboardView" class="view hidden">
@@ -2643,7 +2682,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.25 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.26 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -4512,9 +4551,9 @@ function checkBigMoments(){
 function applyPlayerSimplicity(){
  const simple=!!user&&!isCommissioner;
  document.body.classList.toggle("player-simple-home",simple);
- if(!simple)document.body.classList.remove("player-extras-open");
+ document.body.classList.remove("player-extras-open");
  const btn=$("playerExtrasToggle");
- if(btn)btn.textContent=document.body.classList.contains("player-extras-open")?"− Hide Tournament Extras":"＋ Show Tournament Extras";
+ if(btn)btn.textContent="＋ Tournament Extras";
 }
 function renderHome(){
  if(!draftState||!tournament)return;
@@ -4876,8 +4915,9 @@ function showView(name){
  if(name==="scoring"&&!(isCommissioner||captainTeam!=null))name="handicap";
  if(name==="admin"&&!isCommissioner)name=user?"handicap":"home";
  const target=$(name+"View");if(!target)return;
- document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.view===name));
- document.querySelectorAll(".mobile-nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.mobileView===name));
+ const navName=name==="extras"?"home":name;
+ document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.view===navName));
+ document.querySelectorAll(".mobile-nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.mobileView===navName));
  document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));
  target.classList.remove("hidden");
  if(name==="trash")loadTrashTalk().then(renderTrashTalk).catch(e=>console.warn("Trash Talk refresh skipped",e));
@@ -4918,7 +4958,13 @@ if($("digitalScorecardTeam"))$("digitalScorecardTeam").addEventListener("change"
 $("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;document.body.classList.add("login-mode");setMobileNavVisible(false);$("passwordChangeCard").classList.add("hidden");showView("home");await enterViewer()});
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
 document.querySelectorAll("[data-home-go]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.homeGo)));
-if($("playerExtrasToggle"))$("playerExtrasToggle").addEventListener("click",()=>{document.body.classList.toggle("player-extras-open");applyPlayerSimplicity();});
+function initTournamentExtrasScreen(){
+ const dest=$("tournamentExtrasContent");if(!dest)return;
+ ["teamMomentumCard","featuredMatchupCard","playerSpotlightCard","whatChangedCard","onTheClockCard","paceTrackerCard","leadChangeAlert","momentumCard","tournamentPulseCard","postRoundRecapCard","awardsCard"].forEach(id=>{const el=$(id);if(el)dest.appendChild(el)});
+}
+initTournamentExtrasScreen();
+if($("playerExtrasToggle"))$("playerExtrasToggle").addEventListener("click",()=>showView("extras"));
+if($("closeTournamentExtras"))$("closeTournamentExtras").addEventListener("click",()=>showView("home"));
 document.querySelectorAll("[data-mobile-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.mobileView)));
 const moreBackdrop=$("moreMenuBackdrop"), moreBtn=$("mobileMoreBtn");
 function closeMoreMenu(){if(moreBackdrop){moreBackdrop.classList.remove("open");moreBackdrop.setAttribute("aria-hidden","true")}}
