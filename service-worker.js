@@ -1,8 +1,8 @@
-const CACHE="elleng-cup-v2.7.42";
+const CACHE="elleng-cup-v2.7.43";
 const STATIC=[
-  "./config.js?v=2.7.42",
-  "./common.js?v=2.7.42",
-  "./manifest.webmanifest?v=2.7.42",
+  "./config.js?v=2.7.43",
+  "./common.js?v=2.7.43",
+  "./manifest.webmanifest?v=2.7.43",
   "./app-icon-180.png",
   "./app-icon-192.png",
   "./app-icon-512.png",

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.42">
+<meta name="elleng-app-version" content="2.7.43">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1469,7 +1469,7 @@ body.player-simple-home:not(.player-extras-open) #playerSpotlightCard,
 body.player-simple-home:not(.player-extras-open) #whatChangedCard,
 body.player-simple-home:not(.player-extras-open) #onTheClockCard,
 body.player-simple-home:not(.player-extras-open) #paceTrackerCard{display:none!important}
-body.player-simple-home #openBroadcast{display:none!important}
+body.player-simple-home #openBroadcast{display:flex!important}
 body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 @media(max-width:650px){
  .player-essentials-grid{grid-template-columns:1fr 1fr}
@@ -2600,7 +2600,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.42</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.43</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -3046,7 +3046,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.42 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.43 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -3186,6 +3186,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
             <button class="more-menu-btn" type="button" data-more-view="progress"><span>✅</span>Hole Progress</button>
       <button class="more-menu-btn" type="button" data-more-view="clubhouse"><span>🏛️</span>Clubhouse</button>
       <button class="more-menu-btn" type="button" data-more-view="trash"><span>💬</span>Trash Talk</button>
+      <button id="openBroadcast" class="more-menu-btn" type="button"><span>📺</span>Broadcast</button>
       <button id="moreScoringBtn" class="more-menu-btn hidden" type="button" data-more-view="scoring"><span>✏️</span>Enter Scores</button>
       <button id="moreAdminBtn" class="more-menu-btn admin-link hidden" type="button" data-more-view="admin"><span>⚙️</span>Commissioner</button>
     </div>
@@ -5406,7 +5407,7 @@ document.querySelectorAll(".global-main-menu-btn").forEach(a=>a.addEventListener
 
 window.addEventListener("online",()=>{renderOfflineState();flushOfflineScores()});
 window.addEventListener("offline",renderOfflineState);
-if("serviceWorker" in navigator){window.addEventListener("load",async()=>{try{const reg=await navigator.serviceWorker.register("./service-worker.js?v=2.7.42",{scope:"./",updateViaCache:"none"});await reg.update().catch(()=>{});if(reg.waiting){reg.waiting.postMessage({type:"SKIP_WAITING"})}}catch(e){console.warn("Service worker registration skipped",e)}})}
+if("serviceWorker" in navigator){window.addEventListener("load",async()=>{try{const reg=await navigator.serviceWorker.register("./service-worker.js?v=2.7.43",{scope:"./",updateViaCache:"none"});await reg.update().catch(()=>{});if(reg.waiting){reg.waiting.postMessage({type:"SKIP_WAITING"})}}catch(e){console.warn("Service worker registration skipped",e)}})}
 
 
 $("selfGolferSelect").addEventListener("change",renderSelfHandicap);
@@ -5619,7 +5620,7 @@ $("savePlayers").addEventListener("click",async()=>{
  }catch(e){setSyncStatus("error","Save failed");if(msg)msg.textContent=e?.message||"Unable to save player changes."}
  finally{if(btn)btn.disabled=false}
 });
-const openBroadcastBtn=$("openBroadcast");if(openBroadcastBtn)openBroadcastBtn.addEventListener("click",openBroadcastMode);
+const openBroadcastBtn=$("openBroadcast");if(openBroadcastBtn)openBroadcastBtn.addEventListener("click",()=>{closeMoreMenu();openBroadcastMode()});
 const closeBroadcastBtn=$("closeBroadcast");if(closeBroadcastBtn)closeBroadcastBtn.addEventListener("click",closeBroadcastMode);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("broadcastOverlay")?.classList.contains("open"))closeBroadcastMode()});
 const winnerBtn=$("generateWinnerGraphic");if(winnerBtn)winnerBtn.addEventListener("click",createWinnerGraphic);
