@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.48">
+<meta name="elleng-app-version" content="2.7.52">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -2722,6 +2722,24 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   }
 }
 </style>
+
+<style id="v2752-broadcast-gator-header">
+/* v2.7.52 — BROADCAST ONLY: add EllenG gator mark to the broadcast header. */
+.broadcast-overlay .broadcast-brand-lockup{display:flex;align-items:center;gap:10px;min-width:0}
+.broadcast-overlay .broadcast-gator-logo{width:60px;height:60px;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 3px 6px rgba(0,0,0,.28))}
+.broadcast-overlay .broadcast-brand-copy{min-width:0}
+@media (max-width:800px){
+  .broadcast-overlay .broadcast-brand-lockup{gap:7px}
+  .broadcast-overlay .broadcast-gator-logo{width:48px;height:48px}
+  .broadcast-overlay .broadcast-brand{font-size:25px!important}
+  .broadcast-overlay .broadcast-sub{font-size:8.5px!important;white-space:nowrap}
+}
+@media (max-width:360px){
+  .broadcast-overlay .broadcast-gator-logo{width:42px;height:42px}
+  .broadcast-overlay .broadcast-brand{font-size:22px!important}
+  .broadcast-overlay .broadcast-sub{font-size:7.5px!important}
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -2782,7 +2800,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.49</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.52</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -3381,7 +3399,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <script src="config.js"></script>
 <div id="broadcastOverlay" class="broadcast-overlay" aria-hidden="true">
   <div class="broadcast-shell">
-    <div class="broadcast-top"><div><div class="broadcast-brand">EllenG Cup</div><div class="broadcast-sub">Live Tournament Broadcast</div></div><button type="button" id="closeBroadcast" class="broadcast-close">← Menu</button></div>
+    <div class="broadcast-top"><div class="broadcast-brand-lockup"><img src="gator.png" alt="EllenG Cup gator logo" class="broadcast-gator-logo"><div class="broadcast-brand-copy"><div class="broadcast-brand">EllenG Cup</div><div class="broadcast-sub">Live Tournament Broadcast</div></div></div><button type="button" id="closeBroadcast" class="broadcast-close">← Menu</button></div>
     <div id="broadcastTicker" class="broadcast-ticker">Waiting for tournament action…</div>
     <div class="broadcast-grid">
       <div class="broadcast-panel"><h2>Live Standings</h2><div id="broadcastStandings" class="broadcast-rows"></div></div>
