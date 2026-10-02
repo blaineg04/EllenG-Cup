@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.53">
+<meta name="elleng-app-version" content="2.7.54">
 <meta name="elleng-build-date" content="Oct 1, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -2740,6 +2740,22 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   .broadcast-overlay .broadcast-sub{font-size:7.5px!important}
 }
 .broadcast-overlay .broadcast-gator-logo{display:block!important;background-repeat:no-repeat!important;background-position:center!important;background-size:contain!important}
+</style>
+
+<style id="v2754-leaderboard-bottom-fit">
+/* v2.7.54 — LEADERBOARD ONLY: keep the bottom row and card border fully inside the phone viewport. */
+@media (max-width:650px){
+  body:not(.login-mode) #leaderboardView:not(.hidden) #myScoreLeaderboardCard{
+    margin:0 0 8px!important;
+  }
+  body:not(.login-mode) #leaderboardView:not(.hidden) #myScoreLeaderboardCard #leaderboard{
+    gap:4px!important;
+    margin-top:4px!important;
+  }
+  body:not(.login-mode) #leaderboardView:not(.hidden) #myScoreLeaderboardCard .leader-row{
+    padding:3px 5px!important;
+  }
+}
 </style>
 </head>
 <body class="login-mode">
