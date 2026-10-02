@@ -2507,7 +2507,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.34</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.35</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2953,7 +2953,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.34 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.35 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -5235,17 +5235,17 @@ document.querySelectorAll("[data-home-go]").forEach(b=>b.addEventListener("click
 function initTournamentExtrasScreen(){
  const dest=$("tournamentExtrasContent"),menu=$("extrasMenuGrid"),view=$("extrasView");if(!dest||!menu||!view)return;
  const items=[
-  ["teamMomentumCard","📈","Team Momentum","See who's heating up"],
+  ["teamMomentumCard","📈","Team Momentum","See which teams are heating up"],
   ["featuredMatchupCard","⚔️","Matchups","Compare teams hole by hole"],
-  ["playerSpotlightCard","⭐","Player Spotlight","Featured player"],
-  ["whatChangedCard","🔔","Live Feed","Recent tournament changes"],
-  ["onTheClockCard","⏱️","On the Clock","Current action"],
-  ["paceTrackerCard","🏃","Pace Tracker","Round progress"],
-  ["leadChangeAlert","🚨","Lead Changes","Leaderboard movement"],
-  ["momentumCard","🔥","Momentum","Hot teams and trends"],
-  ["tournamentPulseCard","📡","Tournament Pulse","Live tournament snapshot"],
-  ["postRoundRecapCard","📖","Tournament Recap","Round story and winner"],
-  ["awardsCard","🏆","Awards","EllenG awards"]
+  ["playerSpotlightCard","⭐","Player Spotlight","See who is playing best right now"],
+  ["whatChangedCard","🔔","Live Feed","Follow lead changes and big moments"],
+  ["onTheClockCard","⏱️","On the Clock","See upcoming pressure moments"],
+  ["paceTrackerCard","🏃","Pace Tracker","See how quickly teams are moving"],
+  ["leadChangeAlert","🚨","Lead Changes","Track when the tournament lead changes"],
+  ["momentumCard","🔥","Momentum Meter","See recent team performance trends"],
+  ["tournamentPulseCard","📡","Tournament Pulse","View the overall live state of the tournament"],
+  ["postRoundRecapCard","📖","Tournament Recap","Review the biggest moments after the round"],
+  ["awardsCard","🏆","Awards","See MVPs and tournament honors"]
  ];
  items.forEach(([id,icon,title,sub])=>{const el=$(id);if(el)dest.appendChild(el);const b=document.createElement("button");b.type="button";b.className="extras-menu-tile";b.dataset.extrasCard=id;b.innerHTML=`<span class="extras-menu-icon">${icon}</span><strong>${title}</strong><small>${sub}</small>`;menu.appendChild(b)});
  function resetExtrasDetail(){
@@ -5630,6 +5630,43 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
     <div id="bigMomentSub" class="big-moment-sub"></div>
   </div>
 </div>
+
+<style id="extras-v2735-labels">
+/* v2.7.35 — make Tournament Extras self-explanatory without adding page scroll */
+@media(max-width:760px){
+  body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) #extrasMenuGrid .extras-menu-tile,
+  body:not(.login-mode).extras-screen-active #extrasView:not(.extras-detail-open) #extrasMenuGrid .extras-menu-tile{
+    justify-content:center!important;
+    align-items:flex-start!important;
+    gap:3px!important;
+    padding:6px!important;
+  }
+  body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) #extrasMenuGrid .extras-menu-icon{
+    font-size:18px!important;
+  }
+  body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) #extrasMenuGrid strong{
+    display:block!important;
+    width:100%!important;
+    font-size:11px!important;
+    line-height:1.05!important;
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+  }
+  body:not(.login-mode) #extrasView:not(.hidden):not(.extras-detail-open) #extrasMenuGrid small{
+    display:-webkit-box!important;
+    width:100%!important;
+    font-size:8px!important;
+    line-height:1.12!important;
+    color:#60727e!important;
+    white-space:normal!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    -webkit-box-orient:vertical!important;
+    -webkit-line-clamp:2!important;
+  }
+}
+</style>
 </body>
 </html>
 
