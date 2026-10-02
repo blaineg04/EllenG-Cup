@@ -2062,6 +2062,100 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   #leaderboardView:not(.hidden) > .card:nth-of-type(n+4){display:none!important}
 }
 </style>
+
+<style>
+/* v2.7.25 — hard My Score no-scroll layout. Teams and Players intentionally untouched. */
+@media (max-width:650px){
+  body:not(.login-mode) #leaderboardView:not(.hidden){
+    display:flex!important;
+    flex-direction:column!important;
+    gap:6px!important;
+    height:100%!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    padding:0!important;
+  }
+  body:not(.login-mode) #leaderboardView:not(.hidden) > .card:first-of-type,
+  body:not(.login-mode) #leaderboardView:not(.hidden) > #myProfilePhotoCard{display:none!important}
+
+  body:not(.login-mode) #myScoreEntryCard{
+    display:flex!important;
+    flex:0 0 218px!important;
+    height:218px!important;
+    min-height:218px!important;
+    max-height:218px!important;
+    flex-direction:column!important;
+    overflow:hidden!important;
+    padding:7px 9px!important;
+    margin:0!important;
+    border-radius:14px!important;
+  }
+  body:not(.login-mode) #myScoreEntryCard > .row:first-child{margin:0!important;align-items:center!important}
+  body:not(.login-mode) #myScoreEntryCard h2{font-size:17px!important;line-height:1!important}
+  body:not(.login-mode) #myScoreEntryCard > .row:first-child .status{display:none!important}
+  body:not(.login-mode) #myScoreEntryCard .badge{font-size:8px!important;padding:3px 6px!important;white-space:nowrap!important}
+  body:not(.login-mode) #selfScoreContext{
+    flex:0 0 30px!important;max-height:30px!important;overflow:hidden!important;
+    margin:5px 0 0!important;padding:5px 7px!important;font-size:8px!important;line-height:1.05!important;
+    display:-webkit-box!important;-webkit-box-orient:vertical!important;-webkit-line-clamp:2!important;
+  }
+  body:not(.login-mode) #myScoreEntryCard .admin-grid{
+    display:grid!important;grid-template-columns:1fr .7fr .9fr!important;gap:5px!important;margin:5px 0 0!important;
+  }
+  body:not(.login-mode) #myScoreEntryCard label small{font-size:8px!important;line-height:1!important;margin-bottom:2px!important}
+  body:not(.login-mode) #myScoreEntryCard select,
+  body:not(.login-mode) #myScoreEntryCard input{height:29px!important;min-height:29px!important;padding:2px 5px!important;font-size:11px!important;border-radius:9px!important}
+  body:not(.login-mode) #myScoreEntryCard .self-score-summary{margin:5px 0 0!important}
+  body:not(.login-mode) #myScoreEntryCard .self-score-box{
+    min-height:46px!important;height:46px!important;padding:4px 7px!important;display:grid!important;grid-template-columns:1fr auto 1fr!important;align-items:center!important;gap:6px!important;
+  }
+  body:not(.login-mode) #myScoreEntryCard .self-score-box small{font-size:8px!important;margin:0!important}
+  body:not(.login-mode) #myScoreEntryCard .self-score-box strong{font-size:20px!important;line-height:1!important;margin:0!important}
+  body:not(.login-mode) #myScoreEntryCard .self-score-box .term{font-size:9px!important;line-height:1!important;text-align:right!important;margin:0!important}
+  body:not(.login-mode) #myScoreEntryCard > .note:not(#selfScoreContext),
+  body:not(.login-mode) #selfScoreMsg{display:none!important}
+  body:not(.login-mode) #myScoreEntryCard > .row:last-of-type{
+    margin:5px 0 0!important;gap:5px!important;display:grid!important;grid-template-columns:1fr 1fr!important;
+  }
+  body:not(.login-mode) #myScoreEntryCard button{height:29px!important;min-height:29px!important;padding:3px 6px!important;font-size:9px!important;border-radius:9px!important}
+
+  body:not(.login-mode) #myScoreLeaderboardCard{
+    display:flex!important;flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;
+    flex-direction:column!important;padding:7px 9px!important;margin:0!important;border-radius:14px!important;
+  }
+  body:not(.login-mode) #myScoreLeaderboardCard > .row:first-child{margin:0!important;align-items:center!important}
+  body:not(.login-mode) #myScoreLeaderboardCard h2{font-size:16px!important;line-height:1!important}
+  body:not(.login-mode) #myScoreLeaderboardCard .status{display:none!important}
+  body:not(.login-mode) #myScoreLeaderboardCard .badge{font-size:8px!important;padding:3px 6px!important}
+  body:not(.login-mode) #myScoreLeaderboardCard #leaderboard{
+    display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-template-rows:repeat(3,minmax(0,1fr))!important;
+    grid-auto-flow:row!important;gap:5px!important;flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;margin:5px 0 0!important;align-items:stretch!important;align-content:stretch!important;
+  }
+  body:not(.login-mode) #myScoreLeaderboardCard #leaderboard[data-team-count="1"],
+  body:not(.login-mode) #myScoreLeaderboardCard #leaderboard[data-team-count="2"],
+  body:not(.login-mode) #myScoreLeaderboardCard #leaderboard[data-team-count="3"]{grid-template-columns:1fr!important;grid-template-rows:repeat(3,minmax(0,1fr))!important}
+  body:not(.login-mode) #myScoreLeaderboardCard #leaderboard[data-team-count="4"],
+  body:not(.login-mode) #myScoreLeaderboardCard #leaderboard[data-team-count="5"],
+  body:not(.login-mode) #myScoreLeaderboardCard #leaderboard[data-team-count="6"]{grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-rows:repeat(3,minmax(0,1fr))!important}
+  body:not(.login-mode) #myScoreLeaderboardCard #leaderboard[data-team-count="7"],
+  body:not(.login-mode) #myScoreLeaderboardCard #leaderboard[data-team-count="8"],
+  body:not(.login-mode) #myScoreLeaderboardCard #leaderboard[data-team-count="9"]{grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-template-rows:repeat(3,minmax(0,1fr))!important}
+  body:not(.login-mode) #myScoreLeaderboardCard #leaderboard[data-team-count="10"],
+  body:not(.login-mode) #myScoreLeaderboardCard #leaderboard[data-team-count="11"],
+  body:not(.login-mode) #myScoreLeaderboardCard #leaderboard[data-team-count="12"]{grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-rows:repeat(3,minmax(0,1fr))!important}
+  body:not(.login-mode) #myScoreLeaderboardCard .leader-row{
+    height:100%!important;min-height:0!important;margin:0!important;padding:4px 5px!important;border-radius:9px!important;
+    display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;grid-template-areas:"place team" "pts thru"!important;grid-template-rows:auto auto!important;gap:1px 4px!important;align-content:center!important;overflow:hidden!important;
+  }
+  body:not(.login-mode) #myScoreLeaderboardCard .leader-row .place{grid-area:place!important;font-size:13px!important;min-width:14px!important}
+  body:not(.login-mode) #myScoreLeaderboardCard .leader-row > div:nth-child(2){grid-area:team!important;min-width:0!important;overflow:hidden!important}
+  body:not(.login-mode) #myScoreLeaderboardCard .leader-row strong{font-size:9px!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;display:block!important}
+  body:not(.login-mode) #myScoreLeaderboardCard .leader-row .pts{grid-area:pts!important;font-size:8px!important;white-space:nowrap!important}
+  body:not(.login-mode) #myScoreLeaderboardCard .leader-row .thru{grid-area:thru!important;font-size:8px!important;white-space:nowrap!important;text-align:right!important}
+  body:not(.login-mode) #myScoreLeaderboardCard .leader-row .badge{display:none!important}
+  body:not(.login-mode) #leaderboardView:not(.hidden) > .card:not(#myScoreEntryCard):not(#myScoreLeaderboardCard){display:none!important}
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -2122,7 +2216,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.24</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.25</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2309,7 +2403,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
     </div>
   </details>
 </div>
-<div class="card">
+<div class="card" id="myScoreEntryCard">
   <div class="row between"><div><h2 style="margin:0">My Score Entry</h2><div class="status">Once you are drafted, your login automatically gives you the score-entry permissions for your own player/team role.</div></div><span class="badge">PLAYER SCORING</span></div>
   <div id="selfScoreContext" class="note" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb">Your player account is loading. Choose a hole after your profile is linked.</div>
   <div class="admin-grid" style="margin-top:12px">
@@ -2326,7 +2420,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </div>
 
 
-<div class="card">
+<div class="card" id="myScoreLeaderboardCard">
 <div class="row between"><div><h2 style="margin:0">Live Leaderboard</h2><div class="status">Cup points update automatically as scores are entered.</div></div><span id="pointScaleBadge" class="badge">6–5–4–3–2–1</span></div>
 <div id="leaderboard" class="leader" style="margin-top:14px"></div>
 </div>
@@ -2549,7 +2643,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.24 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.25 • UPDATED OCT 1, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
