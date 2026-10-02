@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.57">
-<meta name="elleng-build-date" content="Oct 1, 2026">
+<meta name="elleng-app-version" content="2.7.58">
+<meta name="elleng-build-date" content="Oct 2, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -5971,76 +5971,77 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
 }
 </style>
 
-<style id="v2757-clubhouse-no-scroll">
-/* v2.7.57 — CLUBHOUSE ONLY: fit the entire Clubhouse into the app viewport. */
+<style id="v2758-clubhouse-restored-scroll">
+/* v2.7.58 — CLUBHOUSE ONLY: restore every Clubhouse section and let the Clubhouse screen scroll naturally. */
 @media (max-width:650px){
   body:not(.login-mode) #app > #clubhouseView:not(.hidden){
-    display:grid!important;
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
-    grid-template-rows:auto repeat(4,minmax(0,1fr))!important;
-    gap:6px!important;
-    height:100%!important;
+    display:block!important;
+    height:auto!important;
     min-height:0!important;
-    overflow:hidden!important;
-    padding:0 0 2px!important;
-    align-content:stretch!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    padding:0 0 8px!important;
+    -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior:contain!important;
+    scrollbar-width:none!important;
   }
-  body:not(.login-mode) #clubhouseView > .clubhouse-hero{
-    grid-column:1/-1!important;
-    min-height:0!important;
-    padding:8px 10px!important;
-    margin:0!important;
-    border-radius:13px!important;
-    overflow:hidden!important;
-  }
-  body:not(.login-mode) #clubhouseView > .clubhouse-hero .home-kicker{font-size:8px!important;line-height:1!important;}
-  body:not(.login-mode) #clubhouseView > .clubhouse-hero h2{font-size:18px!important;line-height:1.05!important;margin:2px 0!important;}
-  body:not(.login-mode) #clubhouseView > .clubhouse-hero .status{font-size:9px!important;line-height:1.1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  body:not(.login-mode) #app > #clubhouseView:not(.hidden)::-webkit-scrollbar{display:none!important;}
 
-  body:not(.login-mode) #clubhouseView > .experience-grid{display:contents!important;}
+  body:not(.login-mode) #clubhouseView > .clubhouse-hero{
+    min-height:0!important;
+    padding:10px 12px!important;
+    margin:0 0 7px!important;
+    border-radius:14px!important;
+    overflow:hidden!important;
+  }
+  body:not(.login-mode) #clubhouseView > .clubhouse-hero .home-kicker{font-size:9px!important;line-height:1.05!important;}
+  body:not(.login-mode) #clubhouseView > .clubhouse-hero h2{font-size:20px!important;line-height:1.08!important;margin:3px 0!important;}
+  body:not(.login-mode) #clubhouseView > .clubhouse-hero .status{font-size:10px!important;line-height:1.15!important;}
+
+  body:not(.login-mode) #clubhouseView > .experience-grid{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:7px!important;
+    margin:0!important;
+  }
   body:not(.login-mode) #clubhouseView > .card:not(.clubhouse-hero),
   body:not(.login-mode) #clubhouseView > .experience-grid > .card{
     min-width:0!important;
     min-height:0!important;
-    height:100%!important;
-    margin:0!important;
-    padding:7px 8px!important;
-    border-radius:13px!important;
+    height:auto!important;
+    margin:0 0 7px!important;
+    padding:10px 12px!important;
+    border-radius:14px!important;
     box-sizing:border-box!important;
-    overflow:auto!important;
-    -webkit-overflow-scrolling:touch!important;
-    scrollbar-width:none!important;
+    overflow:visible!important;
   }
-  body:not(.login-mode) #clubhouseView > .card:not(.clubhouse-hero)::-webkit-scrollbar,
-  body:not(.login-mode) #clubhouseView > .experience-grid > .card::-webkit-scrollbar{display:none!important;}
-  body:not(.login-mode) #clubhouseView .row.between{gap:5px!important;align-items:flex-start!important;flex-wrap:nowrap!important;}
-  body:not(.login-mode) #clubhouseView .premium-label{font-size:7.5px!important;line-height:1!important;letter-spacing:.06em!important;}
-  body:not(.login-mode) #clubhouseView h2{font-size:15px!important;line-height:1.05!important;margin:2px 0!important;}
+  body:not(.login-mode) #clubhouseView .row.between{gap:7px!important;align-items:flex-start!important;flex-wrap:nowrap!important;}
+  body:not(.login-mode) #clubhouseView .premium-label{font-size:9px!important;line-height:1.05!important;letter-spacing:.07em!important;}
+  body:not(.login-mode) #clubhouseView h2{font-size:18px!important;line-height:1.08!important;margin:3px 0!important;}
   body:not(.login-mode) #clubhouseView .status,
-  body:not(.login-mode) #clubhouseView .note{font-size:8.5px!important;line-height:1.12!important;}
-  body:not(.login-mode) #clubhouseView .badge{font-size:7px!important;line-height:1!important;padding:3px 5px!important;white-space:nowrap!important;}
+  body:not(.login-mode) #clubhouseView .note{font-size:10px!important;line-height:1.2!important;}
+  body:not(.login-mode) #clubhouseView .badge{font-size:8px!important;line-height:1!important;padding:4px 6px!important;white-space:nowrap!important;}
   body:not(.login-mode) #clubhouseView .wow-body,
   body:not(.login-mode) #clubhouseView .group-assignment-list,
   body:not(.login-mode) #clubhouseView #tournamentMvpCard,
   body:not(.login-mode) #clubhouseView #bestWorstHoleRecap,
   body:not(.login-mode) #clubhouseView #seasonStandings,
-  body:not(.login-mode) #clubhouseView #trophyRoom{margin-top:5px!important;}
-  body:not(.login-mode) #clubhouseView .clubhouse-weather-card .weather-panel{margin-top:5px!important;}
+  body:not(.login-mode) #clubhouseView #trophyRoom{margin-top:7px!important;}
+  body:not(.login-mode) #clubhouseView .clubhouse-weather-card .weather-panel{margin-top:7px!important;}
   body:not(.login-mode) #clubhouseView #loadWeatherBtn{
-    margin-top:5px!important;min-height:30px!important;height:30px!important;padding:4px 7px!important;font-size:9px!important;border-radius:8px!important;
+    margin-top:7px!important;min-height:34px!important;height:auto!important;padding:6px 9px!important;font-size:11px!important;border-radius:9px!important;
   }
-  body:not(.login-mode) #clubhouseView .weather-grid{gap:4px!important;margin-top:5px!important;}
-  body:not(.login-mode) #clubhouseView .weather-stat{padding:4px!important;border-radius:7px!important;}
-  body:not(.login-mode) #clubhouseView .weather-main{font-size:18px!important;}
-  body:not(.login-mode) #clubhouseView .leader{gap:3px!important;}
-  body:not(.login-mode) #clubhouseView .leader-row{padding:4px 5px!important;gap:4px!important;grid-template-columns:22px minmax(0,1fr) 45px 35px!important;}
-  body:not(.login-mode) #clubhouseView .trophy-grid{grid-template-columns:1fr!important;gap:4px!important;margin-top:5px!important;}
-  body:not(.login-mode) #clubhouseView .trophy-card{padding:5px!important;border-radius:8px!important;}
+  body:not(.login-mode) #clubhouseView .weather-grid{gap:5px!important;margin-top:7px!important;}
+  body:not(.login-mode) #clubhouseView .weather-stat{padding:6px!important;border-radius:8px!important;}
+  body:not(.login-mode) #clubhouseView .weather-main{font-size:22px!important;}
+  body:not(.login-mode) #clubhouseView .leader{gap:5px!important;}
+  body:not(.login-mode) #clubhouseView .leader-row{padding:6px 7px!important;gap:5px!important;grid-template-columns:28px minmax(0,1fr) 58px 44px!important;}
+  body:not(.login-mode) #clubhouseView .trophy-grid{grid-template-columns:1fr!important;gap:6px!important;margin-top:7px!important;}
+  body:not(.login-mode) #clubhouseView .trophy-card{padding:8px!important;border-radius:10px!important;}
 }
 @media (max-width:380px){
-  body:not(.login-mode) #clubhouseView h2{font-size:13px!important;}
-  body:not(.login-mode) #clubhouseView .status,body:not(.login-mode) #clubhouseView .note{font-size:7.5px!important;}
-  body:not(.login-mode) #clubhouseView > .card:not(.clubhouse-hero),body:not(.login-mode) #clubhouseView > .experience-grid > .card{padding:6px!important;}
+  body:not(.login-mode) #clubhouseView h2{font-size:16px!important;}
+  body:not(.login-mode) #clubhouseView .status,body:not(.login-mode) #clubhouseView .note{font-size:9px!important;}
 }
 </style>
 </body>
