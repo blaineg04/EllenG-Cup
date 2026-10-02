@@ -2483,6 +2483,87 @@ body.player-simple-home #openBroadcast{display:block!important}
 }
 </style>
 
+
+<style>
+/* v2.7.37 — Hole Progress full-app screen: all 18 holes visible, no scrolling */
+@media (max-width:650px){
+  body:not(.login-mode) #progressView{
+    overflow:hidden!important;
+    height:100%!important;
+    min-height:0!important;
+    padding:0!important;
+  }
+  body:not(.login-mode) #progressView > .card{
+    height:100%!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:4px 6px!important;
+    border-radius:12px!important;
+    display:flex!important;
+    flex-direction:column!important;
+    overflow:hidden!important;
+    box-sizing:border-box!important;
+  }
+  /* On the phone this screen is the dashboard itself; save every pixel for the 18 holes. */
+  body:not(.login-mode) #progressView > .card > .row:first-child,
+  body:not(.login-mode) #progressSummary{
+    display:none!important;
+  }
+  body:not(.login-mode) #progressGrid{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    height:100%!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-template-rows:repeat(9,minmax(0,1fr))!important;
+    gap:4px!important;
+    margin:0!important;
+    overflow:hidden!important;
+  }
+  body:not(.login-mode) #progressGrid > div{
+    min-width:0!important;
+    min-height:0!important;
+    height:100%!important;
+    box-sizing:border-box!important;
+    padding:3px 6px!important;
+    border-width:1px!important;
+    border-radius:9px!important;
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:center!important;
+    overflow:hidden!important;
+  }
+  body:not(.login-mode) #progressGrid > div .row{
+    flex-wrap:nowrap!important;
+    gap:4px!important;
+    min-width:0!important;
+  }
+  body:not(.login-mode) #progressGrid > div strong{
+    font-size:12px!important;
+    line-height:1.05!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+  body:not(.login-mode) #progressGrid > div .badge{
+    flex:0 0 auto!important;
+    min-height:0!important;
+    padding:2px 5px!important;
+    font-size:9px!important;
+    line-height:1!important;
+    border-radius:999px!important;
+  }
+  body:not(.login-mode) #progressGrid > div .status{
+    margin-top:2px!important;
+    font-size:9px!important;
+    line-height:1.05!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+}
+</style>
+
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -2543,7 +2624,7 @@ body.player-simple-home #openBroadcast{display:block!important}
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
   <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
 </div>
-<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.36</span></div>
+<div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.37</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
 
 <main class="wrap">
@@ -2989,7 +3070,7 @@ body.player-simple-home #openBroadcast{display:block!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.36 • UPDATED OCT 1, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.37 • UPDATED OCT 2, 2026</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
