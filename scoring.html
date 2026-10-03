@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.80">
+<meta name="elleng-app-version" content="2.7.81">
 <meta name="elleng-build-date" content="Oct 3, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -6265,6 +6265,70 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
     min-height:48px!important;
     height:auto!important;
     overflow:visible!important;
+  }
+}
+</style>
+
+<style id="v2781-rankings-root-fix">
+/* v2.7.81 — definitive Rankings fix: use the app view itself as the only mobile scroller.
+   This override is intentionally last so older v2.7.68 nested-scroll rules cannot win. */
+@media (max-width:650px){
+  body:not(.login-mode) #app > #rankingsView:not(.hidden){
+    display:block!important;
+    flex:1 1 auto!important;
+    min-height:0!important;
+    height:auto!important;
+    max-height:none!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior-y:contain!important;
+    touch-action:pan-y!important;
+    padding-bottom:110px!important;
+  }
+  body:not(.login-mode) #rankingsView > .rankings-page-card{
+    display:block!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    padding:10px!important;
+    margin-bottom:0!important;
+  }
+  body:not(.login-mode) #rankingsView .rankings-directory{
+    display:block!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    margin-top:8px!important;
+    padding-bottom:8px!important;
+  }
+  body:not(.login-mode) #rankingsView .ranking-band-card{
+    display:block!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    margin:0 0 9px!important;
+  }
+  body:not(.login-mode) #rankingsView .ranking-player-list{
+    display:block!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+  }
+  body:not(.login-mode) #rankingsView .ranking-player-row{
+    display:grid!important;
+    grid-template-columns:32px minmax(0,1fr) auto!important;
+    height:auto!important;
+    min-height:48px!important;
+    max-height:none!important;
+    overflow:visible!important;
+    padding:7px 9px!important;
   }
 }
 </style>
