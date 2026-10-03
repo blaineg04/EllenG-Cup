@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.68">
+<meta name="elleng-app-version" content="2.7.69">
 <meta name="elleng-build-date" content="Oct 3, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -2771,6 +2771,54 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 }
 .more-menu-btn[data-more-view="trash"] .trash-talk-menu-icon img{
   width:42px;height:42px;display:block;object-fit:cover;border-radius:10px;
+}
+</style>
+
+<style id="v2769-my-score-entry-fit">
+/* v2.7.69 — MY SCORE ENTRY ONLY: keep the bottom action buttons fully inside the card on short iPhone screens. */
+@media (max-width:650px){
+  body:not(.login-mode) #myScoreEntryCard{
+    flex:0 0 198px!important;
+    height:198px!important;
+    min-height:198px!important;
+    max-height:198px!important;
+    padding:6px 8px!important;
+    overflow:hidden!important;
+  }
+  body:not(.login-mode) #myScoreEntryCard h2{font-size:16px!important;}
+  body:not(.login-mode) #selfScoreContext{
+    flex:0 0 27px!important;
+    max-height:27px!important;
+    margin-top:4px!important;
+    padding:4px 7px!important;
+    font-size:7.5px!important;
+    line-height:1.05!important;
+  }
+  body:not(.login-mode) #myScoreEntryCard .admin-grid{margin-top:4px!important;gap:4px!important;}
+  body:not(.login-mode) #myScoreEntryCard label small{font-size:7.5px!important;margin-bottom:1px!important;}
+  body:not(.login-mode) #myScoreEntryCard select,
+  body:not(.login-mode) #myScoreEntryCard input{
+    height:27px!important;min-height:27px!important;padding:1px 5px!important;font-size:10.5px!important;
+  }
+  body:not(.login-mode) #myScoreEntryCard .self-score-summary{margin-top:4px!important;}
+  body:not(.login-mode) #myScoreEntryCard .self-score-box{
+    min-height:40px!important;height:40px!important;padding:3px 7px!important;
+  }
+  body:not(.login-mode) #myScoreEntryCard .self-score-box strong{font-size:18px!important;}
+  body:not(.login-mode) #myScoreEntryCard > .row:last-of-type{margin-top:4px!important;gap:4px!important;}
+  body:not(.login-mode) #myScoreEntryCard button{
+    height:28px!important;min-height:28px!important;padding:2px 4px!important;font-size:8px!important;
+  }
+}
+
+/* Extra safeguard for very short mobile viewports / landscape browser chrome. */
+@media (max-width:650px) and (max-height:740px){
+  body:not(.login-mode) #myScoreEntryCard{
+    flex-basis:190px!important;height:190px!important;min-height:190px!important;max-height:190px!important;
+  }
+  body:not(.login-mode) #selfScoreContext{flex-basis:24px!important;max-height:24px!important;}
+  body:not(.login-mode) #myScoreEntryCard .self-score-box{min-height:37px!important;height:37px!important;}
+  body:not(.login-mode) #myScoreEntryCard button{height:27px!important;min-height:27px!important;}
 }
 </style>
 </head>
