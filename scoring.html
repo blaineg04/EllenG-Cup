@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.67">
-<meta name="elleng-build-date" content="Oct 2, 2026">
+<meta name="elleng-app-version" content="2.7.68">
+<meta name="elleng-build-date" content="Oct 3, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
 :root{--navy:#08253b;--green:#087c42;--gold:#d5a72c;--ink:#10202c;--muted:#667782;--line:#dce3e7;--bg:#f5f7f8;--white:#fff}
@@ -3098,14 +3098,13 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="playersView" class="view hidden">
 <div class="card">
   <div class="row between">
-    <div><h2 style="margin:0">Players & Handicaps</h2><div class="status">Public tournament directory with teams and A/B/C/D player rankings.</div></div>
+    <div><h2 style="margin:0">Players</h2><div class="status">Clean tournament roster with player photos, names and team assignments.</div></div>
     <span class="badge">LIVE DRAFT SYNC</span>
   </div>
-  <div class="players-toolbar">
-    <label><small>Organize players</small><select id="playerDirectoryMode"><option value="team">By Team</option><option value="all">All Players A–Z</option><option value="band">By A/B/C/D Band</option></select></label>
+  <div class="players-toolbar players-toolbar-single">
     <label><small>Find player</small><input id="playerDirectorySearch" placeholder="Search by player or team"></label>
   </div>
-  <div class="note" style="margin-top:10px">Tap a player to open their profile. Public player rankings show A/B/C/D only; exact handicap numbers stay private to player/commissioner controls.</div>
+  <div class="note" style="margin-top:10px">Tap a player to open their tournament profile. Player rankings are now on the separate Rankings page under More.</div>
   <div id="playerDirectory" class="player-list"></div>
 <div class="card" id="rsvpCard" style="margin-top:14px">
   <div class="row between"><div><div class="premium-label">AVAILABILITY</div><h2 style="margin:3px 0 0">Tournament RSVP</h2><div class="status">Players can mark Playing, Maybe or Out.</div></div><span class="badge">PLAYER STATUS</span></div>
@@ -3282,7 +3281,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.67 • STABLE BASE v2.7.64</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.68 • STABLE BASE v2.7.64</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -3419,6 +3418,19 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </section>
 </section>
 
+<section id="rankingsView" class="view hidden">
+  <div class="card rankings-page-card">
+    <div class="row between">
+      <div><div class="premium-label">PLAYER RANKINGS</div><h2 style="margin:3px 0 0">A / B / C / D Rankings</h2><div class="status">Draft bands only. Exact handicap numbers stay private.</div></div>
+      <span class="badge">DRAFT BOARD</span>
+    </div>
+    <div class="players-toolbar players-toolbar-single" style="margin-top:12px">
+      <label><small>Find player</small><input id="rankingsSearch" placeholder="Search player or team"></label>
+    </div>
+    <div id="rankingsDirectory" class="rankings-directory"></div>
+  </div>
+</section>
+
 <nav id="mobileBottomNav" class="mobile-bottom-nav hidden" aria-label="Mobile navigation">
   <button class="mobile-nav-btn active" type="button" data-mobile-view="home"><span class="nav-icon">⌂</span>Home</button>
   <button class="mobile-nav-btn" type="button" data-mobile-view="leaderboard"><span class="nav-icon">✏️</span>My Score</button>
@@ -3431,7 +3443,8 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div class="more-sheet" role="dialog" aria-modal="true" aria-label="More options">
     <div class="more-sheet-head"><h3>More</h3><button id="moreMenuClose" class="more-sheet-close" type="button">Close</button></div>
     <div class="more-menu-grid">
-            <button class="more-menu-btn" type="button" data-more-view="progress"><span>✅</span>Hole Progress</button>
+            <button class="more-menu-btn" type="button" data-more-view="rankings"><span>🏷️</span>Player Rankings</button>
+      <button class="more-menu-btn" type="button" data-more-view="progress"><span>✅</span>Hole Progress</button>
       <button class="more-menu-btn" type="button" data-more-view="clubhouse"><span>🏛️</span>Clubhouse</button>
       <button class="more-menu-btn" type="button" data-more-view="trash"><span class="trash-talk-menu-icon"><img src="trash-talk-icon.png" alt="" aria-hidden="true"></span>Trash Talk</button>
       <button id="openBroadcast" class="more-menu-btn" type="button"><span>📺</span>Broadcast</button>
@@ -4285,19 +4298,22 @@ function publicPlayerAvatar(g,cls="player-photo-thumb"){
 function renderPlayersDirectory(){
  const root=$("playerDirectory"); if(!root||!draftState)return;
  const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>({...(g||{}),index:i,name:(g?.name||"").trim()})).filter(g=>g.name);
- const mode=$("playerDirectoryMode")?.value||"team";
  const q=($("playerDirectorySearch")?.value||"").trim().toLowerCase();
- const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Available / Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`),band:playerBandLabel(g)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q)||g.band.toLowerCase().includes(q));
- const rowHtml=g=>`<div class="player-row-public" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}</div><div class="player-hcp-public"><span class="status">RANK</span><br><strong>${esc(g.band)}</strong></div><div class="player-band-public"><span class="player-band-chip">${esc(g.band)}</span></div><div class="player-team-public">${esc(g.teamName)}</div></div>`;
+ const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Available / Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q));
+ const rowHtml=g=>`<div class="player-row-public player-roster-only" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}<div class="player-team-inline">${esc(g.teamName)}</div></div><div class="player-open-arrow">›</div></div>`;
  if(!rows.length){root.innerHTML='<div class="note">No matching players found.</div>';return}
- if(mode==="all"){root.innerHTML=`<div class="player-team-card"><div class="player-team-head"><h3>All Players</h3><div class="status">${rows.length} golfer${rows.length===1?"":"s"}</div></div>${rows.sort((a,b)=>a.name.localeCompare(b.name)).map(rowHtml).join("")}</div>`;return}
- if(mode==="band"){
-   const order=["A","B","C","D","—"];
-   root.innerHTML=order.map(b=>{const list=rows.filter(g=>g.band===b).sort((a,c)=>{const ah=Number(a.hcp),ch=Number(c.hcp);if(Number.isFinite(ah)&&Number.isFinite(ch)&&ah!==ch)return ah-ch;return a.name.localeCompare(c.name)});if(!list.length)return "";return `<div class="player-team-card"><div class="player-team-head"><h3>${b==="—"?"Band Not Set":`Band ${b}`}</h3><div class="status">${list.length} golfer${list.length===1?"":"s"}</div></div>${list.map(rowHtml).join("")}</div>`}).join("");return
- }
  const teamGroups=Array.from({length:activeTeamCount()},(_,i)=>({name:draftState?.teams?.[i]?.name||`Team ${i+1}`,captain:draftState?.teams?.[i]?.captain||"",rows:rows.filter(g=>g.teamIndex===i).sort((a,b)=>a.name.localeCompare(b.name))}));
  const unassigned=rows.filter(g=>g.teamIndex==null).sort((a,b)=>a.name.localeCompare(b.name));
  root.innerHTML=teamGroups.map((grp,i)=>`<div class="player-team-card"><div class="player-team-head"><div><h3>${esc(grp.name)}</h3><div class="status">${grp.captain?`Captain: ${esc(grp.captain)}`:"Captain not assigned"}</div></div><div class="status">${grp.rows.length} player${grp.rows.length===1?"":"s"}</div></div>${grp.rows.length?grp.rows.map(rowHtml).join(""):'<div class="note" style="padding:12px 14px">No golfers assigned.</div>'}</div>`).join("")+(unassigned.length?`<div class="player-team-card"><div class="player-team-head"><h3>Available / Unassigned</h3><div class="status">${unassigned.length} player${unassigned.length===1?"":"s"}</div></div>${unassigned.map(rowHtml).join("")}</div>`:"");
+}
+
+function renderRankingsDirectory(){
+ const root=$("rankingsDirectory");if(!root||!draftState)return;
+ const q=($("rankingsSearch")?.value||"").trim().toLowerCase();
+ const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>{const name=String(g?.name||"").trim();const ti=golferTeamIndex(i);return {...(g||{}),index:i,name,band:playerBandLabel(g),teamName:ti==null?"Available / Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>g.name&&(!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q)||g.band.toLowerCase().includes(q)));
+ if(!golfers.length){root.innerHTML='<div class="note" style="margin-top:12px">No matching players found.</div>';return}
+ const order=["A","B","C","D","—"];
+ root.innerHTML=order.map(b=>{const list=golfers.filter(g=>g.band===b).sort((a,c)=>a.name.localeCompare(c.name));if(!list.length)return "";return `<section class="ranking-band-card"><div class="ranking-band-head"><div class="ranking-letter">${esc(b)}</div><div><strong>${b==="—"?"Unranked":`Band ${b}`}</strong><div class="status">${list.length} player${list.length===1?"":"s"}</div></div></div><div class="ranking-player-list">${list.map(g=>`<div class="ranking-player-row">${publicPlayerAvatar(g,"ranking-avatar")}<div><strong>${esc(g.name)}</strong><div class="status">${esc(g.teamName)}</div></div><span class="player-band-chip">${esc(g.band)}</span></div>`).join("")}</div></section>`}).join("");
 }
 
 function renderProgress(){
@@ -5363,6 +5379,7 @@ function renderAll(){
  renderTeams();
  renderCaptainDashboard();
  renderPlayersDirectory();
+ renderRankingsDirectory();
  renderRsvp();
  renderCourse();
  renderProgress();
@@ -5675,8 +5692,8 @@ if($("playerDirectory"))$("playerDirectory").addEventListener("keydown",e=>{
 if($("closePlayerProfile"))$("closePlayerProfile").addEventListener("click",()=>{
  selectedPlayerProfileIndex=null;renderPlayerProfileCards();
 });
-if($("playerDirectoryMode"))$("playerDirectoryMode").addEventListener("change",renderPlayersDirectory);
 if($("playerDirectorySearch"))$("playerDirectorySearch").addEventListener("input",renderPlayersDirectory);
+if($("rankingsSearch"))$("rankingsSearch").addEventListener("input",renderRankingsDirectory);
 if($("courseBrowseSelect"))$("courseBrowseSelect").addEventListener("change",()=>{
  const c=COURSE_LIBRARY[$("courseBrowseSelect").value];
  if(!c)return;
@@ -6810,5 +6827,36 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
   body.player-simple-home #playersView #playerDirectory .player-hcp-public strong{
     font-size:13px!important;font-weight:950!important;color:var(--navy)!important;
   }
+}
+</style>
+
+<style id="v2768-player-rankings-split">
+/* v2.7.68 — separate clean Players roster from public A/B/C/D Rankings. */
+.players-toolbar-single{grid-template-columns:minmax(180px,420px)!important}
+.player-row-public.player-roster-only{grid-template-columns:46px minmax(0,1fr) 28px!important;cursor:pointer}
+.player-row-public.player-roster-only .player-name-public{font-size:15px}
+.player-team-inline{font-size:12px;color:var(--muted);font-weight:700;margin-top:3px}
+.player-open-arrow{font-size:24px;color:var(--muted);text-align:right}
+.rankings-directory{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.ranking-band-card{border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden}
+.ranking-band-head{display:flex;align-items:center;gap:10px;padding:11px 12px;background:#f8fafb;border-bottom:1px solid var(--line)}
+.ranking-letter{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--navy);color:#fff;font-size:21px;font-weight:950;border:2px solid var(--gold)}
+.ranking-player-list{display:grid}
+.ranking-player-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:9px;align-items:center;padding:9px 11px;border-top:1px solid #edf1f3}
+.ranking-player-row:first-child{border-top:0}
+.ranking-avatar{width:38px;height:38px;border-radius:50%;background:#edf1f3;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;overflow:hidden}
+.ranking-avatar img{width:100%;height:100%;object-fit:cover}
+@media(max-width:650px){
+ body:not(.login-mode) #rankingsView{height:100%!important;min-height:0!important;overflow:hidden!important}
+ body:not(.login-mode) #rankingsView>.rankings-page-card{height:100%!important;min-height:0!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;padding:10px!important}
+ #rankingsView .rankings-directory{grid-template-columns:1fr!important;gap:7px!important;overflow-y:auto!important;min-height:0!important;flex:1 1 auto!important;margin-top:8px!important;scrollbar-width:none}
+ #rankingsView .rankings-directory::-webkit-scrollbar{display:none}
+ #rankingsView .ranking-band-head{padding:7px 9px!important}
+ #rankingsView .ranking-letter{width:32px;height:32px;border-radius:9px;font-size:17px}
+ #rankingsView .ranking-player-row{grid-template-columns:32px minmax(0,1fr) auto;padding:6px 9px;gap:7px}
+ #rankingsView .ranking-avatar{width:32px;height:32px}
+ body.player-simple-home #playersView #playerDirectory .player-row-public.player-roster-only{display:grid!important;grid-template-columns:30px minmax(0,1fr) 18px!important}
+ body.player-simple-home #playersView #playerDirectory .player-roster-only .player-open-arrow{display:block!important;font-size:17px!important}
+ body.player-simple-home #playersView #playerDirectory .player-roster-only .player-team-inline{display:block!important;font-size:8px!important;line-height:1.05!important;margin-top:2px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 }
 </style>
