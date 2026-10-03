@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.81">
+<meta name="elleng-app-version" content="2.7.82">
 <meta name="elleng-build-date" content="Oct 3, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -2826,6 +2826,30 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   body:not(.login-mode) #myScoreEntryCard button{height:27px!important;min-height:27px!important;}
 }
 </style>
+
+<style id="v2782-rankings-compact-board">
+/* v2.7.82 — Compact rankings board: show all golfers at once without an inner scroller. */
+#rankingsView .players-toolbar{display:none!important}
+#rankingsView .rankings-page-card{overflow:visible!important;height:auto!important;max-height:none!important}
+#rankingsView .rankings-directory{display:block!important;overflow:visible!important;height:auto!important;max-height:none!important;padding-bottom:8px!important}
+.ranking-board-compact{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:10px}
+.ranking-band-compact{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
+.ranking-band-compact-head{display:flex;align-items:center;gap:8px;padding:8px 9px;background:#f8fafb;border-bottom:1px solid var(--line)}
+.ranking-band-compact-head .ranking-letter{width:30px;height:30px;border-radius:8px;font-size:16px;flex:0 0 30px}
+.ranking-band-compact-head strong{display:block;font-size:14px;line-height:1.05}
+.ranking-band-compact-head small{display:block;color:var(--muted);font-size:10px;margin-top:2px;font-weight:800}
+.ranking-name-chips{display:flex;flex-wrap:wrap;gap:5px;padding:7px}
+.ranking-name-chip{display:inline-flex;align-items:center;min-height:25px;padding:4px 7px;border-radius:999px;background:#eef3f5;border:1px solid #d8e1e5;color:var(--navy);font-size:11px;font-weight:850;line-height:1.05}
+@media(max-width:650px){
+ body:not(.login-mode) #rankingsView:not(.hidden){display:block!important;height:auto!important;min-height:0!important;overflow:visible!important}
+ body:not(.login-mode) #rankingsView>.rankings-page-card{display:block!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;padding:10px!important}
+ #rankingsView .rankings-directory{overflow:visible!important;min-height:0!important;flex:none!important;margin-top:4px!important}
+ .ranking-board-compact{grid-template-columns:1fr 1fr!important;gap:7px!important}
+ .ranking-band-compact-head{padding:6px 7px!important}
+ .ranking-name-chips{gap:4px!important;padding:6px!important}
+ .ranking-name-chip{font-size:10px!important;min-height:22px!important;padding:3px 6px!important}
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -4364,7 +4388,7 @@ function renderRankingsDirectory(){
  const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>{const name=String(g?.name||"").trim();const ti=golferTeamIndex(i);return {...(g||{}),index:i,name,band:playerBandLabel(g),teamName:ti==null?"Available / Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>g.name&&(!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q)||g.band.toLowerCase().includes(q)));
  if(!golfers.length){root.innerHTML='<div class="note" style="margin-top:12px">No matching players found.</div>';return}
  const order=["A","B","C","D","—"];
- root.innerHTML=order.map(b=>{const list=golfers.filter(g=>g.band===b).sort((a,c)=>a.name.localeCompare(c.name));if(!list.length)return "";return `<section class="ranking-band-card"><div class="ranking-band-head"><div class="ranking-letter">${esc(b)}</div><div><strong>${b==="—"?"Unranked":`Band ${b}`}</strong><div class="status">${list.length} player${list.length===1?"":"s"}</div></div></div><div class="ranking-player-list">${list.map(g=>`<div class="ranking-player-row">${publicPlayerAvatar(g,"ranking-avatar")}<div><strong>${esc(g.name)}</strong><div class="status">${esc(g.teamName)}</div></div><span class="player-band-chip">${esc(g.band)}</span></div>`).join("")}</div></section>`}).join("");
+ root.innerHTML=`<div class="ranking-board-compact">${order.map(b=>{const list=golfers.filter(g=>g.band===b).sort((a,c)=>a.name.localeCompare(c.name));if(!list.length)return "";return `<section class="ranking-band-compact"><div class="ranking-band-compact-head"><span class="ranking-letter">${esc(b)}</span><div><strong>${b==="—"?"Unranked":`Band ${b}`}</strong><small>${list.length} player${list.length===1?"":"s"}</small></div></div><div class="ranking-name-chips">${list.map(g=>`<span class="ranking-name-chip" title="${esc(g.teamName)}">${esc(g.name)}</span>`).join("")}</div></section>`}).join("")}</div>`;
 }
 
 function renderProgress(){
