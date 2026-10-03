@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.83">
+<meta name="elleng-app-version" content="2.7.85">
 <meta name="elleng-build-date" content="Oct 3, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -1285,6 +1285,24 @@ html.broadcast-active,body.broadcast-active{overflow:hidden!important;height:100
   .broadcast-overlay.open{position:fixed!important;inset:0!important;width:100%!important;height:100dvh!important;max-height:100dvh!important;overflow:hidden!important}
   .broadcast-shell{width:100%!important;height:100dvh!important;max-height:100dvh!important;min-height:0!important;overflow:hidden!important}
   .broadcast-grid{min-height:0!important;height:auto!important;overflow:hidden!important}
+}
+
+/* v2.7.84 rankings fit-all mobile refinement */
+@media(max-width:650px){
+  #rankingsView .card{padding:10px!important;margin-bottom:8px!important;}
+  #rankingsView h2{font-size:28px!important;line-height:1.0!important;margin:0 0 4px!important;}
+  #rankingsView .status{font-size:12px!important;line-height:1.2!important;}
+  #rankingsView .premium-label{font-size:10px!important;margin-bottom:2px!important;}
+  #rankingsView .badge{font-size:10px!important;padding:3px 7px!important;}
+  #rankingsView .ranking-band-card{margin-top:7px!important;}
+  #rankingsView .ranking-band-head{padding:6px 10px!important;min-height:42px!important;}
+  #rankingsView .ranking-band-head .band-letter{width:38px!important;height:38px!important;font-size:22px!important;}
+  #rankingsView .ranking-band-head strong{font-size:16px!important;}
+  #rankingsView .ranking-band-head .status{font-size:10px!important;}
+  #rankingsView .ranking-chip-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;padding:6px 10px 7px!important;}
+  #rankingsView .ranking-player-chip{min-height:30px!important;padding:5px 7px!important;font-size:11px!important;line-height:1.05!important;border-radius:9px!important;}
+  #rankingsView .rankings-board{gap:6px!important;}
+  #rankingsView{padding-bottom:86px!important;}
 }
 </style>
 
@@ -2852,7 +2870,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </style>
 
 <style id="v2783-rankings-even-board">
-/* v2.7.83 — Balanced full-width rankings board for mobile. */
+/* v2.7.84 — Balanced full-width rankings board for mobile. */
 #rankingsView .ranking-board-compact{
   display:grid!important;
   grid-template-columns:1fr!important;
@@ -6399,6 +6417,106 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
     overflow:visible!important;
     padding:7px 9px!important;
   }
+}
+</style>
+
+<style id="v2785-rankings-one-screen-final">
+/* v2.7.85 — FINAL rankings layout. This block is intentionally last so it overrides older ranking rules. */
+@media (max-width:650px){
+  body:not(.login-mode) #app > #rankingsView:not(.hidden){
+    display:block!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    padding:0!important;
+    margin:0!important;
+  }
+  body:not(.login-mode) #rankingsView > .rankings-page-card{
+    display:block!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    padding:8px 10px!important;
+    margin-bottom:0!important;
+  }
+  #rankingsView .players-toolbar,
+  #rankingsView #rankingsSearch{display:none!important}
+  #rankingsView .rankings-page-card > .row:first-child{margin-bottom:4px!important;align-items:flex-start!important}
+  #rankingsView .premium-label{font-size:9px!important;line-height:1!important;margin:0!important}
+  #rankingsView h2{font-size:20px!important;line-height:1!important;margin:2px 0 2px!important}
+  #rankingsView h2 + .status{font-size:9px!important;line-height:1.05!important;margin:0!important}
+  #rankingsView .badge{font-size:8px!important;padding:3px 7px!important;line-height:1!important}
+  #rankingsView .rankings-directory{
+    display:block!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    margin-top:4px!important;
+    padding:0!important;
+    flex:none!important;
+  }
+  #rankingsView .ranking-board-compact{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:4px!important;
+    margin:0!important;
+  }
+  #rankingsView .ranking-band-compact{
+    display:grid!important;
+    grid-template-columns:88px minmax(0,1fr)!important;
+    align-items:stretch!important;
+    min-height:0!important;
+    height:auto!important;
+    overflow:hidden!important;
+    border-radius:9px!important;
+  }
+  #rankingsView .ranking-band-compact-head{
+    display:flex!important;
+    align-items:center!important;
+    gap:5px!important;
+    padding:4px 5px!important;
+    border-bottom:0!important;
+    border-right:1px solid var(--line)!important;
+    min-height:34px!important;
+  }
+  #rankingsView .ranking-band-compact-head .ranking-letter{
+    width:26px!important;height:26px!important;flex:0 0 26px!important;
+    border-radius:7px!important;font-size:14px!important;border-width:1.5px!important;
+  }
+  #rankingsView .ranking-band-compact-head strong{font-size:11px!important;line-height:1!important;white-space:nowrap!important}
+  #rankingsView .ranking-band-compact-head small{font-size:7px!important;line-height:1!important;margin-top:1px!important;white-space:nowrap!important}
+  #rankingsView .ranking-name-chips{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:3px!important;
+    align-content:center!important;
+    padding:4px!important;
+    min-height:34px!important;
+  }
+  #rankingsView .ranking-name-chip{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:100%!important;
+    min-width:0!important;
+    min-height:20px!important;
+    height:20px!important;
+    padding:2px 3px!important;
+    border-radius:6px!important;
+    font-size:8px!important;
+    line-height:1!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+}
+@media (max-width:390px){
+  #rankingsView .ranking-band-compact{grid-template-columns:78px minmax(0,1fr)!important}
+  #rankingsView .ranking-name-chip{font-size:7.4px!important;padding:2px!important}
+  #rankingsView .ranking-band-compact-head strong{font-size:10px!important}
 }
 </style>
 </body>
