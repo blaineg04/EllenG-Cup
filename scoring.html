@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.59">
+<meta name="elleng-app-version" content="2.7.63">
 <meta name="elleng-build-date" content="Oct 2, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -3234,6 +3234,9 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </section>
 
 <section id="trashView" class="view hidden">
+<div class="row" style="margin:0 0 10px">
+  <button id="trashBackBtn" class="secondary" type="button" style="padding:9px 12px">← Back to More</button>
+</div>
 <div class="card">
   <div class="row between"><div><h2 style="margin:0">Live Trash Talk</h2><div class="status">Signed-in EllenG Cup players can post. Your account automatically supplies your golfer name and team.</div></div><span class="badge">PLAYERS ONLY</span></div>
   <div id="trashFeed" class="trash-feed" style="margin-top:14px"><div class="note">No trash talk yet. Somebody has to start it.</div></div>
@@ -5335,10 +5338,10 @@ function renderAll(){
  renderSelfProfilePhoto();
  renderScoring();
  renderTrashTalk();
- renderAdmin();
- renderAdminGroupAssignments();
- renderTournamentHealth();
- renderCommissionerControlRoom();
+ safeFeatureRender("Commissioner Setup",renderAdmin);
+ safeFeatureRender("Commissioner Groups",renderAdminGroupAssignments);
+ safeFeatureRender("Tournament Health",renderTournamentHealth);
+ safeFeatureRender("Commissioner Control Room",renderCommissionerControlRoom);
 
  // OPTIONAL EXPERIENCE FEATURES: no feature is allowed to interrupt core scoring.
  safeFeatureRender("Featured Matchup",renderFeaturedMatchup);
@@ -5442,6 +5445,28 @@ document.body.classList.add("login-mode");setGlobalMenuVisible(false);setMobileN
  $("loginMsg").textContent="Sign in once to continue.";
  setSyncStatus("saved","Connected");
 }
+function forceSignedInHome(){
+ if(!user)return;
+ // Only regular players get the repeated Home landing guard.
+ // Commissioner/captain sessions are left alone so admin rendering/navigation cannot be interrupted.
+ if(isCommissioner||captainTeam!=null){showView("home");return;}
+ const goHome=()=>{
+   if(!user||isCommissioner||captainTeam!=null)return;
+   const home=$("homeView");
+   if(!home)return;
+   document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));
+   home.classList.remove("hidden");
+   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.view==="home"));
+   document.querySelectorAll(".mobile-nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.mobileView==="home"));
+   document.body.classList.remove("extras-screen-active");
+   window.scrollTo({top:0,behavior:"auto"});
+ };
+ goHome();
+ requestAnimationFrame(goHome);
+ setTimeout(goHome,120);
+ setTimeout(goHome,450);
+}
+
 async function enterApp(){
 document.body.classList.remove("login-mode");setGlobalMenuVisible(false);setMobileNavVisible(false);
  
@@ -5466,14 +5491,13 @@ document.body.classList.remove("login-mode");setGlobalMenuVisible(false);setMobi
     $("app").classList.remove("hidden");$("app").style.display="";
     setMobileNavVisible(true);
     renderAll();
-    // Always land signed-in users on Home, regardless of the view that was open before sign-out/reload.
-    showView("home");
-    // Re-assert Home after this render cycle so player sign-in can never inherit My Score as the active screen.
-    requestAnimationFrame(()=>showView("home"));
+    // Always land signed-in users on Home, regardless of any previously active player screen.
+    forceSignedInHome();
     subscribeLive();
     setSyncStatus("saved","Synced");
     if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;
-    const hub=$("appHub");if(hub)hub.classList.remove("hidden");
+    const hub=$("appHub");if(hub)hub.classList.add("hidden");
+    setGlobalMenuVisible(true);
   }
  }catch(e){
   console.error("Tournament load failed:",e);
@@ -5515,7 +5539,7 @@ function openHubView(view){
  }
  closeAppHub();
  if(view==="clubhouse"){showView("clubhouse");return}
- if(view==="scoring"){showView("leaderboard");return}
+ if(view==="scoring"){showView("home");return}
 }
 function showView(name){
  if(!user){enterViewer();return}
@@ -5556,7 +5580,7 @@ $("changeAccountPasswordBtn").addEventListener("click",async()=>{
  try{
    const {error}=await db.auth.updateUser({password:p1});if(error)throw error;
    const {data,error:profileError}=await db.functions.invoke("player-profile",{body:{action:"password_changed",draft_id:DRAFT_ID}});if(profileError)throw profileError;if(data?.error)throw new Error(data.error);
-   mustChangePassword=false;$("newAccountPassword").value="";$("confirmAccountPassword").value="";$("passwordChangeCard").classList.add("hidden");$("app").classList.remove("hidden");setMobileNavVisible(true);renderAll();showView("home");subscribeLive();if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;if($("appHub"))$("appHub").classList.remove("hidden");
+   mustChangePassword=false;$("newAccountPassword").value="";$("confirmAccountPassword").value="";$("passwordChangeCard").classList.add("hidden");$("app").classList.remove("hidden");setMobileNavVisible(true);renderAll();forceSignedInHome();subscribeLive();if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;if($("appHub"))$("appHub").classList.add("hidden");setGlobalMenuVisible(true);
  }catch(e){msg.textContent=e?.message||"Unable to change password."}
  finally{btn.disabled=false}
 });
@@ -5603,6 +5627,8 @@ function openMoreMenu(){
 }
 if(moreBtn)moreBtn.addEventListener("click",openMoreMenu);
 if($("moreMenuClose"))$("moreMenuClose").addEventListener("click",closeMoreMenu);
+if($("trashBackBtn"))$("trashBackBtn").addEventListener("click",()=>{showView("home");openMoreMenu()});
+
 if(moreBackdrop)moreBackdrop.addEventListener("click",e=>{if(e.target===moreBackdrop)closeMoreMenu()});
 document.querySelectorAll("[data-more-view]").forEach(b=>b.addEventListener("click",()=>{closeMoreMenu();showView(b.dataset.moreView)}));
 if($("playerDirectory"))$("playerDirectory").addEventListener("click",e=>{
