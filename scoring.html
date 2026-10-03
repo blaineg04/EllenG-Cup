@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.73">
+<meta name="elleng-app-version" content="2.7.74">
 <meta name="elleng-build-date" content="Oct 3, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -83,6 +83,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 /* Public Players directory */
 .players-toolbar{display:grid;grid-template-columns:minmax(180px,260px) minmax(180px,1fr);gap:10px;margin-top:12px}
 .player-list{display:grid;gap:10px;margin-top:14px}
+.player-directory-flat{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}.player-directory-flat .player-row-public{border-top:1px solid var(--line)}.player-directory-flat .player-row-public:first-child{border-top:0}
 .player-team-card{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
 .player-team-head{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px 14px;background:#f8fafb;border-bottom:1px solid var(--line)}
 .player-team-head h3{margin:0;font-size:18px}
@@ -3150,7 +3151,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="playersView" class="view hidden">
 <div class="card">
   <div class="row between">
-    <div><h2 style="margin:0">Players</h2><div class="status">Clean tournament roster with player photos, names and team assignments.</div></div>
+    <div><h2 style="margin:0">Players</h2><div class="status">Player directory with photos, names and current team. Team rosters stay under Teams.</div></div>
     <span class="badge">LIVE DRAFT SYNC</span>
   </div>
   <div class="players-toolbar players-toolbar-single">
@@ -4354,9 +4355,8 @@ function renderPlayersDirectory(){
  const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Available / Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q));
  const rowHtml=g=>`<div class="player-row-public player-roster-only" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}<div class="player-team-inline">${esc(g.teamName)}</div></div><span class="player-roster-band" title="Handicap band ${esc(playerBandLabel(g))}">${esc(playerBandLabel(g))}</span><div class="player-open-arrow">›</div></div>`;
  if(!rows.length){root.innerHTML='<div class="note">No matching players found.</div>';return}
- const teamGroups=Array.from({length:activeTeamCount()},(_,i)=>({name:draftState?.teams?.[i]?.name||`Team ${i+1}`,captain:draftState?.teams?.[i]?.captain||"",rows:rows.filter(g=>g.teamIndex===i).sort((a,b)=>a.name.localeCompare(b.name))}));
- const unassigned=rows.filter(g=>g.teamIndex==null).sort((a,b)=>a.name.localeCompare(b.name));
- root.innerHTML=teamGroups.map((grp,i)=>`<div class="player-team-card"><div class="player-team-head"><div><h3>${esc(grp.name)}</h3><div class="status">${grp.captain?`Captain: ${esc(grp.captain)}`:"Captain not assigned"}</div></div><div class="status">${grp.rows.length} player${grp.rows.length===1?"":"s"}</div></div>${grp.rows.length?grp.rows.map(rowHtml).join(""):'<div class="note" style="padding:12px 14px">No golfers assigned.</div>'}</div>`).join("")+(unassigned.length?`<div class="player-team-card"><div class="player-team-head"><h3>Available / Unassigned</h3><div class="status">${unassigned.length} player${unassigned.length===1?"":"s"}</div></div>${unassigned.map(rowHtml).join("")}</div>`:"");
+ const sorted=rows.sort((a,b)=>a.name.localeCompare(b.name));
+ root.innerHTML=`<div class="player-directory-flat">${sorted.map(rowHtml).join("")}</div>`;
 }
 
 function renderRankingsDirectory(){
