@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.70">
+<meta name="elleng-app-version" content="2.7.71">
 <meta name="elleng-build-date" content="Oct 3, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -5589,13 +5589,12 @@ document.body.classList.remove("login-mode");setGlobalMenuVisible(false);setMobi
     $("app").classList.remove("hidden");$("app").style.display="";
     setMobileNavVisible(true);
     renderAll();
-    // Always land signed-in users on Home, regardless of any previously active player screen.
+    // Keep Home ready underneath, then show the signed-in destination hub.
     forceSignedInHome();
     subscribeLive();
     setSyncStatus("saved","Synced");
     if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;
-    const hub=$("appHub");if(hub)hub.classList.add("hidden");
-    setGlobalMenuVisible(true);
+    openAppHub();
   }
  }catch(e){
   console.error("Tournament load failed:",e);
@@ -5678,7 +5677,7 @@ $("changeAccountPasswordBtn").addEventListener("click",async()=>{
  try{
    const {error}=await db.auth.updateUser({password:p1});if(error)throw error;
    const {data,error:profileError}=await db.functions.invoke("player-profile",{body:{action:"password_changed",draft_id:DRAFT_ID}});if(profileError)throw profileError;if(data?.error)throw new Error(data.error);
-   mustChangePassword=false;$("newAccountPassword").value="";$("confirmAccountPassword").value="";$("passwordChangeCard").classList.add("hidden");$("app").classList.remove("hidden");setMobileNavVisible(true);renderAll();forceSignedInHome();subscribeLive();if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;if($("appHub"))$("appHub").classList.add("hidden");setGlobalMenuVisible(true);
+   mustChangePassword=false;$("newAccountPassword").value="";$("confirmAccountPassword").value="";$("passwordChangeCard").classList.add("hidden");$("app").classList.remove("hidden");setMobileNavVisible(true);renderAll();forceSignedInHome();subscribeLive();if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;openAppHub();
  }catch(e){msg.textContent=e?.message||"Unable to change password."}
  finally{btn.disabled=false}
 });
