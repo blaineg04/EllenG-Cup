@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.77">
+<meta name="elleng-app-version" content="2.7.78">
 <meta name="elleng-build-date" content="Oct 3, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -5652,6 +5652,7 @@ function showView(name){
  document.querySelectorAll(".mobile-nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.mobileView===navName));
  document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));
  target.classList.remove("hidden");
+ if(name==="rankings")renderRankingsDirectory();
  if(name==="trash")loadTrashTalk().then(renderTrashTalk).catch(e=>console.warn("Trash Talk refresh skipped",e));
  window.scrollTo({top:0,behavior:"smooth"});
 }
@@ -6170,6 +6171,37 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
 @media (max-width:380px){
   body:not(.login-mode) #clubhouseView h2{font-size:16px!important;}
   body:not(.login-mode) #clubhouseView .status,body:not(.login-mode) #clubhouseView .note{font-size:9px!important;}
+}
+</style>
+
+<style id="v2778-rankings-fix">
+/* v2.7.78 — Rankings page: force a fresh render when opened and use reliable iPhone page scrolling. */
+@media (max-width:650px){
+  body:not(.login-mode) #rankingsView:not(.hidden){
+    display:block!important;
+    height:auto!important;
+    min-height:100%!important;
+    overflow:visible!important;
+  }
+  body:not(.login-mode) #rankingsView > .rankings-page-card{
+    display:block!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    padding:10px!important;
+  }
+  body:not(.login-mode) #rankingsView .rankings-directory{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:7px!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    margin-top:8px!important;
+    padding-bottom:90px!important;
+  }
 }
 </style>
 </body>
