@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.82">
+<meta name="elleng-app-version" content="2.7.83">
 <meta name="elleng-build-date" content="Oct 3, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -2848,6 +2848,51 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
  .ranking-band-compact-head{padding:6px 7px!important}
  .ranking-name-chips{gap:4px!important;padding:6px!important}
  .ranking-name-chip{font-size:10px!important;min-height:22px!important;padding:3px 6px!important}
+}
+</style>
+
+<style id="v2783-rankings-even-board">
+/* v2.7.83 — Balanced full-width rankings board for mobile. */
+#rankingsView .ranking-board-compact{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:7px!important;
+  margin-top:8px!important;
+}
+#rankingsView .ranking-band-compact{
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  border-radius:11px!important;
+}
+#rankingsView .ranking-band-compact-head{
+  padding:6px 8px!important;
+  min-height:40px!important;
+}
+#rankingsView .ranking-band-compact-head .ranking-letter{
+  width:28px!important;height:28px!important;flex:0 0 28px!important;font-size:15px!important;
+}
+#rankingsView .ranking-band-compact-head strong{font-size:13px!important}
+#rankingsView .ranking-band-compact-head small{font-size:9px!important}
+#rankingsView .ranking-name-chips{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:4px 5px!important;
+  padding:6px 7px 7px!important;
+}
+#rankingsView .ranking-name-chip{
+  display:block!important;
+  min-height:20px!important;
+  padding:4px 4px!important;
+  border-radius:7px!important;
+  font-size:9px!important;
+  line-height:1.05!important;
+  text-align:center!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+@media(max-width:390px){
+ #rankingsView .ranking-name-chip{font-size:8.5px!important;padding:3px 3px!important}
 }
 </style>
 </head>
