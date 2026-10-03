@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.63">
+<meta name="elleng-app-version" content="2.7.64">
 <meta name="elleng-build-date" content="Oct 2, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -273,6 +273,12 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 .sync-status-chip.saving{background:#fff3c8;border-color:#e1bd46;color:#695000}
 .sync-status-chip.error{background:#fde9e7;border-color:#e6b5af;color:#8d2519}
 .sync-status-chip.saved{background:#e7f5ec;border-color:#b9ddc7;color:#116338}
+
+.commissioner-system-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px}
+.commissioner-system-item{border:1px solid var(--line);border-radius:11px;padding:11px;background:#f8fafb;min-width:0}
+.commissioner-system-item strong{display:block;font-size:17px;color:var(--navy);overflow-wrap:anywhere}
+.commissioner-system-item span{display:block;margin-top:3px;font-size:10px;color:var(--muted);font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+@media(max-width:650px){.commissioner-system-grid{grid-template-columns:1fr 1fr}.commissioner-system-item strong{font-size:15px}}
 
 .player-photo-thumb{width:46px;height:46px;border-radius:50%;background:#edf1f3;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:900;overflow:hidden;flex:0 0 auto}
 .player-photo-thumb img{width:100%;height:100%;object-fit:cover}
@@ -3277,7 +3283,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.49 • UPDATED OCT 2, 2026</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.64 • STABLE BASE v2.7.63</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -3294,6 +3300,18 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   </div>
 </div>
 
+<div class="card admin-card" id="commissionerSystemStatusCard">
+  <div class="row between">
+    <div><div class="premium-label">SYSTEM STATUS</div><h2 style="margin:3px 0 0">Tournament App Health</h2><div class="status">Quick check that the Commissioner is on the expected build and live data connection.</div></div>
+    <span id="commissionerSystemBadge" class="badge">CHECKING</span>
+  </div>
+  <div class="commissioner-system-grid">
+    <div class="commissioner-system-item"><strong id="commissionerSystemVersion">—</strong><span>App Version</span></div>
+    <div class="commissioner-system-item"><strong id="commissionerSystemConnection">—</strong><span>Live Connection</span></div>
+    <div class="commissioner-system-item"><strong id="commissionerSystemSync">—</strong><span>Last Sync</span></div>
+    <div class="commissioner-system-item"><strong id="commissionerSystemRole">—</strong><span>Signed-in Role</span></div>
+  </div>
+</div>
 
 <div class="card admin-card" id="adminGroups">
   <div class="row between"><div><div class="premium-label">TEE SHEET</div><h2 style="margin:3px 0 0">Groups & Starting Assignments</h2><div class="status">Assign tee times, starting holes, groups and carts.</div></div><span class="badge">COMMISSIONER</span></div>
@@ -3532,6 +3550,21 @@ function syncedLabel(){
  return s<8?"Synced just now":s<60?`Synced ${s}s ago`:`Synced ${Math.floor(s/60)}m ago`;
 }
 setInterval(()=>{const el=$("syncStatusChip");if(el&&el.classList.contains("saved"))el.textContent=syncedLabel()},10000);
+
+function renderCommissionerSystemStatus(){
+ if(!isCommissioner)return;
+ const versionEl=$("commissionerSystemVersion"),connectionEl=$("commissionerSystemConnection"),syncEl=$("commissionerSystemSync"),roleEl=$("commissionerSystemRole"),badge=$("commissionerSystemBadge"),build=$("commissionerBuildInfo");
+ if(versionEl)versionEl.textContent=`v${APP_VERSION}`;
+ if(build)build.textContent=`APP BUILD v${APP_VERSION} • STABLE BASE v2.7.63`;
+ const chip=$("syncStatusChip");
+ const chipText=String(chip?.textContent||"").trim();
+ const isError=chip?.classList?.contains("error");
+ if(connectionEl)connectionEl.textContent=isError?"Needs Attention":"Connected";
+ if(syncEl)syncEl.textContent=lastSuccessfulSyncAt?lastSuccessfulSyncAt.toLocaleTimeString([], {hour:"numeric",minute:"2-digit",second:"2-digit"}):chipText||"Waiting";
+ if(roleEl)roleEl.textContent="Commissioner";
+ if(badge){badge.textContent=isError?"CHECK CONNECTION":"READY";badge.classList.toggle("gator-badge",!isError)}
+}
+setInterval(renderCommissionerSystemStatus,10000);
 
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const PLAYER_LOGIN_DOMAIN="@players.ellengcup.app";
@@ -5339,6 +5372,7 @@ function renderAll(){
  renderScoring();
  renderTrashTalk();
  safeFeatureRender("Commissioner Setup",renderAdmin);
+ safeFeatureRender("Commissioner System Status",renderCommissionerSystemStatus);
  safeFeatureRender("Commissioner Groups",renderAdminGroupAssignments);
  safeFeatureRender("Tournament Health",renderTournamentHealth);
  safeFeatureRender("Commissioner Control Room",renderCommissionerControlRoom);
