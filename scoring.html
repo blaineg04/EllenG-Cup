@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.74">
+<meta name="elleng-app-version" content="2.7.75">
 <meta name="elleng-build-date" content="Oct 3, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -3151,13 +3151,13 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="playersView" class="view hidden">
 <div class="card">
   <div class="row between">
-    <div><h2 style="margin:0">Players</h2><div class="status">Player directory with photos, names and current team. Team rosters stay under Teams.</div></div>
+    <div><h2 style="margin:0">Players</h2><div class="status">Player directory with photos, names and current team.</div></div>
     <span class="badge">LIVE DRAFT SYNC</span>
   </div>
   <div class="players-toolbar players-toolbar-single">
     <label><small>Find player</small><input id="playerDirectorySearch" placeholder="Search by player or team"></label>
   </div>
-  <div class="note" style="margin-top:10px">Tap a player to open their tournament profile. Player rankings are now on the separate Rankings page under More.</div>
+  <div class="note" style="margin-top:10px">Tap a player to view their tournament profile.</div>
   <div id="playerDirectory" class="player-list"></div>
 <div class="card" id="rsvpCard" style="margin-top:14px">
   <div class="row between"><div><div class="premium-label">AVAILABILITY</div><h2 style="margin:3px 0 0">Tournament RSVP</h2><div class="status">Players can mark Playing, Maybe or Out.</div></div><span class="badge">PLAYER STATUS</span></div>
@@ -4352,7 +4352,7 @@ function renderPlayersDirectory(){
  const root=$("playerDirectory"); if(!root||!draftState)return;
  const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>({...(g||{}),index:i,name:(g?.name||"").trim()})).filter(g=>g.name);
  const q=($("playerDirectorySearch")?.value||"").trim().toLowerCase();
- const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Available / Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q));
+ const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q));
  const rowHtml=g=>`<div class="player-row-public player-roster-only" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}<div class="player-team-inline">${esc(g.teamName)}</div></div><span class="player-roster-band" title="Handicap band ${esc(playerBandLabel(g))}">${esc(playerBandLabel(g))}</span><div class="player-open-arrow">›</div></div>`;
  if(!rows.length){root.innerHTML='<div class="note">No matching players found.</div>';return}
  const sorted=rows.sort((a,b)=>a.name.localeCompare(b.name));
@@ -6911,5 +6911,42 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
  body.player-simple-home #playersView #playerDirectory .player-roster-only .player-roster-band{min-width:22px!important;width:22px!important;height:22px!important;padding:0!important;font-size:9px!important;justify-self:end!important}
  body.player-simple-home #playersView #playerDirectory .player-roster-only .player-open-arrow{display:block!important;font-size:17px!important}
  body.player-simple-home #playersView #playerDirectory .player-roster-only .player-team-inline{display:block!important;font-size:8px!important;line-height:1.05!important;margin-top:2px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+}
+</style>
+
+<style id="v2775-players-scroll-final">
+/* v2.7.75 — Players mobile: make the entire directory card reliably scrollable on iPhone. */
+@media (max-width:650px){
+  body.player-simple-home #playersView{
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  body.player-simple-home #playersView > .card:first-child{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    max-height:100%!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior-y:contain!important;
+    touch-action:pan-y!important;
+    display:block!important;
+    padding-bottom:18px!important;
+  }
+  body.player-simple-home #playersView #playerDirectory{
+    display:block!important;
+    flex:none!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    margin-top:6px!important;
+    padding-bottom:12px!important;
+  }
+  body.player-simple-home #playersView #playerDirectory .player-directory-flat{
+    display:block!important;
+    height:auto!important;
+    overflow:visible!important;
+  }
 }
 </style>
