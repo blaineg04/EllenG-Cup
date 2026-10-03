@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.72">
+<meta name="elleng-app-version" content="2.7.73">
 <meta name="elleng-build-date" content="Oct 3, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -2973,8 +2973,8 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </div>
 
 <div id="homeSpecialCard" class="card home-highlight">
-  <div class="row between"><strong>🐊 Gator Hole & Final Cargo</strong><span class="badge">SPECIAL SCORING</span></div>
-  <div id="homeSpecialText" class="note" style="margin-top:8px">The Gator Hole is secret until the Commissioner reveals it. Final Cargo adds 6 points to the selected winner.</div>
+  <div class="row between"><strong>🐊 Gator Hole & Final Cargo Shot</strong><span class="badge">SPECIAL SCORING</span></div>
+  <div id="homeSpecialText" class="note" style="margin-top:8px">The Gator Hole is secret until the Commissioner reveals it. Final Cargo Shot adds 6 points to the winning team.</div>
 </div>
 
 
@@ -3127,7 +3127,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div style="margin-top:12px"><label><small>Choose team</small><select id="digitalScorecardTeam" style="max-width:360px"></select></label></div>
   <div id="digitalScorecard" class="scorecard-wrap"></div><div class="row" style="margin-top:12px"><button id="shareTeamScorecard" class="secondary" type="button">📤 Share Team Scorecard</button><span id="shareScorecardMsg" class="status"></span></div>
 </div>
-<div class="card note"><strong>Special scoring:</strong> The Gator Hole awards 12 points to the lowest team, split equally only if the low score is tied. Final Cargo adds 6 points to the winning team.</div>
+<div class="card note"><strong>Special scoring:</strong> The Gator Hole awards 12 points to the lowest team, split equally only if the low score is tied. Final Cargo Shot adds 6 points to the winning team.</div>
 </section>
 
 <section id="teamsView" class="view hidden">
@@ -3387,7 +3387,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 <div id="adminTournament" class="card admin-card">
   <div class="section-toolbar">
-    <div class="admin-section-title"><span class="step">1</span><div><h2>Tournament Controls</h2><div class="section-sub">Course, routing, status, team size, golfer count, hole pars, Gator Hole and Final Cargo.</div></div></div>
+    <div class="admin-section-title"><span class="step">1</span><div><h2>Tournament Controls</h2><div class="section-sub">Course, routing, status, team size, golfer count, hole pars, Gator Hole and Final Cargo Shot.</div></div></div>
   </div>
   <div class="admin-grid">
 
@@ -3402,7 +3402,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
     <label><small>Gator Hole side</small><select id="gatorSide"><option value="">Select / keep current</option><option value="front">Front 9</option><option value="back">Back 9</option></select></label>
     <label><small>Secret Gator Hole</small><select id="gatorHole"><option value="">Not selected</option></select></label>
     <label><small>Gator Hole visibility</small><select id="gatorReveal"><option value="false">Keep Secret</option><option value="true">Reveal Gator Hole</option></select></label>
-    <label><small>Final Cargo winner</small><select id="cargoTeam"><option value="">Not awarded</option></select></label>
+    <label><small>Final Cargo Shot winner</small><select id="cargoTeam"><option value="">Not awarded</option></select></label>
   </div>
   <div id="teamBuildSummary" class="note" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb"></div>
   <div class="note" style="margin-top:7px">Number of teams and Number of golfers stay blank until you choose a new value. Leaving either blank keeps the current saved setting.</div>
@@ -3456,7 +3456,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 <div id="adminNewTournament" class="card admin-card" style="border:2px solid #d8b14a">
   <div class="admin-section-title"><span class="step">6</span><div><h2>Quarterly Tournament Reset</h2><div class="section-sub">Archive the current event, clear live scoring, and prepare the app for the next EllenG Cup.</div></div></div>
-  <div class="note" style="margin-top:12px"><strong>Archive & Start New</strong> keeps your golfer list, handicaps, team count, hole pars and captain login accounts, but clears scores, team assignments, draft picks, captain names, captain team assignments, Gator Hole and Final Cargo. Team names stay in place and can be renamed afterward.</div>
+  <div class="note" style="margin-top:12px"><strong>Archive & Start New</strong> keeps your golfer list, handicaps, team count, hole pars and captain login accounts, but clears scores, team assignments, draft picks, captain names, captain team assignments, Gator Hole and Final Cargo Shot. Team names stay in place and can be renamed afterward.</div>
   <div class="admin-grid" style="margin-top:12px">
     <label><small>New tournament name</small><input id="newTournamentName" value="EllenG Cup" placeholder="EllenG Cup"></label>
     <label><small>New tournament date</small><input id="newTournamentDate" type="date"></label>
@@ -3841,7 +3841,7 @@ async function createWinnerGraphic(){
  const grad=ctx.createLinearGradient(0,0,1200,675);grad.addColorStop(0,'#061827');grad.addColorStop(.6,'#08253b');grad.addColorStop(1,'#123d55');ctx.fillStyle=grad;ctx.fillRect(0,0,1200,675);
  ctx.fillStyle='#d5a72c';ctx.fillRect(0,0,1200,12);ctx.fillRect(0,663,1200,12);ctx.textAlign='center';ctx.fillStyle='#d5a72c';ctx.font='900 70px Georgia, serif';ctx.fillText('EllenG Cup',600,120);ctx.fillStyle='#ffffff';ctx.font='700 30px Arial';ctx.fillText('TOURNAMENT CHAMPIONS',600,176);
  ctx.fillStyle='#ffffff';ctx.font='900 66px Arial';ctx.fillText(teams[win.team]?.name||`Team ${win.team+1}`,600,305);ctx.fillStyle='#d5a72c';ctx.font='900 44px Arial';ctx.fillText(`${win.pts.toFixed(win.pts%1?1:0)} CUP POINTS`,600,365);
- ctx.fillStyle='rgba(255,255,255,.82)';ctx.font='26px Arial';ctx.fillText(tournamentCourseLabel()||'Course not selected',600,430);const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`Final Cargo: ${teams[Number(tournament.final_cargo_team)]?.name||'Awarded'}`:'Final Cargo: —';ctx.font='22px Arial';ctx.fillText(cargo,600,475);ctx.fillStyle='rgba(255,255,255,.65)';ctx.font='20px Arial';ctx.fillText('PLAY BAD. LOOK GOOD. • ELLENG CUP',600,590);
+ ctx.fillStyle='rgba(255,255,255,.82)';ctx.font='26px Arial';ctx.fillText(tournamentCourseLabel()||'Course not selected',600,430);const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`Final Cargo Shot: ${teams[Number(tournament.final_cargo_team)]?.name||'Awarded'}`:'Final Cargo Shot: —';ctx.font='22px Arial';ctx.fillText(cargo,600,475);ctx.fillStyle='rgba(255,255,255,.65)';ctx.font='20px Arial';ctx.fillText('PLAY BAD. LOOK GOOD. • ELLENG CUP',600,590);
  const url=canvas.toDataURL('image/png');preview.innerHTML=`<img src="${url}" alt="EllenG Cup winner graphic"><a class="primary" id="winnerDownload" download="EllenG-Cup-Champions.png" href="${url}" style="padding:11px 14px;border-radius:10px;color:white;font-weight:800">Save Winner Graphic</a> <button type="button" class="secondary" id="winnerShare">Share</button>`;msg.textContent='Winner graphic ready.';
  const share=$("winnerShare");if(share)share.onclick=async()=>{try{const blob=await (await fetch(url)).blob(),file=new File([blob],'EllenG-Cup-Champions.png',{type:'image/png'});if(navigator.canShare?.({files:[file]}))await navigator.share({files:[file],title:'EllenG Cup Champions'});else if(navigator.share)await navigator.share({title:'EllenG Cup Champions',text:`${teams[win.team]?.name||'Champions'} won the EllenG Cup.`});else msg.textContent='Use Save Winner Graphic to save or share it.'}catch(e){if(e?.name!=='AbortError')msg.textContent='Use Save Winner Graphic to save or share it.'}};
 }
@@ -3950,7 +3950,7 @@ function renderCourseHoleCard(){
  const h=Number(sel.value||1),p=parForHole(h),yards=activeTeeLine(h,false);
  const isG=!!(tournament?.gator_revealed&&Number(tournament?.gator_hole)===h);
  const cargo=(h===18);
- root.innerHTML=`<div class="hole-big">Hole ${h} • Par ${p}</div><div style="margin-top:5px;opacity:.88">${esc(yards||"Yardage unavailable")}</div><div class="hole-meta"><span class="hole-pill">${isG?"🐊 GATOR HOLE":"⛳ Standard Hole"}</span>${cargo?'<span class="hole-pill">🚢 FINAL CARGO FINISH</span>':""}<span class="hole-pill">HCP ${h}</span></div><div style="margin-top:12px;font-size:13px;opacity:.86">${p===3?"Accuracy hole — center of the green is your friend.":p===5?"Risk/reward — position the tee shot for the best scoring angle.":"Commit to the target and keep the ball in play."}</div>`;
+ root.innerHTML=`<div class="hole-big">Hole ${h} • Par ${p}</div><div style="margin-top:5px;opacity:.88">${esc(yards||"Yardage unavailable")}</div><div class="hole-meta"><span class="hole-pill">${isG?"🐊 GATOR HOLE":"⛳ Standard Hole"}</span>${cargo?'<span class="hole-pill">🚢 FINAL CARGO SHOT</span>':""}<span class="hole-pill">HCP ${h}</span></div><div style="margin-top:12px;font-size:13px;opacity:.86">${p===3?"Accuracy hole — center of the green is your friend.":p===5?"Risk/reward — position the tee shot for the best scoring angle.":"Commit to the target and keep the ball in play."}</div>`;
 }
 async function loadWeather(){
  const panel=$("weatherPanel"),btn=$("loadWeatherBtn");if(!panel)return;
@@ -4006,7 +4006,7 @@ function renderTournamentAwards(){
   ['BIRDIE LEADER',birds&&birds.value?teams[birds.ti]?.name:'—',birds&&birds.value?`${birds.value} birdie${birds.value===1?'':'s'}`:'No birdies yet',birds?.ti],
   ['EAGLE WATCH',eagles&&eagles.value?teams[eagles.ti]?.name:'—',eagles&&eagles.value?`${eagles.value} eagle${eagles.value===1?'':'s'}`:'No eagles yet',eagles?.ti],
   ['GATOR KILLER',gatorWinner?gatorWinner.names:'—',gatorWinner?`Hole ${gatorHole} • ${gatorWinner.score} strokes`:(tournament?.gator_revealed?'Waiting on all teams':'Gator Hole still secret'),null],
-  ['CARGO KING',tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?(teams[Number(tournament.final_cargo_team)]?.name||'—'):'—',tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`+${Number(tournament.final_cargo_points||6)} Final Cargo points`:'Not awarded yet',Number(tournament?.final_cargo_team)]
+  ['CARGO KING',tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?(teams[Number(tournament.final_cargo_team)]?.name||'—'):'—',tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`+${Number(tournament.final_cargo_points||6)} Final Cargo Shot points`:'Not awarded yet',Number(tournament?.final_cargo_team)]
  ];
  root.innerHTML=cards.map(c=>`<div class="award-card" style="--accent:${Number.isInteger(c[3])?teamAccent(c[3]):'var(--gold)'}"><div class="award-kicker">${esc(c[0])}</div><strong>${esc(c[1]||'—')}</strong><span>${esc(c[2])}</span></div>`).join('');
  if($("awardsStatus"))$("awardsStatus").textContent=String(tournament?.status||'setup').toUpperCase()==='COMPLETE'?'FINAL':'LIVE';
@@ -4016,7 +4016,7 @@ function renderCommissionerControlRoom(){
  const pending=nextHole<=18?teams.filter((_,ti)=>!scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===nextHole&&x.score!=null)).map(t=>t.name):[];
  const logged='Live account tracking is not enabled';
  root.innerHTML=`<div class="control-card"><span>OFFICIAL HOLES</span><strong>${holes.length} / 18</strong><div class="status">Completed by every team</div></div><div class="control-card"><span>CURRENT LEADER</span><strong>${snap?(snap.tied?'Tied':esc(teams[snap.team]?.name||`Team ${snap.team+1}`)):'—'}</strong><div class="status">${snap?`${snap.pts.toFixed(snap.pts%1?1:0)} Cup pts`:'No official points yet'}</div></div><div class="control-card"><span>NEXT ACTIVE HOLE</span><strong>${nextHole<=18?'Hole '+nextHole:'Complete'}</strong><div class="status">${nextHole<=18?`${teams.length-pending.length}/${teams.length} teams posted`:'Round finished'}</div></div><div class="control-card"><span>PLAYER STATUS</span><strong>${(draftState?.golfers||[]).filter(g=>(g?.name||'').trim()).length}</strong><div class="status">${logged}</div></div>`;
- alert.innerHTML=nextHole>18?'<strong>Round scoring is complete.</strong> Review final standings, awards, Gator Hole and Final Cargo before marking the tournament complete.':pending.length?`<strong>Hole ${nextHole} pending:</strong> ${esc(pending.join(', '))}`:`<strong>Hole ${nextHole} ready to score.</strong> No teams have posted yet.`;
+ alert.innerHTML=nextHole>18?'<strong>Round scoring is complete.</strong> Review final standings, awards, Gator Hole and Final Cargo Shot before marking the tournament complete.':pending.length?`<strong>Hole ${nextHole} pending:</strong> ${esc(pending.join(', '))}`:`<strong>Hole ${nextHole} ready to score.</strong> No teams have posted yet.`;
 }
 function pulseGolfLabel(score,par){
  const diff=Number(score)-Number(par);
@@ -4097,7 +4097,7 @@ function renderTournamentRecap(){
  const medals=["🥇","🥈","🥉"],pod=ranking.slice(0,3).map((x,i)=>`<div class="recap-place team-accent" style="--team-accent:${teamAccent(x.team)}"><span class="medal">${medals[i]}</span><strong>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div class="status" style="margin-top:4px">${x.pts.toFixed(x.pts%1?1:0)} Cup pts • Thru ${x.thru||0}</div></div>`).join("");
  let best=null;teams.forEach((_,ti)=>{let s=0,p=0,c=0;for(let h=1;h<=18;h++){const r=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null);if(r){s+=Number(r.score);p+=parForHole(h);c++}}if(c&&(!best||((s-p)<best.rel)||((s-p)===best.rel&&c>best.c)))best={ti,rel:s-p,c}});
  const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Hole ${Number(tournament.gator_hole)}`:"Secret / not revealed";const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""?(teams[Number(tournament.final_cargo_team)]?.name||`Team ${Number(tournament.final_cargo_team)+1}`):"Not awarded";const bestText=best?`${teams[best.ti]?.name||`Team ${best.ti+1}`} ${best.rel===0?'E':best.rel>0?'+'+best.rel:'−'+Math.abs(best.rel)} (${best.c} holes)`:"—";
- root.innerHTML=`<div class="recap-podium">${pod}</div><div class="recap-stats"><div class="recap-stat"><span class="status">BEST TO PAR</span><strong>${esc(bestText)}</strong></div><div class="recap-stat"><span class="status">GATOR HOLE</span><strong>${esc(gator)}</strong></div><div class="recap-stat"><span class="status">FINAL CARGO</span><strong>${esc(cargo)}</strong></div></div>`;
+ root.innerHTML=`<div class="recap-podium">${pod}</div><div class="recap-stats"><div class="recap-stat"><span class="status">BEST TO PAR</span><strong>${esc(bestText)}</strong></div><div class="recap-stat"><span class="status">GATOR HOLE</span><strong>${esc(gator)}</strong></div><div class="recap-stat"><span class="status">FINAL CARGO SHOT</span><strong>${esc(cargo)}</strong></div></div>`;
 }
 function renderTournamentHealth(){
  if(!isCommissioner||!draftState)return;let incomplete=0,missing=0;const next=[];for(let h=1;h<=18;h++){const miss=teams.map((t,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null)?null:t.name).filter(Boolean);if(miss.length){incomplete++;missing+=miss.length;if(next.length<4)next.push(`Hole ${h}: ${miss.join(', ')}`)}}
@@ -5119,7 +5119,7 @@ async function archiveAndStartNew(){
  const date=$("newTournamentDate")?.value||null;
  const first=confirm("Archive the current tournament and start a new quarterly event? Current scores and rosters will be saved in the archive first. Captain logins will be kept for the next event.");
  if(!first)return;
- const second=confirm("This will clear live scores, draft picks, golfer-to-team assignments, the Gator Hole and Final Cargo. Captain login accounts will be kept, but captain names, emails and team assignments will be cleared. Continue?");
+ const second=confirm("This will clear live scores, draft picks, golfer-to-team assignments, the Gator Hole and Final Cargo Shot. Captain login accounts will be kept, but captain names, emails and team assignments will be cleared. Continue?");
  if(!second)return;
  const msg=$("newTournamentMsg"); if(msg)msg.textContent="Archiving current tournament…";
  try{
@@ -5136,7 +5136,7 @@ async function archiveAndStartNew(){
   if(resetError)throw resetError;
   if(resetData?.error)throw new Error(resetData.error);
   await loadBase(); await loadScores(); renderAll();
-  if(msg)msg.textContent="New tournament is ready. Scores, picks, golfer team assignments, captain names, captain team assignments, Gator Hole and Final Cargo were reset. Captain login accounts were kept.";
+  if(msg)msg.textContent="New tournament is ready. Scores, picks, golfer team assignments, captain names, captain team assignments, Gator Hole and Final Cargo Shot were reset. Captain login accounts were kept.";
  }catch(e){console.error(e);if(msg)msg.textContent=e?.message||"Unable to start the new tournament."}
 }
 
@@ -5165,7 +5165,7 @@ function checkLiveAlerts(){
  if(gComplete&&!lastAlertGatorComplete)pushInAppAlert("🐊 Gator Hole complete",`Hole ${gh} points are official`);
  lastAlertGatorComplete=gComplete;
  const cargo=tournament?.final_cargo_team;
- if(cargo!==null&&cargo!==undefined&&cargo!==""&&String(cargo)!==String(lastAlertCargo)){pushInAppAlert("🚢 Final Cargo awarded",`${teams[Number(cargo)]?.name||`Team ${Number(cargo)+1}`} +${Number(tournament?.final_cargo_points||6)} points`);lastAlertCargo=cargo}
+ if(cargo!==null&&cargo!==undefined&&cargo!==""&&String(cargo)!==String(lastAlertCargo)){pushInAppAlert("🚢 Final Cargo Shot awarded",`${teams[Number(cargo)]?.name||`Team ${Number(cargo)+1}`} +${Number(tournament?.final_cargo_points||6)} points`);lastAlertCargo=cargo}
 }
 
 function renderLeaderSpotlight(){
@@ -5252,7 +5252,7 @@ function checkBigMoments(){
  if(gComplete&&!lastBigMomentGator){const hp=pointsForHole(gh)||[],mx=Math.max(...hp),wins=teams.map((t,i)=>({t,i,p:Number(hp[i]||0)})).filter(x=>x.p===mx&&mx>0).map(x=>x.t?.name||`Team ${x.i+1}`);showBigMoment("🐊","GATOR HOLE",wins.length?`${wins.join(" & ")} STRIKE`:"GATOR HOLE COMPLETE",`Hole ${gh} • ${wins.length>1?"points split":"12-point showdown"}`)}
  lastBigMomentGator=gComplete;
  const cargo=tournament?.final_cargo_team;
- if(cargo!==null&&cargo!==undefined&&cargo!==""&&String(cargo)!==String(lastBigMomentCargo)){const ti=Number(cargo);showBigMoment("🚢","FINAL CARGO",`${teams[ti]?.name||`Team ${ti+1}`} GETS THE CARGO`,`+${Number(tournament?.final_cargo_points||6)} Cup points`);lastBigMomentCargo=cargo}
+ if(cargo!==null&&cargo!==undefined&&cargo!==""&&String(cargo)!==String(lastBigMomentCargo)){const ti=Number(cargo);showBigMoment("🚢","FINAL CARGO SHOT",`${teams[ti]?.name||`Team ${ti+1}`} GETS THE CARGO`,`+${Number(tournament?.final_cargo_points||6)} Cup points`);lastBigMomentCargo=cargo}
 }
 function applyPlayerSimplicity(){
  const simple=!!user&&!isCommissioner;
@@ -5284,8 +5284,8 @@ function renderHome(){
  if($("homeFormat"))$("homeFormat").textContent=formatConfirmed?(isSplitPair()?"Split-Pair Scramble":`${draftTeamSize()}-Man EllenG`):"—";
  if($("homeFormatSub"))$("homeFormatSub").textContent=formatConfirmed?(isSplitPair()?"Two 2-man pairs • both scores count":"Front 9 Scramble • Back 9 Shamble"):"";
  const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Gator Hole: Hole ${Number(tournament.gator_hole)}. `:"Gator Hole is still secret. ";
- let cargo="Final Cargo has not been awarded.";
- if(tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""){const ti=Number(tournament.final_cargo_team);cargo=`Final Cargo: ${teams[ti]?.name||`Team ${ti+1}`} +${Number(tournament.final_cargo_points||6)} points.`}
+ let cargo="Final Cargo Shot has not been awarded.";
+ if(tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""){const ti=Number(tournament.final_cargo_team);cargo=`Final Cargo Shot: ${teams[ti]?.name||`Team ${ti+1}`} +${Number(tournament.final_cargo_points||6)} points.`}
  if($("homeSpecialText"))$("homeSpecialText").textContent=gator+cargo;
 }
 
