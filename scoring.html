@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.69">
+<meta name="elleng-app-version" content="2.7.70">
 <meta name="elleng-build-date" content="Oct 3, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -4348,7 +4348,7 @@ function renderPlayersDirectory(){
  const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>({...(g||{}),index:i,name:(g?.name||"").trim()})).filter(g=>g.name);
  const q=($("playerDirectorySearch")?.value||"").trim().toLowerCase();
  const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Available / Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q));
- const rowHtml=g=>`<div class="player-row-public player-roster-only" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}<div class="player-team-inline">${esc(g.teamName)}</div></div><div class="player-open-arrow">›</div></div>`;
+ const rowHtml=g=>`<div class="player-row-public player-roster-only" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}<div class="player-team-inline">${esc(g.teamName)}</div></div><span class="player-roster-band" title="Handicap band ${esc(playerBandLabel(g))}">${esc(playerBandLabel(g))}</span><div class="player-open-arrow">›</div></div>`;
  if(!rows.length){root.innerHTML='<div class="note">No matching players found.</div>';return}
  const teamGroups=Array.from({length:activeTeamCount()},(_,i)=>({name:draftState?.teams?.[i]?.name||`Team ${i+1}`,captain:draftState?.teams?.[i]?.captain||"",rows:rows.filter(g=>g.teamIndex===i).sort((a,b)=>a.name.localeCompare(b.name))}));
  const unassigned=rows.filter(g=>g.teamIndex==null).sort((a,b)=>a.name.localeCompare(b.name));
@@ -6881,8 +6881,9 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
 <style id="v2768-player-rankings-split">
 /* v2.7.68 — separate clean Players roster from public A/B/C/D Rankings. */
 .players-toolbar-single{grid-template-columns:minmax(180px,420px)!important}
-.player-row-public.player-roster-only{grid-template-columns:46px minmax(0,1fr) 28px!important;cursor:pointer}
+.player-row-public.player-roster-only{grid-template-columns:46px minmax(0,1fr) 34px 24px!important;cursor:pointer}
 .player-row-public.player-roster-only .player-name-public{font-size:15px}
+.player-roster-band{display:inline-grid;place-items:center;min-width:28px;height:28px;padding:0 7px;border-radius:999px;background:#edf1f3;border:1px solid var(--line);color:var(--navy);font-size:12px;font-weight:950;line-height:1}
 .player-team-inline{font-size:12px;color:var(--muted);font-weight:700;margin-top:3px}
 .player-open-arrow{font-size:24px;color:var(--muted);text-align:right}
 .rankings-directory{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
@@ -6903,7 +6904,8 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
  #rankingsView .ranking-letter{width:32px;height:32px;border-radius:9px;font-size:17px}
  #rankingsView .ranking-player-row{grid-template-columns:32px minmax(0,1fr) auto;padding:6px 9px;gap:7px}
  #rankingsView .ranking-avatar{width:32px;height:32px}
- body.player-simple-home #playersView #playerDirectory .player-row-public.player-roster-only{display:grid!important;grid-template-columns:30px minmax(0,1fr) 18px!important}
+ body.player-simple-home #playersView #playerDirectory .player-row-public.player-roster-only{display:grid!important;grid-template-columns:30px minmax(0,1fr) 24px 14px!important}
+ body.player-simple-home #playersView #playerDirectory .player-roster-only .player-roster-band{min-width:22px!important;width:22px!important;height:22px!important;padding:0!important;font-size:9px!important;justify-self:end!important}
  body.player-simple-home #playersView #playerDirectory .player-roster-only .player-open-arrow{display:block!important;font-size:17px!important}
  body.player-simple-home #playersView #playerDirectory .player-roster-only .player-team-inline{display:block!important;font-size:8px!important;line-height:1.05!important;margin-top:2px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 }
