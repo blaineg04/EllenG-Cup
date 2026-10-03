@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.64">
+<meta name="elleng-app-version" content="2.7.65">
 <meta name="elleng-build-date" content="Oct 2, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -3283,7 +3283,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <section id="adminView" class="view hidden">
 <div class="card commissioner-hero">
   <div class="row between">
-    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.64 • STABLE BASE v2.7.63</div></div>
+    <div><h2 style="margin:0;color:white">Commissioner Dashboard</h2><div class="note" style="margin-top:5px">One place to run the EllenG Cup — tournament controls, teams, captain logins, golfers and assignments.</div><div id="commissionerBuildInfo" style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#f2c94c">APP BUILD v2.7.65 • STABLE BASE v2.7.64</div></div>
     <div class="row">
       <a href="draft.html" class="secondary" style="text-decoration:none;display:inline-block">Open Draft Room</a>
       <span class="badge" style="background:#d5a72c;color:#10202c">FULL CONTROL</span>
@@ -3555,7 +3555,7 @@ function renderCommissionerSystemStatus(){
  if(!isCommissioner)return;
  const versionEl=$("commissionerSystemVersion"),connectionEl=$("commissionerSystemConnection"),syncEl=$("commissionerSystemSync"),roleEl=$("commissionerSystemRole"),badge=$("commissionerSystemBadge"),build=$("commissionerBuildInfo");
  if(versionEl)versionEl.textContent=`v${APP_VERSION}`;
- if(build)build.textContent=`APP BUILD v${APP_VERSION} • STABLE BASE v2.7.63`;
+ if(build)build.textContent=`APP BUILD v${APP_VERSION} • STABLE BASE v2.7.64`;
  const chip=$("syncStatusChip");
  const chipText=String(chip?.textContent||"").trim();
  const isError=chip?.classList?.contains("error");
@@ -6107,6 +6107,57 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
 }
 </style>
 </body>
+
+<style id="v2765-handicap-restore">
+/* v2.7.65 — restore player handicap editing on mobile My Score.
+   The older no-scroll board hid card #1, which is the My Golf / handicap editor. */
+@media (max-width:650px){
+  body.player-simple-home #leaderboardView:not(.hidden) > .card:nth-of-type(1){
+    display:block!important;
+    flex:0 0 auto!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:7px 9px!important;
+    border-radius:14px!important;
+    overflow:hidden!important;
+  }
+  body.player-simple-home #leaderboardView:not(.hidden) > .card:nth-of-type(1) > .row:first-child{
+    margin:0!important;
+  }
+  body.player-simple-home #leaderboardView:not(.hidden) > .card:nth-of-type(1) h2{
+    font-size:15px!important;line-height:1!important;margin:0!important;
+  }
+  body.player-simple-home #leaderboardView:not(.hidden) > .card:nth-of-type(1) > .row:first-child .status,
+  body.player-simple-home #leaderboardView:not(.hidden) > .card:nth-of-type(1) #selfPlayerIdentity,
+  body.player-simple-home #leaderboardView:not(.hidden) > .card:nth-of-type(1) > .note:not(#selfPlayerIdentity){
+    display:none!important;
+  }
+  body.player-simple-home #leaderboardView:not(.hidden) > .card:nth-of-type(1) .badge{
+    font-size:8px!important;padding:3px 6px!important;
+  }
+  body.player-simple-home #leaderboardView:not(.hidden) > .card:nth-of-type(1) .admin-grid{
+    grid-template-columns:1fr 1fr!important;
+    gap:5px!important;
+    margin-top:6px!important;
+  }
+  body.player-simple-home #leaderboardView:not(.hidden) > .card:nth-of-type(1) label small{
+    font-size:8px!important;line-height:1!important;margin-bottom:2px!important;
+  }
+  body.player-simple-home #leaderboardView:not(.hidden) > .card:nth-of-type(1) select,
+  body.player-simple-home #leaderboardView:not(.hidden) > .card:nth-of-type(1) input{
+    min-height:30px!important;height:30px!important;padding:3px 6px!important;font-size:12px!important;
+  }
+  body.player-simple-home #leaderboardView:not(.hidden) > .card:nth-of-type(1) > .row:last-of-type{
+    margin-top:5px!important;
+  }
+  body.player-simple-home #leaderboardView:not(.hidden) #saveSelfHandicap{
+    width:100%!important;min-height:30px!important;height:30px!important;padding:4px 8px!important;font-size:10px!important;
+  }
+  body.player-simple-home #leaderboardView:not(.hidden) #selfHandicapMsg{
+    margin-top:3px!important;font-size:8px!important;line-height:1!important;
+  }
+}
+</style>
 </html>
 
 <style>
