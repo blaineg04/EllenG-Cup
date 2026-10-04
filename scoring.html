@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.86">
+<meta name="elleng-app-version" content="2.7.88">
 <meta name="elleng-build-date" content="Oct 3, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -4406,10 +4406,7 @@ function renderTeams(){
 
 function playerBandLabel(g){
  const b=String(g?.band||"").toUpperCase();
- if(["A","B","C","D"].includes(b))return b;
- const n=Number(g?.hcp);
- if(Number.isFinite(n))return n<10?"A":n<18?"B":n<26?"C":"D";
- return "—";
+ return ["A","B","C","D"].includes(b)?b:"—";
 }
 function playerHandicapLabel(g){
  const raw=g?.hcp;
@@ -4439,7 +4436,7 @@ function renderPlayersDirectory(){
  const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>({...(g||{}),index:i,name:(g?.name||"").trim()})).filter(g=>g.name);
  const q=($("playerDirectorySearch")?.value||"").trim().toLowerCase();
  const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q));
- const rowHtml=g=>`<div class="player-row-public player-roster-only" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}<div class="player-team-inline">${esc(g.teamName)}</div></div><span class="player-roster-band" title="Handicap band ${esc(playerBandLabel(g))}">${esc(playerBandLabel(g))}</span><div class="player-open-arrow">›</div></div>`;
+ const rowHtml=g=>{const band=playerBandLabel(g);const bandChip=band==="—"?"":`<span class="player-roster-band" title="Handicap band ${esc(band)}">${esc(band)}</span>`;return `<div class="player-row-public player-roster-only" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}<div class="player-team-inline">${esc(g.teamName)}</div></div>${bandChip}<div class="player-open-arrow">›</div></div>`};
  if(!rows.length){root.innerHTML='<div class="note">No matching players found.</div>';return}
  const sorted=rows.sort((a,b)=>a.name.localeCompare(b.name));
  root.innerHTML=`<div class="player-directory-flat">${sorted.map(rowHtml).join("")}</div>`;
@@ -4886,13 +4883,13 @@ function renderPlayerEditor(){
  ensureDraftShape();
  $("playerEditor").innerHTML=draftState.golfers.map((g,i)=>{
    const rawHcp=String(g.hcp??"").trim();
-   const shownBand=rawHcp!==""?(bandFromHandicapValue(rawHcp)||String(g.band||"").toUpperCase()):String(g.band||"").toUpperCase();
+   const shownBand=["A","B","C","D"].includes(String(g.band||"").toUpperCase())?String(g.band).toUpperCase():"";
    const acct=playerAccounts.find(a=>Number(a.golfer_index)===i);
    const loginUsername=String(acct?.username||"");
    const linked=!!acct?.user_id;
    const photo=String(g.photo_url||g.photo||"").trim();
    const preview=photo?`<div class="player-photo-preview"><img src="${esc(photo)}" alt="${esc(g.name||"Player")}"><span>Current profile photo</span></div>`:`<div class="player-photo-preview"><span>No photo yet — initials will be used on the profile card.</span></div>`;
-   return `<div data-player-block="${i}"><div class="player-admin-row" data-player-row="${i}"><input data-player-name="${i}" value="${esc(g.name||"")}" placeholder="Golfer name"><select data-player-band="${i}" ${rawHcp!==""?"disabled":""}><option value="" ${shownBand===""?"selected":""}>Unranked</option>${["A","B","C","D"].map(b=>`<option value="${b}" ${shownBand===b?"selected":""}>${b}</option>`).join("")}</select><input data-player-hcp="${i}" type="number" min="0" max="54" step="0.1" inputmode="decimal" value="${esc(g.hcp??"")}" placeholder="HCP" oninput="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onchange="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onblur="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)"><select class="player-team" data-player-team="${i}">${teamOptions(g.team==null?"":g.team)}</select><div class="row player-actions" style="gap:5px;flex-wrap:nowrap"><button class="danger" style="padding:8px 9px;font-size:11px" data-remove-player="${i}" type="button">Remove</button></div></div><div class="player-photo-tools"><label><small>Profile photo</small><input data-player-photo-file="${i}" type="file" accept="image/*"></label><button class="secondary" type="button" data-upload-player-photo="${i}">Upload Photo</button><label style="grid-column:1/-1"><small>Photo URL (optional backup)</small><input class="player-photo-input" data-idx="${i}" value="${esc(photo)}" placeholder="Optional image URL"></label><div style="grid-column:1/-1" data-player-photo-msg="${i}" class="status"></div><div style="grid-column:1/-1">${preview}</div></div><div class="player-login-row"><label><small>Player username</small><input data-player-login-username="${i}" type="text" autocapitalize="none" autocomplete="off" value="${esc(loginUsername)}" placeholder="Example: ${esc(String(g.name||"player").toLowerCase().replace(/[^a-z0-9]+/g,""))}"></label><label><small>${linked?"Reset password (optional)":"Temporary password"}</small><input data-player-login-password="${i}" type="password" minlength="6" placeholder="${linked?"Enter only to reset":"Automatic: golf01"}"></label><button class="primary" type="button" data-save-player-login="${i}">${linked?"Update / Reset":"Create Login"}</button><button class="secondary" type="button" data-unlink-player-login="${i}" ${linked||loginUsername?"":"disabled"}>Unlink</button><div class="player-login-status" data-player-login-msg="${i}">${linked?`✓ Username: ${esc(loginUsername||"linked account")}${acct?.must_change_password?" • temporary password still active":""}`:"Login will be created automatically."}</div></div></div>`;
+   return `<div data-player-block="${i}"><div class="player-admin-row" data-player-row="${i}"><input data-player-name="${i}" value="${esc(g.name||"")}" placeholder="Golfer name"><select data-player-band="${i}"><option value="" ${shownBand===""?"selected":""}>Unranked</option>${["A","B","C","D"].map(b=>`<option value="${b}" ${shownBand===b?"selected":""}>${b}</option>`).join("")}</select><input data-player-hcp="${i}" type="number" min="0" max="54" step="0.1" inputmode="decimal" value="${esc(g.hcp??"")}" placeholder="HCP" oninput="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onchange="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onblur="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)"><select class="player-team" data-player-team="${i}">${teamOptions(g.team==null?"":g.team)}</select><div class="row player-actions" style="gap:5px;flex-wrap:nowrap"><button class="danger" style="padding:8px 9px;font-size:11px" data-remove-player="${i}" type="button">Remove</button></div></div><div class="player-photo-tools"><label><small>Profile photo</small><input data-player-photo-file="${i}" type="file" accept="image/*"></label><button class="secondary" type="button" data-upload-player-photo="${i}">Upload Photo</button><label style="grid-column:1/-1"><small>Photo URL (optional backup)</small><input class="player-photo-input" data-idx="${i}" value="${esc(photo)}" placeholder="Optional image URL"></label><div style="grid-column:1/-1" data-player-photo-msg="${i}" class="status"></div><div style="grid-column:1/-1">${preview}</div></div><div class="player-login-row"><label><small>Player username</small><input data-player-login-username="${i}" type="text" autocapitalize="none" autocomplete="off" value="${esc(loginUsername)}" placeholder="Example: ${esc(String(g.name||"player").toLowerCase().replace(/[^a-z0-9]+/g,""))}"></label><label><small>${linked?"Reset password (optional)":"Temporary password"}</small><input data-player-login-password="${i}" type="password" minlength="6" placeholder="${linked?"Enter only to reset":"Automatic: golf01"}"></label><button class="primary" type="button" data-save-player-login="${i}">${linked?"Update / Reset":"Create Login"}</button><button class="secondary" type="button" data-unlink-player-login="${i}" ${linked||loginUsername?"":"disabled"}>Unlink</button><div class="player-login-status" data-player-login-msg="${i}">${linked?`✓ Username: ${esc(loginUsername||"linked account")}${acct?.must_change_password?" • temporary password still active":""}`:"Login will be created automatically."}</div></div></div>`;
  }).join("")||'<div class="note" style="padding:12px 0">No golfers yet.</div>';
  document.querySelectorAll("[data-remove-player]").forEach(b=>b.addEventListener("click",()=>removePlayer(Number(b.dataset.removePlayer))));
  document.querySelectorAll("[data-save-player-login]").forEach(b=>b.addEventListener("click",()=>savePlayerLogin(Number(b.dataset.savePlayerLogin))));
@@ -4901,7 +4898,16 @@ function renderPlayerEditor(){
  document.querySelectorAll("[data-player-hcp]").forEach(input=>{
    const syncBand=()=>syncPlayerBandField(input);
    ["input","change","keyup","blur"].forEach(evt=>input.addEventListener(evt,syncBand));
-   syncBand();
+ });
+ // If the commissioner explicitly chooses Unranked, also clear the old HCP field.
+ // That leaves the player truly unranked until they submit their own handicap.
+ document.querySelectorAll("[data-player-band]").forEach(sel=>{
+   sel.addEventListener("change",()=>{
+     if(String(sel.value||"")!=="")return;
+     const i=sel.getAttribute("data-player-band");
+     const h=document.querySelector(`[data-player-hcp="${i}"]`);
+     if(h)h.value="";
+   });
  });
 }
 async function savePlayerLogin(i){
@@ -5026,10 +5032,11 @@ function renderSelfHandicap(){
    const rawHcp=g.hcp==null?"":String(g.hcp).trim();
    if(!selfHandicapEditing) hcpInput.value=rawHcp;
    const effectiveHcp=selfHandicapEditing?selfHandicapDraftValue:rawHcp;
-   const autoBand=bandFromHandicapValue(effectiveHcp);
-   bandSel.value=autoBand||(["A","B","C","D"].includes(String(g.band||"").toUpperCase())?String(g.band).toUpperCase():"");
+   const savedBand=["A","B","C","D"].includes(String(g.band||"").toUpperCase())?String(g.band).toUpperCase():"";
+   const autoBand=selfHandicapEditing?bandFromHandicapValue(effectiveHcp):null;
+   bandSel.value=autoBand||savedBand;
    bandSel.disabled=!!autoBand;
-   bandSel.title=autoBand?`Auto-set from handicap ${effectiveHcp}`:"Choose a band only when exact handicap is blank.";
+   bandSel.title=autoBand?`Auto-set from handicap ${effectiveHcp}`:(savedBand?"Your saved handicap band.":"Unranked until you enter and save your handicap.");
    if(saveBtn)saveBtn.disabled=false;
    if(scoreBtn){
      scoreBtn.disabled=ti==null;
@@ -6056,13 +6063,14 @@ $("savePlayers").addEventListener("click",async()=>{
  try{
    const patches=draftState.golfers.map((g,i)=>{
      const n=document.querySelector(`[data-player-name="${i}"]`),b=document.querySelector(`[data-player-band="${i}"]`),h=document.querySelector(`[data-player-hcp="${i}"]`),t=document.querySelector(`[data-player-team="${i}"]`),p=document.querySelector(`.player-photo-input[data-idx="${i}"]`);
-     const hcp=h?h.value.trim():String(g.hcp??"").trim();
-     const autoBand=hcp!==""?bandFromHandicapValue(hcp):null;
-     if(b&&autoBand)b.value=autoBand;
+     const selectedBand=b?String(b.value||"").toUpperCase():String(g.band||"").toUpperCase();
+     // Unranked means no commissioner-supplied handicap remains on the record.
+     // This prevents the backend from immediately recreating A/B/C/D from an old HCP.
+     const hcp=selectedBand===""?"":(h?h.value.trim():String(g.hcp??"").trim());
      return {index:i,patch:{
        name:n?n.value.trim():g.name,
        hcp,
-       band:autoBand||(b?b.value:g.band),
+       band:selectedBand,
        team:t?(t.value===""?null:Number(t.value)):(g.team??null),
        photo_url:p?p.value.trim():String(g.photo_url||"").trim()
      }};
