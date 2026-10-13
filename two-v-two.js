@@ -33,5 +33,28 @@
     return {ok:true,format,matches};
   }
 
-  return Object.freeze({FORMATS,planPairings});
+
+  // Adapt the existing draft roster without writing to the tournament database.
+  // Captains count as golfers only when they are present in a team roster.
+  function fromDraftState(state,format){
+    if(!state||!Array.isArray(state.teams)||state.teams.length!==2||!Array.isArray(state.golfers))
+      return {ok:false,error:'Choose exactly two drafted teams first.'};
+    const make=(team,index)=>{
+      if(!Array.isArray(team.roster)) return null;
+      return team.roster.map(playerIndex=>{
+        const golfer=state.golfers[playerIndex];
+        if(!Number.isInteger(playerIndex)||!golfer||!String(golfer.name||'').trim()) return null;
+        return {id:String(playerIndex),name:String(golfer.name)};
+      });
+    };
+    const a=make(state.teams[0],0),b=make(state.teams[1],1);
+    if(!a||!b||a.some(x=>!x)||b.some(x=>!x))
+      return {ok:false,error:'The draft roster contains an invalid golfer.'};
+    const result=planPairings(a,b,format);
+    if(!result.ok) return result;
+    return {...result,teamNames:state.teams.map((t,i)=>String(t.name||'Team '+(i+1))),
+      golferNames:Object.fromEntries([...a,...b].map(p=>[p.id,p.name]))};
+  }
+
+  return Object.freeze({FORMATS,planPairings,fromDraftState});
 });
