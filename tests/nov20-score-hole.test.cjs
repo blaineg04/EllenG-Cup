@@ -89,3 +89,13 @@ test('live score subscription reports disconnections and failed reloads',()=>{
  assert.match(body,/setSyncStatus\("error","Live updates disconnected/);
  assert.match(body,/setSyncStatus\("error","Live scores need refresh"\)/);
 });
+
+test('network recovery reloads scores before restoring realtime and offline queue',()=>{
+ const body=functionBody('window.addEventListener("online",async()=>{','\nwindow.addEventListener("offline",renderOfflineState)');
+ assert.match(body,/await loadScores\(\)/);
+ assert.match(body,/renderAll\(\)/);
+ assert.match(body,/subscribeLive\(\)/);
+ assert.match(body,/await flushOfflineScores\(\)/);
+ assert.ok(body.indexOf('await loadScores()')<body.indexOf('subscribeLive()'));
+ assert.ok(body.indexOf('subscribeLive()')<body.indexOf('await flushOfflineScores()'));
+});
