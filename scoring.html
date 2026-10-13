@@ -4376,16 +4376,19 @@ function playerAchievementBadges(g,gi){
 const OFFLINE_SCORE_KEY="elleng_offline_score_queue_v1";
 function offlineQueue(){try{return JSON.parse(localStorage.getItem(OFFLINE_SCORE_KEY)||"[]")}catch(_){return[]}}
 function setOfflineQueue(q){localStorage.setItem(OFFLINE_SCORE_KEY,JSON.stringify(q));renderOfflineState()}
-function renderOfflineState(){const b=$("offlineBanner"),q=offlineQueue();if(!b)return;b.classList.toggle("hidden",navigator.onLine&&q.length===0);b.textContent=!navigator.onLine?`Offline • ${q.length} score${q.length===1?"":"s"} waiting`:q.length?`${q.length} score${q.length===1?"":"s"} waiting to sync`:""}
+function renderOfflineState(){
+ const b=$("offlineBanner"),q=offlineQueue();if(!b)return;
+ b.classList.toggle("hidden",navigator.onLine&&q.length===0);
+ b.textContent=!navigator.onLine?`Offline • ${q.length} score${q.length===1?"":"s"} stored locally`:q.length?`${q.length} score${q.length===1?"":"s"} need review before submission`:"";
+}
 function queueOfflineScore(payload){const q=offlineQueue();q.push({...payload,queued_at:new Date().toISOString()});setOfflineQueue(q)}
 async function flushOfflineScores(){
- if(!navigator.onLine||!user)return;let q=offlineQueue();if(!q.length){renderOfflineState();return}
- // Offline entries may be older than edits from another device. Do not replay them
- // automatically until the server supports an atomic version/conflict check.
+ if(!navigator.onLine||!user)return;
+ const q=offlineQueue();
+ if(!q.length){renderOfflineState();return}
+ // Preserve queued entries until server-side atomic conflict checks are available.
  setSyncStatus("error",`${q.length} offline score(s) need review — automatic replay paused`);
- pushInAppAlert("Offline scores need review",`${q.length} queued score(s) were kept on this device. Automatic replay is paused to avoid overwriting newer scores.`);
- return;
- setOfflineQueue(keep);if(!keep.length){await loadScores();renderAll();pushInAppAlert("Offline scores synced","All queued scores reached the server.")}
+ renderOfflineState();
 }
 function renderTeams(){
  const sel=$("teamRosterSelect");
