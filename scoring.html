@@ -4403,7 +4403,19 @@ function reviewOfflineScores(){
  if(!reviewAccountId){window.alert("Sign in to review your offline scores.");return}
  const entries=offlineQueue();
  if(legacyOfflineQueueCount())window.alert("Older unassigned offline scores exist on this device. They cannot be safely attributed to an account. Ask the commissioner to review them before clearing browser data.");
- if(!entries.length){window.alert("No account-specific offline scores are pending.");return}
+ if(!entries.length){
+  let archive=[];
+  try{
+   const saved=JSON.parse(localStorage.getItem(offlineQueueKey()+":review_archive")||"[]");
+   archive=Array.isArray(saved)?saved:[];
+  }catch(_){}
+  if(!archive.length){window.alert("No account-specific offline scores are pending.");return}
+  if(!window.confirm("No pending scores. View the most recent archived offline-score review? This will not change any scores."))return;
+  const latest=archive[archive.length-1];
+  const archivedLines=(Array.isArray(latest?.entries)?latest.entries:[]).map((item,i)=>`${i+1}. Hole ${item.hole}: ${item.score===""?"Clear score":String(item.score)+" strokes"}`);
+  window.alert("Archived local review (NOT server scores):\\n"+archivedLines.join("\\n"));
+  return;
+ }
  const lines=entries.map((item,i)=>{
   const hole=Number(item.hole);
   const value=item.score===""?"Clear score":String(item.score)+" strokes";
