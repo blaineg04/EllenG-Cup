@@ -4374,8 +4374,19 @@ function playerAchievementBadges(g,gi){
  const b=[];if(eagles)b.push("🦅 Eagle Club");if(birds>=2)b.push("🔥 Birdie Machine");if(Number(g.gator_wins||0)>0)b.push("🐊 Gator King");if(Number(g.career_wins||0)>0)b.push("🏆 Cup Champion");if(!b.length&&own.length>=9)b.push("⛳ Grinder");return b;
 }
 const OFFLINE_SCORE_KEY="elleng_offline_score_queue_v1";
-function offlineQueue(){try{return JSON.parse(localStorage.getItem(OFFLINE_SCORE_KEY)||"[]")}catch(_){return[]}}
-function setOfflineQueue(q){localStorage.setItem(OFFLINE_SCORE_KEY,JSON.stringify(q));renderOfflineState()}
+function offlineQueueKey(){return OFFLINE_SCORE_KEY+":"+String(user?.id||"signed-out")}
+function offlineQueue(){
+ if(!user)return[];
+ try{
+  const q=JSON.parse(localStorage.getItem(offlineQueueKey())||"[]");
+  return Array.isArray(q)?q:[];
+ }catch(_){return[]}
+}
+function setOfflineQueue(q){
+ if(!user)return;
+ localStorage.setItem(offlineQueueKey(),JSON.stringify(q));
+ renderOfflineState();
+}
 function renderOfflineState(){
  const b=$("offlineBanner"),q=offlineQueue();if(!b)return;
  b.classList.toggle("hidden",navigator.onLine&&q.length===0);
