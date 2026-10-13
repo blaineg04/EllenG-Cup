@@ -4546,13 +4546,22 @@ async function savePlayerShambleScore(teamIndex,golferIndex,val){
    const rows=roster.map(g=>playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===scoreHole&&Number(x.golfer_index)===g.index));
    if(roster.length&&rows.every(Boolean)){
      const low=Math.min(...rows.map(x=>Number(x.score)));
-     const {error}=await db.from("elleng_team_scores").upsert({tournament_id:TOURNAMENT_ID,team_index:teamIndex,hole,score:low,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:"tournament_id,team_index,hole"});
+     const {error}=await db.from("elleng_team_scores").upsert({tournament_id:TOURNAMENT_ID,team_index:teamIndex,hole:scoreHole,score:low,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:"tournament_id,team_index,hole"});
      if(error)throw error;
    }else{
      const {error}=await db.from("elleng_team_scores").delete().eq("tournament_id",TOURNAMENT_ID).eq("team_index",teamIndex).eq("hole",scoreHole);
      if(error)throw error;
    }
    await loadScores();
+   const savedEntry=playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===scoreHole&&Number(x.golfer_index)===golferIndex);
+   if(score===null ? savedEntry!=null : Number(savedEntry?.score)!==score){
+     throw new Error("Score could not be verified after saving. Reload and check this hole.");
+   }
+   const expectedTeamScore=roster.length&&rows.every(Boolean)?Math.min(...rows.map(x=>Number(x.score))):null;
+   const savedTeamScore=scores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===scoreHole);
+   if(expectedTeamScore===null ? savedTeamScore!=null : Number(savedTeamScore?.score)!==expectedTeamScore){
+     throw new Error("Team total could not be verified after saving. Reload and check this hole.");
+   }
    el.textContent="Saved. Lowest completed player score becomes the team score.";
    renderAll();
  }catch(e){el.textContent=e?.message||"Unable to save shamble score.";endScoreSave(false);return}endScoreSave(true)
@@ -4600,11 +4609,21 @@ async function savePairScore(teamIndex,pairIndex,val){
    const roster=teamRosterGolfers(teamIndex);
    if(a&&b&&roster.length>=4){
      const total=Number(a.score)+Number(b.score);
-     const {error}=await db.from("elleng_team_scores").upsert({tournament_id:TOURNAMENT_ID,team_index:teamIndex,hole,score:total,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:"tournament_id,team_index,hole"});if(error)throw error;
+     const {error}=await db.from("elleng_team_scores").upsert({tournament_id:TOURNAMENT_ID,team_index:teamIndex,hole:scoreHole,score:total,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:"tournament_id,team_index,hole"});if(error)throw error;
    }else{
      const {error}=await db.from("elleng_team_scores").delete().eq("tournament_id",TOURNAMENT_ID).eq("team_index",teamIndex).eq("hole",scoreHole);if(error)throw error;
    }
-   await loadScores();el.textContent="Saved. Both 2-man pair scores combine into the team total.";renderAll();
+   await loadScores();
+   const savedEntry=pairScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===scoreHole&&Number(x.pair_index)===pairIndex);
+   if(score===null ? savedEntry!=null : Number(savedEntry?.score)!==score){
+     throw new Error("Score could not be verified after saving. Reload and check this hole.");
+   }
+   const expectedTeamScore=a&&b&&roster.length>=4?Number(a.score)+Number(b.score):null;
+   const savedTeamScore=scores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===scoreHole);
+   if(expectedTeamScore===null ? savedTeamScore!=null : Number(savedTeamScore?.score)!==expectedTeamScore){
+     throw new Error("Team total could not be verified after saving. Reload and check this hole.");
+   }
+   el.textContent="Saved. Both 2-man pair scores combine into the team total.";renderAll();
  }catch(e){el.textContent=e?.message||"Unable to save pair score.";endScoreSave(false);return}endScoreSave(true)
 }
 function renderScoring(){
