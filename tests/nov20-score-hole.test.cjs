@@ -205,3 +205,11 @@ test('reviewed offline entries are archived before pending queue is cleared',()=
  assert.ok(body.indexOf('localStorage.setItem(archiveKey')<body.indexOf('setOfflineQueue([])'));
  assert.match(body,/Pending entries were not cleared/);
 });
+
+test('last reviewed offline archive can be inspected without resubmitting',()=>{
+ const body=functionBody('function reviewOfflineScores(){','\nfunction queueOfflineScore(');
+ assert.match(body,/offlineQueueKey\(\)\+":review_archive"/);
+ assert.match(body,/archive\[archive\.length-1\]/);
+ assert.match(body,/Archived local review/);
+ assert.doesNotMatch(body,/db\.functions\.invoke/);
+});
