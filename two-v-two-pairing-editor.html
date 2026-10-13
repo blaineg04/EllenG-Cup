@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EllenG Cup — Commissioner Pairing Editor</title>
+<style>
+:root{font-family:system-ui,sans-serif;background:#f5f7f8;color:#08253b}body{margin:0;padding:16px}.wrap{max-width:720px;margin:auto;background:white;padding:18px;border:1px solid #dce3e7;border-radius:14px}h1{margin:0 0 8px;font-size:1.5rem}p{color:#667782}label{display:block;margin:12px 0 4px;font-weight:650}select,button{font:inherit;padding:10px;border:1px solid #aebfc9;border-radius:8px;width:100%;box-sizing:border-box}button{background:#08253b;color:white;margin-top:16px}.match{border:1px solid #dce3e7;border-radius:10px;padding:12px;margin-top:12px}.columns{display:grid;grid-template-columns:1fr 1fr;gap:12px}.error{color:#9b1c1c}.muted{font-size:.9rem}@media(max-width:480px){.columns{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main class="wrap">
+<h1>Commissioner Pairing Editor</h1>
+<p>Development-only demonstration. Edit the two-person pairings before the tournament. No live data is loaded or saved.</p>
+<label for="format">2v2 format</label><select id="format"><option value="scramble">2-Man Scramble</option><option value="best_ball">2-Man Best Ball</option><option value="shamble">2-Man Shamble</option><option value="split_nine">EllenG Split Nine</option></select>
+<label for="size">Golfers per team</label><select id="size"><option value="2">2</option><option value="4" selected>4</option><option value="6">6</option><option value="8">8</option><option value="10">10</option><option value="12">12</option><option value="16">16</option><option value="20">20</option></select>
+<button type="button" id="generate">Generate pairing editor</button>
+<div id="editor"></div><button type="button" id="validate" hidden>Validate pairings</button>
+<div id="output" aria-live="polite"></div>
+</main><script src="./two-v-two.js"></script><script>
+const $=id=>document.getElementById(id);
+let state=null;
+function makeState(n){
+ const golfers=Array.from({length:2*n},(_,i)=>({name:(i<n?'Gators ':'Cargo ')+(i%n+1)}));
+ return {golfers,teams:[{name:'Gators',roster:Array.from({length:n},(_,i)=>i)},{name:'Cargo',roster:Array.from({length:n},(_,i)=>n+i)}]};
+}
+function render(){
+ const n=Number($('size').value);state=makeState(n);
+ const editor=$('editor');editor.replaceChildren();
+ for(let m=0;m<n/2;m++){
+   const box=document.createElement('section');box.className='match';
+   const title=document.createElement('strong');title.textContent='Match '+(m+1);box.append(title);
+   const cols=document.createElement('div');cols.className='columns';
+   for(let team=0;team<2;team++){
+     const column=document.createElement('div');
+     const heading=document.createElement('p');heading.textContent=state.teams[team].name;column.append(heading);
+     for(let slot=0;slot<2;slot++){
+       const select=document.createElement('select');
+       select.setAttribute('aria-label',state.teams[team].name+' match '+(m+1)+' player '+(slot+1));
+       select.dataset.team=String(team);select.dataset.slot=String(m*2+slot);
+       for(const id of state.teams[team].roster){
+         const option=document.createElement('option');option.value=String(id);
+         option.textContent=state.golfers[id].name;select.append(option);
+       }
+       select.value=String(state.teams[team].roster[m*2+slot]);
+       column.append(select);
+     }
+     cols.append(column);
+   }
+   box.append(cols);editor.append(box);
+ }
+ $('validate').hidden=false;$('output').replaceChildren();
+}
+$('generate').addEventListener('click',render);
+$('validate').addEventListener('click',()=>{
+ const selections=[[],[]];
+ for(const select of $('editor').querySelectorAll('select[data-team]'))
+   selections[Number(select.dataset.team)].push(Number(select.value));
+ const result=window.EllenGTwoVsTwo.rearrangePairings(state,$('format').value,selections[0],selections[1]);
+ const output=$('output');output.replaceChildren();
+ const p=document.createElement('p');p.className=result.ok?'':'error';
+ p.textContent=result.ok?'Valid: '+result.matches.length+' head-to-head matches ready for review. Not saved.':result.error;
+ output.append(p);
+ if(result.ok)for(const match of result.matches){
+   const item=document.createElement('div');item.className='match';
+   item.textContent='Match '+match.match+': '+match.teamA.map(id=>result.golferNames[id]).join(' & ')+' vs '+match.teamB.map(id=>result.golferNames[id]).join(' & ');
+   output.append(item);
+ }
+});
+render();
+</script></body></html>
