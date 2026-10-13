@@ -196,3 +196,12 @@ test('offline review blocks clearing after a signed-in account switch',()=>{
  assert.match(body,/if\(user\?\.id!==reviewAccountId\)/);
  assert.ok(body.indexOf('user?.id!==reviewAccountId')<body.indexOf('setOfflineQueue([])'));
 });
+
+test('reviewed offline entries are archived before pending queue is cleared',()=>{
+ const body=functionBody('function reviewOfflineScores(){','\nfunction queueOfflineScore(');
+ assert.match(body,/offlineQueueKey\(\)\+":review_archive"/);
+ assert.match(body,/localStorage\.setItem\(archiveKey,JSON\.stringify\(archive\)\)/);
+ assert.match(body,/reviewed_at:new Date\(\)\.toISOString\(\),entries/);
+ assert.ok(body.indexOf('localStorage.setItem(archiveKey')<body.indexOf('setOfflineQueue([])'));
+ assert.match(body,/Pending entries were not cleared/);
+});
