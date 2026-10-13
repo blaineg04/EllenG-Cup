@@ -4390,7 +4390,16 @@ function reviewOfflineScores(){
   const time=item.queued_at?new Date(item.queued_at).toLocaleString():"Time unknown";
   return `${i+1}. Hole ${Number.isInteger(hole)&&hole>=1&&hole<=18?hole:"?"}: ${value} • ${time}`;
  });
- window.alert("Scores stored only on this device (NOT submitted):\n\n"+lines.join("\n")+"\n\nCompare these entries with the live scorecard. Re-enter any missing scores while online. Entries remain stored for review.");
+ const summary="Scores stored only on this device (NOT submitted):\\n\\n"+lines.join("\\n")+"\\n\\nCompare these entries with the live scorecard and re-enter missing scores while online.";
+ window.alert(summary);
+ if(!navigator.onLine)return;
+ if(!window.confirm("Have you checked the live scorecard and manually resolved EVERY listed offline entry?\\n\\nOK permanently clears this device's queued copies. Cancel keeps them for later review."))return;
+ const current=offlineQueue();
+ // Never clear if the queue changed while the user was reviewing it.
+ if(JSON.stringify(current)!==JSON.stringify(entries)){window.alert("Offline scores changed during review. Reopen the list before clearing.");return}
+ setOfflineQueue([]);
+ setSyncStatus("saved","Offline review cleared locally");
+ window.alert("Local offline entries cleared. No scores were submitted or changed on the server.");
 }
 function queueOfflineScore(payload){const q=offlineQueue();q.push({...payload,queued_at:new Date().toISOString()});setOfflineQueue(q)}
 async function flushOfflineScores(){
