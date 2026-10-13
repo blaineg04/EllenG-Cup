@@ -10,8 +10,16 @@ Support a tournament with exactly **two teams**, **two captains** (one per team)
 - For complete simultaneous pairings, each team needs an even, equal number of participating golfers; otherwise present an explicit unpaired-player/rotation decision.
 - Captains may play if included in the player roster. Do not count captains as extra players by default.
 
-## Match scoring decisions still required
-- Decide whether each 2v2 pairing plays scramble, shamble, best ball, or another scoring method.
+## Available 2v2 playing formats
+The commissioner must be able to select any of these options, without removing existing tournament formats:
+- **2-person scramble**: teammates choose the best shot and play one team score.
+- **2-person best ball**: both play their own balls; the lower teammate score counts.
+- **2-person shamble**: choose the best drive; both finish their own balls; lower score counts by default.
+- **Split-nine EllenG format**: 2-person scramble on the front nine and 2-person shamble on the back nine.
+
+All four options must remain available whenever two-team 2v2 mode is selected. The commissioner selects the format for the event, and it is saved in tournament configuration.
+
+## Scoring and pairing decisions still required
 - Decide match-play points versus aggregate strokes and whether Gator Hole / Final Cargo apply per match or per team.
 - Define tie handling, substitutes, and rotations before implementing standings.
 
