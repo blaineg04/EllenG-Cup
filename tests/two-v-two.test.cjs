@@ -61,3 +61,24 @@ test('draft roster adapter rejects missing player references',()=>{
   state.teams[0].roster[1]=99;
   assert.equal(fromDraftState(state,'best_ball').ok,false);
 });
+
+test('commissioner can reorder pairings without changing team membership',()=>{
+  const {rearrangePairings}=require('../two-v-two.js');
+  const state=draftState(['Alex','Blake','Chris','David'],['Evan','Finn','Gray','Harper']);
+  const before=JSON.stringify(state);
+  const result=rearrangePairings(state,'scramble',[0,2,1,3],[4,6,5,7]);
+  assert.equal(result.ok,true);
+  assert.deepEqual(result.matches[0].teamA,['0','2']);
+  assert.deepEqual(result.matches[0].teamB,['4','6']);
+  assert.equal(JSON.stringify(state),before,'Draft state must not be mutated');
+});
+test('pairing edits reject duplicate players',()=>{
+  const {rearrangePairings}=require('../two-v-two.js');
+  const state=draftState(['Alex','Blake','Chris','David'],['Evan','Finn','Gray','Harper']);
+  assert.equal(rearrangePairings(state,'scramble',[0,0,2,3],[4,5,6,7]).ok,false);
+});
+test('pairing edits reject moving golfers to the opposing team',()=>{
+  const {rearrangePairings}=require('../two-v-two.js');
+  const state=draftState(['Alex','Blake'],['Casey','Drew']);
+  assert.equal(rearrangePairings(state,'best_ball',[0,2],[1,3]).ok,false);
+});
