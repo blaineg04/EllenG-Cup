@@ -111,3 +111,13 @@ test('offline save copy does not promise automatic synchronization',()=>{
  assert.match(body,/offline score needs review after reconnecting/);
  assert.doesNotMatch(body,/it will sync automatically/);
 });
+
+test('offline queue status requires review and never claims automatic replay',()=>{
+ const body=functionBody('function renderOfflineState(){','\nfunction renderTeams(');
+ assert.match(body,/need review before submission/);
+ assert.match(body,/stored locally/);
+ assert.match(body,/automatic replay paused/);
+ assert.doesNotMatch(body,/waiting to sync/);
+ assert.doesNotMatch(body,/db\.functions\.invoke/);
+ assert.doesNotMatch(body,/setOfflineQueue\(keep\)/);
+});
