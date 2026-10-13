@@ -42,3 +42,17 @@ test('team save confirms the persisted value before reporting Saved',()=>{
  assert.match(body,/score===null \? persisted!=null/);
  assert.ok(body.indexOf('const persisted=scores.find')<body.indexOf('el.textContent="Saved."'));
 });
+
+for(const [name,start,end] of [
+ ['shamble','async function savePlayerShambleScore(teamIndex,golferIndex,val){','\nfunction renderPairScoring('],
+ ['split-pair','async function savePairScore(teamIndex,pairIndex,val){','\nfunction renderScoring(']
+]){
+ test(name+' verifies the saved entry and derived team total',()=>{
+  const body=functionBody(start,end);
+  assert.match(body,/team_index:teamIndex,hole:scoreHole,score:/);
+  assert.match(body,/const savedEntry=/);
+  assert.match(body,/const savedTeamScore=scores\.find/);
+  assert.match(body,/const expectedTeamScore=/);
+  assert.ok(body.indexOf('const savedTeamScore=')<body.indexOf('el.textContent="Saved.'));
+ });
+}
