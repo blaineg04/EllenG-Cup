@@ -1,0 +1,29 @@
+name: EllenG Nov 20 scoring regression
+on:
+  push:
+    branches:
+      - development/elleng-audit-20261013
+    paths:
+      - scoring.html
+      - tests/nov20-*.test.cjs
+      - .github/workflows/nov20-score-regression.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: elleng-nov20-scoring-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  score-regression:
+    name: Node scoring source regressions
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Node is available on MacBook runner
+        run: node --version
+      - name: Run scoring regression tests
+        run: node --test tests/nov20-*.test.cjs
