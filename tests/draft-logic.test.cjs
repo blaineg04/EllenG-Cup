@@ -1,0 +1,63 @@
+// Run with: node --test tests/draft-logic.test.cjs
+// No network calls, Supabase credentials, or writes to tournament data.
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+
+function makeDraft({teams=7,players=27,type='snake',rules='banded'}={}) {
+  const source=fs.readFileSync(path.join(__dirname,'..','common.js'),'utf8');
+  const sandbox={
+    window:{
+      ELLENG_CONFIG:{supabaseUrl:'https://example.invalid',supabasePublishableKey:'test-only',defaultTeamCount:teams,defaultGolferCount:players},
+      supabase:{createClient:()=>({})}
+    },
+    Date, Math, Number, String, Set
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(source,sandbox,{filename:'common.js'});
+  vm.runInContext('S.draftType='+JSON.stringify(type)+';S.draftRules='+JSON.stringify(rules)+';',sandbox);
+  return {
+    order:n=>vm.runInContext('order('+n+')',sandbox),
+    capacity:t=>vm.runInContext('teamCapacity('+t+')',sandbox),
+    setGolfers:bands=>vm.runInContext('S.golfers.forEach((g,i)=>{g.name="Player "+i;g.band='+JSON.stringify(bands)+'[i]||"C";});',sandbox),
+    canBand:(t,b)=>vm.runInContext('canBand('+t+','+JSON.stringify(b)+')',sandbox),
+    addPick:(t,player)=>vm.runInContext('S.teams['+t+'].roster.push('+player+');S.golfers['+player+'].team='+t+';',sandbox)
+  };
+}
+
+test('27 golfers across 7 snake teams have correct uneven capacities',()=>{
+  const d=makeDraft();
+  assert.deepEqual(Array.from({length:7},(_,i)=>d.capacity(i)),[3,4,4,4,4,4,4]);
+});
+
+test('snake draft reverses every other round',()=>{
+  const d=makeDraft({teams:4,players:12});
+  assert.deepEqual(Array.from({length:12},(_,i)=>d.order(i)),[0,1,2,3,3,2,1,0,0,1,2,3]);
+});
+
+test('standard draft keeps the same team order',()=>{
+  const d=makeDraft({teams:4,players:12,type:'standard'});
+  assert.deepEqual(Array.from({length:12},(_,i)=>d.order(i)),[0,1,2,3,0,1,2,3,0,1,2,3]);
+});
+
+test('24 golfers across 6 teams each have four picks',()=>{
+  const d=makeDraft({teams:6,players:24});
+  assert.deepEqual(Array.from({length:6},(_,i)=>d.capacity(i)),[4,4,4,4,4,4]);
+});
+
+test('open draft permits valid team selection',()=>{
+  const d=makeDraft({teams:2,players:4,rules:'open'});
+  assert.equal(d.canBand(0,'A'),true);
+  assert.equal(d.canBand(1,'D'),true);
+  assert.equal(d.canBand(2,'A'),false);
+});
+
+test('banded draft requires a remaining ranked golfer',()=>{
+  const d=makeDraft({teams:2,players:4});
+  assert.equal(d.canBand(0,'A'),false);
+  d.setGolfers(['A','B','C','D']);
+  assert.equal(d.canBand(0,'A'),true);
+  assert.equal(d.canBand(0,'Z'),false);
+});
