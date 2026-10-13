@@ -33,3 +33,31 @@ test('2v2 rejects duplicate players', () => {
 test('2v2 rejects unsupported formats', () => {
   assert.equal(planPairings(players('A',2), players('B',2), 'other').ok, false);
 });
+
+function draftState(teamA,teamB){
+  const golfers=[...teamA,...teamB].map(name=>({name}));
+  return {golfers,teams:[
+    {name:'Gators',roster:teamA.map((_,i)=>i)},
+    {name:'Cargo',roster:teamB.map((_,i)=>i+teamA.length)}
+  ]};
+}
+test('draft roster adapter preserves player names and teams',()=>{
+  const {fromDraftState}=require('../two-v-two.js');
+  const result=fromDraftState(draftState(['Alex','Blake'],['Casey','Drew']),'split_nine');
+  assert.equal(result.ok,true);
+  assert.deepEqual(result.teamNames,['Gators','Cargo']);
+  assert.deepEqual(result.matches[0].teamA,['0','1']);
+  assert.equal(result.golferNames['2'],'Casey');
+});
+test('draft roster adapter rejects more than two teams',()=>{
+  const {fromDraftState}=require('../two-v-two.js');
+  const state=draftState(['Alex','Blake'],['Casey','Drew']);
+  state.teams.push({name:'Extra',roster:[]});
+  assert.equal(fromDraftState(state,'scramble').ok,false);
+});
+test('draft roster adapter rejects missing player references',()=>{
+  const {fromDraftState}=require('../two-v-two.js');
+  const state=draftState(['Alex','Blake'],['Casey','Drew']);
+  state.teams[0].roster[1]=99;
+  assert.equal(fromDraftState(state,'best_ball').ok,false);
+});
