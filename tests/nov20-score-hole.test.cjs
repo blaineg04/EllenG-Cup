@@ -164,3 +164,12 @@ test('offline queue replaces repeated local entries for the same event and hole'
  assert.match(body,/remaining\.push\(/);
  assert.match(body,/setOfflineQueue\(remaining\)/);
 });
+
+test('offline queue is isolated by authenticated user id',()=>{
+ const body=functionBody('function offlineQueueKey(){','\nfunction renderOfflineState(');
+ assert.match(body,/user\?\.id/);
+ assert.match(body,/if\(!user\)return\[\]/);
+ assert.match(body,/localStorage\.getItem\(offlineQueueKey\(\)\)/);
+ assert.match(body,/localStorage\.setItem\(offlineQueueKey\(\),JSON\.stringify\(q\)\)/);
+ assert.doesNotMatch(body,/localStorage\.getItem\(OFFLINE_SCORE_KEY\)/);
+});
