@@ -33,3 +33,12 @@ test('hole navigation is blocked during an in-flight score save',()=>{
  assert.match(body,/score to finish saving/);
  assert.ok(body.indexOf('if(scoreSaveBusy)')<body.indexOf('hole=Number(b.dataset.hole)'));
 });
+
+test('team save confirms the persisted value before reporting Saved',()=>{
+ const body=functionBody('async function saveScore(teamIndex,val){','\nasync function loadBase(){');
+ assert.match(body,/await loadScores\(\);/);
+ assert.match(body,/const persisted=scores\.find/);
+ assert.match(body,/Number\(persisted\?\.score\)!==score/);
+ assert.match(body,/score===null \? persisted!=null/);
+ assert.ok(body.indexOf('const persisted=scores.find')<body.indexOf('el.textContent="Saved."'));
+});
