@@ -4619,7 +4619,9 @@ async function savePairScore(teamIndex,pairIndex,val){
    if(score===null ? savedEntry!=null : Number(savedEntry?.score)!==score){
      throw new Error("Score could not be verified after saving. Reload and check this hole.");
    }
-   const expectedTeamScore=a&&b&&roster.length>=4?Number(a.score)+Number(b.score):null;
+   const verifiedA=pairScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===scoreHole&&Number(x.pair_index)===0);
+   const verifiedB=pairScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===scoreHole&&Number(x.pair_index)===1);
+   const expectedTeamScore=verifiedA&&verifiedB&&roster.length>=4?Number(verifiedA.score)+Number(verifiedB.score):null;
    const savedTeamScore=scores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===scoreHole);
    if(expectedTeamScore===null ? savedTeamScore!=null : Number(savedTeamScore?.score)!==expectedTeamScore){
      throw new Error("Team total could not be verified after saving. Reload and check this hole.");
