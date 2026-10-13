@@ -139,3 +139,11 @@ test('offline review banner supports click and keyboard',()=>{
  assert.match(body,/addEventListener\("click",reviewOfflineScores\)/);
  assert.match(body,/e\.key==="Enter"\|\|e\.key===" "/);
 });
+
+test('personal score save reports success only after completed server and reload work',()=>{
+ const body=functionBody('async function saveSelfScore(clear=false){','\nasync function resetGolferPin(');
+ assert.match(body,/let saveSucceeded=false/);
+ assert.match(body,/await loadBase\(\);await loadScores\(\);renderAll\(\);\s*saveSucceeded=true/);
+ assert.match(body,/if\(saveSucceeded\)setSyncStatus\("saved","Saved ✓"\)/);
+ assert.doesNotMatch(body,/!String\(msg\.textContent\|\|""\)/);
+});
