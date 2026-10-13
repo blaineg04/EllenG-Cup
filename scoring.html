@@ -4418,7 +4418,19 @@ function reviewOfflineScores(){
  const current=offlineQueue();
  // Never clear if the queue changed while the user was reviewing it.
  if(JSON.stringify(current)!==JSON.stringify(entries)){window.alert("Offline scores changed during review. Reopen the list before clearing.");return}
- setOfflineQueue([]);
+ // Preserve a recoverable local snapshot before clearing the pending list.
+ // If browser storage is full or disabled, retain pending entries.
+ try{
+  const archiveKey=offlineQueueKey()+":review_archive";
+  const previous=JSON.parse(localStorage.getItem(archiveKey)||"[]");
+  const archive=Array.isArray(previous)?previous:[];
+  archive.push({reviewed_at:new Date().toISOString(),entries});
+  localStorage.setItem(archiveKey,JSON.stringify(archive));
+  setOfflineQueue([]);
+ }catch(_){
+  window.alert("Could not preserve an offline-score backup. Pending entries were not cleared.");
+  return;
+ }
  setSyncStatus("saving","Offline entries cleared locally — server scores unchanged");
  window.alert("Local offline entries cleared. No scores were submitted or changed on the server.");
 }
