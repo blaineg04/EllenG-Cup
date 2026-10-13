@@ -5678,13 +5678,13 @@ let liveChannel=null;
 function subscribeLive(){
  if(liveChannel)db.removeChannel(liveChannel);
  liveChannel=db.channel("elleng-live-scoring")
-  .on("postgres_changes",{event:"*",schema:"public",table:"elleng_team_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e)}})
-  .on("postgres_changes",{event:"*",schema:"public",table:"elleng_trash_talk",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadTrashTalk();renderTrashTalk()}catch(e){console.error(e)}});
+  .on("postgres_changes",{event:"*",schema:"public",table:"elleng_team_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e);setSyncStatus("error","Live scores need refresh")}})
+  .on("postgres_changes",{event:"*",schema:"public",table:"elleng_trash_talk",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadTrashTalk();renderTrashTalk()}catch(e){console.error(e);setSyncStatus("error","Live scores need refresh")}});
  if(user)liveChannel=liveChannel
-  .on("postgres_changes",{event:"*",schema:"public",table:"elleng_player_hole_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e)}})
-  .on("postgres_changes",{event:"*",schema:"public",table:"elleng_pair_hole_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e)}})
+  .on("postgres_changes",{event:"*",schema:"public",table:"elleng_player_hole_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e);setSyncStatus("error","Live scores need refresh")}})
+  .on("postgres_changes",{event:"*",schema:"public",table:"elleng_pair_hole_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e);setSyncStatus("error","Live scores need refresh")}})
   .on("postgres_changes",{event:"UPDATE",schema:"public",table:"elleng_tournaments",filter:`id=eq.${TOURNAMENT_ID}`},async p=>{tournament=p.new;renderAll()});
- liveChannel.subscribe();
+ liveChannel.subscribe(status=>{\n  if(status==="SUBSCRIBED"){setSyncStatus("saved","Live updates connected")}\n  else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){setSyncStatus("error","Live updates disconnected — refresh scores")}\n });
 }
 
 
