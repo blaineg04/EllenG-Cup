@@ -5941,7 +5941,18 @@ document.querySelectorAll(".global-main-menu-btn").forEach(a=>a.addEventListener
   openAppHub();
 }));
 
-window.addEventListener("online",()=>{renderOfflineState();flushOfflineScores()});
+window.addEventListener("online",async()=>{
+ renderOfflineState();
+ try{
+  if(user){
+   await loadScores();
+   renderAll();
+   setSyncStatus("saved","Scores refreshed after reconnect");
+   subscribeLive();
+  }
+ }catch(e){console.error("Score refresh after reconnect failed",e);setSyncStatus("error","Reconnect refresh failed")}
+ try{await flushOfflineScores()}catch(e){console.error("Offline score sync failed",e);setSyncStatus("error","Offline score sync failed")}
+});
 window.addEventListener("offline",renderOfflineState);
 if("serviceWorker" in navigator){window.addEventListener("load",async()=>{try{const reg=await navigator.serviceWorker.register("./service-worker.js?v=2.7.43",{scope:"./",updateViaCache:"none"});await reg.update().catch(()=>{});if(reg.waiting){reg.waiting.postMessage({type:"SKIP_WAITING"})}}catch(e){console.warn("Service worker registration skipped",e)}})}
 
