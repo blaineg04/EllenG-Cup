@@ -99,3 +99,15 @@ test('network recovery reloads scores before restoring realtime and offline queu
  assert.ok(body.indexOf('await loadScores()')<body.indexOf('subscribeLive()'));
  assert.ok(body.indexOf('subscribeLive()')<body.indexOf('await flushOfflineScores()'));
 });
+
+test('offline replay is paused without server-side conflict checks',()=>{
+ const body=functionBody('async function flushOfflineScores(){','\nfunction renderTeams(');
+ assert.match(body,/automatic replay paused/);
+ assert.match(body,/return;/);
+ assert.doesNotMatch(body,/db\.functions\.invoke\("golfer-handicap"/);
+});
+test('offline save copy does not promise automatic synchronization',()=>{
+ const body=functionBody('async function saveSelfScore(clear=false){','\nasync function resetGolferPin(');
+ assert.match(body,/offline score needs review after reconnecting/);
+ assert.doesNotMatch(body,/it will sync automatically/);
+});
