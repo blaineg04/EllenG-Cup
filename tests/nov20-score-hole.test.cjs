@@ -173,3 +173,12 @@ test('offline queue is isolated by authenticated user id',()=>{
  assert.match(body,/localStorage\.setItem\(offlineQueueKey\(\),JSON\.stringify\(q\)\)/);
  assert.doesNotMatch(body,/localStorage\.getItem\(OFFLINE_SCORE_KEY\)/);
 });
+
+test('legacy offline scores are flagged without being reassigned or deleted',()=>{
+ const body=functionBody('function legacyOfflineQueueCount(){','\nfunction queueOfflineScore(');
+ assert.match(body,/localStorage\.getItem\(OFFLINE_SCORE_KEY\)/);
+ assert.match(body,/legacyOfflineQueueCount\(\)/);
+ assert.match(body,/commissioner review/);
+ assert.doesNotMatch(body,/localStorage\.removeItem\(OFFLINE_SCORE_KEY\)/);
+ assert.doesNotMatch(body,/setOfflineQueue\(legacy/);
+});
