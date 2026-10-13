@@ -4395,8 +4395,15 @@ function legacyOfflineQueueCount(){
 }
 function renderOfflineState(){
  const b=$("offlineBanner"),q=offlineQueue(),legacy=legacyOfflineQueueCount();if(!b)return;
- b.classList.toggle("hidden",navigator.onLine&&q.length===0&&legacy===0);
- b.textContent=legacy?`Legacy offline scores (${legacy}) need commissioner review • ${q.length} account score(s) pending`:!navigator.onLine?`Offline • ${q.length} score${q.length===1?"":"s"} stored locally`:q.length?`${q.length} score${q.length===1?"":"s"} need review before submission`:"";
+ let hasArchive=false;
+ if(user){
+  try{
+   const archived=JSON.parse(localStorage.getItem(offlineQueueKey()+":review_archive")||"[]");
+   hasArchive=Array.isArray(archived)&&archived.length>0;
+  }catch(_){}
+ }
+ b.classList.toggle("hidden",navigator.onLine&&q.length===0&&legacy===0&&!hasArchive);
+ b.textContent=legacy?`Legacy offline scores (${legacy}) need commissioner review • ${q.length} account score(s) pending`:!navigator.onLine?`Offline • ${q.length} score${q.length===1?"":"s"} stored locally`:q.length?`${q.length} score${q.length===1?"":"s"} need review before submission`:hasArchive?"View last offline-score review archive":"";
 }
 function reviewOfflineScores(){
  const reviewAccountId=user?.id;
