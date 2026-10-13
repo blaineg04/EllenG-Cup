@@ -4387,14 +4387,21 @@ function setOfflineQueue(q){
  localStorage.setItem(offlineQueueKey(),JSON.stringify(q));
  renderOfflineState();
 }
+function legacyOfflineQueueCount(){
+ try{
+  const q=JSON.parse(localStorage.getItem(OFFLINE_SCORE_KEY)||"[]");
+  return Array.isArray(q)?q.length:0;
+ }catch(_){return 0}
+}
 function renderOfflineState(){
- const b=$("offlineBanner"),q=offlineQueue();if(!b)return;
- b.classList.toggle("hidden",navigator.onLine&&q.length===0);
- b.textContent=!navigator.onLine?`Offline • ${q.length} score${q.length===1?"":"s"} stored locally`:q.length?`${q.length} score${q.length===1?"":"s"} need review before submission`:"";
+ const b=$("offlineBanner"),q=offlineQueue(),legacy=legacyOfflineQueueCount();if(!b)return;
+ b.classList.toggle("hidden",navigator.onLine&&q.length===0&&legacy===0);
+ b.textContent=legacy?`Legacy offline scores (${legacy}) need commissioner review • ${q.length} account score(s) pending`:!navigator.onLine?`Offline • ${q.length} score${q.length===1?"":"s"} stored locally`:q.length?`${q.length} score${q.length===1?"":"s"} need review before submission`:"";
 }
 function reviewOfflineScores(){
  const entries=offlineQueue();
- if(!entries.length){window.alert("No offline scores are pending.");return}
+ if(legacyOfflineQueueCount())window.alert("Older unassigned offline scores exist on this device. They cannot be safely attributed to an account. Ask the commissioner to review them before clearing browser data.");
+ if(!entries.length){window.alert("No account-specific offline scores are pending.");return}
  const lines=entries.map((item,i)=>{
   const hole=Number(item.hole);
   const value=item.score===""?"Clear score":String(item.score)+" strokes";
