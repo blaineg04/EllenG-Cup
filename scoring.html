@@ -4380,7 +4380,11 @@ function renderOfflineState(){const b=$("offlineBanner"),q=offlineQueue();if(!b)
 function queueOfflineScore(payload){const q=offlineQueue();q.push({...payload,queued_at:new Date().toISOString()});setOfflineQueue(q)}
 async function flushOfflineScores(){
  if(!navigator.onLine||!user)return;let q=offlineQueue();if(!q.length){renderOfflineState();return}
- const keep=[];for(const item of q){try{const {data,error}=await db.functions.invoke("golfer-handicap",{body:item});if(error||data?.error)throw error||new Error(data.error)}catch(e){keep.push(item)}}
+ // Offline entries may be older than edits from another device. Do not replay them
+ // automatically until the server supports an atomic version/conflict check.
+ setSyncStatus("error",`${q.length} offline score(s) need review — automatic replay paused`);
+ pushInAppAlert("Offline scores need review",`${q.length} queued score(s) were kept on this device. Automatic replay is paused to avoid overwriting newer scores.`);
+ return;
  setOfflineQueue(keep);if(!keep.length){await loadScores();renderAll();pushInAppAlert("Offline scores synced","All queued scores reached the server.")}
 }
 function renderTeams(){
