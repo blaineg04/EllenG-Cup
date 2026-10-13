@@ -135,7 +135,7 @@ test('offline review displays local scores without uploading or deleting them',(
  assert.match(body,/setOfflineQueue\(\[\]\)/);
 });
 test('offline review banner supports click and keyboard',()=>{
- const body=functionBody('if\($("offlineBanner")\){','\nif("serviceWorker" in navigator)');
+ const body=functionBody('if($("offlineBanner")){','\nif("serviceWorker" in navigator)');
  assert.match(body,/addEventListener\("click",reviewOfflineScores\)/);
  assert.match(body,/e\.key==="Enter"\|\|e\.key===" "/);
 });
