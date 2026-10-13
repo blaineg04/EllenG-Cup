@@ -72,3 +72,11 @@ test('split-pair verification recomputes from the final database reload',()=>{
  assert.match(body,/Number\(verifiedA\.score\)\+Number\(verifiedB\.score\)/);
  assert.ok(body.lastIndexOf('await loadScores();')<body.indexOf('const verifiedA='));
 });
+
+test('failed score reload cannot publish a partial snapshot',()=>{
+ const body=functionBody('async function loadScores(){','\nfunction teamOptions(');
+ assert.match(body,/let nextPlayerScores=\[\],nextPairScores=\[\]/);
+ assert.match(body,/if\(pe\)throw pe;if\(pairError\)throw pairError/);
+ assert.match(body,/scores=data\|\|\[\];playerScores=nextPlayerScores;pairScores=nextPairScores/);
+ assert.ok(body.indexOf('if(pe)throw pe')<body.indexOf('scores=data||[]'));
+});
