@@ -64,3 +64,11 @@ test('shamble verification recalculates from scores reloaded after team write',(
  assert.match(body,/verifiedRows\.map\(x=>Number\(x\.score\)\)/);
  assert.ok(body.lastIndexOf('await loadScores();')<body.indexOf('const verifiedRows='));
 });
+
+test('split-pair verification recomputes from the final database reload',()=>{
+ const body=functionBody('async function savePairScore(teamIndex,pairIndex,val){','\nfunction renderScoring(');
+ assert.match(body,/const verifiedA=pairScores\.find/);
+ assert.match(body,/const verifiedB=pairScores\.find/);
+ assert.match(body,/Number\(verifiedA\.score\)\+Number\(verifiedB\.score\)/);
+ assert.ok(body.lastIndexOf('await loadScores();')<body.indexOf('const verifiedA='));
+});
