@@ -4557,7 +4557,8 @@ async function savePlayerShambleScore(teamIndex,golferIndex,val){
    if(score===null ? savedEntry!=null : Number(savedEntry?.score)!==score){
      throw new Error("Score could not be verified after saving. Reload and check this hole.");
    }
-   const expectedTeamScore=roster.length&&rows.every(Boolean)?Math.min(...rows.map(x=>Number(x.score))):null;
+   const verifiedRows=roster.map(g=>playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===scoreHole&&Number(x.golfer_index)===g.index));
+   const expectedTeamScore=roster.length&&verifiedRows.every(Boolean)?Math.min(...verifiedRows.map(x=>Number(x.score))):null;
    const savedTeamScore=scores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===scoreHole);
    if(expectedTeamScore===null ? savedTeamScore!=null : Number(savedTeamScore?.score)!==expectedTeamScore){
      throw new Error("Team total could not be verified after saving. Reload and check this hole.");
