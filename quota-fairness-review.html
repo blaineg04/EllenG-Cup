@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EllenG Cup — Quota Fairness Review</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#09283b;background:#f3f6f8}body{margin:0;padding:16px}
+main{max-width:820px;margin:auto;background:white;border:1px solid #dce4e8;border-radius:14px;padding:18px}
+h1{margin:0}p{color:#536875}table{width:100%;border-collapse:collapse}th,td{padding:9px;text-align:left;border-bottom:1px solid #e2e8ed}input{font:inherit;width:64px;padding:8px;border:1px solid #b8c7d0;border-radius:6px}button{font:inherit;background:#082b43;color:white;border:0;border-radius:8px;padding:12px;margin:14px 0;cursor:pointer}.notice{background:#fff7e3;padding:12px;border-radius:8px}.error{color:#a31e1e}.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stats>div{border:1px solid #dce4e8;border-radius:8px;padding:12px}@media(max-width:520px){th,td{padding:5px;font-size:.85rem}.stats{grid-template-columns:1fr}input{width:45px}}
+</style></head><body><main>
+<h1>Quota Fairness Review</h1>
+<p>Commissioner preview only. These are invented example rounds, not player handicaps or live scores. Nothing is saved.</p>
+<p class="notice">A quota is not considered fair simply because each band exceeds it equally often. Compare average bonus points too. Five examples per band are too few to approve official quotas.</p>
+<table><thead><tr><th>Band</th><th>Quota</th><th>Example round points</th></tr></thead><tbody id="bands"></tbody></table>
+<button id="evaluate" type="button">Compare quotas</button>
+<section id="result" aria-live="polite"></section>
+</main><script src="./quota-fairness.js"></script><script>
+const initial={A:{quota:23,points:[26,24,22,25,20]},B:{quota:20,points:[21,20,19,22,18]},C:{quota:16,points:[17,16,15,18,14]},D:{quota:10,points:[11,10,9,12,8]}};
+const tbody=document.getElementById('bands');
+for(const band of ['A','B','C','D']){
+ const tr=document.createElement('tr');
+ const name=document.createElement('td');name.textContent=band;
+ const quota=document.createElement('td'),input=document.createElement('input');
+ input.type='number';input.min='0';input.max='200';input.step='1';input.value=String(initial[band].quota);input.id='quota-'+band;input.setAttribute('aria-label',band+' quota');quota.append(input);
+ const samples=document.createElement('td');samples.textContent=initial[band].points.join(', ');
+ tr.append(name,quota,samples);tbody.append(tr);
+}
+document.getElementById('evaluate').addEventListener('click',()=>{
+ const quotas={},groups={};for(const band of ['A','B','C','D']){
+  quotas[band]=Number(document.getElementById('quota-'+band).value);
+  groups[band]=initial[band].points;
+ }
+ const report=window.EllenGQuotaFairness.assess(groups,quotas);
+ const output=document.getElementById('result');output.replaceChildren();
+ if(!report.ok){const p=document.createElement('p');p.className='error';p.textContent=report.error;output.append(p);return;}
+ const heading=document.createElement('h2');heading.textContent='Illustrative comparison';output.append(heading);
+ const table=document.createElement('table'),head=document.createElement('thead'),row=document.createElement('tr');
+ for(const text of ['Band','Rounds above quota','Average bonus']){const th=document.createElement('th');th.textContent=text;row.append(th);}head.append(row);table.append(head);
+ const body=document.createElement('tbody');
+ for(const band of ['A','B','C','D']){
+  const m=report.metrics[band],tr=document.createElement('tr');
+  for(const text of [band,(m.hitRate*100).toFixed(0)+'%',m.averageBonus.toFixed(1)]){const td=document.createElement('td');td.textContent=text;tr.append(td);}body.append(tr);
+ }
+ table.append(body);output.append(table);
+ const summary=document.createElement('p');summary.textContent='Achievement-rate gap: '+(report.hitRateGap*100).toFixed(0)+' percentage points. Average-bonus gap: '+report.averageBonusGap.toFixed(1)+' points.';output.append(summary);
+ if(report.provisional){const warning=document.createElement('p');warning.className='notice';warning.textContent='Provisional: fewer than 20 example rounds per band. Do not treat these quotas as validated.';output.append(warning);}
+});
+document.getElementById('evaluate').click();
+</script></body></html>
