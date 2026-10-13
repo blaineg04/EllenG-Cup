@@ -147,3 +147,10 @@ test('personal score save reports success only after completed server and reload
  assert.match(body,/if\(saveSucceeded\)setSyncStatus\("saved","Saved ✓"\)/);
  assert.doesNotMatch(body,/!String\(msg\.textContent\|\|""\)/);
 });
+
+test('offline review alerts use real newline escape sequences',()=>{
+ const body=functionBody('function reviewOfflineScores(){','\nfunction queueOfflineScore(');
+ assert.match(body,/lines\.join\("\\n"\)/);
+ assert.doesNotMatch(body,/lines\.join\("\\\\n"\)/);
+ assert.match(body,/window\.confirm\(/);
+});
