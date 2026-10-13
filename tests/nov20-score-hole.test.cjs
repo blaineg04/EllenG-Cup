@@ -121,3 +121,18 @@ test('offline queue status requires review and never claims automatic replay',()
  assert.doesNotMatch(body,/db\.functions\.invoke/);
  assert.doesNotMatch(body,/setOfflineQueue\(keep\)/);
 });
+
+test('offline review displays local scores without uploading or deleting them',()=>{
+ const body=functionBody('function reviewOfflineScores(){','\nfunction queueOfflineScore(');
+ assert.match(body,/offlineQueue\(\)/);
+ assert.match(body,/item\.hole/);
+ assert.match(body,/item\.score/);
+ assert.match(body,/item\.queued_at/);
+ assert.match(body,/NOT submitted/);
+ assert.doesNotMatch(body,/db\.functions\.invoke|setOfflineQueue\(|localStorage\.removeItem/);
+});
+test('offline review banner supports click and keyboard',()=>{
+ const body=functionBody('if\($("offlineBanner")\){','\nif("serviceWorker" in navigator)');
+ assert.match(body,/addEventListener\("click",reviewOfflineScores\)/);
+ assert.match(body,/e\.key==="Enter"\|\|e\.key===" "/);
+});
