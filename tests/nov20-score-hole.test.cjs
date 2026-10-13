@@ -188,3 +188,11 @@ test('clearing local offline entries never reports a successful server sync',()=
  assert.match(body,/setSyncStatus\("saving","Offline entries cleared locally/);
  assert.doesNotMatch(body,/setSyncStatus\("saved"/);
 });
+
+test('offline review blocks clearing after a signed-in account switch',()=>{
+ const body=functionBody('function reviewOfflineScores(){','\nfunction queueOfflineScore(');
+ assert.match(body,/const reviewAccountId=user\?\.id/);
+ assert.match(body,/if\(!reviewAccountId\)/);
+ assert.match(body,/if\(user\?\.id!==reviewAccountId\)/);
+ assert.ok(body.indexOf('user?.id!==reviewAccountId')<body.indexOf('setOfflineQueue([])'));
+});
