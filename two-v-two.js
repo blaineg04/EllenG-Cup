@@ -56,5 +56,28 @@
       golferNames:Object.fromEntries([...a,...b].map(p=>[p.id,p.name]))};
   }
 
-  return Object.freeze({FORMATS,planPairings,fromDraftState});
+
+  // Reorder players within their existing teams before generating match pairings.
+  // This intentionally does not persist changes to the live draft.
+  function rearrangePairings(state,format,orderedTeamA,orderedTeamB){
+    if(!Array.isArray(orderedTeamA)||!Array.isArray(orderedTeamB))
+      return {ok:false,error:'Provide both team pairing orders.'};
+    if(!state||!Array.isArray(state.teams)||state.teams.length!==2)
+      return {ok:false,error:'Choose exactly two drafted teams first.'};
+    const original=state.teams.map(t=>Array.isArray(t.roster)?t.roster:null);
+    if(original.some(x=>!x)) return {ok:false,error:'Invalid team roster.'};
+    const valid=(current,proposed)=>
+      current.length===proposed.length &&
+      new Set(proposed).size===proposed.length &&
+      current.every(id=>proposed.includes(id));
+    if(!valid(original[0],orderedTeamA)||!valid(original[1],orderedTeamB))
+      return {ok:false,error:'Pairing edits must retain every golfer on their original team exactly once.'};
+    const copy={...state,teams:[
+      {...state.teams[0],roster:[...orderedTeamA]},
+      {...state.teams[1],roster:[...orderedTeamB]}
+    ]};
+    return fromDraftState(copy,format);
+  }
+
+  return Object.freeze({FORMATS,planPairings,fromDraftState,rearrangePairings});
 });
