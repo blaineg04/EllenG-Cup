@@ -80,3 +80,12 @@ test('failed score reload cannot publish a partial snapshot',()=>{
  assert.match(body,/scores=data\|\|\[\];playerScores=nextPlayerScores;pairScores=nextPairScores/);
  assert.ok(body.indexOf('if(pe)throw pe')<body.indexOf('scores=data||[]'));
 });
+
+test('live score subscription reports disconnections and failed reloads',()=>{
+ const body=functionBody('function subscribeLive(){','\nfunction setMobileNavVisible(');
+ assert.match(body,/liveChannel\.subscribe\(status=>/);
+ assert.match(body,/status==="SUBSCRIBED"/);
+ assert.match(body,/status==="CHANNEL_ERROR"\|\|status==="TIMED_OUT"\|\|status==="CLOSED"/);
+ assert.match(body,/setSyncStatus\("error","Live updates disconnected/);
+ assert.match(body,/setSyncStatus\("error","Live scores need refresh"\)/);
+});
