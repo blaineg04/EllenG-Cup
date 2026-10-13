@@ -4416,7 +4416,7 @@ function reviewOfflineScores(){
  // Never clear if the queue changed while the user was reviewing it.
  if(JSON.stringify(current)!==JSON.stringify(entries)){window.alert("Offline scores changed during review. Reopen the list before clearing.");return}
  setOfflineQueue([]);
- setSyncStatus("saved","Offline review cleared locally");
+ setSyncStatus("saving","Offline entries cleared locally — server scores unchanged");
  window.alert("Local offline entries cleared. No scores were submitted or changed on the server.");
 }
 function queueOfflineScore(payload){
