@@ -213,3 +213,10 @@ test('last reviewed offline archive can be inspected without resubmitting',()=>{
  assert.match(body,/Archived local review/);
  assert.doesNotMatch(body,/db\.functions\.invoke/);
 });
+
+test('archived offline review remains reachable when pending queue is empty',()=>{
+ const body=functionBody('function renderOfflineState(){','\nfunction reviewOfflineScores(');
+ assert.match(body,/hasArchive=Array\.isArray\(archived\)&&archived\.length>0/);
+ assert.match(body,/&&legacy===0&&!hasArchive/);
+ assert.match(body,/View last offline-score review archive/);
+});
