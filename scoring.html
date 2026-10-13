@@ -4302,7 +4302,10 @@ function renderHolebar(){
   let h=i+1,g=tournament&&tournament.gator_revealed&&Number(tournament.gator_hole)===h;
   return `<button class="holebtn ${h===hole?"active":""} ${g?"gator":""}" data-hole="${h}"><strong>${h}${g?" 🐊":""}</strong><br><span style="font-size:10px">P${parForHole(h)}</span></button>`
  }).join("");
- document.querySelectorAll("[data-hole]").forEach(b=>b.addEventListener("click",()=>{hole=Number(b.dataset.hole);renderScoring()}));
+ document.querySelectorAll("[data-hole]").forEach(b=>b.addEventListener("click",()=>{
+  if(scoreSaveBusy){const el=$("saveMsg");if(el)el.textContent="Wait for the current score to finish saving before changing holes.";return}
+  hole=Number(b.dataset.hole);renderScoring()
+ }));
 }
 function canEditTeam(i){return isCommissioner||(captainTeam!=null&&Number(captainTeam)===Number(i))}
 
