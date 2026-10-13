@@ -129,7 +129,10 @@ test('offline review displays local scores without uploading or deleting them',(
  assert.match(body,/item\.score/);
  assert.match(body,/item\.queued_at/);
  assert.match(body,/NOT submitted/);
- assert.doesNotMatch(body,/db\.functions\.invoke|setOfflineQueue\(|localStorage\.removeItem/);
+ assert.doesNotMatch(body,/db\.functions\.invoke|localStorage\.removeItem/);
+ assert.match(body,/window\.confirm\(/);
+ assert.match(body,/JSON\.stringify\(current\)!==JSON\.stringify\(entries\)/);
+ assert.match(body,/setOfflineQueue\(\[\]\)/);
 });
 test('offline review banner supports click and keyboard',()=>{
  const body=functionBody('if\($("offlineBanner")\){','\nif("serviceWorker" in navigator)');
