@@ -182,3 +182,9 @@ test('legacy offline scores are flagged without being reassigned or deleted',()=
  assert.doesNotMatch(body,/localStorage\.removeItem\(OFFLINE_SCORE_KEY\)/);
  assert.doesNotMatch(body,/setOfflineQueue\(legacy/);
 });
+
+test('clearing local offline entries never reports a successful server sync',()=>{
+ const body=functionBody('function reviewOfflineScores(){','\nfunction queueOfflineScore(');
+ assert.match(body,/setSyncStatus\("saving","Offline entries cleared locally/);
+ assert.doesNotMatch(body,/setSyncStatus\("saved"/);
+});
