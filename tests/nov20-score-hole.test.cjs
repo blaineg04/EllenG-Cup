@@ -26,3 +26,10 @@ for(const [name,start,end] of [
   assert.doesNotMatch(body,/Number\(x\.hole\)===hole/);
  });
 }
+
+test('hole navigation is blocked during an in-flight score save',()=>{
+ const body=functionBody('function renderHolebar(){','\nfunction canEditTeam(');
+ assert.match(body,/if\(scoreSaveBusy\)/);
+ assert.match(body,/score to finish saving/);
+ assert.ok(body.indexOf('if(scoreSaveBusy)')<body.indexOf('hole=Number(b.dataset.hole)'));
+});
