@@ -5684,7 +5684,10 @@ function subscribeLive(){
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_player_hole_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e);setSyncStatus("error","Live scores need refresh")}})
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_pair_hole_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e);setSyncStatus("error","Live scores need refresh")}})
   .on("postgres_changes",{event:"UPDATE",schema:"public",table:"elleng_tournaments",filter:`id=eq.${TOURNAMENT_ID}`},async p=>{tournament=p.new;renderAll()});
- liveChannel.subscribe(status=>{\n  if(status==="SUBSCRIBED"){setSyncStatus("saved","Live updates connected")}\n  else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){setSyncStatus("error","Live updates disconnected — refresh scores")}\n });
+ liveChannel.subscribe(status=>{
+  if(status==="SUBSCRIBED"){setSyncStatus("saved","Live updates connected")}
+  else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){setSyncStatus("error","Live updates disconnected — refresh scores")}
+ });
 }
 
 
