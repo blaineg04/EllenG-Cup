@@ -4381,6 +4381,17 @@ function renderOfflineState(){
  b.classList.toggle("hidden",navigator.onLine&&q.length===0);
  b.textContent=!navigator.onLine?`Offline • ${q.length} score${q.length===1?"":"s"} stored locally`:q.length?`${q.length} score${q.length===1?"":"s"} need review before submission`:"";
 }
+function reviewOfflineScores(){
+ const entries=offlineQueue();
+ if(!entries.length){window.alert("No offline scores are pending.");return}
+ const lines=entries.map((item,i)=>{
+  const hole=Number(item.hole);
+  const value=item.score===""?"Clear score":String(item.score)+" strokes";
+  const time=item.queued_at?new Date(item.queued_at).toLocaleString():"Time unknown";
+  return `${i+1}. Hole ${Number.isInteger(hole)&&hole>=1&&hole<=18?hole:"?"}: ${value} • ${time}`;
+ });
+ window.alert("Scores stored only on this device (NOT submitted):\\n\\n"+lines.join("\\n")+"\\n\\nCompare these entries with the live scorecard. Re-enter any missing scores while online. Entries remain stored for review.");
+}
 function queueOfflineScore(payload){const q=offlineQueue();q.push({...payload,queued_at:new Date().toISOString()});setOfflineQueue(q)}
 async function flushOfflineScores(){
  if(!navigator.onLine||!user)return;
@@ -5961,6 +5972,14 @@ window.addEventListener("online",async()=>{
  try{await flushOfflineScores()}catch(e){console.error("Offline score sync failed",e);setSyncStatus("error","Offline score sync failed")}
 });
 window.addEventListener("offline",renderOfflineState);
+if($("offlineBanner")){
+ const banner=$("offlineBanner");
+ banner.setAttribute("role","button");
+ banner.setAttribute("tabindex","0");
+ banner.setAttribute("aria-label","Review locally stored offline scores");
+ banner.addEventListener("click",reviewOfflineScores);
+ banner.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();reviewOfflineScores()}});
+}
 if("serviceWorker" in navigator){window.addEventListener("load",async()=>{try{const reg=await navigator.serviceWorker.register("./service-worker.js?v=2.7.43",{scope:"./",updateViaCache:"none"});await reg.update().catch(()=>{});if(reg.waiting){reg.waiting.postMessage({type:"SKIP_WAITING"})}}catch(e){console.warn("Service worker registration skipped",e)}})}
 
 
