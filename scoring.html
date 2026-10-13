@@ -4399,6 +4399,8 @@ function renderOfflineState(){
  b.textContent=legacy?`Legacy offline scores (${legacy}) need commissioner review • ${q.length} account score(s) pending`:!navigator.onLine?`Offline • ${q.length} score${q.length===1?"":"s"} stored locally`:q.length?`${q.length} score${q.length===1?"":"s"} need review before submission`:"";
 }
 function reviewOfflineScores(){
+ const reviewAccountId=user?.id;
+ if(!reviewAccountId){window.alert("Sign in to review your offline scores.");return}
  const entries=offlineQueue();
  if(legacyOfflineQueueCount())window.alert("Older unassigned offline scores exist on this device. They cannot be safely attributed to an account. Ask the commissioner to review them before clearing browser data.");
  if(!entries.length){window.alert("No account-specific offline scores are pending.");return}
@@ -4412,6 +4414,7 @@ function reviewOfflineScores(){
  window.alert(summary);
  if(!navigator.onLine)return;
  if(!window.confirm("Have you checked the live scorecard and manually resolved EVERY listed offline entry?\n\nOK permanently clears this device's queued copies. Cancel keeps them for later review."))return;
+ if(user?.id!==reviewAccountId){window.alert("Account changed during review. Sign back into the original account before clearing.");return}
  const current=offlineQueue();
  // Never clear if the queue changed while the user was reviewing it.
  if(JSON.stringify(current)!==JSON.stringify(entries)){window.alert("Offline scores changed during review. Reopen the list before clearing.");return}
