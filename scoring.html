@@ -4390,7 +4390,7 @@ function reviewOfflineScores(){
   const time=item.queued_at?new Date(item.queued_at).toLocaleString():"Time unknown";
   return `${i+1}. Hole ${Number.isInteger(hole)&&hole>=1&&hole<=18?hole:"?"}: ${value} • ${time}`;
  });
- window.alert("Scores stored only on this device (NOT submitted):\\n\\n"+lines.join("\\n")+"\\n\\nCompare these entries with the live scorecard. Re-enter any missing scores while online. Entries remain stored for review.");
+ window.alert("Scores stored only on this device (NOT submitted):\n\n"+lines.join("\n")+"\n\nCompare these entries with the live scorecard. Re-enter any missing scores while online. Entries remain stored for review.");
 }
 function queueOfflineScore(payload){const q=offlineQueue();q.push({...payload,queued_at:new Date().toISOString()});setOfflineQueue(q)}
 async function flushOfflineScores(){
