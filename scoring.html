@@ -4401,7 +4401,15 @@ function reviewOfflineScores(){
  setSyncStatus("saved","Offline review cleared locally");
  window.alert("Local offline entries cleared. No scores were submitted or changed on the server.");
 }
-function queueOfflineScore(payload){const q=offlineQueue();q.push({...payload,queued_at:new Date().toISOString()});setOfflineQueue(q)}
+function queueOfflineScore(payload){
+ const q=offlineQueue();
+ // Keep the most recent local intent for each tournament/hole, avoiding
+ // duplicate review entries after repeated offline save attempts.
+ const key=String(payload.tournament_id)+"|"+String(payload.draft_id)+"|"+String(payload.hole);
+ const remaining=q.filter(item=>String(item.tournament_id)+"|"+String(item.draft_id)+"|"+String(item.hole)!==key);
+ remaining.push({...payload,queued_at:new Date().toISOString()});
+ setOfflineQueue(remaining);
+}
 async function flushOfflineScores(){
  if(!navigator.onLine||!user)return;
  const q=offlineQueue();
