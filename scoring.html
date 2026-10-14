@@ -5264,7 +5264,7 @@ async function saveSelfScore(clear=false){
    serverAccepted=true;
    await loadBase();
    // A concurrent realtime refresh may supersede this request; verify a fresh snapshot.
-   if(await loadScores()===false)await loadScores();
+   if(await loadScores()===false && await loadScores()===false)throw new Error("Score refresh was superseded twice. Reload the live scorecard to verify the saved score.");
    const savedRow=data.mode==="player_shamble"
      ?playerScores.find(x=>Number(x.hole)===h&&Number(x.golfer_index)===idx&&Number(x.team_index)===Number(data.team_index))
      :data.mode==="split_pair"
