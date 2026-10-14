@@ -1,6 +1,6 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {FORMAT_ID,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry}=require('../two-team-points.js');
+const {FORMAT_ID,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster}=require('../two-team-points.js');
 test('new points format has its own identifier',()=>assert.equal(FORMAT_ID,'two_team_individual_points'));
 test('points ladder and hole-in-one override',()=>{
  for(const [par,strokes,points] of [[5,3,6],[4,3,5],[4,4,4],[4,5,2],[4,6,1],[4,9,1],[3,1,7]])
@@ -68,4 +68,18 @@ test('score save cannot silently move a golfer between teams',()=>{
  const old={playerId:'p1',teamId:'A',hole:1,par:4,strokes:4};
  assert.equal(upsertHoleEntry([old],{...old,teamId:'B'}).ok,false);
  assert.equal(upsertHoleEntry([old],{...old,hole:2,teamId:'B'}).ok,false);
+});
+
+test('official two-team roster allows large equal teams',()=>{
+ const a=Array.from({length:40},(_,i)=>'a'+i);
+ const b=Array.from({length:40},(_,i)=>'b'+i);
+ assert.deepEqual(validateRoster(a,b),{ok:true,teamSize:40,playerCount:80});
+});
+test('official play blocks uneven teams but setup can retain uneven RSVPs',()=>{
+ assert.equal(validateRoster(['a','b'],['c']).ok,false);
+ assert.equal(validateRoster(['a','b'],['c'],{requireEqual:false}).ok,true);
+});
+test('roster cannot duplicate golfers or omit IDs',()=>{
+ assert.equal(validateRoster(['a'],['a']).ok,false);
+ assert.equal(validateRoster([''],['b']).ok,false);
 });
