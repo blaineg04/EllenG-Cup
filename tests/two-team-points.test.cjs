@@ -364,3 +364,9 @@ test('pickup flag must be a boolean when scoring directly',()=>{
  assert.equal(scoreHole(4,null,{pickup:true}).points,1);
  assert.equal(scoreHole(4,4,{pickup:false}).points,4);
 });
+
+test('local SQL score function explicitly rejects null hole and par',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const sql=fs.readFileSync(path.join(__dirname,'sql','two-team-points-local-save-score.sql'),'utf8');
+ assert.match(sql,/p_hole IS NULL OR p_par IS NULL/);
+});
