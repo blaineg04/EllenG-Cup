@@ -5288,8 +5288,13 @@ async function saveSelfScore(clear=false){
      msg.textContent="Score update accepted by server, but confirmation refresh failed. Reload the live scorecard to verify before trying again.";
      setSyncStatus("error","Score accepted — refresh unverified");
    }else if(!navigator.onLine || /fetch|network|timeout|failed/i.test(String(e?.message||""))){
-     queueOfflineScore({action:"update_score",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,golfer_index:idx,hole:h,score});
-     msg.textContent="Stored on this device only — offline score needs review after reconnecting.";setSyncStatus("saving","Queued offline");
+     try{
+       queueOfflineScore({action:"update_score",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,golfer_index:idx,hole:h,score});
+       msg.textContent="Stored on this device only — offline score needs review after reconnecting.";setSyncStatus("saving","Queued offline");
+     }catch(_){
+       msg.textContent="Unable to save the score online or store it on this device. Write down your score and retry when connected.";
+       setSyncStatus("error","Offline score could not be stored");
+     }
    }else{msg.textContent=e?.message||"Unable to save score.";setSyncStatus("error","Save failed")}
  }
  finally{btn.disabled=false;scoreSaveBusy=false;if(saveSucceeded)setSyncStatus("saved","Saved ✓")}
