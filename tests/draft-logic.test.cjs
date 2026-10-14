@@ -81,3 +81,22 @@ test('no remaining golfers means no legal band',()=>{
  assert.equal(d.canBand(0,'A'),false);
  assert.equal(d.canBand(1,'B'),false);
 });
+
+test('band penalty uses combined A/B imbalance rather than independent band counts alone',()=>{
+ const d=makeDraft({teams:2,players:6});
+ d.setGolfers(['A','B','A','B','C','D']);
+ d.addPick(0,0);
+ d.addPick(0,1);
+ d.addPick(1,4);
+ assert.equal(d.canBand(0,'A'),false);
+ assert.equal(d.canBand(0,'B'),false);
+ assert.equal(d.canBand(0,'D'),true);
+});
+
+test('a single remaining valid golfer stays eligible even with a balance penalty',()=>{
+ const d=makeDraft({teams:2,players:3});
+ d.setGolfers(['A','A','B']);
+ d.addPick(0,0);
+ d.addPick(1,2);
+ assert.equal(d.canBand(0,'A'),true);
+});
