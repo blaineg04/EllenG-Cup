@@ -85,7 +85,7 @@ test('roster cannot duplicate golfers or omit IDs',()=>{
 });
 
 test('event snapshot verifies team ownership before computing totals',()=>{
- const event={format:FORMAT_ID,status:'live',teams:[
+ const event={format:FORMAT_ID,status:'live',revision:0,teams:[
   {id:'A',playerIds:['a1','a2']},{id:'B',playerIds:['b1','b2']}
  ],entries:[{playerId:'a1',teamId:'A',hole:1,par:4,strokes:3}]};
  const valid=validateEventSnapshot(event);
@@ -95,7 +95,7 @@ test('event snapshot verifies team ownership before computing totals',()=>{
  assert.equal(validateEventSnapshot({...event,format:'standard'}).ok,false);
 });
 test('event snapshot permits uneven setup but not uneven live rosters',()=>{
- const event={format:FORMAT_ID,status:'setup',teams:[
+ const event={format:FORMAT_ID,status:'setup',revision:0,teams:
   {id:'A',playerIds:['a1','a2']},{id:'B',playerIds:['b1']}
  ],entries:[]};
  assert.equal(validateEventSnapshot(event).ok,true);
@@ -103,7 +103,7 @@ test('event snapshot permits uneven setup but not uneven live rosters',()=>{
 });
 
 test('event score updates produce a new snapshot and fresh leaderboard',()=>{
- const event={format:FORMAT_ID,status:'live',teams:[
+ const event={format:FORMAT_ID,status:'live',revision:0,teams:[
   {id:'A',playerIds:['a']},{id:'B',playerIds:['b']}
  ],entries:[]};
  const saved=applyEventScore(event,{playerId:'a',teamId:'A',hole:1,par:4,strokes:3});
@@ -117,7 +117,7 @@ test('event score updates produce a new snapshot and fresh leaderboard',()=>{
  assert.equal(revised.snapshot.entries.length,1);
 });
 test('event score update rejects unknown players and non-live tournaments',()=>{
- const event={format:FORMAT_ID,status:'live',teams:[
+ const event={format:FORMAT_ID,status:'live',revision:0,teams:[
   {id:'A',playerIds:['a']},{id:'B',playerIds:['b']}
  ],entries:[]};
  const score={playerId:'outsider',teamId:'A',hole:1,par:4,strokes:4};
