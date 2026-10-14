@@ -1,6 +1,6 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {FORMAT_ID,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot,applyEventScore,applyEventScoreAtRevision}=require('../two-team-points.js');
+const {FORMAT_ID,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot,applyEventScore,applyEventScoreAtRevision,finalizeEventAtRevision}=require('../two-team-points.js');
 test('new points format has its own identifier',()=>assert.equal(FORMAT_ID,'two_team_individual_points'));
 test('points ladder and hole-in-one override',()=>{
  for(const [par,strokes,points] of [[5,3,6],[4,3,5],[4,4,4],[4,5,2],[4,6,1],[4,9,1],[3,1,7]])
@@ -145,4 +145,22 @@ test('revision-aware updates require a valid snapshot revision',()=>{
   {id:'A',playerIds:['a']},{id:'B',playerIds:['b']}
  ],entries:[]};
  assert.equal(applyEventScoreAtRevision(event,{playerId:'a',teamId:'A',hole:1,par:4,strokes:4},0).ok,false);
+});
+
+test('finalization requires every golfer to complete 18 holes',()=>{
+ const base={format:FORMAT_ID,status:'live',revision:0,teams:[
+  {id:'A',playerIds:['a']},{id:'B',playerIds:['b']}
+ ],entries:[]};
+ const incomplete=finalizeEventAtRevision(base,0);
+ assert.equal(incomplete.ok,false);
+ assert.equal(incomplete.expected,36);
+ const entries=['a','b'].flatMap((playerId,i)=>Array.from({length:18},(_,j)=>({
+  playerId,teamId:i===0?'A':'B',hole:j+1,par:4,strokes:4
+ })));
+ const complete=finalizeEventAtRevision({...base,entries},0);
+ assert.equal(complete.ok,true);
+ assert.equal(complete.snapshot.status,'final');
+ assert.equal(complete.snapshot.revision,1);
+ assert.equal(finalizeEventAtRevision(complete.snapshot,1).ok,false);
+ assert.equal(finalizeEventAtRevision({...base,entries},1).ok,false);
 });
