@@ -16,6 +16,25 @@
   const result=relative===-2?'eagle':relative===-1?'birdie':relative===0?'par':relative===1?'bogey':'double_or_worse';
   return {ok:true,points:POINTS[result],result,strokes,pickup:false};
  }
+ function validateEventSnapshot(snapshot){
+  if(!snapshot||snapshot.format!==FORMAT_ID)return {ok:false,error:'Not a two-team points event'};
+  if(!Array.isArray(snapshot.teams)||snapshot.teams.length!==2)
+   return {ok:false,error:'Exactly two teams required'};
+  const [a,b]=snapshot.teams;
+  if(!a||!b||typeof a.id!=='string'||typeof b.id!=='string'||a.id===b.id)
+   return {ok:false,error:'Two distinct team IDs required'};
+  const roster=validateRoster(a.playerIds,b.playerIds,{requireEqual:snapshot.status==='live'});
+  if(!roster.ok)return roster;
+  if(!Array.isArray(snapshot.entries))return {ok:false,error:'Missing score entries'};
+  const membership=new Map([...a.playerIds.map(id=>[id,a.id]),...b.playerIds.map(id=>[id,b.id])]);
+  for(const e of snapshot.entries){
+   if(!e||membership.get(e.playerId)!==e.teamId)
+    return {ok:false,error:'Score does not match event roster'};
+  }
+  const board=leaderboard(snapshot.entries,[a.id,b.id]);
+  if(!board.ok)return board;
+  return {ok:true,board,playerCount:roster.playerCount};
+ }
  function validateRoster(teamA,teamB,{requireEqual=true}={}){
   if(!Array.isArray(teamA)||!Array.isArray(teamB)||!teamA.length||!teamB.length)
    return {ok:false,error:'Both teams need at least one golfer'};
@@ -88,5 +107,5 @@
   }
   return {ok:true,points,completed};
  }
- return Object.freeze({FORMAT_ID,POINTS,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster});
+ return Object.freeze({FORMAT_ID,POINTS,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot});
 });
