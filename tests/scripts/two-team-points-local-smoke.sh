@@ -35,6 +35,20 @@ BEGIN
   RAISE EXCEPTION 'stale revision accepted';
  EXCEPTION WHEN SQLSTATE '40001' THEN NULL;
  END;
+ BEGIN
+  PERFORM elleng_points_dev.save_score('00000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000011','00000000-0000-0000-0000-000000000022',2,4,4,false,1);
+  RAISE EXCEPTION 'wrong-team submission accepted';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM <> 'golfer not assigned to team' THEN RAISE; END IF;
+ END;
+ BEGIN
+  PERFORM elleng_points_dev.save_score('00000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000012','00000000-0000-0000-0000-000000000022',1,5,5,false,1);
+  RAISE EXCEPTION 'conflicting par accepted';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM <> 'conflicting hole par' THEN RAISE; END IF;
+ END;
+ IF (SELECT revision FROM elleng_points_dev.events WHERE id='00000000-0000-0000-0000-000000000001')<>1
+ THEN RAISE EXCEPTION 'rejected submissions changed revision'; END IF;
  IF (SELECT strokes FROM elleng_points_dev.scores WHERE player_id='00000000-0000-0000-0000-000000000021')<>4
  THEN RAISE EXCEPTION 'stale update modified score'; END IF;
 END $$;
