@@ -166,7 +166,7 @@
   }
   const [a,b]=teams;
   return {ok:true,teams,leader:a.points===b.points?'tie':a.points>b.points?a.teamId:b.teamId,
-   margin:Math.abs(a.points-b.points),complete:a.completed===b.completed};
+   margin:Math.abs(a.points-b.points),balancedProgress:a.completed===b.completed};
  }
  function totalTeamPoints(entries,teamId){
   if(!Array.isArray(entries))return {ok:false,error:'Entries must be an array'};
