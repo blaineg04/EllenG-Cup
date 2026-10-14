@@ -72,6 +72,7 @@
  }
  function validateEventSnapshot(snapshot){
   if(!snapshot||snapshot.format!==FORMAT_ID)return {ok:false,error:'Not a two-team points event'};
+  if(!['setup','live','final'].includes(snapshot.status))return {ok:false,error:'Invalid tournament status'};
   if(!Array.isArray(snapshot.teams)||snapshot.teams.length!==2)
    return {ok:false,error:'Exactly two teams required'};
   const [a,b]=snapshot.teams;
@@ -105,6 +106,11 @@
   }
   const board=leaderboard(snapshot.entries,[a.id,b.id]);
   if(!board.ok)return board;
+  if(snapshot.status==='final'){
+   const completed=board.teams.reduce((sum,t)=>sum+t.completed,0);
+   if(completed!==roster.playerCount*18)
+    return {ok:false,error:'Final tournament is missing golfer-hole scores'};
+  }
   return {ok:true,board,playerCount:roster.playerCount};
  }
  function validateRoster(teamA,teamB,{requireEqual=true}={}){
