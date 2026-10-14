@@ -17,7 +17,8 @@ BEGIN
   WHERE event_id=p_event AND team_id=p_team AND player_id=p_player) THEN
   RAISE EXCEPTION 'golfer not assigned to team';
  END IF;
- IF p_hole NOT BETWEEN 1 AND 18 OR p_par NOT BETWEEN 3 AND 5 OR
+ IF p_hole IS NULL OR p_par IS NULL OR
+    p_hole NOT BETWEEN 1 AND 18 OR p_par NOT BETWEEN 3 AND 5 OR
     p_pickup IS NULL OR
     NOT ((p_pickup AND p_strokes IS NULL) OR
          (NOT p_pickup AND p_strokes BETWEEN 1 AND 99)) THEN
