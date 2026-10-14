@@ -23,7 +23,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Verify Node is available on MacBook runner
+      - name: Set up Node.js for scoring tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify Node.js
         run: node --version
       - name: Run scoring regression tests
         run: node --test tests/nov20-*.test.cjs
