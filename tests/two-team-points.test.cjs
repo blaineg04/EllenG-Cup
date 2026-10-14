@@ -351,3 +351,9 @@ test('event snapshot revisions must be nonnegative safe integers',()=>{
   assert.match(result.error,/revision/);
  }
 });
+
+test('stroke scoring rejects unsafe and noninteger numeric values',()=>{
+ for(const strokes of [Number.MAX_SAFE_INTEGER+1,Infinity,NaN,3.5,0,-2])
+  assert.equal(scoreHole(4,strokes).ok,false);
+ assert.equal(scoreHole(4,4).points,4);
+});
