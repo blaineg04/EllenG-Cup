@@ -177,7 +177,9 @@ test('offline queue is isolated by authenticated user id',()=>{
  assert.match(body,/user\?\.id/);
  assert.match(body,/if\(!user\)return\[\]/);
  assert.match(body,/localStorage\.getItem\(offlineQueueKey\(\)\)/);
- assert.match(body,/localStorage\.setItem\(offlineQueueKey\(\),JSON\.stringify\(q\)\)/);
+ assert.match(body,/const key=offlineQueueKey\(\);/);
+ assert.match(body,/localStorage\.setItem\(key,JSON\.stringify\(q\)\)/);
+ assert.match(body,/JSON\.stringify\(stored\)!==JSON\.stringify\(q\)/);
  assert.doesNotMatch(body,/localStorage\.getItem\(OFFLINE_SCORE_KEY\)/);
 });
 
