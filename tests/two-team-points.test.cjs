@@ -274,3 +274,11 @@ test('local database runner blocks URL connection overrides',()=>{
  assert.match(sh,/unset PGHOST PGHOSTADDR PGSERVICE PGSERVICEFILE PGPORT PGUSER PGDATABASE/);
  assert.match(sh,/Refusing URL userinfo or connection options/);
 });
+
+test('local database runner refuses default and unnamed PostgreSQL databases',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const sh=fs.readFileSync(path.join(__dirname,'scripts','two-team-points-local-smoke.sh'),'utf8');
+ assert.match(sh,/db_name=.*ELLENG_LOCAL_DB_URL/);
+ for(const db of ['postgres','template0','template1'])assert.match(sh,new RegExp('"'+db+'"'));
+ assert.match(sh,/Refusing default or unnamed PostgreSQL database/);
+});
