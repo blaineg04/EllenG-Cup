@@ -1,6 +1,5 @@
 -- EllenG Cup Two-Team Points: LOCAL/DISPOSABLE DATABASE ONLY.
 -- Do not execute against production. Independent prototype; no existing tables modified.
-BEGIN;
 CREATE SCHEMA IF NOT EXISTS elleng_points_dev;
 CREATE TABLE elleng_points_dev.events (
  id uuid PRIMARY KEY,
@@ -40,4 +39,3 @@ CREATE TABLE elleng_points_dev.scores (
 -- No client role may access prototype tables; later integration requires reviewed RLS.
 REVOKE ALL ON SCHEMA elleng_points_dev FROM PUBLIC;
 REVOKE ALL ON ALL TABLES IN SCHEMA elleng_points_dev FROM PUBLIC;
-COMMIT;
