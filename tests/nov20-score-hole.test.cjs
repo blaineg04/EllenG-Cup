@@ -257,6 +257,6 @@ test('personal score verification retries a superseded realtime refresh',()=>{
  const save=functionBody('async function saveSelfScore(clear=false){','\nasync function resetGolferPin(');
  assert.match(load,/if\(requestId!==latestScoreLoadRequest\)return false;/);
  assert.match(load,/scores=data\|\|\[\];playerScores=nextPlayerScores;pairScores=nextPairScores;\s*return true;/);
- assert.match(save,/if\(await loadScores\(\)===false\)await loadScores\(\);/);
- assert.ok(save.indexOf('if(await loadScores()===false)')<save.indexOf('const savedRow='));
+ assert.match(save,/if\(await loadScores\(\)===false && await loadScores\(\)===false\)throw new Error/);
+ assert.ok(save.indexOf('if(await loadScores()===false && await loadScores()===false)')<save.indexOf('const savedRow='));
 });
