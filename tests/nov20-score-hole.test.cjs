@@ -229,3 +229,12 @@ test('accepted personal score is not requeued if confirmation refresh fails',()=
  assert.match(body,/Score accepted — refresh unverified/);
  assert.ok(body.indexOf('if(serverAccepted){')<body.indexOf('queueOfflineScore('));
 });
+
+test('personal score confirms refreshed row for shamble, pair and team modes',()=>{
+ const body=functionBody('async function saveSelfScore(clear=false){','\nasync function resetGolferPin(');
+ assert.match(body,/data\.mode==="player_shamble"\s*\?playerScores\.find/);
+ assert.match(body,/data\.mode==="split_pair"\s*\?pairScores\.find/);
+ assert.match(body,/:scores\.find\(/);
+ assert.match(body,/if\(clear\?savedRow!=null:Number\(savedRow\?\.score\)!==Number\(raw\)\)/);
+ assert.ok(body.indexOf('const savedRow=')<body.indexOf('saveSucceeded=true;',body.indexOf('const savedRow=')));
+});
