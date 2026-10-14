@@ -8,6 +8,8 @@ on:
       - tests/nov20-*.test.cjs
       - tests/draft-logic.test.cjs
       - tests/draft-auto-integration-readiness.test.cjs
+      - tests/local-draft-db-safety.test.cjs
+      - scripts/check-local-draft-db.cjs
       - docs/draft-auto-pick-*.md
       - common.js
       - .github/workflows/nov20-score-regression.yml
@@ -40,3 +42,5 @@ jobs:
 
       - name: Run automatic-pick integration readiness checks
         run: node --test tests/draft-auto-integration-readiness.test.cjs
+      - name: Run local draft database safety tests
+        run: node --test tests/local-draft-db-safety.test.cjs
