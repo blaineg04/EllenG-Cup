@@ -16,6 +16,18 @@
   const result=relative===-2?'eagle':relative===-1?'birdie':relative===0?'par':relative===1?'bogey':'double_or_worse';
   return {ok:true,points:POINTS[result],result,strokes,pickup:false};
  }
+ function validateRoster(teamA,teamB,{requireEqual=true}={}){
+  if(!Array.isArray(teamA)||!Array.isArray(teamB)||!teamA.length||!teamB.length)
+   return {ok:false,error:'Both teams need at least one golfer'};
+  const all=[...teamA,...teamB];
+  if(all.some(id=>typeof id!=='string'||!id.trim()))
+   return {ok:false,error:'Every golfer needs a nonempty ID'};
+  if(new Set(all).size!==all.length)
+   return {ok:false,error:'A golfer can belong to only one team'};
+  if(requireEqual&&teamA.length!==teamB.length)
+   return {ok:false,error:'Official play requires equal roster sizes'};
+  return {ok:true,teamSize:teamA.length,playerCount:all.length};
+ }
  function upsertHoleEntry(entries,entry){
   if(!Array.isArray(entries))return {ok:false,error:'Entries must be an array'};
   if(!entry||typeof entry.playerId!=='string'||!entry.playerId.trim()||
@@ -76,5 +88,5 @@
   }
   return {ok:true,points,completed};
  }
- return Object.freeze({FORMAT_ID,POINTS,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry});
+ return Object.freeze({FORMAT_ID,POINTS,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster});
 });
