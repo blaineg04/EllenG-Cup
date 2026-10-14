@@ -5254,6 +5254,7 @@ async function saveSelfHandicap(){
 async function saveSelfScore(clear=false){
  const msg=$("selfScoreMsg"),btn=$("saveSelfScore");if(scoreSaveBusy){msg.textContent="A score is already saving — please wait.";return}
  const idx=currentGolferIndex;
+ const savingAccountId=user?.id;
  const h=Number($("selfScoreHole").value);
  const raw=$("selfScoreInput").value.trim();
  if(idx==null){msg.textContent="Your login is not linked to a golfer profile yet.";return}
@@ -5277,6 +5278,7 @@ async function saveSelfScore(clear=false){
    if(clear?savedRow!=null:Number(savedRow?.score)!==Number(raw)){
      throw new Error("Server accepted the score update, but the refreshed scorecard did not confirm it. Reload and check this hole before trying again.");
    }
+   if(user?.id!==savingAccountId)throw new Error("Account changed during score save. Reload the scorecard to verify before continuing.");
    renderAll();
    saveSucceeded=true;
    if(clear){$("selfScoreInput").value="";renderSelfGolfScore();msg.textContent=`Score cleared for Hole ${h}.`;}
