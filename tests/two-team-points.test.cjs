@@ -174,3 +174,14 @@ test('event snapshot rejects duplicate and malformed records even across teams',
  assert.equal(validateEventSnapshot({...base,entries:[{...score,hole:19}]}).ok,false);
  assert.equal(validateEventSnapshot({...base,entries:[{...score,par:6}]}).ok,false);
 });
+
+test('players on different teams cannot record conflicting par for the same hole',()=>{
+ const base={format:FORMAT_ID,status:'live',revision:0,teams:[
+  {id:'A',playerIds:['a']},{id:'B',playerIds:['b']}
+ ],entries:[{playerId:'a',teamId:'A',hole:1,par:4,strokes:4}]};
+ const inconsistent=applyEventScoreAtRevision(base,{playerId:'b',teamId:'B',hole:1,par:5,strokes:5},0);
+ assert.equal(inconsistent.ok,false);
+ assert.equal(base.entries.length,1);
+ const consistent=applyEventScoreAtRevision(base,{playerId:'b',teamId:'B',hole:1,par:4,strokes:4},0);
+ assert.equal(consistent.ok,true);
+});
