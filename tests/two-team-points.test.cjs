@@ -236,3 +236,14 @@ test('local score-save prototype locks event revision and keeps execution privat
  const statements=sql.split('\n').filter(line=>!line.trimStart().startsWith('--')).join('\n');
  assert.doesNotMatch(statements,/GRANT EXECUTE|CREATE POLICY|ALTER TABLE public\./i);
 });
+
+test('local database smoke runner refuses remote databases and requires opt-in',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const sh=fs.readFileSync(path.join(__dirname,'scripts','two-team-points-local-smoke.sh'),'utf8');
+ assert.match(sh,/ELLENG_RUN_LOCAL_DB_TESTS/);
+ assert.match(sh,/ELLENG_LOCAL_DB_URL/);
+ assert.match(sh,/Refusing non-loopback PostgreSQL URL/);
+ assert.match(sh,/ON_ERROR_STOP=1/);
+ assert.match(sh,/ROLLBACK;/);
+ assert.match(sh,/SQLSTATE '40001'/);
+});
