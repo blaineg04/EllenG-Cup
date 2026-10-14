@@ -35,3 +35,17 @@ Do not execute this against the live database until isolated test coverage and a
 ## Boundaries
 
 No live tournament picks, scores, handicap records, or production configuration should be modified as part of this review.
+
+## Isolated database verification procedure
+
+Use a **separate disposable Supabase test project**, never the live EllenG project. Import the relevant schema/functions into the test project and seed only fictional draft IDs, captains, golfers, and timers. Do not copy real player credentials or live tournament records.
+
+1. Capture the current SQL definitions and grants for `elleng_make_pick`, `elleng_auto_pick`, `elleng_pick_balance_penalty`, and their dependent tables/functions.
+2. Create a fixture with two teams and four golfers: `A,A,B,C`. Assign team 0 an A and a B, and team 1 a C. Set the current turn to team 0, with the final A unassigned and timer expired.
+3. Under a test captain identity, check the manual function accepts the final A in a **separate transaction/fixture**. Check the unmodified automatic function rejects the same candidate; record its error.
+4. Reset the fixture. Apply a candidate automatic-pick function **only to the disposable project** that selects the minimum penalty across remaining unassigned golfers.
+5. Assert one automatic pick is persisted, the turn advances, and the deadline restarts. Repeat with two concurrent callers to verify only one pick for the expired turn.
+6. Repeat for paused drafts, non-expired turns, unauthorized identities, and already-completed drafts. Confirm none can write a pick.
+7. Review results and the exact migration diff before requesting explicit approval for any live function change.
+
+**Release gate:** do not deploy the database correction unless all isolated tests pass and the user separately approves the production migration.
