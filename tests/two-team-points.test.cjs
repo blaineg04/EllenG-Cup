@@ -1,6 +1,6 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {FORMAT_ID,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot,applyEventScore}=require('../two-team-points.js');
+const {FORMAT_ID,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot,applyEventScore,applyEventScoreAtRevision}=require('../two-team-points.js');
 test('new points format has its own identifier',()=>assert.equal(FORMAT_ID,'two_team_individual_points'));
 test('points ladder and hole-in-one override',()=>{
  for(const [par,strokes,points] of [[5,3,6],[4,3,5],[4,4,4],[4,5,2],[4,6,1],[4,9,1],[3,1,7]])
@@ -123,4 +123,26 @@ test('event score update rejects unknown players and non-live tournaments',()=>{
  const score={playerId:'outsider',teamId:'A',hole:1,par:4,strokes:4};
  assert.equal(applyEventScore(event,score).ok,false);
  assert.equal(applyEventScore({...event,status:'setup'},{...score,playerId:'a'}).ok,false);
+});
+
+test('revision-aware score updates reject stale devices without mutating state',()=>{
+ const event={format:FORMAT_ID,status:'live',revision:0,teams:[
+  {id:'A',playerIds:['a']},{id:'B',playerIds:['b']}
+ ],entries:[]};
+ const first=applyEventScoreAtRevision(event,{playerId:'a',teamId:'A',hole:1,par:4,strokes:4},0);
+ assert.equal(first.ok,true);
+ assert.equal(first.snapshot.revision,1);
+ const stale=applyEventScoreAtRevision(first.snapshot,{playerId:'b',teamId:'B',hole:1,par:4,strokes:3},0);
+ assert.equal(stale.ok,false);
+ assert.equal(stale.conflict,true);
+ assert.equal(first.snapshot.entries.length,1);
+ const retry=applyEventScoreAtRevision(first.snapshot,{playerId:'b',teamId:'B',hole:1,par:4,strokes:3},1);
+ assert.equal(retry.ok,true);
+ assert.equal(retry.snapshot.revision,2);
+});
+test('revision-aware updates require a valid snapshot revision',()=>{
+ const event={format:FORMAT_ID,status:'live',teams:[
+  {id:'A',playerIds:['a']},{id:'B',playerIds:['b']}
+ ],entries:[]};
+ assert.equal(applyEventScoreAtRevision(event,{playerId:'a',teamId:'A',hole:1,par:4,strokes:4},0).ok,false);
 });
