@@ -84,6 +84,13 @@
    if(![3,4,5].includes(e.par))
     return {ok:false,error:'Score par must be 3, 4, or 5'};
   }
+  const parByHole=new Map();
+  for(const e of snapshot.entries){
+   const known=parByHole.get(e.hole);
+   if(known!==undefined&&known!==e.par)
+    return {ok:false,error:'Golfers cannot have conflicting pars for the same hole'};
+   parByHole.set(e.hole,e.par);
+  }
   const board=leaderboard(snapshot.entries,[a.id,b.id]);
   if(!board.ok)return board;
   return {ok:true,board,playerCount:roster.playerCount};
