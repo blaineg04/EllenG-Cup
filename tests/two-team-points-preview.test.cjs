@@ -24,3 +24,9 @@ test('commissioner development setup links preview without replacing existing fo
  assert.match(scoring,/<option value="split_pair">/);
  assert.doesNotMatch(scoring,/<option value="two_team_individual_points">/);
 });
+
+test('preview validates rosters before clearing or recreating teams',()=>{
+ assert.match(html,/engine\.validateRoster\(teamA,teamB\)/);
+ assert.match(html,/if\(!roster\.ok\)/);
+ assert.match(html,/size=next;entries=\[\]/);
+});
