@@ -213,3 +213,14 @@ test('event snapshots reject unknown states and incomplete finalized rounds',()=
  })));
  assert.equal(validateEventSnapshot({...base,status:'final',entries}).ok,true);
 });
+
+test('local schema prototype is isolated and does not grant public table access',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const sql=fs.readFileSync(path.join(__dirname,'sql','two-team-points-local-schema.sql'),'utf8');
+ assert.match(sql,/CREATE SCHEMA IF NOT EXISTS elleng_points_dev/);
+ for(const table of ['events','teams','roster','scores'])
+  assert.match(sql,new RegExp('CREATE TABLE elleng_points_dev\\.'+table+' \\('));
+ assert.match(sql,/PRIMARY KEY\(event_id,player_id,hole\)/);
+ assert.match(sql,/REVOKE ALL ON ALL TABLES IN SCHEMA elleng_points_dev FROM PUBLIC/);
+ assert.doesNotMatch(sql,/DROP TABLE|ALTER TABLE public\./i);
+});
