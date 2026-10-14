@@ -318,7 +318,7 @@ test('final snapshots reject unscored placeholder entries',()=>{
  entries[0]={...entries[0],strokes:null,pickup:false};
  const result=validateEventSnapshot({format:FORMAT_ID,status:'final',revision:3,teams,entries});
  assert.equal(result.ok,false);
- assert.match(result.error,/unscored/);
+ assert.match(result.error,/missing golfer-hole scores/);
 });
 
 test('balanced progress does not imply that the round is complete',()=>{
