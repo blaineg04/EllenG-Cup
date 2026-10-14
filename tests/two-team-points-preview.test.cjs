@@ -11,8 +11,8 @@ test('preview exposes team, golfer, hole, par and pickup inputs',()=>{
  for(const id of ['count','team','player','hole','par','strokes','pickup','save','scores','a','b'])
   assert.match(html,new RegExp('id="'+id+'"'));
 });
-test('preview uses score upsert and leaderboard instead of legacy scoring',()=>{
- assert.match(html,/engine\.upsertHoleEntry\(/);
+test('preview uses revision-aware score updates and leaderboard instead of legacy scoring',()=>{
+ assert.match(html,/engine\.applyEventScoreAtRevision\(/);
  assert.match(html,/engine\.leaderboard\(/);
  assert.match(html,/engine\.scoreHole\(/);
 });
