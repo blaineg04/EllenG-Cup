@@ -224,3 +224,14 @@ test('local schema prototype is isolated and does not grant public table access'
  assert.match(sql,/REVOKE ALL ON ALL TABLES IN SCHEMA elleng_points_dev FROM PUBLIC/);
  assert.doesNotMatch(sql,/DROP TABLE|ALTER TABLE public\./i);
 });
+
+test('local score-save prototype locks event revision and keeps execution private',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const sql=fs.readFileSync(path.join(__dirname,'sql','two-team-points-local-save-score.sql'),'utf8');
+ assert.match(sql,/FOR UPDATE/);
+ assert.match(sql,/stale revision/);
+ assert.match(sql,/ON CONFLICT\(event_id,player_id,hole\)/);
+ assert.match(sql,/revision=revision\+1/);
+ assert.match(sql,/REVOKE ALL ON FUNCTION elleng_points_dev\.save_score/);
+ assert.doesNotMatch(sql,/GRANT EXECUTE|CREATE POLICY|ALTER TABLE public\./i);
+});
