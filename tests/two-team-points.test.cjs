@@ -1,6 +1,6 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {FORMAT_ID,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot,applyEventScore,applyEventScoreAtRevision,finalizeEventAtRevision}=require('../two-team-points.js');
+const {FORMAT_ID,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot,applyEventScore,applyEventScoreAtRevision,finalizeEventAtRevision,startEventAtRevision}=require('../two-team-points.js');
 test('new points format has its own identifier',()=>assert.equal(FORMAT_ID,'two_team_individual_points'));
 test('points ladder and hole-in-one override',()=>{
  for(const [par,strokes,points] of [[5,3,6],[4,3,5],[4,4,4],[4,5,2],[4,6,1],[4,9,1],[3,1,7]])
@@ -184,4 +184,19 @@ test('players on different teams cannot record conflicting par for the same hole
  assert.equal(base.entries.length,1);
  const consistent=applyEventScoreAtRevision(base,{playerId:'b',teamId:'B',hole:1,par:4,strokes:4},0);
  assert.equal(consistent.ok,true);
+});
+
+test('starting tournament requires balanced rosters and current revision',()=>{
+ const base={format:FORMAT_ID,status:'setup',revision:3,teams:[
+  {id:'A',playerIds:['a1','a2']},{id:'B',playerIds:['b1']}
+ ],entries:[]};
+ assert.equal(startEventAtRevision(base,3).ok,false);
+ const ready={...base,teams:[base.teams[0],{id:'B',playerIds:['b1','b2']}]};
+ assert.equal(startEventAtRevision(ready,2).conflict,true);
+ const started=startEventAtRevision(ready,3);
+ assert.equal(started.ok,true);
+ assert.equal(started.snapshot.status,'live');
+ assert.equal(started.snapshot.revision,4);
+ assert.equal(ready.status,'setup');
+ assert.equal(startEventAtRevision(started.snapshot,4).ok,false);
 });
