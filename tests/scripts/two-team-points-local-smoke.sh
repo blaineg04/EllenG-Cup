@@ -21,6 +21,9 @@ esac
 # Refuse running as an administrative OS account or against a default database name.
 # A unique disposable database must be explicitly selected.
 db_name="${ELLENG_LOCAL_DB_URL##*/}"
+if [[ ! "$db_name" =~ ^elleng_points_test_[a-zA-Z0-9_]+$ ]]; then
+ echo "Database name must begin with elleng_points_test_ and include a suffix" >&2; exit 2
+fi
 if [[ -z "$db_name" || "$db_name" == "postgres" || "$db_name" == "template0" || "$db_name" == "template1" ]]; then
  echo "Refusing default or unnamed PostgreSQL database" >&2; exit 2
 fi
