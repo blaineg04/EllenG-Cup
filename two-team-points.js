@@ -16,6 +16,20 @@
   const result=relative===-2?'eagle':relative===-1?'birdie':relative===0?'par':relative===1?'bogey':'double_or_worse';
   return {ok:true,points:POINTS[result],result,strokes,pickup:false};
  }
+ function applyEventScore(snapshot,entry){
+  const check=validateEventSnapshot(snapshot);
+  if(!check.ok)return check;
+  if(snapshot.status!=='live')return {ok:false,error:'Scores can only be entered during live play'};
+  const team=snapshot.teams.find(t=>t.id===entry?.teamId);
+  if(!team||!team.playerIds.includes(entry?.playerId))
+   return {ok:false,error:'Golfer is not assigned to the selected team'};
+  const updated=upsertHoleEntry(snapshot.entries,entry);
+  if(!updated.ok)return updated;
+  const next={...snapshot,entries:updated.entries};
+  const verified=validateEventSnapshot(next);
+  if(!verified.ok)return verified;
+  return {ok:true,snapshot:next,board:verified.board,replaced:updated.replaced};
+ }
  function validateEventSnapshot(snapshot){
   if(!snapshot||snapshot.format!==FORMAT_ID)return {ok:false,error:'Not a two-team points event'};
   if(!Array.isArray(snapshot.teams)||snapshot.teams.length!==2)
@@ -107,5 +121,5 @@
   }
   return {ok:true,points,completed};
  }
- return Object.freeze({FORMAT_ID,POINTS,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot});
+ return Object.freeze({FORMAT_ID,POINTS,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot,applyEventScore});
 });
