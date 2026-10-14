@@ -28,8 +28,10 @@ if [[ -z "$db_name" || "$db_name" == "postgres" || "$db_name" == "template0" || 
  echo "Refusing default or unnamed PostgreSQL database" >&2; exit 2
 fi
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-psql "$ELLENG_LOCAL_DB_URL" -X -v ON_ERROR_STOP=1 -f "$root/tests/sql/two-team-points-local-schema.sql"
-psql "$ELLENG_LOCAL_DB_URL" -X -v ON_ERROR_STOP=1 -f "$root/tests/sql/two-team-points-local-save-score.sql"
+# Apply both SQL files in one transaction so a failed install cannot leave partial objects.
+psql "$ELLENG_LOCAL_DB_URL" -X -v ON_ERROR_STOP=1 --single-transaction \
+ -f "$root/tests/sql/two-team-points-local-schema.sql" \
+ -f "$root/tests/sql/two-team-points-local-save-score.sql"
 psql "$ELLENG_LOCAL_DB_URL" -X -v ON_ERROR_STOP=1 <<'SQL'
 BEGIN;
 INSERT INTO elleng_points_dev.events(id,status) VALUES ('00000000-0000-0000-0000-000000000001','live');
