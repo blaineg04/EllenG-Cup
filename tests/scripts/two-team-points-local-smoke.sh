@@ -18,6 +18,12 @@ case "$ELLENG_LOCAL_DB_URL" in
  postgresql://localhost/*|postgresql://127.0.0.1/*|postgres://localhost/*|postgres://127.0.0.1/*|postgresql://localhost:*/*|postgresql://127.0.0.1:*/*|postgres://localhost:*/*|postgres://127.0.0.1:*/*) ;;
  *) echo "Refusing non-loopback PostgreSQL URL" >&2; exit 2;;
 esac
+# Refuse running as an administrative OS account or against a default database name.
+# A unique disposable database must be explicitly selected.
+db_name="${ELLENG_LOCAL_DB_URL##*/}"
+if [[ -z "$db_name" || "$db_name" == "postgres" || "$db_name" == "template0" || "$db_name" == "template1" ]]; then
+ echo "Refusing default or unnamed PostgreSQL database" >&2; exit 2
+fi
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 psql "$ELLENG_LOCAL_DB_URL" -X -v ON_ERROR_STOP=1 -f "$root/tests/sql/two-team-points-local-schema.sql"
 psql "$ELLENG_LOCAL_DB_URL" -X -v ON_ERROR_STOP=1 -f "$root/tests/sql/two-team-points-local-save-score.sql"
