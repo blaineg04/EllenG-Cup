@@ -331,3 +331,13 @@ test('balanced progress does not imply that the round is complete',()=>{
  assert.equal(board.balancedProgress,true);
  assert.equal(Object.hasOwn(board,'complete'),false);
 });
+
+test('event snapshots reject blank team IDs',()=>{
+ const {FORMAT_ID,validateEventSnapshot}=require('../two-team-points.js');
+ for(const id of ['', '   ']){
+  const result=validateEventSnapshot({format:FORMAT_ID,status:'setup',revision:0,
+   teams:[{id,playerIds:['a']},{id:'B',playerIds:['b']}],entries:[]});
+  assert.equal(result.ok,false);
+  assert.match(result.error,/distinct team IDs/);
+ }
+});
