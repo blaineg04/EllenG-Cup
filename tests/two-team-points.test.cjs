@@ -308,3 +308,15 @@ test('final event rejects uneven rosters even if every listed golfer finished',(
  assert.equal(result.ok,false);
  assert.match(result.error,/equal roster sizes/);
 });
+
+test('final snapshots reject unscored placeholder entries',()=>{
+ const {FORMAT_ID,validateEventSnapshot}=require('../two-team-points.js');
+ const teams=[{id:'A',playerIds:['a']},{id:'B',playerIds:['b']}];
+ const entries=[];
+ for(const t of teams)for(let hole=1;hole<=18;hole++)
+  entries.push({teamId:t.id,playerId:t.playerIds[0],hole,par:4,strokes:4,pickup:false});
+ entries[0]={...entries[0],strokes:null,pickup:false};
+ const result=validateEventSnapshot({format:FORMAT_ID,status:'final',revision:3,teams,entries});
+ assert.equal(result.ok,false);
+ assert.match(result.error,/unscored/);
+});
