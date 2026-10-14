@@ -341,3 +341,13 @@ test('event snapshots reject blank team IDs',()=>{
   assert.match(result.error,/distinct team IDs/);
  }
 });
+
+test('event snapshot revisions must be nonnegative safe integers',()=>{
+ const {FORMAT_ID,validateEventSnapshot}=require('../two-team-points.js');
+ for(const revision of [undefined,null,-1,0.5,Number.MAX_SAFE_INTEGER+1,'2']){
+  const result=validateEventSnapshot({format:FORMAT_ID,status:'setup',revision,
+   teams:[{id:'A',playerIds:['a']},{id:'B',playerIds:['b']}],entries:[]});
+  assert.equal(result.ok,false);
+  assert.match(result.error,/revision/);
+ }
+});
