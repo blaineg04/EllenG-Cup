@@ -9,6 +9,11 @@ if [[ -z "${ELLENG_LOCAL_DB_URL:-}" ]]; then
  echo "ELLENG_LOCAL_DB_URL must point to a disposable local PostgreSQL database" >&2
  exit 2
 fi
+# Ignore libpq connection environment overrides.
+unset PGHOST PGHOSTADDR PGSERVICE PGSERVICEFILE PGPORT PGUSER PGDATABASE
+if [[ "$ELLENG_LOCAL_DB_URL" == *"@"* || "$ELLENG_LOCAL_DB_URL" == *"?"* || "$ELLENG_LOCAL_DB_URL" == *"#"* ]]; then
+ echo "Refusing URL userinfo or connection options" >&2; exit 2
+fi
 case "$ELLENG_LOCAL_DB_URL" in
  postgresql://localhost/*|postgresql://127.0.0.1/*|postgres://localhost/*|postgres://127.0.0.1/*|postgresql://localhost:*/*|postgresql://127.0.0.1:*/*|postgres://localhost:*/*|postgres://127.0.0.1:*/*) ;;
  *) echo "Refusing non-loopback PostgreSQL URL" >&2; exit 2;;
