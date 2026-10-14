@@ -78,6 +78,8 @@
   const [a,b]=snapshot.teams;
   if(!a||!b||typeof a.id!=='string'||typeof b.id!=='string'||!a.id.trim()||!b.id.trim()||a.id===b.id)
    return {ok:false,error:'Two distinct team IDs required'};
+  if(!Number.isSafeInteger(snapshot.revision)||snapshot.revision<0)
+   return {ok:false,error:'Invalid tournament revision'};
   const roster=validateRoster(a.playerIds,b.playerIds,{requireEqual:snapshot.status!=='setup'});
   if(!roster.ok)return roster;
   if(!Array.isArray(snapshot.entries))return {ok:false,error:'Missing score entries'};
