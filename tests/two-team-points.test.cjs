@@ -272,6 +272,7 @@ test('local database runner blocks URL connection overrides',()=>{
  const fs=require('node:fs'),path=require('node:path');
  const sh=fs.readFileSync(path.join(__dirname,'scripts','two-team-points-local-smoke.sh'),'utf8');
  assert.match(sh,/unset PGHOST PGHOSTADDR PGSERVICE PGSERVICEFILE PGPORT PGUSER PGDATABASE/);
+ assert.match(sh,/PGOPTIONS PGSSLMODE PGREQUIRESSL/);
  assert.match(sh,/Refusing URL userinfo or connection options/);
 });
 
