@@ -257,3 +257,13 @@ test('local transaction smoke test covers unauthorized teams and conflicting par
  assert.match(sh,/conflicting hole par/);
  assert.match(sh,/rejected submissions changed revision/);
 });
+
+test('local SQL rejects unsupported better-than-eagle results consistently with scoring engine',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const sql=fs.readFileSync(path.join(__dirname,'sql','two-team-points-local-save-score.sql'),'utf8');
+ const sh=fs.readFileSync(path.join(__dirname,'scripts','two-team-points-local-smoke.sh'),'utf8');
+ assert.match(sql,/p_strokes <> 1 AND p_strokes < p_par - 2/);
+ assert.match(sh,/unsupported albatross accepted/);
+ assert.equal(scoreHole(5,2).ok,false);
+ assert.equal(scoreHole(5,1).result,'hole_in_one');
+});
