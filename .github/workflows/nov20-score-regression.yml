@@ -36,6 +36,19 @@ jobs:
           node-version: '22'
       - name: Verify Node.js
         run: node --version
+      - name: Check local PostgreSQL tooling availability (no connections)
+        run: |
+          if command -v psql >/dev/null 2>&1; then
+            echo 'psql is installed'
+            psql --version
+          else
+            echo 'psql is not installed; database integration remains disabled'
+          fi
+          if command -v postgres >/dev/null 2>&1; then
+            echo 'postgres server executable is installed'
+          else
+            echo 'postgres server executable not found on PATH'
+          fi
       - name: Run scoring regression tests
         run: node --test tests/nov20-*.test.cjs
       - name: Run draft logic regression tests
