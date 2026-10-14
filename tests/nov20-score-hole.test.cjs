@@ -143,7 +143,12 @@ test('offline review banner supports click and keyboard',()=>{
 test('personal score save reports success only after completed server and reload work',()=>{
  const body=functionBody('async function saveSelfScore(clear=false){','\nasync function resetGolferPin(');
  assert.match(body,/let saveSucceeded=false/);
- assert.match(body,/await loadBase\(\);await loadScores\(\);renderAll\(\);\s*saveSucceeded=true/);
+ assert.match(body,/serverAccepted=true/);
+ assert.match(body,/await loadBase\(\)/);
+ assert.match(body,/if\(await loadScores\(\)===false\)await loadScores\(\)/);
+ assert.match(body,/const savedRow=data\.mode/);
+ assert.match(body,/if\(clear\?savedRow!=null:Number\(savedRow\?\.score\)!==Number\(raw\)\)/);
+ assert.match(body,/renderAll\(\);\s*saveSucceeded=true/);
  assert.match(body,/if\(saveSucceeded\)setSyncStatus\("saved","Saved ✓"\)/);
  assert.doesNotMatch(body,/!String\(msg\.textContent\|\|""\)/);
 });
