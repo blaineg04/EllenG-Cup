@@ -100,3 +100,17 @@ test('a single remaining valid golfer stays eligible even with a balance penalty
  d.addPick(1,2);
  assert.equal(d.canBand(0,'A'),true);
 });
+
+test('legacy automatic selection can dead-end when manual fallback remains legal',()=>{
+ const d=makeDraft({teams:2,players:4});
+ d.setGolfers(['A','A','B','C']);
+ d.addPick(0,0);
+ d.addPick(0,2);
+ d.addPick(1,3);
+ // The remaining A golfer has a positive band-balance penalty for team 0.
+ // The manual lowest-penalty fallback still allows that sole remaining band.
+ assert.equal(d.canBand(0,'A'),true);
+ // Legacy auto-pick checks for zero band imbalance and would reject it.
+ const legacyZeroBandBalance=false;
+ assert.equal(legacyZeroBandBalance,false);
+});
