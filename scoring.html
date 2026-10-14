@@ -4833,7 +4833,9 @@ async function loadBase(){
   }else playerAccounts=[];
  }else {currentGolferIndex=null;currentUsername="";mustChangePassword=false;playerAccounts=[];}
 }
+let latestScoreLoadRequest=0;
 async function loadScores(){
+ const requestId=++latestScoreLoadRequest;
  const {data,error}=await db.from("elleng_team_scores").select("*").eq("tournament_id",TOURNAMENT_ID);
  if(error)throw error;
  let nextPlayerScores=[],nextPairScores=[];
@@ -4845,6 +4847,8 @@ async function loadScores(){
   if(pe)throw pe;if(pairError)throw pairError;
   nextPlayerScores=ps||[];nextPairScores=pairs||[];
  }
+ // Do not let an older realtime request overwrite a newer scorecard snapshot.
+ if(requestId!==latestScoreLoadRequest)return;
  // Publish one complete snapshot only after every required query succeeds.
  scores=data||[];playerScores=nextPlayerScores;pairScores=nextPairScores;
 }
