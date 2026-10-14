@@ -61,3 +61,23 @@ test('banded draft requires a remaining ranked golfer',()=>{
   assert.equal(d.canBand(0,'A'),true);
   assert.equal(d.canBand(0,'Z'),false);
 });
+
+test('uneven rank mix falls back to the best remaining band',()=>{
+ const d=makeDraft({teams:2,players:4});
+ d.setGolfers(['A','A','B','C']);
+ d.addPick(0,0);
+ d.addPick(0,2);
+ assert.equal(d.canBand(0,'A'),false);
+ assert.equal(d.canBand(0,'C'),true);
+ d.addPick(1,3);
+ assert.equal(d.canBand(0,'A'),true);
+});
+
+test('no remaining golfers means no legal band',()=>{
+ const d=makeDraft({teams:2,players:2});
+ d.setGolfers(['A','B']);
+ d.addPick(0,0);
+ d.addPick(1,1);
+ assert.equal(d.canBand(0,'A'),false);
+ assert.equal(d.canBand(1,'B'),false);
+});
