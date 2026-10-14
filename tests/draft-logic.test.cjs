@@ -23,6 +23,8 @@ function makeDraft({teams=7,players=27,type='snake',rules='banded'}={}) {
     capacity:t=>vm.runInContext('teamCapacity('+t+')',sandbox),
     setGolfers:bands=>vm.runInContext('S.golfers.forEach((g,i)=>{g.name="Player "+i;g.band='+JSON.stringify(bands)+'[i]||"C";});',sandbox),
     canBand:(t,b)=>vm.runInContext('canBand('+t+','+JSON.stringify(b)+')',sandbox),
+    bandCount:(t,b)=>vm.runInContext('tbc('+t+','+JSON.stringify(b)+')',sandbox),
+    abCount:t=>vm.runInContext('teamABCount('+t+')',sandbox),
     addPick:(t,player)=>vm.runInContext('S.teams['+t+'].roster.push('+player+');S.golfers['+player+'].team='+t+';',sandbox)
   };
 }
@@ -111,6 +113,7 @@ test('legacy automatic selection can dead-end when manual fallback remains legal
  // The manual lowest-penalty fallback still allows that sole remaining band.
  assert.equal(d.canBand(0,'A'),true);
  // Legacy auto-pick checks for zero band imbalance and would reject it.
- const legacyZeroBandBalance=(2===0); // team 0 has two A/B picks; team 1 has none
- assert.equal(legacyZeroBandBalance,false);
+ const legacyBandEligible=d.bandCount(0,'A')===Math.min(d.bandCount(0,'A'),d.bandCount(1,'A'));
+ const legacyAbEligible=d.abCount(0)===Math.min(d.abCount(0),d.abCount(1));
+ assert.equal(legacyBandEligible&&legacyAbEligible,false);
 });
