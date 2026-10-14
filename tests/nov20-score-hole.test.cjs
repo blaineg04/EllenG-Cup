@@ -246,3 +246,12 @@ test('concurrent score refresh cannot publish an older snapshot after a newer re
  assert.match(body,/if\(requestId!==latestScoreLoadRequest\)return;/);
  assert.ok(body.indexOf('if(requestId!==latestScoreLoadRequest)return;')<body.indexOf('scores=data||[]'));
 });
+
+test('personal score verification retries a superseded realtime refresh',()=>{
+ const load=functionBody('async function loadScores(){','\nfunction teamOptions(');
+ const save=functionBody('async function saveSelfScore(clear=false){','\nasync function resetGolferPin(');
+ assert.match(load,/if\(requestId!==latestScoreLoadRequest\)return false;/);
+ assert.match(load,/scores=data\|\|\[\];playerScores=nextPlayerScores;pairScores=nextPairScores;\s*return true;/);
+ assert.match(save,/if\(await loadScores\(\)===false\)await loadScores\(\);/);
+ assert.ok(save.indexOf('if(await loadScores()===false)')<save.indexOf('const savedRow='));
+});
