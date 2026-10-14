@@ -16,3 +16,11 @@ test('preview uses score upsert and leaderboard instead of legacy scoring',()=>{
  assert.match(html,/engine\.leaderboard\(/);
  assert.match(html,/engine\.scoreHole\(/);
 });
+
+test('commissioner development setup links preview without replacing existing formats',()=>{
+ const scoring=fs.readFileSync(path.join(__dirname,'..','scoring.html'),'utf8');
+ assert.match(scoring,/href="two-team-points-preview\.html"/);
+ assert.match(scoring,/<option value="standard">/);
+ assert.match(scoring,/<option value="split_pair">/);
+ assert.doesNotMatch(scoring,/<option value="two_team_individual_points">/);
+});
