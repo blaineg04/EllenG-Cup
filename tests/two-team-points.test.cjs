@@ -1,6 +1,6 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {FORMAT_ID,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster}=require('../two-team-points.js');
+const {FORMAT_ID,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot}=require('../two-team-points.js');
 test('new points format has its own identifier',()=>assert.equal(FORMAT_ID,'two_team_individual_points'));
 test('points ladder and hole-in-one override',()=>{
  for(const [par,strokes,points] of [[5,3,6],[4,3,5],[4,4,4],[4,5,2],[4,6,1],[4,9,1],[3,1,7]])
@@ -82,4 +82,22 @@ test('official play blocks uneven teams but setup can retain uneven RSVPs',()=>{
 test('roster cannot duplicate golfers or omit IDs',()=>{
  assert.equal(validateRoster(['a'],['a']).ok,false);
  assert.equal(validateRoster([''],['b']).ok,false);
+});
+
+test('event snapshot verifies team ownership before computing totals',()=>{
+ const event={format:FORMAT_ID,status:'live',teams:[
+  {id:'A',playerIds:['a1','a2']},{id:'B',playerIds:['b1','b2']}
+ ],entries:[{playerId:'a1',teamId:'A',hole:1,par:4,strokes:3}]};
+ const valid=validateEventSnapshot(event);
+ assert.equal(valid.ok,true);
+ assert.equal(valid.board.teams[0].points,5);
+ assert.equal(validateEventSnapshot({...event,entries:[{...event.entries[0],teamId:'B'}]}).ok,false);
+ assert.equal(validateEventSnapshot({...event,format:'standard'}).ok,false);
+});
+test('event snapshot permits uneven setup but not uneven live rosters',()=>{
+ const event={format:FORMAT_ID,status:'setup',teams:[
+  {id:'A',playerIds:['a1','a2']},{id:'B',playerIds:['b1']}
+ ],entries:[]};
+ assert.equal(validateEventSnapshot(event).ok,true);
+ assert.equal(validateEventSnapshot({...event,status:'live'}).ok,false);
 });
