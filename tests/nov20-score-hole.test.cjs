@@ -160,11 +160,13 @@ test('offline review alerts use real newline escape sequences',()=>{
  assert.match(body,/window\.confirm\(/);
 });
 
-test('offline queue replaces repeated local entries for the same event and hole',()=>{
+test('offline queue replaces repeated local entries for the same golfer, event and hole',()=>{
  const body=functionBody('function queueOfflineScore(payload){','\nasync function flushOfflineScores(');
  assert.match(body,/payload\.tournament_id/);
  assert.match(body,/payload\.draft_id/);
  assert.match(body,/payload\.hole/);
+ assert.match(body,/payload\.golfer_index/);
+ assert.match(body,/item\.golfer_index/);
  assert.match(body,/q\.filter\(/);
  assert.match(body,/remaining\.push\(/);
  assert.match(body,/setOfflineQueue\(remaining\)/);
