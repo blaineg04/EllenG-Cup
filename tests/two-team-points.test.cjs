@@ -1,6 +1,6 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {FORMAT_ID,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot}=require('../two-team-points.js');
+const {FORMAT_ID,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot,applyEventScore}=require('../two-team-points.js');
 test('new points format has its own identifier',()=>assert.equal(FORMAT_ID,'two_team_individual_points'));
 test('points ladder and hole-in-one override',()=>{
  for(const [par,strokes,points] of [[5,3,6],[4,3,5],[4,4,4],[4,5,2],[4,6,1],[4,9,1],[3,1,7]])
@@ -100,4 +100,27 @@ test('event snapshot permits uneven setup but not uneven live rosters',()=>{
  ],entries:[]};
  assert.equal(validateEventSnapshot(event).ok,true);
  assert.equal(validateEventSnapshot({...event,status:'live'}).ok,false);
+});
+
+test('event score updates produce a new snapshot and fresh leaderboard',()=>{
+ const event={format:FORMAT_ID,status:'live',teams:[
+  {id:'A',playerIds:['a']},{id:'B',playerIds:['b']}
+ ],entries:[]};
+ const saved=applyEventScore(event,{playerId:'a',teamId:'A',hole:1,par:4,strokes:3});
+ assert.equal(saved.ok,true);
+ assert.equal(saved.board.teams[0].points,5);
+ assert.equal(event.entries.length,0);
+ const revised=applyEventScore(saved.snapshot,{playerId:'a',teamId:'A',hole:1,par:4,strokes:4});
+ assert.equal(revised.ok,true);
+ assert.equal(revised.replaced,true);
+ assert.equal(revised.board.teams[0].points,4);
+ assert.equal(revised.snapshot.entries.length,1);
+});
+test('event score update rejects unknown players and non-live tournaments',()=>{
+ const event={format:FORMAT_ID,status:'live',teams:[
+  {id:'A',playerIds:['a']},{id:'B',playerIds:['b']}
+ ],entries:[]};
+ const score={playerId:'outsider',teamId:'A',hole:1,par:4,strokes:4};
+ assert.equal(applyEventScore(event,score).ok,false);
+ assert.equal(applyEventScore({...event,status:'setup'},{...score,playerId:'a'}).ok,false);
 });
