@@ -16,6 +16,21 @@
   const result=relative===-2?'eagle':relative===-1?'birdie':relative===0?'par':relative===1?'bogey':'double_or_worse';
   return {ok:true,points:POINTS[result],result,strokes,pickup:false};
  }
+ function finalizeEventAtRevision(snapshot,expectedRevision){
+  if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0||
+     !Number.isSafeInteger(snapshot?.revision)||snapshot.revision!==expectedRevision)
+   return {ok:false,conflict:true,error:'Invalid or stale tournament revision'};
+  if(snapshot.status!=='live')return {ok:false,error:'Only live tournaments can be finalized'};
+  const verified=validateEventSnapshot(snapshot);
+  if(!verified.ok)return verified;
+  const expected=verified.playerCount*18;
+  const completed=verified.board.teams.reduce((sum,t)=>sum+t.completed,0);
+  if(completed!==expected)
+   return {ok:false,error:'Every golfer must finish all 18 holes',completed,expected};
+  if(snapshot.revision===Number.MAX_SAFE_INTEGER)
+   return {ok:false,error:'Revision limit reached'};
+  return {ok:true,snapshot:{...snapshot,status:'final',revision:snapshot.revision+1},board:verified.board};
+ }
  function applyEventScoreAtRevision(snapshot,entry,expectedRevision){
   if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0)
    return {ok:false,error:'Expected revision must be a nonnegative integer'};
@@ -134,5 +149,5 @@
   }
   return {ok:true,points,completed};
  }
- return Object.freeze({FORMAT_ID,POINTS,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot,applyEventScore,applyEventScoreAtRevision});
+ return Object.freeze({FORMAT_ID,POINTS,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot,applyEventScore,applyEventScoreAtRevision,finalizeEventAtRevision});
 });
