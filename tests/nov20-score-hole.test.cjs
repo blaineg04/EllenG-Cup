@@ -243,8 +243,8 @@ test('concurrent score refresh cannot publish an older snapshot after a newer re
  const body=functionBody('async function loadScores(){','\nfunction teamOptions(');
  assert.match(html,/let latestScoreLoadRequest=0;/);
  assert.match(body,/const requestId=\+\+latestScoreLoadRequest;/);
- assert.match(body,/if\(requestId!==latestScoreLoadRequest\)return;/);
- assert.ok(body.indexOf('if(requestId!==latestScoreLoadRequest)return;')<body.indexOf('scores=data||[]'));
+ assert.match(body,/if\(requestId!==latestScoreLoadRequest\)return false;/);
+ assert.ok(body.indexOf('if(requestId!==latestScoreLoadRequest)return false;')<body.indexOf('scores=data||[]'));
 });
 
 test('personal score verification retries a superseded realtime refresh',()=>{
