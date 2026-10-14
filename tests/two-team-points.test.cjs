@@ -1,6 +1,6 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {FORMAT_ID,scoreHole,totalTeamPoints}=require('../two-team-points.js');
+const {FORMAT_ID,scoreHole,totalTeamPoints,leaderboard}=require('../two-team-points.js');
 test('new points format has its own identifier',()=>assert.equal(FORMAT_ID,'two_team_individual_points'));
 test('points ladder and hole-in-one override',()=>{
  for(const [par,strokes,points] of [[5,3,6],[4,3,5],[4,4,4],[4,5,2],[4,6,1],[4,9,1],[3,1,7]])
@@ -24,4 +24,26 @@ test('all golfers count with flexible rosters and unplayed holes earn zero',()=>
 test('duplicate player-hole score is rejected',()=>{
  const entry={playerId:'a',teamId:'A',hole:1,par:4,strokes:4};
  assert.equal(totalTeamPoints([entry,entry],'A').ok,false);
+});
+
+test('leaderboard totals every golfer and reports incomplete participation',()=>{
+ const entries=[
+  {playerId:'a1',teamId:'A',hole:1,par:4,strokes:3},
+  {playerId:'a2',teamId:'A',hole:1,par:4,strokes:4},
+  {playerId:'b1',teamId:'B',hole:1,par:4,strokes:4},
+  {playerId:'b2',teamId:'B',hole:1,par:4,strokes:null}
+ ];
+ const board=leaderboard(entries);
+ assert.equal(board.ok,true);
+ assert.equal(board.teams[0].points,9);
+ assert.equal(board.teams[1].points,4);
+ assert.equal(board.leader,'A');
+ assert.equal(board.complete,false);
+});
+test('leaderboard rejects golfers appearing on both teams',()=>{
+ const entries=[
+  {playerId:'p',teamId:'A',hole:1,par:4,strokes:4},
+  {playerId:'p',teamId:'B',hole:2,par:4,strokes:4}
+ ];
+ assert.equal(leaderboard(entries).ok,false);
 });
