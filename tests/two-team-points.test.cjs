@@ -1,6 +1,6 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {FORMAT_ID,scoreHole,totalTeamPoints,leaderboard}=require('../two-team-points.js');
+const {FORMAT_ID,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry}=require('../two-team-points.js');
 test('new points format has its own identifier',()=>assert.equal(FORMAT_ID,'two_team_individual_points'));
 test('points ladder and hole-in-one override',()=>{
  for(const [par,strokes,points] of [[5,3,6],[4,3,5],[4,4,4],[4,5,2],[4,6,1],[4,9,1],[3,1,7]])
@@ -46,4 +46,26 @@ test('leaderboard rejects golfers appearing on both teams',()=>{
   {playerId:'p',teamId:'B',hole:2,par:4,strokes:4}
  ];
  assert.equal(leaderboard(entries).ok,false);
+});
+
+test('editing a score replaces its points instead of adding a second hole',()=>{
+ const old={playerId:'p1',teamId:'A',hole:1,par:4,strokes:4};
+ const next=upsertHoleEntry([old],{...old,strokes:3});
+ assert.equal(next.ok,true);
+ assert.equal(next.replaced,true);
+ assert.equal(next.entries.length,1);
+ assert.equal(totalTeamPoints(next.entries,'A').points,5);
+ assert.equal(old.strokes,4);
+});
+test('repeating the same save is idempotent',()=>{
+ const entry={playerId:'p1',teamId:'A',hole:1,par:4,strokes:4};
+ const first=upsertHoleEntry([],entry);
+ const second=upsertHoleEntry(first.entries,entry);
+ assert.equal(second.entries.length,1);
+ assert.equal(totalTeamPoints(second.entries,'A').points,4);
+});
+test('score save cannot silently move a golfer between teams',()=>{
+ const old={playerId:'p1',teamId:'A',hole:1,par:4,strokes:4};
+ assert.equal(upsertHoleEntry([old],{...old,teamId:'B'}).ok,false);
+ assert.equal(upsertHoleEntry([old],{...old,hole:2,teamId:'B'}).ok,false);
 });
