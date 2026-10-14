@@ -9,7 +9,7 @@
  function scoreHole(par,strokes,{pickup=false}={}){
   if(![3,4,5].includes(par))return {ok:false,error:'Par must be 3, 4, or 5'};
   if(pickup)return {ok:true,points:1,result:'double_or_worse',strokes:null,pickup:true};
-  if(!Number.isInteger(strokes)||strokes<1)return {ok:false,error:'Strokes must be a positive integer'};
+  if(!Number.isSafeInteger(strokes)||strokes<1)return {ok:false,error:'Strokes must be a positive safe integer'};
   if(strokes===1)return {ok:true,points:7,result:'hole_in_one',strokes,pickup:false};
   const relative=strokes-par;
   if(relative < -2)return {ok:false,error:'Better than eagle requires an explicit points rule'};
