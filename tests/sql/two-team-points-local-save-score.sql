@@ -23,6 +23,9 @@ BEGIN
          (NOT p_pickup AND p_strokes BETWEEN 1 AND 99)) THEN
   RAISE EXCEPTION 'invalid score input';
  END IF;
+ IF NOT p_pickup AND p_strokes <> 1 AND p_strokes < p_par - 2 THEN
+  RAISE EXCEPTION 'better than eagle requires a points rule';
+ END IF;
  SELECT par INTO v_known_par FROM elleng_points_dev.scores
   WHERE event_id=p_event AND hole=p_hole LIMIT 1;
  IF v_known_par IS NOT NULL AND v_known_par <> p_par THEN
