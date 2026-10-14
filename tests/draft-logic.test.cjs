@@ -117,3 +117,20 @@ test('legacy automatic selection can dead-end when manual fallback remains legal
  const legacyAbEligible=d.abCount(0)===Math.min(d.abCount(0),d.abCount(1));
  assert.equal(legacyBandEligible&&legacyAbEligible,false);
 });
+
+test('automatic zero-imbalance model and manual fallback differ on a reachable synthetic roster',()=>{
+ const d=makeDraft({teams:2,players:4});
+ d.setGolfers(['A','A','B','C']);
+ d.addPick(0,0);
+ d.addPick(0,2);
+ d.addPick(1,3);
+ const remaining=['A'];
+ const manualCandidates=remaining.filter(b=>d.canBand(0,b));
+ const legacyCandidates=remaining.filter(b=>{
+   const bandMin=Math.min(...[0,1].map(t=>d.bandCount(t,b)));
+   const abMin=Math.min(...[0,1].map(t=>d.abCount(t)));
+   return d.bandCount(0,b)===bandMin && d.abCount(0)===abMin;
+ });
+ assert.deepEqual(manualCandidates,['A']);
+ assert.deepEqual(legacyCandidates,[]);
+});
