@@ -78,7 +78,7 @@
   const [a,b]=snapshot.teams;
   if(!a||!b||typeof a.id!=='string'||typeof b.id!=='string'||a.id===b.id)
    return {ok:false,error:'Two distinct team IDs required'};
-  const roster=validateRoster(a.playerIds,b.playerIds,{requireEqual:snapshot.status==='live'});
+  const roster=validateRoster(a.playerIds,b.playerIds,{requireEqual:snapshot.status!=='setup'});
   if(!roster.ok)return roster;
   if(!Array.isArray(snapshot.entries))return {ok:false,error:'Missing score entries'};
   const membership=new Map([...a.playerIds.map(id=>[id,a.id]),...b.playerIds.map(id=>[id,b.id])]);
