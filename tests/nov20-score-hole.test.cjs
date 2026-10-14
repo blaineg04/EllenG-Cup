@@ -270,3 +270,11 @@ test('offline review identifies golfers in both pending and archived entries',()
  assert.match(body,/archivedLines/);
  assert.match(body,/const golfer=/);
 });
+
+test('personal score save warns when offline browser storage fails',()=>{
+ const body=functionBody('async function saveSelfScore(clear=false){','\nasync function resetGolferPin(');
+ assert.match(body,/try\{\s*queueOfflineScore\(/);
+ assert.match(body,/catch\(_\)\{/);
+ assert.match(body,/Unable to save the score online or store it on this device/);
+ assert.match(body,/Offline score could not be stored/);
+});
