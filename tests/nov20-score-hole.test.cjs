@@ -145,7 +145,7 @@ test('personal score save reports success only after completed server and reload
  assert.match(body,/let saveSucceeded=false/);
  assert.match(body,/serverAccepted=true/);
  assert.match(body,/await loadBase\(\)/);
- assert.match(body,/if\(await loadScores\(\)===false\)await loadScores\(\)/);
+ assert.match(body,/if\(await loadScores\(\)===false && await loadScores\(\)===false\)throw new Error/);
  assert.match(body,/const savedRow=data\.mode/);
  assert.match(body,/if\(clear\?savedRow!=null:Number\(savedRow\?\.score\)!==Number\(raw\)\)/);
  assert.match(body,/renderAll\(\);\s*saveSucceeded=true/);
