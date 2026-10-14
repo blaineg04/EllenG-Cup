@@ -164,3 +164,13 @@ test('finalization requires every golfer to complete 18 holes',()=>{
  assert.equal(finalizeEventAtRevision(complete.snapshot,1).ok,false);
  assert.equal(finalizeEventAtRevision({...base,entries},1).ok,false);
 });
+
+test('event snapshot rejects duplicate and malformed records even across teams',()=>{
+ const base={format:FORMAT_ID,status:'live',revision:0,teams:[
+  {id:'A',playerIds:['a']},{id:'B',playerIds:['b']}
+ ],entries:[]};
+ const score={playerId:'a',teamId:'A',hole:1,par:4,strokes:4};
+ assert.equal(validateEventSnapshot({...base,entries:[score,{...score}]}).ok,false);
+ assert.equal(validateEventSnapshot({...base,entries:[{...score,hole:19}]}).ok,false);
+ assert.equal(validateEventSnapshot({...base,entries:[{...score,par:6}]}).ok,false);
+});
