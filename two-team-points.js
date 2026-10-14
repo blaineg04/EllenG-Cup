@@ -104,6 +104,8 @@
     return {ok:false,error:'Golfers cannot have conflicting pars for the same hole'};
    parByHole.set(e.hole,e.par);
   }
+  if(snapshot.entries.some(e=>e.strokes==null&&e.pickup!==true&&snapshot.status==='final'))
+   return {ok:false,error:'Final tournament contains an unscored golfer-hole record'};
   const board=leaderboard(snapshot.entries,[a.id,b.id]);
   if(!board.ok)return board;
   if(snapshot.status==='final'){
