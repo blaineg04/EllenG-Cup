@@ -370,3 +370,10 @@ test('local SQL score function explicitly rejects null hole and par',()=>{
  const sql=fs.readFileSync(path.join(__dirname,'sql','two-team-points-local-save-score.sql'),'utf8');
  assert.match(sql,/p_hole IS NULL OR p_par IS NULL/);
 });
+
+test('local schema has no embedded transaction boundary that defeats atomic install',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const sql=fs.readFileSync(path.join(__dirname,'sql','two-team-points-local-schema.sql'),'utf8');
+ const statements=sql.split('\n').map(line=>line.trim()).filter(line=>!line.startsWith('--'));
+ assert.equal(statements.some(line=>/^(BEGIN|COMMIT|ROLLBACK)\s*;/i.test(line)),false);
+});
