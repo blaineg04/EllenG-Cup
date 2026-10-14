@@ -282,3 +282,10 @@ test('local database runner refuses default and unnamed PostgreSQL databases',()
  for(const db of ['postgres','template0','template1'])assert.match(sh,new RegExp('"'+db+'"'));
  assert.match(sh,/Refusing default or unnamed PostgreSQL database/);
 });
+
+test('local SQL smoke runner requires a dedicated elleng_points_test database name',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const sh=fs.readFileSync(path.join(__dirname,'scripts','two-team-points-local-smoke.sh'),'utf8');
+ assert.match(sh,/elleng_points_test_/);
+ assert.match(sh,/Database name must begin with elleng_points_test_/);
+});
