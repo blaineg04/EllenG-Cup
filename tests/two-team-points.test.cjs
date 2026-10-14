@@ -95,7 +95,7 @@ test('event snapshot verifies team ownership before computing totals',()=>{
  assert.equal(validateEventSnapshot({...event,format:'standard'}).ok,false);
 });
 test('event snapshot permits uneven setup but not uneven live rosters',()=>{
- const event={format:FORMAT_ID,status:'setup',revision:0,teams:
+ const event={format:FORMAT_ID,status:'setup',revision:0,teams:[
   {id:'A',playerIds:['a1','a2']},{id:'B',playerIds:['b1']}
  ],entries:[]};
  assert.equal(validateEventSnapshot(event).ok,true);
