@@ -4419,7 +4419,7 @@ function reviewOfflineScores(){
   if(!archive.length){window.alert("No account-specific offline scores are pending.");return}
   if(!window.confirm("No pending scores. View the most recent archived offline-score review? This will not change any scores."))return;
   const latest=archive[archive.length-1];
-  const archivedLines=(Array.isArray(latest?.entries)?latest.entries:[]).map((item,i)=>`${i+1}. Hole ${item.hole}: ${item.score===""?"Clear score":String(item.score)+" strokes"}`);
+  const archivedLines=(Array.isArray(latest?.entries)?latest.entries:[]).map((item,i)=>`${i+1}. ${Number.isInteger(Number(item.golfer_index))&&item.golfer_index!=null?"Golfer #"+(Number(item.golfer_index)+1):"Golfer unknown"} • Hole ${item.hole}: ${item.score===""?"Clear score":String(item.score)+" strokes"}`);
   window.alert("Archived local review (NOT server scores):\\n"+archivedLines.join("\\n"));
   return;
  }
@@ -4427,7 +4427,8 @@ function reviewOfflineScores(){
   const hole=Number(item.hole);
   const value=item.score===""?"Clear score":String(item.score)+" strokes";
   const time=item.queued_at?new Date(item.queued_at).toLocaleString():"Time unknown";
-  return `${i+1}. Hole ${Number.isInteger(hole)&&hole>=1&&hole<=18?hole:"?"}: ${value} • ${time}`;
+  const golfer=item.golfer_index!=null&&Number.isInteger(Number(item.golfer_index))?"Golfer #"+(Number(item.golfer_index)+1):"Golfer unknown";
+  return `${i+1}. ${golfer} • Hole ${Number.isInteger(hole)&&hole>=1&&hole<=18?hole:"?"}: ${value} • ${time}`;
  });
  const summary="Scores stored only on this device (NOT submitted):\n\n"+lines.join("\n")+"\n\nCompare these entries with the live scorecard and re-enter missing scores while online.";
  window.alert(summary);
