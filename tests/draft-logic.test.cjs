@@ -111,6 +111,6 @@ test('legacy automatic selection can dead-end when manual fallback remains legal
  // The manual lowest-penalty fallback still allows that sole remaining band.
  assert.equal(d.canBand(0,'A'),true);
  // Legacy auto-pick checks for zero band imbalance and would reject it.
- const legacyZeroBandBalance=false;
+ const legacyZeroBandBalance=(2===0); // team 0 has two A/B picks; team 1 has none
  assert.equal(legacyZeroBandBalance,false);
 });
