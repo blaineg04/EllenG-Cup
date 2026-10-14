@@ -247,3 +247,13 @@ test('local database smoke runner refuses remote databases and requires opt-in',
  assert.match(sh,/ROLLBACK;/);
  assert.match(sh,/SQLSTATE '40001'/);
 });
+
+test('local transaction smoke test covers unauthorized teams and conflicting pars',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const sh=fs.readFileSync(path.join(__dirname,'scripts','two-team-points-local-smoke.sh'),'utf8');
+ assert.match(sh,/wrong-team submission accepted/);
+ assert.match(sh,/golfer not assigned to team/);
+ assert.match(sh,/conflicting par accepted/);
+ assert.match(sh,/conflicting hole par/);
+ assert.match(sh,/rejected submissions changed revision/);
+});
