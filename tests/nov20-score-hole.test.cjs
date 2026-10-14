@@ -238,3 +238,11 @@ test('personal score confirms refreshed row for shamble, pair and team modes',()
  assert.match(body,/if\(clear\?savedRow!=null:Number\(savedRow\?\.score\)!==Number\(raw\)\)/);
  assert.ok(body.indexOf('const savedRow=')<body.indexOf('saveSucceeded=true;',body.indexOf('const savedRow=')));
 });
+
+test('concurrent score refresh cannot publish an older snapshot after a newer request',()=>{
+ const body=functionBody('async function loadScores(){','\nfunction teamOptions(');
+ assert.match(html,/let latestScoreLoadRequest=0;/);
+ assert.match(body,/const requestId=\+\+latestScoreLoadRequest;/);
+ assert.match(body,/if\(requestId!==latestScoreLoadRequest\)return;/);
+ assert.ok(body.indexOf('if(requestId!==latestScoreLoadRequest)return;')<body.indexOf('scores=data||[]'));
+});
