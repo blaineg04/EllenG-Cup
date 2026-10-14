@@ -289,3 +289,11 @@ test('local SQL smoke runner requires a dedicated elleng_points_test database na
  assert.match(sh,/elleng_points_test_/);
  assert.match(sh,/Database name must begin with elleng_points_test_/);
 });
+
+test('local PostgreSQL install uses one atomic transaction for schema and function',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const sh=fs.readFileSync(path.join(__dirname,'scripts','two-team-points-local-smoke.sh'),'utf8');
+ assert.match(sh,/--single-transaction/);
+ assert.match(sh,/two-team-points-local-schema\.sql/);
+ assert.match(sh,/two-team-points-local-save-score\.sql/);
+});
