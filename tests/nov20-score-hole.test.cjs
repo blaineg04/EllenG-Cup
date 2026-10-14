@@ -278,3 +278,11 @@ test('personal score save warns when offline browser storage fails',()=>{
  assert.match(body,/Unable to save the score online or store it on this device/);
  assert.match(body,/Offline score could not be stored/);
 });
+
+test('offline queue confirms browser storage persisted before reporting success',()=>{
+ const body=functionBody('function setOfflineQueue(q){','\nfunction legacyOfflineQueueCount(');
+ assert.match(body,/localStorage\.setItem\(key,JSON\.stringify\(q\)\)/);
+ assert.match(body,/localStorage\.getItem\(key\)/);
+ assert.match(body,/JSON\.stringify\(stored\)!==JSON\.stringify\(q\)/);
+ assert.ok(body.indexOf('localStorage.getItem(key)')<body.indexOf('renderOfflineState();'));
+});
