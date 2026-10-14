@@ -16,6 +16,18 @@
   const result=relative===-2?'eagle':relative===-1?'birdie':relative===0?'par':relative===1?'bogey':'double_or_worse';
   return {ok:true,points:POINTS[result],result,strokes,pickup:false};
  }
+ function startEventAtRevision(snapshot,expectedRevision){
+  if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0||
+     !Number.isSafeInteger(snapshot?.revision)||snapshot.revision!==expectedRevision)
+   return {ok:false,conflict:true,error:'Invalid or stale tournament revision'};
+  if(snapshot.status!=='setup')return {ok:false,error:'Only setup tournaments can start'};
+  const candidate={...snapshot,status:'live'};
+  const verified=validateEventSnapshot(candidate);
+  if(!verified.ok)return verified;
+  if(snapshot.revision===Number.MAX_SAFE_INTEGER)
+   return {ok:false,error:'Revision limit reached'};
+  return {ok:true,snapshot:{...candidate,revision:snapshot.revision+1},board:verified.board};
+ }
  function finalizeEventAtRevision(snapshot,expectedRevision){
   if(!Number.isSafeInteger(expectedRevision)||expectedRevision<0||
      !Number.isSafeInteger(snapshot?.revision)||snapshot.revision!==expectedRevision)
@@ -167,5 +179,5 @@
   }
   return {ok:true,points,completed};
  }
- return Object.freeze({FORMAT_ID,POINTS,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot,applyEventScore,applyEventScoreAtRevision,finalizeEventAtRevision});
+ return Object.freeze({FORMAT_ID,POINTS,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry,validateRoster,validateEventSnapshot,applyEventScore,applyEventScoreAtRevision,finalizeEventAtRevision,startEventAtRevision});
 });
