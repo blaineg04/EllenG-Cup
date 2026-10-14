@@ -8,6 +8,7 @@
  const POINTS=Object.freeze({hole_in_one:7,eagle:6,birdie:5,par:4,bogey:2,double_or_worse:1});
  function scoreHole(par,strokes,{pickup=false}={}){
   if(![3,4,5].includes(par))return {ok:false,error:'Par must be 3, 4, or 5'};
+  if(typeof pickup!=='boolean')return {ok:false,error:'Pickup must be true or false'};
   if(pickup)return {ok:true,points:1,result:'double_or_worse',strokes:null,pickup:true};
   if(!Number.isSafeInteger(strokes)||strokes<1)return {ok:false,error:'Strokes must be a positive safe integer'};
   if(strokes===1)return {ok:true,points:7,result:'hole_in_one',strokes,pickup:false};
