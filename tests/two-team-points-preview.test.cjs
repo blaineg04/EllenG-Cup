@@ -30,3 +30,10 @@ test('preview validates rosters before clearing or recreating teams',()=>{
  assert.match(html,/if\(!roster\.ok\)/);
  assert.match(html,/size=next;entries=\[\]/);
 });
+
+test('preview saves via revision-aware event validation rather than direct entry updates',()=>{
+ assert.match(html,/engine\.applyEventScoreAtRevision\(snapshot,entry,revision\)/);
+ assert.match(html,/revision=result\.snapshot\.revision/);
+ assert.match(html,/revision=0;updatePlayers\(\)/);
+ assert.doesNotMatch(html,/engine\.upsertHoleEntry\(entries,entry\)/);
+});
