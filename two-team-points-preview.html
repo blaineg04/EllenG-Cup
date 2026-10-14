@@ -14,7 +14,7 @@ small{color:#466172}label{display:block;font-weight:600;margin:6px 0}
 @media(max-width:500px){.grid{grid-template-columns:1fr}}
 </style></head><body>
 <h1>EllenG Cup</h1><p><strong>Two-Team Points Challenge — Development preview</strong></p>
-<p>This standalone demo stores scores only in this browser session. It does not connect to Supabase or alter existing tournament formats.</p>
+<p>This standalone demo keeps scores only in this open page (refreshing clears them). It does not connect to Supabase or alter existing tournament formats.</p>
 <div class="panel">
  <div class="controls"><label for="count">Golfers per team</label><input id="count" type="number" min="1" max="200" value="4"><button id="roster">Create teams</button></div>
  <small>Choose any team size. Both teams receive the same number of golfers.</small>
@@ -38,7 +38,7 @@ small{color:#466172}label{display:block;font-weight:600;margin:6px 0}
 <script src="two-team-points.js"></script><script>
 (()=>{'use strict';
  const $=id=>document.getElementById(id),engine=window.EllenGTwoTeamPoints;
- let entries=[],size=4;
+ let entries=[],size=4,revision=0;
  for(let i=1;i<=18;i++)$('hole').add(new Option(String(i),String(i)));
  function updatePlayers(){
   const team=$('team').value;$('player').replaceChildren();
@@ -69,14 +69,19 @@ small{color:#466172}label{display:block;font-weight:600;margin:6px 0}
   const teamB=Array.from({length:next},(_,i)=>'B-'+(i+1));
   const roster=engine.validateRoster(teamA,teamB);
   if(!roster.ok){$('message').textContent=roster.error;return}
-  size=next;entries=[];updatePlayers();render();$('message').textContent='Preview teams created: '+roster.playerCount+' golfers';
+  size=next;entries=[];revision=0;updatePlayers();render();$('message').textContent='Preview teams created: '+roster.playerCount+' golfers';
  });
  $('save').addEventListener('click',()=>{
   const entry={playerId:$('player').value,teamId:$('team').value,hole:Number($('hole').value),par:Number($('par').value),
    strokes:$('pickup').checked?null:Number($('strokes').value),pickup:$('pickup').checked};
-  const result=engine.upsertHoleEntry(entries,entry);
+  const teamA=Array.from({length:size},(_,i)=>'A-'+(i+1));
+  const teamB=Array.from({length:size},(_,i)=>'B-'+(i+1));
+  const snapshot={format:engine.FORMAT_ID,status:'live',revision,
+   teams:[{id:'A',playerIds:teamA},{id:'B',playerIds:teamB}],entries};
+  const result=engine.applyEventScoreAtRevision(snapshot,entry,revision);
   if(!result.ok){$('message').textContent=result.error;return}
-  entries=result.entries;render();$('message').textContent='Saved locally — '+(result.replaced?'score updated':'new score');
+  entries=result.snapshot.entries;revision=result.snapshot.revision;
+  render();$('message').textContent='Saved locally — '+(result.replaced?'score updated':'new score');
  });
  updatePlayers();render();
 })();
