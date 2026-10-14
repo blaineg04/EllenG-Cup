@@ -233,5 +233,6 @@ test('local score-save prototype locks event revision and keeps execution privat
  assert.match(sql,/ON CONFLICT\(event_id,player_id,hole\)/);
  assert.match(sql,/revision=revision\+1/);
  assert.match(sql,/REVOKE ALL ON FUNCTION elleng_points_dev\.save_score/);
- assert.doesNotMatch(sql,/GRANT EXECUTE|CREATE POLICY|ALTER TABLE public\./i);
+ const statements=sql.split('\n').filter(line=>!line.trimStart().startsWith('--')).join('\n');
+ assert.doesNotMatch(statements,/GRANT EXECUTE|CREATE POLICY|ALTER TABLE public\./i);
 });
