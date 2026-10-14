@@ -65,7 +65,11 @@ small{color:#466172}label{display:block;font-weight:600;margin:6px 0}
   const next=Number($('count').value);
   if(!Number.isInteger(next)||next<1||next>200){$('message').textContent='Choose 1 to 200 golfers per team for this preview';return}
   if(entries.length&&!confirm('Creating new teams will clear preview scores. Continue?'))return;
-  size=next;entries=[];updatePlayers();render();$('message').textContent='Preview teams created';
+  const teamA=Array.from({length:next},(_,i)=>'A-'+(i+1));
+  const teamB=Array.from({length:next},(_,i)=>'B-'+(i+1));
+  const roster=engine.validateRoster(teamA,teamB);
+  if(!roster.ok){$('message').textContent=roster.error;return}
+  size=next;entries=[];updatePlayers();render();$('message').textContent='Preview teams created: '+roster.playerCount+' golfers';
  });
  $('save').addEventListener('click',()=>{
   const entry={playerId:$('player').value,teamId:$('team').value,hole:Number($('hole').value),par:Number($('par').value),
