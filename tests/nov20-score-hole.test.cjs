@@ -220,3 +220,12 @@ test('archived offline review remains reachable when pending queue is empty',()=
  assert.match(body,/&&legacy===0&&!hasArchive/);
  assert.match(body,/View last offline-score review archive/);
 });
+
+test('accepted personal score is not requeued if confirmation refresh fails',()=>{
+ const body=functionBody('async function saveSelfScore(clear=false){','\nasync function resetGolferPin(');
+ assert.match(body,/let saveSucceeded=false,serverAccepted=false/);
+ assert.match(body,/if\(data\?\.error\)throw new Error\(data\.error\);\s*serverAccepted=true/);
+ assert.match(body,/if\(serverAccepted\)\{/);
+ assert.match(body,/Score accepted — refresh unverified/);
+ assert.ok(body.indexOf('if(serverAccepted){')<body.indexOf('queueOfflineScore('));
+});
