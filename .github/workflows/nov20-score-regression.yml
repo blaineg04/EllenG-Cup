@@ -13,6 +13,8 @@ on:
       - scripts/check-local-draft-db.cjs
       - docs/draft-auto-pick-*.md
       - common.js
+      - two-team-points.js
+      - tests/two-team-points.test.cjs
       - .github/workflows/nov20-score-regression.yml
   workflow_dispatch:
 
@@ -51,6 +53,8 @@ jobs:
           fi
       - name: Run scoring regression tests
         run: node --test tests/nov20-*.test.cjs
+      - name: Run additive two-team points tests
+        run: node --test tests/two-team-points.test.cjs
       - name: Run draft logic regression tests
         run: node --test tests/draft-logic.test.cjs
 
