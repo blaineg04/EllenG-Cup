@@ -4383,8 +4383,11 @@ function offlineQueue(){
  }catch(_){return[]}
 }
 function setOfflineQueue(q){
- if(!user)return;
- localStorage.setItem(offlineQueueKey(),JSON.stringify(q));
+ if(!user)throw new Error("Sign in before storing offline scores.");
+ const key=offlineQueueKey();
+ localStorage.setItem(key,JSON.stringify(q));
+ const stored=JSON.parse(localStorage.getItem(key)||"null");
+ if(!Array.isArray(stored)||JSON.stringify(stored)!==JSON.stringify(q))throw new Error("Offline scores were not preserved in browser storage.");
  renderOfflineState();
 }
 function legacyOfflineQueueCount(){
