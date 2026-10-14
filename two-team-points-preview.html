@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EllenG Cup — Two-Team Points Preview</title>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#163047;background:#f4f7f8}
+*{box-sizing:border-box}body{margin:0;padding:18px;max-width:900px;margin-inline:auto}
+h1{margin:0 0 8px}p{line-height:1.4}.panel{background:white;border:1px solid #d5e0e5;border-radius:14px;padding:16px;margin:14px 0}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}button,input,select{font:inherit;border:1px solid #9cb2bf;border-radius:8px;padding:10px;background:white}
+button{cursor:pointer}button.primary{background:#176b85;color:white;border-color:#176b85}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.team{background:#e9f3f6;border-radius:10px;padding:12px}.points{font-size:32px;font-weight:800}
+small{color:#466172}label{display:block;font-weight:600;margin:6px 0}
+#message{min-height:24px}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:8px;border-bottom:1px solid #dce5e9}
+@media(max-width:500px){.grid{grid-template-columns:1fr}}
+</style></head><body>
+<h1>EllenG Cup</h1><p><strong>Two-Team Points Challenge — Development preview</strong></p>
+<p>This standalone demo stores scores only in this browser session. It does not connect to Supabase or alter existing tournament formats.</p>
+<div class="panel">
+ <div class="controls"><label for="count">Golfers per team</label><input id="count" type="number" min="1" max="200" value="4"><button id="roster">Create teams</button></div>
+ <small>Choose any team size. Both teams receive the same number of golfers.</small>
+</div>
+<div class="grid">
+ <div class="team"><strong>Team A</strong><div class="points" id="a">0</div><small id="ac">0 player-holes scored</small></div>
+ <div class="team"><strong>Team B</strong><div class="points" id="b">0</div><small id="bc">0 player-holes scored</small></div>
+</div>
+<div class="panel">
+ <h2>Enter a score</h2>
+ <div class="controls"><label for="team">Team</label><select id="team"><option value="A">Team A</option><option value="B">Team B</option></select>
+ <label for="player">Golfer</label><select id="player"></select></div>
+ <div class="controls"><label for="hole">Hole</label><select id="hole"></select><label for="par">Par</label><select id="par"><option>3</option><option selected>4</option><option>5</option></select>
+ <label for="strokes">Strokes</label><input id="strokes" type="number" min="1" max="30" value="4"></div>
+ <label><input type="checkbox" id="pickup"> Picked up at double bogey or worse (1 point)</label>
+ <button class="primary" id="save">Save golfer's hole</button><p role="status" id="message"></p>
+</div>
+<div class="panel"><h2>Points</h2><p>Hole-in-one 7 · Eagle 6 · Birdie 5 · Par 4 · Bogey 2 · Double bogey or worse 1</p>
+ <h2>Recorded scores</h2><table><thead><tr><th>Team / golfer</th><th>Hole</th><th>Result</th><th>Points</th></tr></thead><tbody id="scores"></tbody></table>
+</div>
+<script src="two-team-points.js"></script><script>
+(()=>{'use strict';
+ const $=id=>document.getElementById(id),engine=window.EllenGTwoTeamPoints;
+ let entries=[],size=4;
+ for(let i=1;i<=18;i++)$('hole').add(new Option(String(i),String(i)));
+ function updatePlayers(){
+  const team=$('team').value;$('player').replaceChildren();
+  for(let i=1;i<=size;i++)$('player').add(new Option('Golfer '+i,team+'-'+i));
+ }
+ function render(){
+  const board=engine.leaderboard(entries);
+  if(!board.ok){$('message').textContent=board.error;return}
+  for(const t of board.teams){$(t.teamId.toLowerCase()).textContent=t.points;$(t.teamId.toLowerCase()+'c').textContent=t.completed+' player-holes scored'}
+  $('scores').replaceChildren();
+  for(const e of [...entries].sort((x,y)=>x.hole-y.hole)){
+   if(e.strokes==null&&!e.pickup)continue;
+   const s=engine.scoreHole(e.par,e.strokes,{pickup:e.pickup===true});
+   const tr=document.createElement('tr');
+   for(const value of [e.teamId+' / '+e.playerId,e.hole,s.result.replaceAll('_',' '),s.points]){
+    const td=document.createElement('td');td.textContent=String(value);tr.append(td);
+   }
+   $('scores').append(tr);
+  }
+ }
+ $('team').addEventListener('change',updatePlayers);
+ $('pickup').addEventListener('change',()=>{$('strokes').disabled=$('pickup').checked});
+ $('roster').addEventListener('click',()=>{
+  const next=Number($('count').value);
+  if(!Number.isInteger(next)||next<1||next>200){$('message').textContent='Choose 1 to 200 golfers per team for this preview';return}
+  if(entries.length&&!confirm('Creating new teams will clear preview scores. Continue?'))return;
+  size=next;entries=[];updatePlayers();render();$('message').textContent='Preview teams created';
+ });
+ $('save').addEventListener('click',()=>{
+  const entry={playerId:$('player').value,teamId:$('team').value,hole:Number($('hole').value),par:Number($('par').value),
+   strokes:$('pickup').checked?null:Number($('strokes').value),pickup:$('pickup').checked};
+  const result=engine.upsertHoleEntry(entries,entry);
+  if(!result.ok){$('message').textContent=result.error;return}
+  entries=result.entries;render();$('message').textContent='Saved locally — '+(result.replaced?'score updated':'new score');
+ });
+ updatePlayers();render();
+})();
+</script></body></html>
