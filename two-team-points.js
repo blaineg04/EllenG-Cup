@@ -16,6 +16,26 @@
   const result=relative===-2?'eagle':relative===-1?'birdie':relative===0?'par':relative===1?'bogey':'double_or_worse';
   return {ok:true,points:POINTS[result],result,strokes,pickup:false};
  }
+ function upsertHoleEntry(entries,entry){
+  if(!Array.isArray(entries))return {ok:false,error:'Entries must be an array'};
+  if(!entry||typeof entry.playerId!=='string'||!entry.playerId.trim()||
+     !Number.isInteger(entry.hole)||entry.hole<1||entry.hole>18||
+     typeof entry.teamId!=='string'||!entry.teamId.trim())
+   return {ok:false,error:'Invalid player, team, or hole'};
+  const existing=entries.filter(e=>e&&e.playerId===entry.playerId&&e.hole===entry.hole);
+  if(existing.length>1)return {ok:false,error:'Duplicate existing player-hole records'};
+  if(existing.length&&existing[0].teamId!==entry.teamId)
+   return {ok:false,error:'Cannot silently transfer a golfer to another team'};
+  if(entries.some(e=>e&&e.playerId===entry.playerId&&e.teamId!==entry.teamId))
+   return {ok:false,error:'Golfer belongs to a different team'};
+  if(entry.strokes!=null||entry.pickup===true){
+   const scored=scoreHole(entry.par,entry.strokes,{pickup:entry.pickup===true});
+   if(!scored.ok)return scored;
+  }else if(![3,4,5].includes(entry.par))return {ok:false,error:'Invalid par'};
+  const next=entries.filter(e=>!(e&&e.playerId===entry.playerId&&e.hole===entry.hole));
+  next.push({...entry});
+  return {ok:true,entries:next,replaced:existing.length===1};
+ }
  function leaderboard(entries,teamIds=['A','B']){
   if(!Array.isArray(teamIds)||teamIds.length!==2||teamIds[0]===teamIds[1]||teamIds.some(id=>typeof id!=='string'||!id.trim()))
    return {ok:false,error:'Exactly two distinct team IDs are required'};
@@ -56,5 +76,5 @@
   }
   return {ok:true,points,completed};
  }
- return Object.freeze({FORMAT_ID,POINTS,scoreHole,totalTeamPoints,leaderboard});
+ return Object.freeze({FORMAT_ID,POINTS,scoreHole,totalTeamPoints,leaderboard,upsertHoleEntry});
 });
