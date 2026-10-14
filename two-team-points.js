@@ -76,7 +76,7 @@
   if(!Array.isArray(snapshot.teams)||snapshot.teams.length!==2)
    return {ok:false,error:'Exactly two teams required'};
   const [a,b]=snapshot.teams;
-  if(!a||!b||typeof a.id!=='string'||typeof b.id!=='string'||a.id===b.id)
+  if(!a||!b||typeof a.id!=='string'||typeof b.id!=='string'||!a.id.trim()||!b.id.trim()||a.id===b.id)
    return {ok:false,error:'Two distinct team IDs required'};
   const roster=validateRoster(a.playerIds,b.playerIds,{requireEqual:snapshot.status!=='setup'});
   if(!roster.ok)return roster;
