@@ -26,3 +26,12 @@ test('unset and malformed database URLs fail closed',()=>{
  assert.notEqual(check(null).status,0);
  assert.notEqual(check('not a url').status,0);
 });
+
+test('database URL preflight rejects misleading loopback suffixes and encoded production names',()=>{
+ for(const url of [
+  'postgresql://tester:example@127.0.0.1.evil.example:5432/elleng_test',
+  'postgresql://tester:example@localhost.evil.example:5432/elleng_test',
+  'postgresql://tester:example@localhost:5432/elleng%5Fproduction',
+  'postgresql://tester:example@localhost:5432/elleng_test_backup'
+ ])assert.notEqual(check(url).status,0,url);
+});
