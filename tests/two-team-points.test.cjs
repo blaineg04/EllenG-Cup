@@ -297,3 +297,14 @@ test('local PostgreSQL install uses one atomic transaction for schema and functi
  assert.match(sh,/two-team-points-local-schema\.sql/);
  assert.match(sh,/two-team-points-local-save-score\.sql/);
 });
+
+test('final event rejects uneven rosters even if every listed golfer finished',()=>{
+ const {FORMAT_ID,validateEventSnapshot}=require('../two-team-points.js');
+ const teams=[{id:'A',playerIds:['a1','a2']},{id:'B',playerIds:['b1']}];
+ const entries=[];
+ for(const t of teams)for(const playerId of t.playerIds)for(let hole=1;hole<=18;hole++)
+  entries.push({teamId:t.id,playerId,hole,par:4,strokes:4,pickup:false});
+ const result=validateEventSnapshot({format:FORMAT_ID,status:'final',revision:2,teams,entries});
+ assert.equal(result.ok,false);
+ assert.match(result.error,/equal roster sizes/);
+});
