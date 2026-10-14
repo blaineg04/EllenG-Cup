@@ -262,3 +262,11 @@ test('personal score verification retries a superseded realtime refresh',()=>{
  assert.match(save,/if\(await loadScores\(\)===false && await loadScores\(\)===false\)throw new Error/);
  assert.ok(save.indexOf('if(await loadScores()===false && await loadScores()===false)')<save.indexOf('const savedRow='));
 });
+
+test('offline review identifies golfers in both pending and archived entries',()=>{
+ const body=functionBody('function reviewOfflineScores(){','\nfunction queueOfflineScore(');
+ assert.match(body,/item\.golfer_index/);
+ assert.match(body,/Golfer unknown/);
+ assert.match(body,/archivedLines/);
+ assert.match(body,/const golfer=/);
+});
