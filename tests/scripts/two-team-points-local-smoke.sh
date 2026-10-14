@@ -73,6 +73,16 @@ BEGIN
  THEN RAISE EXCEPTION 'rejected submissions changed revision'; END IF;
  IF (SELECT strokes FROM elleng_points_dev.scores WHERE player_id='00000000-0000-0000-0000-000000000021')<>4
  THEN RAISE EXCEPTION 'stale update modified score'; END IF;
+ SELECT elleng_points_dev.save_score('00000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000012','00000000-0000-0000-0000-000000000022',1,4,NULL,true,1) INTO rev;
+ IF rev <> 2 THEN RAISE EXCEPTION 'pickup did not advance revision'; END IF;
+ IF NOT EXISTS (SELECT 1 FROM elleng_points_dev.scores WHERE player_id='00000000-0000-0000-0000-000000000022' AND hole=1 AND pickup=true AND strokes IS NULL)
+ THEN RAISE EXCEPTION 'pickup was not persisted'; END IF;
+ SELECT elleng_points_dev.save_score('00000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000012','00000000-0000-0000-0000-000000000022',1,4,3,false,2) INTO rev;
+ IF rev <> 3 THEN RAISE EXCEPTION 'score edit did not advance revision'; END IF;
+ IF NOT EXISTS (SELECT 1 FROM elleng_points_dev.scores WHERE player_id='00000000-0000-0000-0000-000000000022' AND hole=1 AND pickup=false AND strokes=3)
+ THEN RAISE EXCEPTION 'pickup-to-birdie edit was not persisted'; END IF;
+ IF (SELECT count(*) FROM elleng_points_dev.scores WHERE player_id='00000000-0000-0000-0000-000000000022' AND hole=1)<>1
+ THEN RAISE EXCEPTION 'score edit created duplicate row'; END IF;
 END $$;
 ROLLBACK;
 SQL
