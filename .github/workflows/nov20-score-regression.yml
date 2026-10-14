@@ -6,6 +6,7 @@ on:
     paths:
       - scoring.html
       - tests/nov20-*.test.cjs
+      - tests/draft-logic.test.cjs
       - .github/workflows/nov20-score-regression.yml
   workflow_dispatch:
 
@@ -31,3 +32,5 @@ jobs:
         run: node --version
       - name: Run scoring regression tests
         run: node --test tests/nov20-*.test.cjs
+      - name: Run draft logic regression tests
+        run: node --test tests/draft-logic.test.cjs
