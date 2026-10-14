@@ -73,6 +73,17 @@
    if(!e||membership.get(e.playerId)!==e.teamId)
     return {ok:false,error:'Score does not match event roster'};
   }
+  const scoredHoles=new Set();
+  for(const e of snapshot.entries){
+   if(!Number.isInteger(e.hole)||e.hole<1||e.hole>18)
+    return {ok:false,error:'Score hole must be 1 through 18'};
+   const key=e.playerId+'|'+e.hole;
+   if(scoredHoles.has(key))
+    return {ok:false,error:'Duplicate golfer-hole record'};
+   scoredHoles.add(key);
+   if(![3,4,5].includes(e.par))
+    return {ok:false,error:'Score par must be 3, 4, or 5'};
+  }
   const board=leaderboard(snapshot.entries,[a.id,b.id]);
   if(!board.ok)return board;
   return {ok:true,board,playerCount:roster.playerCount};
