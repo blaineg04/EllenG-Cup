@@ -38,7 +38,7 @@ test('leaderboard totals every golfer and reports incomplete participation',()=>
  assert.equal(board.teams[0].points,9);
  assert.equal(board.teams[1].points,4);
  assert.equal(board.leader,'A');
- assert.equal(board.complete,false);
+ assert.equal(board.balancedProgress,false);
 });
 test('leaderboard rejects golfers appearing on both teams',()=>{
  const entries=[
@@ -319,4 +319,15 @@ test('final snapshots reject unscored placeholder entries',()=>{
  const result=validateEventSnapshot({format:FORMAT_ID,status:'final',revision:3,teams,entries});
  assert.equal(result.ok,false);
  assert.match(result.error,/unscored/);
+});
+
+test('balanced progress does not imply that the round is complete',()=>{
+ const {leaderboard}=require('../two-team-points.js');
+ const board=leaderboard([
+  {teamId:'A',playerId:'a',hole:1,par:4,strokes:4},
+  {teamId:'B',playerId:'b',hole:1,par:4,strokes:4}
+ ]);
+ assert.equal(board.ok,true);
+ assert.equal(board.balancedProgress,true);
+ assert.equal(Object.hasOwn(board,'complete'),false);
 });
