@@ -15,6 +15,8 @@ on:
       - common.js
       - two-team-points.js
       - two-team-points-preview.html
+      - tests/sql/two-team-points-local-*.sql
+      - tests/scripts/two-team-points-local-smoke.sh
       - tests/two-team-points.test.cjs
       - tests/two-team-points-preview.test.cjs
       - .github/workflows/nov20-score-regression.yml
@@ -68,3 +70,10 @@ jobs:
         run: node --test tests/local-draft-db-safety.test.cjs
       - name: Verify optional local integration harness safely skips by default
         run: node --test tests/draft-local-integration.test.cjs
+
+      - name: Run disposable local PostgreSQL scoring smoke test when explicitly configured
+        if: ${{ vars.ELLENG_ENABLE_LOCAL_POINTS_DB_TESTS == '1' }}
+        env:
+          ELLENG_RUN_LOCAL_DB_TESTS: '1'
+          ELLENG_LOCAL_DB_URL: ${{ secrets.ELLENG_LOCAL_POINTS_DB_URL }}
+        run: bash tests/scripts/two-team-points-local-smoke.sh
