@@ -357,3 +357,10 @@ test('stroke scoring rejects unsafe and noninteger numeric values',()=>{
   assert.equal(scoreHole(4,strokes).ok,false);
  assert.equal(scoreHole(4,4).points,4);
 });
+
+test('pickup flag must be a boolean when scoring directly',()=>{
+ for(const pickup of ['true',1,null])
+  assert.equal(scoreHole(4,4,{pickup}).ok,false);
+ assert.equal(scoreHole(4,null,{pickup:true}).points,1);
+ assert.equal(scoreHole(4,4,{pickup:false}).points,4);
+});
