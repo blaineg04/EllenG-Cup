@@ -200,3 +200,16 @@ test('starting tournament requires balanced rosters and current revision',()=>{
  assert.equal(ready.status,'setup');
  assert.equal(startEventAtRevision(started.snapshot,4).ok,false);
 });
+
+test('event snapshots reject unknown states and incomplete finalized rounds',()=>{
+ const base={format:FORMAT_ID,status:'live',revision:0,teams:[
+  {id:'A',playerIds:['a']},{id:'B',playerIds:['b']}
+ ],entries:[]};
+ assert.equal(validateEventSnapshot({...base,status:'paused'}).ok,false);
+ assert.equal(validateEventSnapshot({...base,status:'final'}).ok,false);
+ assert.equal(validateEventSnapshot(base).ok,true);
+ const entries=['a','b'].flatMap((playerId,i)=>Array.from({length:18},(_,j)=>({
+  playerId,teamId:i?'B':'A',hole:j+1,par:4,strokes:4
+ })));
+ assert.equal(validateEventSnapshot({...base,status:'final',entries}).ok,true);
+});
