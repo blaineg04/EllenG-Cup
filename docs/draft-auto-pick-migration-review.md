@@ -29,3 +29,15 @@ Capture the full existing function definition, including its signature, grants, 
 - Reviewed SQL diff, rollback strategy, and explicit production approval.
 
 **Current evidence:** the repository's JavaScript regression fixture demonstrates the rule mismatch; it is not a database integration test.
+
+## Live metadata verified (read-only, 2026-10-14)
+
+The EllenG project's PostgreSQL catalog confirms these function signatures:
+
+| Function | Arguments | Security definer |
+| --- | --- | --- |
+| `public.elleng_auto_pick` | `p_draft_id text` | yes |
+| `public.elleng_make_pick` | `p_draft_id text, p_golfer_index integer` | yes |
+| `public.elleng_pick_balance_penalty` | `p_state jsonb, p_team integer, p_band text` | no |
+
+These metadata checks do not constitute a database integration test. No SQL was changed.
