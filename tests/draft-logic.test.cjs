@@ -143,7 +143,7 @@ test('two-team head-to-head snake drafts scale to arbitrary roster sizes',()=>{
   assert.ok(Math.abs(counts[0]-counts[1])<=1);
   const order=Array.from({length:players},(_,i)=>d.order(i));
   assert.ok(order.every(t=>t===0||t===1));
-  assert.deepEqual([0,1,1,0],order.slice(0,4));
+  assert.deepEqual([0,1,1,0].slice(0,Math.min(4,players)),order.slice(0,4));
  }
 });
 
