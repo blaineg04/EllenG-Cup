@@ -26,6 +26,23 @@ BEGIN
  WHERE id='test-draft';
  SELECT public.elleng_auto_pick('test-draft') INTO again;
  IF jsonb_array_length(again->'picks')<>3 THEN RAISE EXCEPTION 'Early auto-pick was allowed'; END IF;
+ -- A nonfinal automatic pick must advance exactly once and restart the clock.
+ -- Rewind the third pick in the disposable fixture so team 1 is on the clock.
+ UPDATE public.elleng_drafts SET state=jsonb_set(
+   jsonb_set(
+     jsonb_set(
+       jsonb_set(before_state,'{picks}',(before_state->'picks')-2),
+       '{teams,1,roster}','[]'::jsonb),
+     '{golfers,3,team}','null'::jsonb),
+   '{timerEndsAt}',to_jsonb((now()-interval '2 minutes')::text))
+ WHERE id='test-draft';
+ SELECT public.elleng_auto_pick('test-draft') INTO again;
+ IF jsonb_array_length(again->'picks')<>3 THEN RAISE EXCEPTION 'Intermediate auto-pick did not advance'; END IF;
+ IF (again->'golfers'->3->>'team')::integer<>1 THEN RAISE EXCEPTION 'Intermediate golfer assigned to wrong team'; END IF;
+ IF (again->>'timerPaused')::boolean IS DISTINCT FROM false THEN RAISE EXCEPTION 'Intermediate pick paused clock'; END IF;
+ IF (again->>'timerEndsAt')::timestamptz <= now() THEN RAISE EXCEPTION 'Intermediate pick did not restart clock'; END IF;
+ SELECT public.elleng_auto_pick('test-draft') INTO after_state;
+ IF jsonb_array_length(after_state->'picks')<>3 THEN RAISE EXCEPTION 'Intermediate pick duplicated before deadline'; END IF;
  UPDATE public.elleng_drafts SET state=before_state WHERE id='test-draft';
  SELECT public.elleng_auto_pick('test-draft') INTO after_state;
  IF jsonb_array_length(after_state->'picks')<>4 THEN RAISE EXCEPTION 'Auto-pick did not advance exactly once'; END IF;
