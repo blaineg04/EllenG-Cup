@@ -80,6 +80,7 @@ jobs:
       - name: Verify optional local integration harness safely skips by default
         run: node --test tests/draft-local-integration.test.cjs
 
+      # New push validates the recently enabled repository variable.
       - name: Run isolated final-score policy assertions when explicitly configured
         if: ${{ vars.ELLENG_ENABLE_FINAL_POLICY_DB_TESTS == '1' }}
         env:
