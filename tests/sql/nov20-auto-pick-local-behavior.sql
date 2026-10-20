@@ -38,6 +38,7 @@ BEGIN
  IF (again->'golfers'->1->>'team')::integer<>0 THEN RAISE EXCEPTION 'Intermediate golfer assigned to wrong team'; END IF;
  IF (again->>'timerPaused')::boolean IS DISTINCT FROM false THEN RAISE EXCEPTION 'Intermediate pick paused clock'; END IF;
  IF (again->>'timerEndsAt')::timestamptz <= now() THEN RAISE EXCEPTION 'Intermediate pick did not restart clock'; END IF;
+ IF (SELECT jsonb_array_length(state->'picks') FROM public.elleng_drafts WHERE id='test-draft')<>4 THEN RAISE EXCEPTION 'Intermediate pick not persisted'; END IF;
  SELECT public.elleng_auto_pick('test-draft') INTO after_state;
  IF jsonb_array_length(after_state->'picks')<>4 THEN RAISE EXCEPTION 'Intermediate pick duplicated before deadline'; END IF;
  UPDATE public.elleng_drafts SET state=before_state WHERE id='test-draft';
@@ -47,6 +48,7 @@ BEGIN
  IF (after_state->'picks'->3->>'auto')::boolean IS DISTINCT FROM true THEN RAISE EXCEPTION 'Auto-pick marker missing'; END IF;
  IF (after_state->>'timerPaused')::boolean IS DISTINCT FROM true THEN RAISE EXCEPTION 'Final draft pick left clock running'; END IF;
  IF after_state->>'timerEndsAt' IS NOT NULL THEN RAISE EXCEPTION 'Final draft pick left an active deadline'; END IF;
+ IF (SELECT state->>'timerEndsAt' FROM public.elleng_drafts WHERE id='test-draft') IS NOT NULL THEN RAISE EXCEPTION 'Final clock state not persisted'; END IF;
  IF jsonb_array_length(after_state->'teams'->0->'roster')<>3 THEN RAISE EXCEPTION 'Auto-pick roster not updated'; END IF;
  IF (SELECT count(*) FROM jsonb_array_elements(after_state->'teams'->0->'roster') r WHERE r::text='1')<>1
  THEN RAISE EXCEPTION 'Last golfer missing or duplicated in roster'; END IF;
