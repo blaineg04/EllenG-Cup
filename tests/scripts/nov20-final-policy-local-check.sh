@@ -26,7 +26,7 @@ unset PGHOST PGHOSTADDR PGSERVICE PGSERVICEFILE PGPORT PGUSER PGDATABASE PGOPTIO
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # The named database must be empty and disposable; fixture creation fails if tables exist.
 # Apply the real migration to this local fixture and exercise it as authenticated.
-psql "$url" -X -v ON_ERROR_STOP=1 \
+psql "$url" -U postgres -X -v ON_ERROR_STOP=1 \
   -f "$root/tests/sql/nov20-final-score-fixture.sql" \
   -f "$root/tests/sql/nov20-final-score-before-migration.sql" \
   -f "$root/sql/nov20-final-team-score-visibility.sql" \
