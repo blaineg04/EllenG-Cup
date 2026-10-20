@@ -21,3 +21,20 @@ test('migration never touches score records',()=>{
  assert.match(sql,/BEGIN;/);
  assert.match(sql,/COMMIT;/);
 });
+
+test('all scoring tables preserve finalized reads and limit writes',()=>{
+ for(const [table,old] of [
+  ['elleng_team_scores','active live team guard team scores'],
+  ['elleng_player_hole_scores','active live team guard player scores'],
+  ['elleng_pair_hole_scores','active live team guard pair scores']
+ ]){
+  assert.ok(sql.includes('DROP POLICY IF EXISTS "'+old+'" ON public.'+table));
+  for(const operation of ['INSERT','UPDATE','DELETE']){
+   const expressions=[...sql.matchAll(/CREATE POLICY[^;]+;/gi)].map(x=>x[0]);
+   const policy=expressions.find(x=>x.includes('ON public.'+table)&&x.includes('FOR '+operation));
+   assert.ok(policy,table+' missing '+operation+' protection');
+   assert.match(policy,/AS RESTRICTIVE/);
+   assert.match(policy,/status IN \('setup','live'\)/);
+  }
+ }
+});
