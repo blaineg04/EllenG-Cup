@@ -12,6 +12,7 @@ on:
       - tests/sql/nov20-final-score-policy-disposable.sql
       - tests/sql/nov20-final-score-fixture.sql
       - tests/sql/nov20-final-score-before-migration.sql
+      - tests/scripts/nov20-final-policy-ephemeral.sh
       - tests/sql/nov20-final-score-authenticated-behavior.sql
       - tests/scripts/nov20-final-policy-local-check.sh
       - tests/draft-logic.test.cjs
@@ -82,7 +83,6 @@ jobs:
       - name: Run isolated final-score policy assertions when explicitly configured
         if: ${{ vars.ELLENG_ENABLE_FINAL_POLICY_DB_TESTS == '1' }}
         env:
-          ELLENG_FINAL_POLICY_DB_URL: ${{ secrets.ELLENG_FINAL_POLICY_DB_URL }}
           ELLENG_ENABLE_FINAL_POLICY_DB_TESTS: '1'
         run: |
           set -euo pipefail
@@ -90,7 +90,7 @@ jobs:
             echo "::error::psql is required for isolated policy assertions"
             exit 1
           fi
-          bash tests/scripts/nov20-final-policy-local-check.sh
+          bash tests/scripts/nov20-final-policy-ephemeral.sh
 
       - name: Run disposable local PostgreSQL scoring smoke test when explicitly configured
         if: ${{ vars.ELLENG_ENABLE_LOCAL_POINTS_DB_TESTS == '1' }}
