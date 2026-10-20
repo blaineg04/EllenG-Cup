@@ -40,7 +40,7 @@ test('all scoring tables preserve finalized reads and limit writes',()=>{
 });
 
 test('migration is repeatable: every added write policy is dropped before recreation',()=>{
- const creations=[...sql.matchAll(/CREATE POLICY "([^"]+)" ON public\\.([a-z_]+)/g)];
+ const creations=[...sql.matchAll(/CREATE POLICY "([^"]+)" ON public[.]([a-z_]+)/g)];
  assert.equal(creations.length,9,'expected three guards for each of three score tables');
  for(const match of creations){
   const drop='DROP POLICY IF EXISTS "'+match[1]+'" ON public.'+match[2]+';';
