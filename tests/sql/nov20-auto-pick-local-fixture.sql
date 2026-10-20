@@ -1,6 +1,6 @@
 -- Run ONLY on a fresh, disposable localhost PostgreSQL database.
 CREATE SCHEMA IF NOT EXISTS auth;
-CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $SELECT coalesce(nullif(current_setting('elleng.test_uid',true),''),'00000000-0000-0000-0000-000000000011')::uuid$;
+CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $auth_uid$ SELECT coalesce(nullif(current_setting('elleng.test_uid',true),''),'00000000-0000-0000-0000-000000000011')::uuid $auth_uid$;
 CREATE TABLE public.elleng_drafts(id text PRIMARY KEY,owner_id uuid,state jsonb,updated_at timestamptz DEFAULT now());
 CREATE TABLE public.elleng_captains(draft_id text,user_id uuid,team_index integer);
 CREATE OR REPLACE FUNCTION public.elleng_team_ab_count(s jsonb,t integer) RETURNS integer LANGUAGE sql IMMUTABLE AS $$
