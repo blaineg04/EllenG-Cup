@@ -378,3 +378,25 @@ test('local schema has no embedded transaction boundary that defeats atomic inst
  const statements=sql.split('\n').map(line=>line.trim()).filter(line=>!line.startsWith('--'));
  assert.equal(statements.some(line=>/^(BEGIN|COMMIT|ROLLBACK)\s*;/i.test(line)),false);
 });
+
+test('two-team full-round scoring and finalization scale with commissioner roster size',()=>{
+ for(const size of [1,2,3,4,8,15]){
+  const teams=[{id:'A',playerIds:Array.from({length:size},(_,i)=>'a'+i)},
+   {id:'B',playerIds:Array.from({length:size},(_,i)=>'b'+i)}];
+  const event={format:FORMAT_ID,status:'live',revision:0,teams,entries:[]};
+  assert.equal(validateEventSnapshot(event).ok,true,'team size '+size);
+  const incomplete=finalizeEventAtRevision(event,0);
+  assert.equal(incomplete.ok,false,'cannot finalize an unplayed round');
+  assert.equal(incomplete.expected,size*2*18);
+  const entries=teams.flatMap(team=>team.playerIds.flatMap(playerId=>
+   Array.from({length:18},(_,hole)=>({playerId,teamId:team.id,hole:hole+1,par:4,strokes:team.id==='A'?4:5}))));
+  const completed=finalizeEventAtRevision({...event,entries},0);
+  assert.equal(completed.ok,true,'full round finalization at team size '+size);
+  assert.equal(completed.snapshot.status,'final');
+  assert.equal(completed.board.teams[0].completed,18*size);
+  assert.equal(completed.board.teams[1].completed,18*size);
+  assert.equal(completed.board.teams[0].points,72*size);
+  assert.equal(completed.board.teams[1].points,36*size);
+  assert.equal(completed.board.leader,'A');
+ }
+});
