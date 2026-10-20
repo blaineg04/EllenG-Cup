@@ -5,6 +5,8 @@ on:
       - development/elleng-audit-20261013
     paths:
       - scoring.html
+      - service-worker.js
+      - index.html
       - tests/nov20-*.test.cjs
       - tests/draft-logic.test.cjs
       - tests/draft-auto-integration-readiness.test.cjs
