@@ -32,3 +32,14 @@ db="elleng_policy_test_ephemeral_$$"
 createdb -h 127.0.0.1 -p "$port" -U postgres "$db"
 export ELLENG_FINAL_POLICY_DB_URL="postgresql://127.0.0.1:$port/$db"
 bash "$(dirname "$0")/nov20-final-policy-local-check.sh"
+
+# Independent disposable draft database; do not reuse the finalized-score fixture.
+draft_db="elleng_draft_test_ephemeral_$$"
+createdb -h 127.0.0.1 -p "$port" -U postgres "$draft_db"
+draft_url="postgresql://127.0.0.1:$port/$draft_db"
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+psql "$draft_url" -U postgres -X -v ON_ERROR_STOP=1 \
+  -f "$root/tests/sql/nov20-auto-pick-local-fixture.sql" \
+  -f "$root/sql/nov20-auto-pick-balance-fallback.sql" \
+  -f "$root/tests/sql/nov20-auto-pick-local-behavior.sql"
+echo "Isolated expired-clock auto-pick fallback passed."
