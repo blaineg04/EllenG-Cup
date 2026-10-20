@@ -29,3 +29,13 @@ test('Supabase credentials are loaded from configuration, not hardcoded in share
  assert.match(common,/cfg\.supabaseUrl/);
  assert.doesNotMatch(common,/https:\/\/[^\s"'\x60]+\.supabase\.co/);
 });
+
+test('PWA cache version matches tournament entry version',()=>{
+ const entry=read('index.html');
+ const sw=read('service-worker.js');
+ const version=entry.match(/scoring\.html\?v=([\d.]+)/);
+ const cache=sw.match(/const CACHE="elleng-cup-v([\d.]+)"/);
+ assert.ok(version,'missing entry version');
+ assert.ok(cache,'missing PWA cache version');
+ assert.equal(cache[1],version[1]);
+});
