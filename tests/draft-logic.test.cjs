@@ -134,3 +134,31 @@ test('automatic zero-imbalance model and manual fallback differ on a reachable s
  assert.deepEqual(manualCandidates,['A']);
  assert.deepEqual(legacyCandidates,[]);
 });
+
+test('two-team head-to-head snake drafts scale to arbitrary roster sizes',()=>{
+ for(const players of [2,3,7,8,15,22,29,36]){
+  const d=makeDraft({teams:2,players});
+  const counts=[d.capacity(0),d.capacity(1)];
+  assert.equal(counts[0]+counts[1],players);
+  assert.ok(Math.abs(counts[0]-counts[1])<=1);
+  const order=Array.from({length:players},(_,i)=>d.order(i));
+  assert.ok(order.every(t=>t===0||t===1));
+  assert.deepEqual([0,1,1,0],order.slice(0,4));
+ }
+});
+
+test('standard and snake drafts allocate all golfers once with changing team counts',()=>{
+ for(const teams of [2,3,4,5,6,7,8,9,12]){
+  for(const players of [teams,teams+1,teams*4,teams*4+1]){
+   for(const type of ['snake','standard']){
+    const d=makeDraft({teams,players,type,rules:'open'});
+    const order=Array.from({length:players},(_,i)=>d.order(i));
+    assert.equal(new Set(order).size,teams);
+    assert.ok(order.every(team=>team>=0&&team<teams));
+    assert.equal(Array.from({length:teams},(_,i)=>d.capacity(i)).reduce((a,b)=>a+b,0),players);
+    const actual=Array.from({length:teams},(_,i)=>order.filter(team=>team===i).length);
+    assert.deepEqual(Array.from({length:teams},(_,i)=>d.capacity(i)),actual);
+   }
+  }
+ }
+});
