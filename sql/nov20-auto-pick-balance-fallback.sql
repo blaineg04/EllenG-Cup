@@ -96,9 +96,15 @@ begin
   v_state := jsonb_set(v_state, array['teams',v_turn::text,'roster'], v_roster, true);
   v_state := jsonb_set(v_state, '{picks}', coalesce(v_state->'picks','[]'::jsonb) || jsonb_build_object('golfer',v_choice,'team',v_turn,'auto',true), true);
 
-  v_timer := coalesce((v_state->>'timerLength')::integer,60);
-  v_state := jsonb_set(v_state,'{timerPaused}','false'::jsonb,true);
-  v_state := jsonb_set(v_state,'{timerEndsAt}',to_jsonb((now() + make_interval(secs=>v_timer))::text),true);
+  if jsonb_array_length(coalesce(v_state->'picks','[]'::jsonb)) >= v_total_picks then
+    -- The draft is complete: never start another deadline after the last pick.
+    v_state := jsonb_set(v_state,'{timerPaused}','true'::jsonb,true);
+    v_state := jsonb_set(v_state,'{timerEndsAt}','null'::jsonb,true);
+  else
+    v_timer := greatest(1,coalesce((v_state->>'timerLength')::integer,60));
+    v_state := jsonb_set(v_state,'{timerPaused}','false'::jsonb,true);
+    v_state := jsonb_set(v_state,'{timerEndsAt}',to_jsonb((now() + make_interval(secs=>v_timer))::text),true);
+  end if;
 
   update public.elleng_drafts set state=v_state, updated_at=now() where id=p_draft_id;
   return v_state;
