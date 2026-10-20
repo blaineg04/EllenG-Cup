@@ -2,6 +2,15 @@ BEGIN;
 DO $$
 DECLARE before_state jsonb; after_state jsonb; again jsonb;
 BEGIN
+ -- A user who is neither commissioner nor captain cannot auto-pick.
+ PERFORM set_config('elleng.test_uid','00000000-0000-0000-0000-000000000099',true);
+ BEGIN
+  PERFORM public.elleng_auto_pick('test-draft');
+  RAISE EXCEPTION 'Unauthorized user was allowed to auto-pick';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM <> 'Not authorized for this draft' THEN RAISE; END IF;
+ END;
+ PERFORM set_config('elleng.test_uid','00000000-0000-0000-0000-000000000011',true);
  SELECT state INTO before_state FROM public.elleng_drafts WHERE id='test-draft';
  IF jsonb_array_length(before_state->'picks')<>3 THEN RAISE EXCEPTION 'Invalid draft fixture'; END IF;
  -- A paused clock must never take a pick.
