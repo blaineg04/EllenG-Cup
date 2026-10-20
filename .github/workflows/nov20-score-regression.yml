@@ -11,6 +11,7 @@ on:
       - sql/nov20-final-team-score-visibility.sql
       - tests/sql/nov20-final-score-policy-disposable.sql
       - tests/sql/nov20-final-score-fixture.sql
+      - tests/sql/nov20-final-score-before-migration.sql
       - tests/sql/nov20-final-score-authenticated-behavior.sql
       - tests/scripts/nov20-final-policy-local-check.sh
       - tests/draft-logic.test.cjs
