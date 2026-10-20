@@ -4,6 +4,20 @@ DECLARE before_state jsonb; after_state jsonb; again jsonb;
 BEGIN
  SELECT state INTO before_state FROM public.elleng_drafts WHERE id='test-draft';
  IF jsonb_array_length(before_state->'picks')<>3 THEN RAISE EXCEPTION 'Invalid draft fixture'; END IF;
+ -- A paused clock must never take a pick.
+ UPDATE public.elleng_drafts
+ SET state=jsonb_set(state,'{timerPaused}','true'::jsonb)
+ WHERE id='test-draft';
+ SELECT public.elleng_auto_pick('test-draft') INTO again;
+ IF jsonb_array_length(again->'picks')<>3 THEN RAISE EXCEPTION 'Paused draft was auto-picked'; END IF;
+ -- A running clock that has not expired must not take a pick.
+ UPDATE public.elleng_drafts
+ SET state=jsonb_set(jsonb_set(state,'{timerPaused}','false'::jsonb),
+ '{timerEndsAt}',to_jsonb((now()+interval '2 minutes')::text))
+ WHERE id='test-draft';
+ SELECT public.elleng_auto_pick('test-draft') INTO again;
+ IF jsonb_array_length(again->'picks')<>3 THEN RAISE EXCEPTION 'Early auto-pick was allowed'; END IF;
+ UPDATE public.elleng_drafts SET state=before_state WHERE id='test-draft';
  SELECT public.elleng_auto_pick('test-draft') INTO after_state;
  IF jsonb_array_length(after_state->'picks')<>4 THEN RAISE EXCEPTION 'Auto-pick did not advance exactly once'; END IF;
  IF (after_state->'golfers'->1->>'team')::integer<>0 THEN RAISE EXCEPTION 'Last remaining golfer not assigned to expected team'; END IF;
