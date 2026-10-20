@@ -24,5 +24,11 @@ command -v psql >/dev/null 2>&1 || { echo "psql not installed" >&2; exit 2; }
 # Ignore ambient Postgres connection settings, which could silently override local.
 unset PGHOST PGHOSTADDR PGSERVICE PGSERVICEFILE PGPORT PGUSER PGDATABASE PGOPTIONS PGSSLMODE PGREQUIRESSL PGSSLROOTCERT PGSSLCERT PGSSLKEY PGPASSFILE PGCHANNELBINDING
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-psql "$url" -X -v ON_ERROR_STOP=1 -f "$root/tests/sql/nov20-final-score-policy-disposable.sql"
-echo "Isolated policy metadata assertions passed. Authenticated role behavior still requires separate verification."
+# The named database must be empty and disposable; fixture creation fails if tables exist.
+# Apply the real migration to this local fixture and exercise it as authenticated.
+psql "$url" -X -v ON_ERROR_STOP=1 \
+  -f "$root/tests/sql/nov20-final-score-fixture.sql" \
+  -f "$root/sql/nov20-final-team-score-visibility.sql" \
+  -f "$root/tests/sql/nov20-final-score-policy-disposable.sql" \
+  -f "$root/tests/sql/nov20-final-score-authenticated-behavior.sql"
+echo "Isolated policy and authenticated finalized-score read/write tests passed."
