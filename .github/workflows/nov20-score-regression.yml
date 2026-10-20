@@ -87,10 +87,6 @@ jobs:
           ELLENG_ENABLE_FINAL_POLICY_DB_TESTS: '1'
         run: |
           set -euo pipefail
-          if ! command -v psql >/dev/null 2>&1; then
-            echo "::error::psql is required for isolated policy assertions"
-            exit 1
-          fi
           bash tests/scripts/nov20-final-policy-ephemeral.sh
 
       - name: Run disposable local PostgreSQL scoring smoke test when explicitly configured
