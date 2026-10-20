@@ -6,6 +6,16 @@
 -- The existing score guard is scoped to setup/live tournaments. Replace it with
 -- operation-specific guards, keeping the same existing conditions for writes.
 BEGIN;
+-- Idempotent cleanup for repeatable application after a prior successful run.
+DROP POLICY IF EXISTS "active live team insert guard" ON public.elleng_team_scores;
+DROP POLICY IF EXISTS "active live team update guard" ON public.elleng_team_scores;
+DROP POLICY IF EXISTS "active live team delete guard" ON public.elleng_team_scores;
+DROP POLICY IF EXISTS "active live player scores insert guard" ON public.elleng_player_hole_scores;
+DROP POLICY IF EXISTS "active live player scores update guard" ON public.elleng_player_hole_scores;
+DROP POLICY IF EXISTS "active live player scores delete guard" ON public.elleng_player_hole_scores;
+DROP POLICY IF EXISTS "active live pair scores insert guard" ON public.elleng_pair_hole_scores;
+DROP POLICY IF EXISTS "active live pair scores update guard" ON public.elleng_pair_hole_scores;
+DROP POLICY IF EXISTS "active live pair scores delete guard" ON public.elleng_pair_hole_scores;
 DROP POLICY IF EXISTS "active live team guard team scores" ON public.elleng_team_scores;
 
 CREATE POLICY "active live team insert guard" ON public.elleng_team_scores
