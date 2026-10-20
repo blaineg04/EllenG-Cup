@@ -8,6 +8,8 @@ on:
       - service-worker.js
       - index.html
       - tests/nov20-*.test.cjs
+      - sql/nov20-final-team-score-visibility.sql
+      - tests/sql/nov20-final-score-policy-disposable.sql
       - tests/draft-logic.test.cjs
       - tests/draft-auto-integration-readiness.test.cjs
       - tests/local-draft-db-safety.test.cjs
