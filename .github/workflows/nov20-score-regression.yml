@@ -79,6 +79,7 @@ jobs:
         if: ${{ vars.ELLENG_ENABLE_FINAL_POLICY_DB_TESTS == '1' }}
         env:
           ELLENG_FINAL_POLICY_DB_URL: ${{ secrets.ELLENG_FINAL_POLICY_DB_URL }}
+          ELLENG_ENABLE_FINAL_POLICY_DB_TESTS: '1'
         run: |
           set -euo pipefail
           if ! command -v psql >/dev/null 2>&1; then
