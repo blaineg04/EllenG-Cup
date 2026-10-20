@@ -28,6 +28,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # Apply the real migration to this local fixture and exercise it as authenticated.
 psql "$url" -X -v ON_ERROR_STOP=1 \
   -f "$root/tests/sql/nov20-final-score-fixture.sql" \
+  -f "$root/tests/sql/nov20-final-score-before-migration.sql" \
   -f "$root/sql/nov20-final-team-score-visibility.sql" \
   -f "$root/tests/sql/nov20-final-score-policy-disposable.sql" \
   -f "$root/tests/sql/nov20-final-score-authenticated-behavior.sql"
