@@ -75,6 +75,18 @@ jobs:
       - name: Verify optional local integration harness safely skips by default
         run: node --test tests/draft-local-integration.test.cjs
 
+      - name: Run isolated final-score policy assertions when explicitly configured
+        if: ${{ vars.ELLENG_ENABLE_FINAL_POLICY_DB_TESTS == '1' }}
+        env:
+          ELLENG_FINAL_POLICY_DB_URL: ${{ secrets.ELLENG_FINAL_POLICY_DB_URL }}
+        run: |
+          set -euo pipefail
+          if ! command -v psql >/dev/null 2>&1; then
+            echo "::error::psql is required for isolated policy assertions"
+            exit 1
+          fi
+          bash tests/scripts/nov20-final-policy-local-check.sh
+
       - name: Run disposable local PostgreSQL scoring smoke test when explicitly configured
         if: ${{ vars.ELLENG_ENABLE_LOCAL_POINTS_DB_TESTS == '1' }}
         env:
