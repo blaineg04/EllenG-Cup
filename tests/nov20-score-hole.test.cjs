@@ -60,7 +60,7 @@ for(const [name,start,end] of [
 test('shamble verification recalculates from scores reloaded after team write',()=>{
  const body=functionBody('async function savePlayerShambleScore(teamIndex,golferIndex,val){','\nfunction renderPairScoring(');
  assert.match(body,/const verifiedRows=roster\.map\(g=>playerScores\.find/);
- assert.match(body,/verifiedRows\.every\(Boolean\)/);
+ assert.match(body,/verifiedRows\.every\(validShambleScoreRow\)/);
  assert.match(body,/verifiedRows\.map\(x=>Number\(x\.score\)\)/);
  assert.ok(body.lastIndexOf('await loadScores();')<body.indexOf('const verifiedRows='));
 });
