@@ -10,6 +10,8 @@ on:
       - tests/nov20-*.test.cjs
       - sql/nov20-final-team-score-visibility.sql
       - sql/nov20-auto-pick-balance-fallback.sql
+      - tests/sql/nov20-auto-pick-local-fixture.sql
+      - tests/sql/nov20-auto-pick-local-behavior.sql
       - tests/sql/nov20-final-score-policy-disposable.sql
       - tests/sql/nov20-final-score-fixture.sql
       - tests/sql/nov20-final-score-before-migration.sql
