@@ -36,4 +36,16 @@ CREATE POLICY "active live team delete guard" ON public.elleng_team_scores
   WHERE t.id = tournament_id AND team_index >= 0
     AND team_index < t.team_count AND t.status IN ('setup','live')
  ));
+
+-- player scores: finalized results remain readable; changes still require setup/live status.
+DROP POLICY IF EXISTS "active live team guard player scores" ON public.elleng_player_hole_scores;
+CREATE POLICY "active live player scores insert guard" ON public.elleng_player_hole_scores AS RESTRICTIVE FOR INSERT TO authenticated WITH CHECK (EXISTS (SELECT 1 FROM public.elleng_tournaments t WHERE t.id = elleng_player_hole_scores.tournament_id AND elleng_player_hole_scores.team_index >= 0 AND elleng_player_hole_scores.team_index < t.team_count AND t.status IN ('setup','live')));
+CREATE POLICY "active live player scores update guard" ON public.elleng_player_hole_scores AS RESTRICTIVE FOR UPDATE TO authenticated USING (EXISTS (SELECT 1 FROM public.elleng_tournaments t WHERE t.id = elleng_player_hole_scores.tournament_id AND elleng_player_hole_scores.team_index >= 0 AND elleng_player_hole_scores.team_index < t.team_count AND t.status IN ('setup','live'))) WITH CHECK (EXISTS (SELECT 1 FROM public.elleng_tournaments t WHERE t.id = elleng_player_hole_scores.tournament_id AND elleng_player_hole_scores.team_index >= 0 AND elleng_player_hole_scores.team_index < t.team_count AND t.status IN ('setup','live')));
+CREATE POLICY "active live player scores delete guard" ON public.elleng_player_hole_scores AS RESTRICTIVE FOR DELETE TO authenticated USING (EXISTS (SELECT 1 FROM public.elleng_tournaments t WHERE t.id = elleng_player_hole_scores.tournament_id AND elleng_player_hole_scores.team_index >= 0 AND elleng_player_hole_scores.team_index < t.team_count AND t.status IN ('setup','live')));
+
+-- pair scores: finalized results remain readable; changes still require setup/live status.
+DROP POLICY IF EXISTS "active live team guard pair scores" ON public.elleng_pair_hole_scores;
+CREATE POLICY "active live pair scores insert guard" ON public.elleng_pair_hole_scores AS RESTRICTIVE FOR INSERT TO authenticated WITH CHECK (EXISTS (SELECT 1 FROM public.elleng_tournaments t WHERE t.id = elleng_pair_hole_scores.tournament_id AND elleng_pair_hole_scores.team_index >= 0 AND elleng_pair_hole_scores.team_index < t.team_count AND t.status IN ('setup','live')));
+CREATE POLICY "active live pair scores update guard" ON public.elleng_pair_hole_scores AS RESTRICTIVE FOR UPDATE TO authenticated USING (EXISTS (SELECT 1 FROM public.elleng_tournaments t WHERE t.id = elleng_pair_hole_scores.tournament_id AND elleng_pair_hole_scores.team_index >= 0 AND elleng_pair_hole_scores.team_index < t.team_count AND t.status IN ('setup','live'))) WITH CHECK (EXISTS (SELECT 1 FROM public.elleng_tournaments t WHERE t.id = elleng_pair_hole_scores.tournament_id AND elleng_pair_hole_scores.team_index >= 0 AND elleng_pair_hole_scores.team_index < t.team_count AND t.status IN ('setup','live')));
+CREATE POLICY "active live pair scores delete guard" ON public.elleng_pair_hole_scores AS RESTRICTIVE FOR DELETE TO authenticated USING (EXISTS (SELECT 1 FROM public.elleng_tournaments t WHERE t.id = elleng_pair_hole_scores.tournament_id AND elleng_pair_hole_scores.team_index >= 0 AND elleng_pair_hole_scores.team_index < t.team_count AND t.status IN ('setup','live')));
 COMMIT;
