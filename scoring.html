@@ -6132,7 +6132,9 @@ function previewTeamBuild(){
    if(isNaN(tc)||tc<2||tc>9){$("teamBuildSummary").innerHTML=`Choose between 2 and 9 teams.`;return}
    if(gc<tc){$("teamBuildSummary").innerHTML=`<strong>${gc} golfers across ${tc} teams.</strong> Some teams would have no golfer assigned.`;return}
    const dist=extra===0?`${tc} teams of ${base}`:`${extra} team${extra===1?"":"s"} of ${base+1} and ${tc-extra} team${tc-extra===1?"":"s"} of ${base}`;
-   $("teamBuildSummary").innerHTML=`<strong>${gc} golfers • ${tc} teams • ${size}-man format.</strong> Even distribution: ${dist}. You can still assign golfers manually in the draft.`;
+   const mismatch=gc!==tc*size;
+   const guidance=mismatch?` <strong>Roster note:</strong> ${size}-man format is selected, but ${gc} golfers cannot fill ${tc} teams with exactly ${size} each. Review format-specific scoring rules for uneven teams before starting.`:"";
+   $("teamBuildSummary").innerHTML=`<strong>${gc} golfers • ${tc} teams • selected ${size}-man format.</strong> Even distribution: ${dist}.${guidance} You can still assign golfers manually in the draft.`;
  }
 }
 
