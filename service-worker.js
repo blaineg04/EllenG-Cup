@@ -23,7 +23,7 @@ self.addEventListener("install",event=>{
 self.addEventListener("activate",event=>{
   event.waitUntil(
     Promise.all([
-      caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))),
+      caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith("elleng-cup-") && k!==CACHE).map(k=>caches.delete(k)))),
       self.clients.claim()
     ])
   );
@@ -32,8 +32,9 @@ self.addEventListener("activate",event=>{
 self.addEventListener("fetch",event=>{
   const req=event.request;
   if(req.method!=="GET") return;
-
+  // Never intercept cross-origin resources or authentication/backend API traffic.
   const url=new URL(req.url);
+  if(url.origin!==self.location.origin) return;
 
   // HTML/navigation is always fetched fresh. Never save HTML in the app cache.
   if(req.mode==="navigate" || url.pathname.endsWith(".html") || url.pathname==="/"){
@@ -50,7 +51,11 @@ self.addEventListener("fetch",event=>{
           caches.open(CACHE).then(cache=>cache.put(req,copy)).catch(()=>{});
         }
         return resp;
-      }).catch(()=>caches.match(req))
+      }).catch(async()=>{
+        const cached=await caches.match(req);
+        if(cached) return cached;
+        return Response.error();
+      })
     );
   }
 });
