@@ -6,6 +6,14 @@ set -euo pipefail
 for bin in /opt/homebrew/opt/postgresql@17/bin /opt/homebrew/opt/postgresql@16/bin /opt/homebrew/opt/postgresql@15/bin /usr/local/opt/postgresql@17/bin /usr/local/opt/postgresql@16/bin; do
   [[ -x "$bin/initdb" ]] && export PATH="$bin:$PATH" && break
 done
+# GitHub-hosted Ubuntu keeps server tools under /usr/lib/postgresql/<version>/bin.
+if command -v pg_config >/dev/null 2>&1; then
+  pg_bin="$(pg_config --bindir)"
+  [[ -x "$pg_bin/initdb" ]] && export PATH="$pg_bin:$PATH"
+fi
+for candidate in /usr/lib/postgresql/*/bin; do
+  [[ -x "$candidate/initdb" ]] && export PATH="$candidate:$PATH" && break
+done
 for exe in initdb pg_ctl createdb psql; do
   command -v "$exe" >/dev/null 2>&1 || { echo "Missing local PostgreSQL command: $exe" >&2; exit 2; }
 done
