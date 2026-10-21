@@ -3021,6 +3021,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 <button id="trashTab" class="tab hidden" data-view="trash">Trash Talk</button>
 <button id="scoringTab" class="tab hidden" data-view="scoring">Enter Scores</button>
 <button id="adminTab" class="tab hidden" data-view="admin">Commissioner</button>
+<button id="desktopMoreBtn" class="secondary" type="button" aria-haspopup="dialog" aria-controls="moreMenuBackdrop">More</button>
 </div></div>
 
 <section id="homeView" class="view">
@@ -3587,7 +3588,8 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div class="more-sheet" role="dialog" aria-modal="true" aria-label="More options">
     <div class="more-sheet-head"><h3>More</h3><button id="moreMenuClose" class="more-sheet-close" type="button">Close</button></div>
     <div class="more-menu-grid">
-            <button class="more-menu-btn" type="button" data-more-view="rankings"><span>🏷️</span>Player Rankings</button>
+            <button class="more-menu-btn" type="button" data-more-view="course"><span>⛳</span>Course</button>
+      <button class="more-menu-btn" type="button" data-more-view="rankings"><span>🏷️</span>Player Rankings</button>
       <button class="more-menu-btn" type="button" data-more-view="progress"><span>✅</span>Hole Progress</button>
       <button class="more-menu-btn" type="button" data-more-view="clubhouse"><span>🏛️</span>Clubhouse</button>
       <button class="more-menu-btn" type="button" data-more-view="trash"><span class="trash-talk-menu-icon"><img src="trash-talk-icon.png" alt="" aria-hidden="true"></span>Trash Talk</button>
@@ -5867,6 +5869,7 @@ function openMoreMenu(){
  if(moreBackdrop){moreBackdrop.classList.add("open");moreBackdrop.setAttribute("aria-hidden","false")}
 }
 if(moreBtn)moreBtn.addEventListener("click",openMoreMenu);
+if($("desktopMoreBtn"))$("desktopMoreBtn").addEventListener("click",openMoreMenu);
 if($("moreMenuClose"))$("moreMenuClose").addEventListener("click",closeMoreMenu);
 if($("trashBackBtn"))$("trashBackBtn").addEventListener("click",()=>{showView("home");openMoreMenu()});
 
