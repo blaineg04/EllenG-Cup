@@ -276,3 +276,18 @@ test('broadcast ignores empty and boolean team identifiers',()=>{
  vm.runInNewContext(html.slice(start,end),ctx);
  assert.match(ctx.latestTournamentMoment(),/Herons.*Hole 4/);
 });
+
+test('golf result labels reject fractional and unsafe strokes',()=>{
+ const start=html.indexOf('function relativeGolf(score,par){');
+ const end=html.indexOf('function pointScaleText(){',start);
+ assert.ok(start>=0&&end>start);
+ const ctx={};
+ vm.runInNewContext(html.slice(start,end),ctx);
+ for(const invalid of [1.5,'3.5',Number.MAX_SAFE_INTEGER+1,NaN,Infinity]){
+  const result=ctx.relativeGolf(invalid,4);
+  assert.equal(result.rel,'—',String(invalid));
+  assert.equal(result.label,'',String(invalid));
+ }
+ assert.equal(ctx.relativeGolf(4,4).label,'Par');
+ assert.equal(ctx.relativeGolf('3',4).label,'Birdie');
+});
