@@ -209,3 +209,20 @@ test('relative golf labels never treat blank, boolean or zero scores as strokes'
  assert.equal(ctx.relativeGolf(4,4).label,'Par');
  assert.equal(ctx.relativeGolf(3,4).label,'Birdie');
 });
+
+test('official points reject holes outside the playable 1–18 range',()=>{
+ const start=html.indexOf('function normalPoints(values){');
+ const end=html.indexOf('function totals(){',start);
+ const ctx={
+  teams:[{name:'Gators'},{name:'Herons'}],
+  scores:[{team_index:0,hole:0,score:3},{team_index:1,hole:0,score:4},{team_index:0,hole:19,score:3},{team_index:1,hole:19,score:4}],
+  tournament:{gator_hole:19},
+  isSplitPair:()=>false,
+  validTeamScore:score=>Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20
+ };
+ vm.runInNewContext(html.slice(start,end),ctx);
+ for(const h of [0,19,-1,1.5,NaN]){
+  assert.deepEqual(Array.from(ctx.pointsForHole(h)),[null,null],String(h));
+ }
+ assert.deepEqual(Array.from(ctx.pointsForHole('19')),[null,null]);
+});
