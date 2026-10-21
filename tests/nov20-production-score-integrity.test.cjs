@@ -108,3 +108,21 @@ test('broadcast moment ignores invalid scores and malformed team or hole referen
  ctx.scores=[];
  assert.equal(ctx.latestTournamentMoment(),'Waiting for the first score to be posted.');
 });
+
+test('leaderboard thru accepts numeric identifiers serialized as strings',()=>{
+ const start=html.indexOf('function normalPoints(values){');
+ const end=html.indexOf('function renderLiveHoleScores(){',start);
+ const ctx={
+  teams:[{name:'One'},{name:'Two'}],
+  scores:[{team_index:'0',hole:'1',score:'4'},{team_index:'1',hole:'1',score:'5'},{team_index:'0',hole:'2',score:''}],
+  tournament:{gator_hole:18,final_cargo_team:null},
+  isSplitPair:()=>false,
+  validTeamScore:score=>score!==null&&score!==undefined&&score!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20
+ };
+ vm.runInNewContext(html.slice(start,end),ctx);
+ const results=Array.from(ctx.totals());
+ assert.equal(results[0].thru,1);
+ assert.equal(results[1].thru,1);
+ assert.equal(results[0].pts,2);
+ assert.equal(results[1].pts,1);
+});
