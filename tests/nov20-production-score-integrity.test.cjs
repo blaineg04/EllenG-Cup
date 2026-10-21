@@ -322,3 +322,14 @@ test('golf labels require a valid par-three, par-four or par-five hole',()=>{
  }
  for(const par of [3,4,5,'4'])assert.notEqual(ctx.relativeGolf(4,par).label,'');
 });
+
+test('golf result label distinguishes albatross from four under par',()=>{
+ const start=html.indexOf('function relativeGolf(score,par){');
+ const end=html.indexOf('function pointScaleText(){',start);
+ const ctx={};
+ vm.runInNewContext(html.slice(start,end),ctx);
+ assert.equal(ctx.relativeGolf(2,5).label,'Albatross');
+ assert.equal(ctx.relativeGolf(1,5).label,'Hole in One');
+ assert.equal(ctx.relativeGolf(2,4).label,'Eagle');
+ assert.equal(ctx.relativeGolf(3,4).label,'Birdie');
+});
