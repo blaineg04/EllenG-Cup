@@ -309,3 +309,16 @@ test('Final Cargo rejects blank, boolean and fractional team assignments',()=>{
  ctx.tournament.final_cargo_team='1';
  assert.equal(ctx.isFinalCargoTeam(1),true);
 });
+
+test('golf labels require a valid par-three, par-four or par-five hole',()=>{
+ const start=html.indexOf('function relativeGolf(score,par){');
+ const end=html.indexOf('function pointScaleText(){',start);
+ const ctx={};
+ vm.runInNewContext(html.slice(start,end),ctx);
+ for(const par of [null,undefined,'',0,2,6,4.5,NaN,Infinity]){
+  const result=ctx.relativeGolf(4,par);
+  assert.equal(result.rel,'—',String(par));
+  assert.equal(result.label,'',String(par));
+ }
+ for(const par of [3,4,5,'4'])assert.notEqual(ctx.relativeGolf(4,par).label,'');
+});
