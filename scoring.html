@@ -3912,7 +3912,7 @@ function projectedTotals(){
 }
 
 function latestTournamentMoment(){
- const ev=(scores||[]).filter(x=>x.score!=null).map(x=>{const h=Number(x.hole),ti=Number(x.team_index),g=relativeGolf(Number(x.score),parForHole(h));return {h,ti,score:Number(x.score),g}}).sort((a,b)=>b.h-a.h||b.ti-a.ti)[0];
+ const ev=(scores||[]).filter(x=>validTeamScore(x.score)&&Number.isInteger(Number(x.hole))&&Number(x.hole)>=1&&Number(x.hole)<=18&&Number.isInteger(Number(x.team_index))&&Number(x.team_index)>=0&&Number(x.team_index)<teams.length).map(x=>{const h=Number(x.hole),ti=Number(x.team_index),g=relativeGolf(Number(x.score),parForHole(h));return {h,ti,score:Number(x.score),g}}).sort((a,b)=>b.h-a.h||b.ti-a.ti)[0];
  if(!ev)return 'Waiting for the first score to be posted.';
  return `${teams[ev.ti]?.name||`Team ${ev.ti+1}`} • Hole ${ev.h} • ${ev.g.rel} ${ev.g.label||''} • ${ev.score} stroke${ev.score===1?'':'s'}`;
 }
