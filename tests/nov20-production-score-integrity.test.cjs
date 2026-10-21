@@ -315,7 +315,7 @@ test('golf labels require a valid par-three, par-four or par-five hole',()=>{
  const end=html.indexOf('function pointScaleText(){',start);
  const ctx={};
  vm.runInNewContext(html.slice(start,end),ctx);
- for(const par of [null,undefined,'',0,2,6,4.5,NaN,Infinity]){
+ for(const par of [null,undefined,'','  ',true,false,0,2,6,4.5,NaN,Infinity]){
   const result=ctx.relativeGolf(4,par);
   assert.equal(result.rel,'—',String(par));
   assert.equal(result.label,'',String(par));
