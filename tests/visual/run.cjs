@@ -209,7 +209,7 @@ async function main() {
           await page.locator(width<700?'[data-mobile-view="leaderboard"]':'.tab[data-view="leaderboard"]').click();
           await page.locator('#leaderboardView:not(.hidden)').waitFor();await capture('player-my-score');
           for(const role of ['commissioner','player'])for(const target of ['hub','content']){
-            await page.goto(host.origin+'/scoring.html?visualRole='+role+'&visualSignOutFailure=1#hub');
+            await page.goto(host.origin+'/scoring.html?visualRole='+role+'&visualSignOutFailure=1&visualSignOutTarget='+target+'#hub');
             await page.locator('#appHub:not(.hidden)').waitFor({state:'visible'});
             if(target==='content'){await page.locator('#hubScoring').click();await page.locator('#appHub').waitFor({state:'hidden'});}
             const button=page.locator(target==='hub'?'#hubSignOutBtn':'#logoutBtn');await button.click();
@@ -239,7 +239,7 @@ async function main() {
             }
           }
         }
-      }catch(e){report.errors.push({width,message:e.message.split('\n')[0]});console.error(width,e.message.split('\n')[0]);await page.screenshot({path:path.join(output,`${width}-capture-error.png`)}).catch(()=>{});}
+      }catch(e){report.errors.push({width,message:e.message.split('\n')[0]});console.error(width,e.message);await page.screenshot({path:path.join(output,`${width}-capture-error.png`)}).catch(()=>{});}
       finally{await context.close();}
     }
   }finally{
