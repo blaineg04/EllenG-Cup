@@ -221,7 +221,7 @@ test('official points reject holes outside the playable 1–18 range',()=>{
   validTeamScore:score=>Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20
  };
  vm.runInNewContext(html.slice(start,end),ctx);
- for(const h of [0,19,-1,1.5,NaN]){
+ for(const h of [0,19,-1,1.5,NaN,null,undefined,'','  ',false,true]){
   assert.deepEqual(Array.from(ctx.pointsForHole(h)),[null,null],String(h));
  }
  assert.deepEqual(Array.from(ctx.pointsForHole('19')),[null,null]);
