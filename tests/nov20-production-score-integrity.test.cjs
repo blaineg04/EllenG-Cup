@@ -73,3 +73,18 @@ test('leaderboard thru ignores blank and invalid scores',()=>{
  assert.equal(results[0].thru,2);
  assert.equal(results[1].thru,2);
 });
+
+test('live hole validation rejects empty and invalid scores across formats',()=>{
+ const from=html.indexOf('function validTeamScore(score){');
+ const to=html.indexOf('function pointsForHole(h){',from);
+ assert.ok(from>=0&&to>from,'Missing shared score validator');
+ for(const splitPair of [false,true]){
+  const ctx={isSplitPair:()=>splitPair};
+  vm.runInNewContext(html.slice(from,to),ctx);
+  for(const value of ['',null,undefined,0,-1,1.5,'oops',splitPair?41:21]){
+   assert.equal(ctx.validTeamScore(value),false,String(value));
+  }
+  assert.equal(ctx.validTeamScore(splitPair?40:20),true);
+  assert.equal(ctx.validTeamScore(4),true);
+ }
+});
