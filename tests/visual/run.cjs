@@ -195,6 +195,9 @@ async function main() {
           else{await page.locator('#teams .team').first().waitFor({state:'visible',timeout:15000});await page.waitForFunction(()=>document.querySelector('#connection')?.textContent==='LIVE',{},{timeout:10000});}
           if(name==='captain')await page.locator('#app').waitFor({state:'visible'});
           await capture(name==='admin'?'draft-admin':name);
+          await page.locator('.global-main-menu-btn').click();
+          await page.locator('#appHub:not(.hidden)').waitFor({state:'visible'});
+          console.log(`${width} ${name}: Main Menu returns to the signed-in hub`);
         }
         if(!live){
           await page.goto(host.origin+'/scoring.html?visualSignedOut=1');
