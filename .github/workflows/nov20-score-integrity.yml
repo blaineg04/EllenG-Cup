@@ -16,6 +16,10 @@ on:
       - 'common.js'
       - '.github/workflows/nov20-score-integrity.yml'
   workflow_dispatch:
+# Avoid duplicate captures competing for the same MacBook.
+concurrency:
+  group: nov20-validation-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   scoring-regression:
     runs-on: [self-hosted, macOS]
