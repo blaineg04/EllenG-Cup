@@ -3865,7 +3865,8 @@ function normalPoints(values){
  return out;
 }
 function pointsForHole(h){
- const vals=teams.map((_,i)=>{const r=scores.find(x=>x.team_index===i&&x.hole===h);return r&&r.score!=null?Number(r.score):NaN});
+ const maxTeamScore=isSplitPair()?40:20; // Split-Pair combines two valid pair scores.
+ const vals=teams.map((_,i)=>{const r=scores.find(x=>x.team_index===i&&x.hole===h);return r&&r.score!==null&&r.score!==undefined&&r.score!==''&&Number.isInteger(Number(r.score))&&Number(r.score)>=1&&Number(r.score)<=maxTeamScore?Number(r.score):NaN});
  const n=teams.length;
  if(vals.filter(Number.isFinite).length<n)return Array(n).fill(null);
  if(tournament&&Number(tournament.gator_hole)===h){
