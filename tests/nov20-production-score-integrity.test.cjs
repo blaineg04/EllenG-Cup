@@ -16,6 +16,7 @@ function points(scores,{gator=false,splitPair=false}={}){
   tournament:{gator_hole:gator?4:17},
   isSplitPair:()=>splitPair
  };
+ ctx.validTeamScore=score=>score!==null&&score!==undefined&&score!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=(ctx.isSplitPair()?40:20);
  vm.runInNewContext(html.slice(from,to),ctx);
  return Array.from(ctx.pointsForHole(4));
 }
