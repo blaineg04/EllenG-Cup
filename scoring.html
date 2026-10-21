@@ -5758,18 +5758,22 @@ function openAppHub(){
 }
 
 async function signOutFromHub(){
+ const buttons=[$("hubSignOutBtn"),$("logoutBtn")].filter(Boolean);
+ if(buttons.some(button=>button.disabled))return;
+ buttons.forEach(button=>{button.disabled=true;button.textContent="Signing Out…"});
  try{
-   const btn=$("hubSignOutBtn");if(btn){btn.disabled=true;btn.textContent="Signing Out…"}
+   const {error}=await db.auth.signOut();if(error)throw error;
    sessionStorage.removeItem("elleng_internal_menu");
-   await db.auth.signOut();
+   user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;
+   document.body.classList.add("login-mode");setMobileNavVisible(false);
+   if($("appHub"))$("appHub").classList.add("hidden");
+   if($("app"))$("app").classList.add("hidden");
+   await enterViewer();
  }catch(e){
-   console.warn("Sign out issue",e);
- }
- user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;document.body.classList.add("login-mode");setMobileNavVisible(false);
- if($("appHub"))$("appHub").classList.add("hidden");
- if($("app"))$("app").classList.add("hidden");
- if($("hubSignOutBtn")){ $("hubSignOutBtn").disabled=false;$("hubSignOutBtn").textContent="Sign Out" }
- await enterViewer();
+   const message="Could not sign out. Please try again.";
+   if($("hubSignedInAs"))$("hubSignedInAs").textContent=message;
+   if($("userLabel"))$("userLabel").textContent=message;
+ }finally{buttons.forEach(button=>{button.disabled=false;button.textContent="Sign Out"})}
 }
 function openHubView(view){
  if(!user){enterViewer();return}
@@ -5832,7 +5836,7 @@ $("changeAccountPasswordBtn").addEventListener("click",async()=>{
 $("authBtn").addEventListener("click",()=>{$("loginCard").classList.remove("hidden");$("loginMsg").textContent="";$("loginCard").scrollIntoView({behavior:"smooth",block:"start"})});
 
 if($("digitalScorecardTeam"))$("digitalScorecardTeam").addEventListener("change",renderDigitalScorecard);
-$("logoutBtn").addEventListener("click",async()=>{await db.auth.signOut();user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;document.body.classList.add("login-mode");setMobileNavVisible(false);$("passwordChangeCard").classList.add("hidden");showView("home");await enterViewer()});
+$("logoutBtn").addEventListener("click",signOutFromHub);
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
 document.querySelectorAll("[data-home-go]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.homeGo)));
 function initTournamentExtrasScreen(){

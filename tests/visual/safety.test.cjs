@@ -111,3 +111,30 @@ test('successful draft authentication clears the password and restores the butto
   const page=signInPage(kind);await page.click();assert.equal(page.opened(),1,kind);assert.equal(page.password().value,'');assert.equal(page.button().disabled,false);assert.equal(page.button().textContent,'Sign In');
  }
 });
+
+function signOutPage(authenticate){
+ const html=fs.readFileSync(path.join(__dirname,'../../scoring.html'),'utf8');
+ const start=html.indexOf('async function signOutFromHub(){'),end=html.indexOf('function openHubView(',start);
+ const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{disabled:false,textContent:'Sign Out',classList:{add(){}}});return nodes.get(id)};
+ let requests=0,viewer=0,cleared=0;
+ const context={user:{id:'signed-in'},captainTeam:0,isCommissioner:true,currentGolferIndex:0,currentUsername:'visual',mustChangePassword:false,
+  $:node,db:{auth:{signOut:async()=>{requests++;return authenticate()}}},sessionStorage:{removeItem(){cleared++}},document:{body:{classList:{add(){}}}},setMobileNavVisible(){},enterViewer:async()=>{viewer++},console:{warn(){}}};
+ vm.runInNewContext(html.slice(start,end),context);
+ return {run:()=>context.signOutFromHub(),context,node,requests:()=>requests,viewer:()=>viewer,cleared:()=>cleared};
+}
+test('failed sign-out keeps the signed-in screen and offers retry guidance',async()=>{
+ for(const authenticate of [async()=>({error:{message:'Server unavailable'}}),async()=>{throw new Error('Network unavailable')}]){
+  const page=signOutPage(authenticate);await page.run();assert.equal(page.context.user.id,'signed-in');assert.equal(page.viewer(),0);assert.equal(page.cleared(),0);
+  assert.match(page.node('hubSignedInAs').textContent,/sign out.*try again/i);assert.match(page.node('userLabel').textContent,/sign out.*try again/i);assert.equal(page.node('hubSignOutBtn').disabled,false);
+ }
+});
+test('successful sign-out clears local app identity after the auth request succeeds',async()=>{
+ const page=signOutPage(async()=>({error:null}));await page.run();assert.equal(page.context.user,null);assert.equal(page.context.isCommissioner,false);assert.equal(page.context.captainTeam,null);assert.equal(page.viewer(),1);assert.equal(page.cleared(),1);
+});
+test('sign-out ignores another click while the auth request is pending',async()=>{
+ let resolve;const pending=new Promise(r=>{resolve=r});const page=signOutPage(()=>pending);
+ const first=page.run(),second=page.run();
+ try{assert.equal(page.requests(),1);assert.equal(page.node('hubSignOutBtn').disabled,true);assert.equal(page.node('logoutBtn').disabled,true);}
+ finally{resolve({error:null});await Promise.all([first,second]);}
+ assert.equal(page.node('hubSignOutBtn').disabled,false);assert.equal(page.node('logoutBtn').disabled,false);assert.equal(page.viewer(),1);
+});

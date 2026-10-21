@@ -1,5 +1,6 @@
 // Synthetic data only. This SDK replacement is injected by the test runner, never by the app.
-function installFixture({ teamCount = 9, role = 'commissioner', partialDraft = false } = {}) {
+function installFixture({ teamCount = 9, role = 'commissioner', partialDraft = false, signOutFailure = false } = {}) {
+  let signedOut=role==='signedout', signOutAttempts=0;
   const user = { id: role === 'commissioner' ? 'visual-owner' : 'visual-player', email: 'visual@example.invalid' };
   const names = ['Alexandra Montgomery', 'Christopher Williamson', 'Jordan Alexander-Smith', 'Taylor Robinson'];
   const golfers = Array.from({ length: teamCount * 4 }, (_, i) => ({
@@ -30,7 +31,7 @@ function installFixture({ teamCount = 9, role = 'commissioner', partialDraft = f
   const channel = { on() { return this; }, subscribe(cb) { cb?.('SUBSCRIBED'); return this; }, unsubscribe() {} };
   window.supabase = { createClient: () => ({
     from: query,
-    auth: { signInWithPassword:async()=>({data:{user:null,session:null},error:{message:'Invalid login credentials'}}), getSession: async()=>({data:{session:role==='signedout'?null:{user}},error:null}), getUser: async()=>({data:{user:role==='signedout'?null:user},error:null}), onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}) },
+    auth: { signOut:async()=>{if(signOutFailure&&signOutAttempts++===0)return {error:{message:'Synthetic sign-out unavailable'}};signedOut=true;return {error:null}}, signInWithPassword:async()=>({data:{user:null,session:null},error:{message:'Invalid login credentials'}}), getSession: async()=>({data:{session:signedOut?null:{user}},error:null}), getUser: async()=>({data:{user:signedOut?null:user},error:null}), onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}) },
     functions: { invoke: async(name, options) => {
       if (name === 'player-profile') return {data:{linked:true,golfer_index:0,username:'visual',must_change_password:false},error:null};
       if (name === 'player-admin' && options?.body?.action === 'list') return {data:{accounts},error:null};
