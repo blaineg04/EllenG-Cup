@@ -137,6 +137,7 @@ test('Final Cargo leaderboard badge uses configured bonus instead of fixed six',
   tournament:{final_cargo_team:0,final_cargo_points:9},
   totals:()=>[{team:0,pts:12,thru:18},{team:1,pts:4,thru:18}],
   finalCargoBonus:()=>9,
+  isFinalCargoTeam:i=>i===0,
   pointScaleText:()=> '2–1',
   esc:x=>String(x),
   renderLiveHoleScores:()=>{},
@@ -290,4 +291,21 @@ test('golf result labels reject fractional and unsafe strokes',()=>{
  }
  assert.equal(ctx.relativeGolf(4,4).label,'Par');
  assert.equal(ctx.relativeGolf('3',4).label,'Birdie');
+});
+
+test('Final Cargo rejects blank, boolean and fractional team assignments',()=>{
+ const start=html.indexOf('function isFinalCargoTeam(i){');
+ const end=html.indexOf('function totals(){',start);
+ assert.ok(start>=0&&end>start);
+ const ctx={teams:[{name:'Gators'},{name:'Herons'}],tournament:{final_cargo_team:0}};
+ vm.runInNewContext(html.slice(start,end),ctx);
+ assert.equal(ctx.isFinalCargoTeam(0),true);
+ assert.equal(ctx.isFinalCargoTeam(1),false);
+ for(const bad of [null,undefined,'','  ',true,false,0.5,-1,2,'invalid']){
+  ctx.tournament.final_cargo_team=bad;
+  assert.equal(ctx.isFinalCargoTeam(0),false,String(bad));
+  assert.equal(ctx.isFinalCargoTeam(1),false,String(bad));
+ }
+ ctx.tournament.final_cargo_team='1';
+ assert.equal(ctx.isFinalCargoTeam(1),true);
 });
