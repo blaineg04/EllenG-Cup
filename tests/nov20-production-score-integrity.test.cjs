@@ -28,3 +28,28 @@ test('standard score limits do not reject valid combined Split-Pair scores',()=>
  assert.deepEqual(points([24,25]),[null,null]);
  assert.deepEqual(points([41,24],{splitPair:true}),[null,null]);
 });
+
+test('scoring works for flexible team counts without assuming nine teams',()=>{
+ for(const n of [2,3,4,6,9,12]){
+  const scores=Array.from({length:n},(_,i)=>i+3);
+  assert.deepEqual(points(scores),Array.from({length:n},(_,i)=>n-i));
+ }
+});
+test('standard tied teams share their rank points',()=>{
+ assert.deepEqual(points([4,4,5,6]),[3.5,3.5,2,1]);
+ assert.deepEqual(points([4,5,5,6]),[4,2.5,2.5,1]);
+ assert.deepEqual(points([4,4,4]),[2,2,2]);
+});
+test('Gator Hole distributes twelve points across all tied winners',()=>{
+ assert.deepEqual(points([3,3,3,4],{gator:true}),[4,4,4,0]);
+ assert.deepEqual(points([5,5],{gator:true}),[6,6]);
+ assert.deepEqual(points([3,4,5,6,7,8],{gator:true}),[12,0,0,0,0,0]);
+});
+test('no leaderboard points until every team submits a valid score',()=>{
+ for(const invalid of ['',null,undefined,0,-1,1.5,'abc',21]){
+  assert.deepEqual(points([4,invalid,6]),[null,null,null],String(invalid));
+ }
+ assert.deepEqual(points([4,20,6]),[3,1,2]);
+ assert.deepEqual(points([4,40,6],{splitPair:true}),[3,1,2]);
+ assert.deepEqual(points([4,41,6],{splitPair:true}),[null,null,null]);
+});
