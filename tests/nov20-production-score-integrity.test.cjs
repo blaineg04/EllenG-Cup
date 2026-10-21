@@ -360,3 +360,12 @@ test('mobile and desktop layouts include responsive overflow containment',()=>{
  assert.match(css,/@media\(max-width:380px\)/);
  assert.match(css,/grid-template-columns:minmax\(0,1fr\)/);
 });
+
+test('responsive overlap guards load after all legacy style overrides',()=>{
+ const marker='<style id="responsive-overlap-guard-20261021">';
+ const pos=html.indexOf(marker);
+ assert.ok(pos>=0);
+ assert.equal(html.indexOf(marker,pos+1),-1,'Duplicate responsive stylesheet');
+ assert.equal(html.slice(pos).match(/<style\b/g)?.length,1,'Later style may override layout guards');
+ assert.ok(html.slice(pos).trimEnd().endsWith('</style>'),'Responsive rules must be the final stylesheet');
+});
