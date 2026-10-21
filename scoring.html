@@ -146,7 +146,7 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
 #moreAdminBtn span{font-size:25px!important;margin:0 0 5px!important}
 #moreAdminBtn strong{display:block;font-size:16px;color:#102a3b!important;margin-bottom:3px}
 #moreAdminBtn small{display:block;font-size:11px;line-height:1.3;color:var(--muted);font-weight:800}
-@media(max-width:420px){.more-menu-grid{grid-template-columns:1fr}}
+@media(max-width:420px){.more-menu-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.more-menu-btn{padding:10px 8px;overflow-wrap:anywhere}}
 
 
 /* Commissioner mobile controls: keep every field visible and prevent horizontal overflow */
@@ -3590,6 +3590,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
     <div class="more-menu-grid">
             <button class="more-menu-btn" type="button" data-more-view="course"><span>⛳</span>Course</button>
       <button class="more-menu-btn" type="button" data-more-view="rankings"><span>🏷️</span>Player Rankings</button>
+      <button class="more-menu-btn" type="button" data-more-view="extras"><span>🏆</span>Tournament Extras</button>
       <button class="more-menu-btn" type="button" data-more-view="progress"><span>✅</span>Hole Progress</button>
       <button class="more-menu-btn" type="button" data-more-view="clubhouse"><span>🏛️</span>Clubhouse</button>
       <button class="more-menu-btn" type="button" data-more-view="trash"><span class="trash-talk-menu-icon"><img src="trash-talk-icon.png" alt="" aria-hidden="true"></span>Trash Talk</button>
