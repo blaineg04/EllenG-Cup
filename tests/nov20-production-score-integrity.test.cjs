@@ -65,6 +65,7 @@ test('leaderboard thru ignores blank and invalid scores',()=>{
   tournament:{gator_hole:18,final_cargo_team:null},
   isSplitPair:()=>false
  };
+ ctx.validTeamScore=score=>score!==null&&score!==undefined&&score!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20;
  vm.runInNewContext(html.slice(start,end),ctx);
  let results=Array.from(ctx.totals());
  assert.equal(results[0].thru,1);
