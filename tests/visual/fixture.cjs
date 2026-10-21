@@ -30,7 +30,7 @@ function installFixture({ teamCount = 9, role = 'commissioner', partialDraft = f
   const channel = { on() { return this; }, subscribe(cb) { cb?.('SUBSCRIBED'); return this; }, unsubscribe() {} };
   window.supabase = { createClient: () => ({
     from: query,
-    auth: { getSession: async()=>({data:{session:{user}},error:null}), getUser: async()=>({data:{user},error:null}), onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}) },
+    auth: { getSession: async()=>({data:{session:role==='signedout'?null:{user}},error:null}), getUser: async()=>({data:{user:role==='signedout'?null:user},error:null}), onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}) },
     functions: { invoke: async(name, options) => {
       if (name === 'player-profile') return {data:{linked:true,golfer_index:0,username:'visual',must_change_password:false},error:null};
       if (name === 'player-admin' && options?.body?.action === 'list') return {data:{accounts},error:null};

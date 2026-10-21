@@ -138,7 +138,7 @@ async function main() {
         await context.addInitScript(()=>{if(new URL(location.href).searchParams.has('visualSignedOut'))sessionStorage.removeItem('elleng_internal_menu');else sessionStorage.setItem('elleng_internal_menu','1');});
         await context.route('**/*',async route=>{
           const url=new URL(route.request().url());
-          if(url.hostname==='cdn.jsdelivr.net'&&url.pathname.includes('supabase-js')){const current=new URL(route.request().frame().url());return route.fulfill({contentType:'text/javascript',body:`(${installFixture.toString()})(${JSON.stringify({teamCount:9,role:current.searchParams.get('visualRole')==='player'?'player':'commissioner',partialDraft:['/draft.html','/captain.html','/admin.html'].includes(current.pathname)})});`});}
+          if(url.hostname==='cdn.jsdelivr.net'&&url.pathname.includes('supabase-js')){const current=new URL(route.request().frame().url());return route.fulfill({contentType:'text/javascript',body:`(${installFixture.toString()})(${JSON.stringify({teamCount:9,role:['player','signedout'].includes(current.searchParams.get('visualRole'))?current.searchParams.get('visualRole'):'commissioner',partialDraft:['/draft.html','/captain.html','/admin.html'].includes(current.pathname)})});`});}
           if(url.origin===host.origin)return route.continue();
           return route.abort();
         });
@@ -208,6 +208,16 @@ async function main() {
           await verifyNavigation(page,width,capture,'player-');
           await page.locator(width<700?'[data-mobile-view="leaderboard"]':'.tab[data-view="leaderboard"]').click();
           await page.locator('#leaderboardView:not(.hidden)').waitFor();await capture('player-my-score');
+          for(const role of ['signedout','player'])for(const name of ['captain','admin']){
+            await page.goto(host.origin+'/'+name+'.html?visualRole='+role);
+            await page.locator(name==='captain'?'#login':'#loginCard').waitFor({state:'visible'});
+            if(name==='captain')await page.waitForFunction(()=>document.querySelector('#connection')?.textContent==='READY');
+            else if(role==='player')await page.waitForFunction(()=>document.querySelector('#authMsg')?.textContent.includes('owned'));
+            const controls=page.locator(name==='captain'?'#app':'#adminApp');
+            if(await controls.isVisible())throw new Error('Restricted draft controls are visible: '+name+' '+role);
+            if(!await page.locator('.global-main-menu-btn').isVisible())throw new Error('Restricted draft page has no visible Main Menu');
+            await capture((name==='admin'?'draft-admin':name)+(role==='signedout'?'-signed-out':'-restricted'));
+          }
         }
       }catch(e){report.errors.push({width,message:e.message.split('\n')[0]});console.error(width,e.message.split('\n')[0]);await page.screenshot({path:path.join(output,`${width}-capture-error.png`)}).catch(()=>{});}
       finally{await context.close();}
