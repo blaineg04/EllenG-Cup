@@ -4206,7 +4206,7 @@ function renderLeaderboard(){
  const arr=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
  const board=$("leaderboard");
  if(board) board.dataset.teamCount=String(arr.length);
- board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===x.team?` <span class="badge">+6 Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
+ board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===x.team?` <span class="badge">+${Number(tournament.final_cargo_points||6)} Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
  renderLiveHoleScores();
 }
 function trashTime(ts){
