@@ -346,3 +346,17 @@ test('golf result labels reject stroke totals beyond the supported score ceiling
  }
  assert.equal(ctx.relativeGolf(40,4).rel,'+36');
 });
+
+test('mobile and desktop layouts include responsive overflow containment',()=>{
+ const start=html.indexOf('<style id="responsive-overlap-guard-20261021">');
+ const end=html.indexOf('</style>',start);
+ assert.ok(start>=0&&end>start,'Missing responsive overlap stylesheet');
+ const css=html.slice(start,end);
+ for(const selector of ['.leader-row > *','.score-grid > *','.player-admin-row > *','.broadcast-row > *','.shamble-player > *']){
+  assert.ok(css.includes(selector),selector);
+ }
+ assert.match(css,/min-width:0/);
+ assert.match(css,/@media\(max-width:650px\)/);
+ assert.match(css,/@media\(max-width:380px\)/);
+ assert.match(css,/grid-template-columns:minmax\(0,1fr\)/);
+});
