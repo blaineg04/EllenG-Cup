@@ -256,7 +256,7 @@ test('unset Gator Hole always uses standard points',()=>{
   validTeamScore:score=>Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20
  };
  vm.runInNewContext(html.slice(start,end),ctx);
- for(const unset of [null,undefined,'','  ']){
+ for(const unset of [null,undefined,'','  ',true,false]){
   ctx.tournament.gator_hole=unset;
   assert.deepEqual(Array.from(ctx.pointsForHole(4)),[2,1],String(unset));
  }
