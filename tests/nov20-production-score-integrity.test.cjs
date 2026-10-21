@@ -146,3 +146,26 @@ test('Final Cargo leaderboard badge uses configured bonus instead of fixed six',
  assert.match(board.innerHTML,/\+9 Cargo/);
  assert.doesNotMatch(board.innerHTML,/\+6 Cargo/);
 });
+
+test('live hole scores accept string-serialized team and hole IDs',()=>{
+ const start=html.indexOf('function renderLiveHoleScores(){');
+ const end=html.indexOf('function scoreClass(rel){',start);
+ assert.ok(start>=0&&end>start,'Unable to locate live hole renderer');
+ const board={innerHTML:''};
+ const ctx={
+  teams:[{name:'Gators'},{name:'Herons'}],
+  scores:[{team_index:'0',hole:'1',score:'4'},{team_index:'1',hole:'1',score:'5'}],
+  tournament:{gator_revealed:false,gator_hole:18},
+  validTeamScore:score=>score!==null&&score!==undefined&&String(score).trim()!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20,
+  parForHole:()=>4,
+  relativeGolf:score=>({rel:String(Number(score)-4),label:'Par'}),
+  esc:x=>String(x),
+  $:()=>board
+ };
+ vm.runInNewContext(html.slice(start,end),ctx);
+ ctx.renderLiveHoleScores();
+ assert.match(board.innerHTML,/OFFICIAL/);
+ assert.match(board.innerHTML,/Gators/);
+ assert.match(board.innerHTML,/Herons/);
+ assert.match(board.innerHTML,/Hole 1/);
+});
