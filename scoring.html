@@ -3864,6 +3864,7 @@ function normalPoints(values){
  }
  return out;
 }
+function validTeamScore(score){return score!==null&&score!==undefined&&score!==""&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=(isSplitPair()?40:20)}
 function pointsForHole(h){
  const maxTeamScore=isSplitPair()?40:20; // Split-Pair combines two valid pair scores.
  const vals=teams.map((_,i)=>{const r=scores.find(x=>x.team_index===i&&x.hole===h);return r&&r.score!==null&&r.score!==undefined&&r.score!==''&&Number.isInteger(Number(r.score))&&Number(r.score)>=1&&Number(r.score)<=maxTeamScore?Number(r.score):NaN});
@@ -3882,11 +3883,11 @@ function totals(){
  return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>x.team_index===i&&x.hole===h);const maxTeamScore=isSplitPair()?40:20;if(r&&r.score!==null&&r.score!==undefined&&r.score!==""&&Number.isInteger(Number(r.score))&&Number(r.score)>=1&&Number(r.score)<=maxTeamScore)thru=Math.max(thru,h)}if(tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===i)pts+=Number(tournament.final_cargo_points||6);return{team:i,pts,thru}})
 }
 function renderLiveHoleScores(){
- const activeHoles=Array.from({length:18},(_,i)=>i+1).filter(h=>scores.some(x=>x.hole===h&&x.score!=null));
+ const activeHoles=Array.from({length:18},(_,i)=>i+1).filter(h=>scores.some(x=>x.hole===h&&validTeamScore(x.score)));
  if(!activeHoles.length){$("liveHoleScores").innerHTML='<div class="note">No scores entered yet.</div>';return}
  $("liveHoleScores").innerHTML=activeHoles.map(h=>{
   const par=parForHole(h);
-  const vals=teams.map((t,i)=>{const r=scores.find(x=>x.team_index===i&&x.hole===h&&x.score!=null);return {name:t.name,score:r?.score??null}});
+  const vals=teams.map((t,i)=>{const r=scores.find(x=>x.team_index===i&&x.hole===h&&validTeamScore(x.score));return {name:t.name,score:r?.score??null}});
   const count=vals.filter(v=>v.score!=null).length, official=count===teams.length;
   const rows=vals.map(v=>{
     const g=relativeGolf(v.score,par);
@@ -3902,7 +3903,7 @@ function projectedTotals(){
  const official=totals();
  const out=teams.map((_,i)=>({team:i,official:official[i]?.pts||0,projected:official[i]?.pts||0,thru:official[i]?.thru||0,provisionalHoles:0}));
  for(let h=1;h<=18;h++){
-   const vals=teams.map((_,i)=>{const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&x.score!=null);return r?Number(r.score):NaN});
+   const vals=teams.map((_,i)=>{const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));return r?Number(r.score):NaN});
    const entered=vals.filter(Number.isFinite).length;
    if(!entered||entered===teams.length)continue;
    vals.forEach((v,i)=>{if(Number.isFinite(v))out[i].provisionalHoles++});
