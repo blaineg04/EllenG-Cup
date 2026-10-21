@@ -18,7 +18,7 @@ on:
   workflow_dispatch:
 # Avoid duplicate captures competing for the same MacBook.
 concurrency:
-  group: nov20-validation-${{ github.ref }}
+  group: nov20-validation-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 jobs:
   scoring-regression:
