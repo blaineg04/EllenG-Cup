@@ -217,6 +217,15 @@ async function main() {
             if(await controls.isVisible())throw new Error('Restricted draft controls are visible: '+name+' '+role);
             if(!await page.locator('.global-main-menu-btn').isVisible())throw new Error('Restricted draft page has no visible Main Menu');
             await capture((name==='admin'?'draft-admin':name)+(role==='signedout'?'-signed-out':'-restricted'));
+            if(role==='signedout'){
+              // Fake credentials stay inside the injected SDK; no auth request leaves this fixture.
+              await page.locator('#email').fill('visual@example.invalid');
+              await page.locator(name==='captain'?'#pw':'#password').fill('invalid-test-password');
+              const button=page.locator(name==='captain'?'#signin':'#login');await button.click();
+              await page.waitForFunction(id=>document.getElementById(id)?.textContent==='Invalid login credentials',name==='captain'?'msg':'authMsg');
+              if(!await button.isEnabled()||await controls.isVisible())throw new Error('Failed sign-in did not restore the restricted form');
+              await capture((name==='admin'?'draft-admin':name)+'-sign-in-error');
+            }
           }
         }
       }catch(e){report.errors.push({width,message:e.message.split('\n')[0]});console.error(width,e.message.split('\n')[0]);await page.screenshot({path:path.join(output,`${width}-capture-error.png`)}).catch(()=>{});}

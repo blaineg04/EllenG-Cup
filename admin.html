@@ -60,10 +60,16 @@ async function openAdmin(){
  }
 }
 document.getElementById("login").onclick=async()=>{
- const email=document.getElementById("email").value.trim(),password=document.getElementById("password").value;
- const msg=document.getElementById("authMsg");msg.textContent="Signing in…";
- const {error}=await db.auth.signInWithPassword({email,password});
- if(error){msg.textContent=error.message;return}
- msg.textContent="";await openAdmin();
+ const button=document.getElementById("login");if(button.disabled)return;
+ const passwordInput=document.getElementById("password");
+ const email=document.getElementById("email").value.trim(),password=passwordInput.value;
+ const msg=document.getElementById("authMsg"),status=document.getElementById("connection");
+ if(!email||!password){msg.textContent="Enter commissioner email and password.";status.textContent="SIGN IN";return}
+ const label=button.textContent;button.disabled=true;button.textContent="Signing In…";msg.textContent="Signing in…";status.textContent="CONNECTING";
+ try{
+  const {error}=await db.auth.signInWithPassword({email,password});if(error)throw error;
+  passwordInput.value="";msg.textContent="";await openAdmin();
+ }catch(e){status.textContent="ERROR";msg.textContent=e?.message||"Sign-in unavailable. Try again.";}
+ finally{button.disabled=false;button.textContent=label;}
 };
 (async()=>{try{await openAdmin()}catch(e){document.getElementById("authMsg").textContent=e.message}})();</script></body></html>

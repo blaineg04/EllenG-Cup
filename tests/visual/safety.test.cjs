@@ -75,3 +75,39 @@ test('commissioner lookup failures show recovery guidance without leaving contro
   assert.equal(page.node('adminApp').style.display,'none');assert.equal(page.rendered(),0);
  }
 });
+
+function signInPage(kind,{email='visual@example.invalid',password='test-only-password',authenticate=async()=>({error:null})}={}){
+ const html=fs.readFileSync(path.join(__dirname,kind==='admin'?'../../admin.html':'../../captain.html'),'utf8');
+ const buttonId=kind==='admin'?'login':'signin',passwordId=kind==='admin'?'password':'pw',messageId=kind==='admin'?'authMsg':'msg';
+ const start=html.indexOf(`document.getElementById("${buttonId}").onclick=`),end=html.indexOf(kind==='admin'?'(async()=>':'document.getElementById("soundToggle").onclick',start);
+ const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{value:id==='email'?email:id===passwordId?password:'',textContent:id===buttonId?'Sign In':'',disabled:false,style:{}});return nodes.get(id)};
+ let requests=0,opened=0;
+ const context={document:{getElementById:node},db:{auth:{signInWithPassword:async args=>{requests++;return authenticate(args)}}},openAdmin:async()=>{opened++},whoami:async()=>true,load:async()=>{},render(){opened++},subscribe(){},setInterval(){},draw(){},console:{error(){}}};
+ vm.runInNewContext(html.slice(start,end),context);
+ return {click:()=>node(buttonId).onclick(),button:()=>node(buttonId),password:()=>node(passwordId),message:()=>node(messageId),requests:()=>requests,opened:()=>opened};
+}
+test('draft sign-in validates empty credentials before sending a request',async()=>{
+ for(const kind of ['admin','captain'])for(const credentials of [{email:'',password:'x'},{email:'x@example.invalid',password:''}]){
+  const page=signInPage(kind,credentials);await page.click();assert.equal(page.requests(),0,kind);assert.match(page.message().textContent,/email.*password|password.*email/i);
+ }
+});
+test('draft sign-in catches rejected requests and restores the button',async()=>{
+ for(const kind of ['admin','captain']){
+  const page=signInPage(kind,{authenticate:async()=>{throw new Error('Network unavailable')}});
+  await page.click();assert.equal(page.button().disabled,false,kind);assert.equal(page.button().textContent,'Sign In');assert.match(page.message().textContent,/unavailable|try again/i);assert.equal(page.opened(),0);
+ }
+});
+test('draft sign-in sends only one request while a submission is pending',async()=>{
+ for(const kind of ['admin','captain']){
+  let resolve;const pending=new Promise(r=>{resolve=r});const page=signInPage(kind,{authenticate:()=>pending});
+  const first=page.click(),second=page.click();
+  try{assert.equal(page.requests(),1,kind);assert.equal(page.button().disabled,true);}
+  finally{resolve({error:{message:'Invalid login credentials'}});await Promise.all([first,second]);}
+  assert.equal(page.button().disabled,false);assert.match(page.message().textContent,/Invalid login/);assert.equal(page.opened(),0);
+ }
+});
+test('successful draft authentication clears the password and restores the button',async()=>{
+ for(const kind of ['admin','captain']){
+  const page=signInPage(kind);await page.click();assert.equal(page.opened(),1,kind);assert.equal(page.password().value,'');assert.equal(page.button().disabled,false);assert.equal(page.button().textContent,'Sign In');
+ }
+});
