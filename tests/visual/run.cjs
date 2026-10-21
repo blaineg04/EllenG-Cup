@@ -88,6 +88,11 @@ async function verifyNavigation(page, width, capture, prefix = '') {
     }).map(e=>e.textContent.trim());
   });
   if(unreadable.length)throw new Error('More menu text lacks contrast: '+unreadable.join(', '));
+  const menuNeedsScroll = await page.locator('.more-sheet').evaluate(e=>e.scrollHeight>e.clientHeight+2);
+  if(menuNeedsScroll)throw new Error('More menu hides destinations below its scroll area');
+  for(const selector of ['#moreAdminBtn','#moreScoringBtn']){
+    if(await page.locator(selector).isVisible() !== (prefix !== 'player-'))throw new Error('Incorrect role visibility: '+selector);
+  }
   await page.locator('#moreMenuClose').click();
   await page.locator('#moreMenuBackdrop').waitFor({state:'hidden'});
   if(mobile){await openMore();await page.locator('[data-more-view="course"]').click();}
@@ -96,6 +101,11 @@ async function verifyNavigation(page, width, capture, prefix = '') {
   await openMore();
   await page.locator('[data-more-view="rankings"]').click();
   await page.locator('#rankingsView:not(.hidden)').waitFor({state:'visible'});
+  await openMore();
+  await page.locator('[data-more-view="extras"]').click();
+  await page.locator('#extrasView:not(.hidden)').waitFor({state:'visible'});
+  await page.locator(home).click();
+  await page.locator('#homeView:not(.hidden)').waitFor({state:'visible'});
   await page.locator('#moreMenuBackdrop').waitFor({state:'hidden'});
   await openMore();
   await page.locator('#openBroadcast').click();
@@ -104,7 +114,7 @@ async function verifyNavigation(page, width, capture, prefix = '') {
   await page.locator('#broadcastOverlay').waitFor({state:'hidden'});
   await page.locator(home).click();
   await page.locator('#homeView:not(.hidden)').waitFor({state:'visible'});
-  console.log(`${width} ${prefix}real navigation: Course, Rankings, Broadcast and return Home passed`);
+  console.log(`${width} ${prefix}real navigation: Course, Rankings, Extras, Broadcast and return Home passed`);
 }
 async function main() {
   const live=!!process.env.ELLENG_PREVIEW_URL;
