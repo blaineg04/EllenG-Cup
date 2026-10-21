@@ -88,3 +88,21 @@ test('live hole validation rejects empty and invalid scores across formats',()=>
   assert.equal(ctx.validTeamScore(4),true);
  }
 });
+
+test('broadcast moment ignores invalid scores and malformed team or hole references',()=>{
+ const start=html.indexOf('function latestTournamentMoment(){');
+ const end=html.indexOf('function renderBroadcast(){',start);
+ assert.ok(start>=0&&end>start,'Missing broadcast highlight function');
+ const ctx={
+  scores:[{hole:18,team_index:0,score:''},{hole:17,team_index:9,score:3},{hole:16,team_index:0,score:0},{hole:4,team_index:1,score:4}],
+  teams:[{name:'Gators'},{name:'Herons'}],
+  isSplitPair:()=>false,
+  validTeamScore:score=>score!==null&&score!==undefined&&score!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20,
+  relativeGolf:(score,par)=>({rel:String(score-par),label:'Par'}),
+  parForHole:()=>4
+ };
+ vm.runInNewContext(html.slice(start,end),ctx);
+ assert.match(ctx.latestTournamentMoment(),/Herons.*Hole 4/);
+ ctx.scores=[];
+ assert.equal(ctx.latestTournamentMoment(),'Waiting for the first score to be posted.');
+});
