@@ -369,3 +369,14 @@ test('responsive overlap guards load after all legacy style overrides',()=>{
  assert.equal(html.slice(pos).match(/<style\b/g)?.length,1,'Later style may override layout guards');
  assert.ok(html.slice(pos).trimEnd().endsWith('</style>'),'Responsive rules must be the final stylesheet');
 });
+
+test('narrow-screen commissioner and text layouts remain bounded',()=>{
+ const start=html.indexOf('<style id="responsive-overlap-guard-20261021">');
+ const css=html.slice(start);
+ assert.ok(css.includes('.admin-stats,.admin-jumps{grid-template-columns:repeat(2,minmax(0,1fr))}'));
+ assert.ok(css.includes('.brand h1,.brand p'));
+ assert.ok(css.includes('overflow-wrap:anywhere'));
+ assert.ok(css.includes('.trash-compose{grid-template-columns:minmax(0,1fr)}'));
+ assert.ok(css.includes('.score-grid input,.score-grid select'));
+ assert.ok(css.includes('max-width:100%;min-width:0'));
+});
