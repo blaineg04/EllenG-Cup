@@ -7388,4 +7388,22 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
  .shamble-player,.pair-score-row{grid-template-columns:minmax(0,1fr) 64px 74px;gap:4px}
  .shamble-player input,.pair-score-row input{max-width:100%}
 }
+/* Long tournament names and translated labels must not widen the viewport. */
+.brand,.brand > *, .card > *, .admin-stat, .admin-jumps a,
+.leader-row strong, .trash-msg, .trash-text, .ranking-player-chip {min-width:0;max-width:100%}
+.brand h1,.brand p,.admin-stat strong,.admin-stat span,.admin-jumps a,
+.ranking-player-chip {overflow-wrap:anywhere}
+.score-grid input,.score-grid select,.player-admin-row input,
+.player-admin-row select,.shamble-player input,.pair-score-row input {max-width:100%;min-width:0}
+@media(max-width:650px){
+ .admin-stats,.admin-jumps{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .trash-compose{grid-template-columns:minmax(0,1fr)}
+ .trash-compose textarea{grid-column:1/-1}
+}
+@media(max-width:380px){
+ .admin-stats,.admin-jumps{gap:5px}
+ .admin-stat{padding:8px}
+ .admin-jumps a{padding:9px 5px;font-size:12px}
+ .score-grid .head{overflow-wrap:anywhere}
+}
 </style>
