@@ -190,3 +190,9 @@ test('live holes do not appear solely because of orphaned team scores',()=>{
  assert.doesNotMatch(board.innerHTML,/Hole 12/);
  assert.doesNotMatch(board.innerHTML,/Hole 10/);
 });
+
+test('official scoring returns no results when there are no teams',()=>{
+ assert.deepEqual(points([]),[]);
+ assert.deepEqual(points([],{gator:true}),[]);
+ assert.deepEqual(points([],{splitPair:true}),[]);
+});
