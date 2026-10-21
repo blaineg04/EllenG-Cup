@@ -3864,7 +3864,7 @@ function normalPoints(values){
  }
  return out;
 }
-function validTeamScore(score){return score!==null&&score!==undefined&&score!==""&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=(isSplitPair()?40:20)}
+function validTeamScore(score){return score!==null&&score!==undefined&&typeof score!=="boolean"&&String(score).trim()!==""&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=(isSplitPair()?40:20)}
 function pointsForHole(h){
  // Split-Pair combines two valid pair scores; all displays use the same validation.
  const vals=teams.map((_,i)=>{const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));return r?Number(r.score):NaN});
