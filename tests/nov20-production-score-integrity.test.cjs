@@ -126,3 +126,23 @@ test('leaderboard thru accepts numeric identifiers serialized as strings',()=>{
  assert.equal(results[0].pts,2);
  assert.equal(results[1].pts,1);
 });
+
+test('Final Cargo leaderboard badge uses configured bonus instead of fixed six',()=>{
+ const start=html.indexOf('function renderLeaderboard(){');
+ const end=html.indexOf('function trashTime(ts){',start);
+ assert.ok(start>=0&&end>start,'Unable to locate leaderboard renderer');
+ const board={innerHTML:'',dataset:{}};
+ const ctx={
+  teams:[{name:'Gators'},{name:'Herons'}],
+  tournament:{final_cargo_team:0,final_cargo_points:9},
+  totals:()=>[{team:0,pts:12,thru:18},{team:1,pts:4,thru:18}],
+  pointScaleText:()=> '2–1',
+  esc:x=>String(x),
+  renderLiveHoleScores:()=>{},
+  $:id=>id==='leaderboard'?board:null
+ };
+ vm.runInNewContext(html.slice(start,end),ctx);
+ ctx.renderLeaderboard();
+ assert.match(board.innerHTML,/\+9 Cargo/);
+ assert.doesNotMatch(board.innerHTML,/\+6 Cargo/);
+});
