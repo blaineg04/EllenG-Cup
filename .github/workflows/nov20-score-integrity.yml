@@ -1,0 +1,18 @@
+name: November 20 score integrity
+on:
+  pull_request:
+    paths:
+      - 'scoring.html'
+      - 'tests/nov20-production-score-integrity.test.cjs'
+      - '.github/workflows/nov20-score-integrity.yml'
+  workflow_dispatch:
+jobs:
+  scoring-regression:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Node is installed
+        run: node --version
+      - name: Run isolated scoring regression tests
+        run: node --test tests/nov20-production-score-integrity.test.cjs
