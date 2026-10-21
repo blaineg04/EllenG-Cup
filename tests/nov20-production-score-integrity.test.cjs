@@ -196,3 +196,16 @@ test('official scoring returns no results when there are no teams',()=>{
  assert.deepEqual(points([],{gator:true}),[]);
  assert.deepEqual(points([],{splitPair:true}),[]);
 });
+
+test('relative golf labels never treat blank, boolean or zero scores as strokes',()=>{
+ const start=html.indexOf('function relativeGolf(score,par){');
+ const end=html.indexOf('function pointScaleText(){',start);
+ assert.ok(start>=0&&end>start);
+ const ctx={};
+ vm.runInNewContext(html.slice(start,end),ctx);
+ for(const invalid of [null,undefined,'','   ',false,true,0,-2,'not a score']){
+  assert.equal(ctx.relativeGolf(invalid,4).rel,'—',String(invalid));
+ }
+ assert.equal(ctx.relativeGolf(4,4).label,'Par');
+ assert.equal(ctx.relativeGolf(3,4).label,'Birdie');
+});
