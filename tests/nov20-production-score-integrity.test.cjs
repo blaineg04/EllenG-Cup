@@ -169,3 +169,24 @@ test('live hole scores accept string-serialized team and hole IDs',()=>{
  assert.match(board.innerHTML,/Herons/);
  assert.match(board.innerHTML,/Hole 1/);
 });
+
+test('live holes do not appear solely because of orphaned team scores',()=>{
+ const start=html.indexOf('function renderLiveHoleScores(){');
+ const end=html.indexOf('function scoreClass(rel){',start);
+ const board={innerHTML:''};
+ const ctx={
+  teams:[{name:'Gators'},{name:'Herons'}],
+  scores:[{team_index:99,hole:12,score:4},{team_index:-1,hole:10,score:4},{team_index:0,hole:2,score:4}],
+  tournament:{gator_revealed:false,gator_hole:18},
+  validTeamScore:score=>Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20,
+  parForHole:()=>4,
+  relativeGolf:()=>({rel:'0',label:'Par'}),
+  esc:x=>String(x),
+  $:()=>board
+ };
+ vm.runInNewContext(html.slice(start,end),ctx);
+ ctx.renderLiveHoleScores();
+ assert.match(board.innerHTML,/Hole 2/);
+ assert.doesNotMatch(board.innerHTML,/Hole 12/);
+ assert.doesNotMatch(board.innerHTML,/Hole 10/);
+});
