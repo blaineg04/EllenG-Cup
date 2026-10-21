@@ -83,7 +83,7 @@ test('live hole validation rejects empty and invalid scores across formats',()=>
  for(const splitPair of [false,true]){
   const ctx={isSplitPair:()=>splitPair};
   vm.runInNewContext(html.slice(from,to),ctx);
-  for(const value of ['',' ','  ',null,undefined,false,true,0,-1,1.5,'oops',splitPair?41:21]){
+  for(const value of ['',' ','  ',null,undefined,false,true,0,-1,1.5,'oops',Number.MAX_SAFE_INTEGER+1,splitPair?41:21]){
    assert.equal(ctx.validTeamScore(value),false,String(value));
   }
   assert.equal(ctx.validTeamScore(splitPair?40:20),true);
