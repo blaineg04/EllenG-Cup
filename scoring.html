@@ -6614,33 +6614,7 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
   }
 }
 </style>
-<style id="responsive-overlap-guard-20261021">
-/* Keep long names, labels and controls inside their own grid/flex tracks. */
-.leader-row > *, .score-grid > *, .shamble-player > *, .pair-score-row > *,
-.player-admin-row > *, .trash-compose > *, .broadcast-row > *,
-.row > *, .admin-grid > *, .team-editor > * {min-width:0}
-.leader-row strong, .shamble-player strong, .pair-score-row strong,
-.player-admin-row strong {overflow-wrap:anywhere}
-.card, .leader-row, .editor-card, .shamble-team, .broadcast-panel {max-width:100%}
-@media(max-width:650px){
- .leader-row{grid-template-columns:26px minmax(0,1fr) minmax(50px,auto) minmax(42px,auto);gap:5px;padding:8px 6px}
- .leader-row .pts,.leader-row .thru{overflow-wrap:anywhere}
- .score-grid{grid-template-columns:minmax(0,1fr) minmax(0,118px) minmax(0,70px)}
- .shamble-area,.team-editor{grid-template-columns:minmax(0,1fr)}
- .shamble-player,.pair-score-row{grid-template-columns:minmax(0,1fr) 74px 88px}
- .player-admin-row{grid-template-columns:minmax(0,1fr) 72px 82px}
- .row{min-width:0}
-}
-@media(max-width:380px){
- .brand{gap:7px}.brand img{width:86px;height:65px}.brand h1{font-size:clamp(22px,7.2vw,29px)}
- .leader-row{grid-template-columns:22px minmax(0,1fr) 48px 38px;gap:3px;padding:7px 4px}
- .leader-row .pts{font-size:12px}.leader-row .thru{font-size:11px}
- .score-grid{grid-template-columns:minmax(0,1fr) 100px 55px;gap:4px}
- .mobile-score-input{max-width:100%}
- .shamble-player,.pair-score-row{grid-template-columns:minmax(0,1fr) 64px 74px;gap:4px}
- .shamble-player input,.pair-score-row input{max-width:100%}
-}
-</style>
+
 </html>
 
 <style>
@@ -7386,5 +7360,32 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
 @media(max-width:650px){
  #adminPlayers .player-actions{grid-column:1/4!important;width:100%!important;min-width:0!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
  #adminPlayers [data-save-player-name],#adminPlayers [data-remove-player]{width:100%!important;min-height:44px!important;font-size:13px!important}
+}
+</style>
+<style id="responsive-overlap-guard-20261021">
+/* Keep long names, labels and controls inside their own grid/flex tracks. */
+.leader-row > *, .score-grid > *, .shamble-player > *, .pair-score-row > *,
+.player-admin-row > *, .trash-compose > *, .broadcast-row > *,
+.row > *, .admin-grid > *, .team-editor > * {min-width:0}
+.leader-row strong, .shamble-player strong, .pair-score-row strong,
+.player-admin-row strong {overflow-wrap:anywhere}
+.card, .leader-row, .editor-card, .shamble-team, .broadcast-panel {max-width:100%}
+@media(max-width:650px){
+ .leader-row{grid-template-columns:26px minmax(0,1fr) minmax(50px,auto) minmax(42px,auto);gap:5px;padding:8px 6px}
+ .leader-row .pts,.leader-row .thru{overflow-wrap:anywhere}
+ .score-grid{grid-template-columns:minmax(0,1fr) minmax(0,118px) minmax(0,70px)}
+ .shamble-area,.team-editor{grid-template-columns:minmax(0,1fr)}
+ .shamble-player,.pair-score-row{grid-template-columns:minmax(0,1fr) 74px 88px}
+ .player-admin-row{grid-template-columns:minmax(0,1fr) 72px 82px}
+ .row{min-width:0}
+}
+@media(max-width:380px){
+ .brand{gap:7px}.brand img{width:86px;height:65px}.brand h1{font-size:clamp(22px,7.2vw,29px)}
+ .leader-row{grid-template-columns:22px minmax(0,1fr) 48px 38px;gap:3px;padding:7px 4px}
+ .leader-row .pts{font-size:12px}.leader-row .thru{font-size:11px}
+ .score-grid{grid-template-columns:minmax(0,1fr) 100px 55px;gap:4px}
+ .mobile-score-input{max-width:100%}
+ .shamble-player,.pair-score-row{grid-template-columns:minmax(0,1fr) 64px 74px;gap:4px}
+ .shamble-player input,.pair-score-row input{max-width:100%}
 }
 </style>
