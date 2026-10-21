@@ -3866,8 +3866,8 @@ function normalPoints(values){
 }
 function validTeamScore(score){return score!==null&&score!==undefined&&score!==""&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=(isSplitPair()?40:20)}
 function pointsForHole(h){
- const maxTeamScore=isSplitPair()?40:20; // Split-Pair combines two valid pair scores.
- const vals=teams.map((_,i)=>{const r=scores.find(x=>x.team_index===i&&x.hole===h);return r&&r.score!==null&&r.score!==undefined&&r.score!==''&&Number.isInteger(Number(r.score))&&Number(r.score)>=1&&Number(r.score)<=maxTeamScore?Number(r.score):NaN});
+ // Split-Pair combines two valid pair scores; all displays use the same validation.
+ const vals=teams.map((_,i)=>{const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));return r?Number(r.score):NaN});
  const n=teams.length;
  if(vals.filter(Number.isFinite).length<n)return Array(n).fill(null);
  if(tournament&&Number(tournament.gator_hole)===h){
