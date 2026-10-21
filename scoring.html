@@ -3873,7 +3873,7 @@ function pointsForHole(h){
  const n=teams.length;
  if(!n)return [];
  if(vals.filter(Number.isFinite).length<n)return Array(n).fill(null);
- if(tournament&&Number(tournament.gator_hole)===h){
+ if(tournament&&tournament.gator_hole!==null&&tournament.gator_hole!==undefined&&String(tournament.gator_hole).trim()!==""&&Number(tournament.gator_hole)===h){
    const out=Array(n).fill(null), valid=vals.filter(Number.isFinite); if(!valid.length)return out;
    const low=Math.min(...valid), winners=[];vals.forEach((v,i)=>{if(v===low)winners.push(i)});
    winners.forEach(i=>out[i]=12/winners.length);
