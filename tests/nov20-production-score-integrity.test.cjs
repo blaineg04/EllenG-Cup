@@ -242,3 +242,23 @@ test('Final Cargo bonus stays finite and honors an explicit zero',()=>{
  ctx.tournament.final_cargo_points=9;
  assert.equal(ctx.finalCargoBonus(),9);
 });
+
+test('unset Gator Hole always uses standard points',()=>{
+ const start=html.indexOf('function normalPoints(values){');
+ const end=html.indexOf('function finalCargoBonus(){',start);
+ assert.ok(start>=0&&end>start);
+ const ctx={
+  teams:[{name:'Gators'},{name:'Herons'}],
+  scores:[{team_index:0,hole:4,score:3},{team_index:1,hole:4,score:5}],
+  tournament:{gator_hole:null},
+  isSplitPair:()=>false,
+  validTeamScore:score=>Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20
+ };
+ vm.runInNewContext(html.slice(start,end),ctx);
+ for(const unset of [null,undefined,'','  ']){
+  ctx.tournament.gator_hole=unset;
+  assert.deepEqual(Array.from(ctx.pointsForHole(4)),[2,1],String(unset));
+ }
+ ctx.tournament.gator_hole=4;
+ assert.deepEqual(Array.from(ctx.pointsForHole(4)),[12,0]);
+});
