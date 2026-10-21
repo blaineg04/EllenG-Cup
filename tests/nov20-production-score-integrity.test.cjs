@@ -16,7 +16,7 @@ function points(scores,{gator=false,splitPair=false}={}){
   tournament:{gator_hole:gator?4:17},
   isSplitPair:()=>splitPair
  };
- ctx.validTeamScore=score=>score!==null&&score!==undefined&&score!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=(ctx.isSplitPair()?40:20);
+ ctx.validTeamScore=score=>score!==null&&score!==undefined&&typeof score!=='boolean'&&String(score).trim()!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=(ctx.isSplitPair()?40:20);
  vm.runInNewContext(html.slice(from,to),ctx);
  return Array.from(ctx.pointsForHole(4));
 }
@@ -65,7 +65,7 @@ test('leaderboard thru ignores blank and invalid scores',()=>{
   tournament:{gator_hole:18,final_cargo_team:null},
   isSplitPair:()=>false
  };
- ctx.validTeamScore=score=>score!==null&&score!==undefined&&score!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20;
+ ctx.validTeamScore=score=>score!==null&&score!==undefined&&typeof score!=='boolean'&&String(score).trim()!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20;
  vm.runInNewContext(html.slice(start,end),ctx);
  let results=Array.from(ctx.totals());
  assert.equal(results[0].thru,1);
@@ -83,7 +83,7 @@ test('live hole validation rejects empty and invalid scores across formats',()=>
  for(const splitPair of [false,true]){
   const ctx={isSplitPair:()=>splitPair};
   vm.runInNewContext(html.slice(from,to),ctx);
-  for(const value of ['',null,undefined,0,-1,1.5,'oops',splitPair?41:21]){
+  for(const value of ['',' ','  ',null,undefined,false,true,0,-1,1.5,'oops',splitPair?41:21]){
    assert.equal(ctx.validTeamScore(value),false,String(value));
   }
   assert.equal(ctx.validTeamScore(splitPair?40:20),true);
@@ -99,7 +99,7 @@ test('broadcast moment ignores invalid scores and malformed team or hole referen
   scores:[{hole:18,team_index:0,score:''},{hole:17,team_index:9,score:3},{hole:16,team_index:0,score:0},{hole:4,team_index:1,score:4}],
   teams:[{name:'Gators'},{name:'Herons'}],
   isSplitPair:()=>false,
-  validTeamScore:score=>score!==null&&score!==undefined&&score!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20,
+  validTeamScore:score=>score!==null&&score!==undefined&&typeof score!=='boolean'&&String(score).trim()!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20,
   relativeGolf:(score,par)=>({rel:String(score-par),label:'Par'}),
   parForHole:()=>4
  };
@@ -117,7 +117,7 @@ test('leaderboard thru accepts numeric identifiers serialized as strings',()=>{
   scores:[{team_index:'0',hole:'1',score:'4'},{team_index:'1',hole:'1',score:'5'},{team_index:'0',hole:'2',score:''}],
   tournament:{gator_hole:18,final_cargo_team:null},
   isSplitPair:()=>false,
-  validTeamScore:score=>score!==null&&score!==undefined&&score!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20
+  validTeamScore:score=>score!==null&&score!==undefined&&typeof score!=='boolean'&&String(score).trim()!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20
  };
  vm.runInNewContext(html.slice(start,end),ctx);
  const results=Array.from(ctx.totals());
