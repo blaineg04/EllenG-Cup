@@ -3723,6 +3723,7 @@ function renderCommissionerSystemStatus(){
 setInterval(renderCommissionerSystemStatus,10000);
 
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function fmt(n){const value=Number(n);return Number.isFinite(value)?value.toFixed(value%1?1:0):"0"}
 const PLAYER_LOGIN_DOMAIN="@players.ellengcup.app";
 const usernameToAuthEmail=u=>`${String(u||"").trim().toLowerCase()}${PLAYER_LOGIN_DOMAIN}`;
 const visibleLogin=()=>currentUsername||(String(user?.email||"").endsWith(PLAYER_LOGIN_DOMAIN)?String(user.email).slice(0,-PLAYER_LOGIN_DOMAIN.length):String(user?.email||""));
@@ -7363,6 +7364,29 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
 }
 </style>
 <style id="responsive-overlap-guard-20261021">
+.tour-card:after{content:none!important}
+@media(max-width:650px){
+ .tour-hub-card{padding:14px!important}
+ .app-hub-logo{width:56px!important;height:56px!important}
+ .tour-title{font-size:28px!important}
+ .tour-divider{margin:8px auto!important}
+ .tour-hub-card h1{font-size:20px!important}
+ .tour-hub-card .app-hub-sub{font-size:11px!important;margin-bottom:8px!important}
+ .tour-hub-card .hub-signed-in{padding:6px 10px!important;margin-bottom:8px!important}
+ .tour-hub-card .app-hub-grid{gap:7px!important}
+ .tour-hub-card .tour-card{min-height:76px!important;grid-template-columns:36px minmax(0,1fr) 16px!important;gap:8px!important;padding:8px!important}
+ .tour-hub-card .tour-icon{width:34px;height:34px;font-size:18px}
+ .tour-hub-card .tour-copy{padding-right:0!important;min-width:0}
+ .tour-hub-card .tour-copy strong{font-size:18px!important;line-height:1.05!important}
+ .tour-hub-card .tour-copy em{font-size:10px!important;line-height:1.15!important}
+}
+@media(max-width:900px){
+ /* Content cards keep their natural height inside the existing Extras scroller. */
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent .wow-main,
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent .momentum-row strong{white-space:normal!important;overflow-wrap:anywhere;overflow:visible!important;text-overflow:clip!important;line-height:1.2!important}
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent{height:auto!important;min-height:min-content!important;flex:0 0 auto!important}
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent > *{flex:0 0 auto!important;height:auto!important;min-height:min-content!important;max-height:none!important}
+}
 /* Keep every navigation destination visible for commissioners on desktop. */
 .top-tabs-card .tabs{flex-wrap:wrap;overflow:visible}
 /* Keep long names, labels and controls inside their own grid/flex tracks. */

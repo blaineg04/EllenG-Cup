@@ -380,3 +380,16 @@ test('narrow-screen commissioner and text layouts remain bounded',()=>{
  assert.ok(css.includes('.score-grid input,.score-grid select'));
  assert.ok(css.includes('max-width:100%;min-width:0'));
 });
+
+test('populated featured matchup renders tied fractional points without a startup exception',()=>{
+ const element={innerHTML:''};
+ const ctx={$:()=>element,esc:s=>s,teams:[{name:'Bayou'},{name:'Herons'}],closestTeams:()=>({a:{team:0,pts:12.5},b:{team:1,pts:11},diff:1.5})};
+ const format=html.match(/function fmt\(n\)\{[^\n]+\}/);
+ if(format)vm.runInNewContext(format[0],ctx);
+ const start=html.indexOf('function renderFeaturedMatchup(){');
+ const end=html.indexOf('function renderPlayerSpotlight(){',start);
+ vm.runInNewContext(html.slice(start,end),ctx);
+ ctx.renderFeaturedMatchup();
+ assert.match(element.innerHTML,/12\.5–11 Cup points/);
+ assert.match(element.innerHTML,/1\.5 points apart/);
+});
