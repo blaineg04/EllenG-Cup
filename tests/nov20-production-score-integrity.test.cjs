@@ -235,7 +235,7 @@ test('Final Cargo bonus stays finite and honors an explicit zero',()=>{
  const ctx={tournament:{final_cargo_points:0}};
  vm.runInNewContext(html.slice(start,end),ctx);
  assert.equal(ctx.finalCargoBonus(),0);
- for(const bad of ['invalid','Infinity',-4,'',null,undefined]){
+ for(const bad of ['invalid','Infinity',-4,'',null,undefined,true,false,1.5,Number.MAX_SAFE_INTEGER+1]){
   ctx.tournament.final_cargo_points=bad;
   assert.equal(ctx.finalCargoBonus(),6,String(bad));
  }
