@@ -212,7 +212,7 @@ async function main() {
             await page.goto(host.origin+'/'+name+'.html?visualRole='+role);
             await page.locator(name==='captain'?'#login':'#loginCard').waitFor({state:'visible'});
             if(name==='captain')await page.waitForFunction(()=>document.querySelector('#connection')?.textContent==='READY');
-            else if(role==='player')await page.waitForFunction(()=>document.querySelector('#authMsg')?.textContent.includes('owned'));
+            else await page.waitForFunction(expected=>document.querySelector('#connection')?.textContent===expected,role==='signedout'?'SIGN IN':'NO ACCESS');
             const controls=page.locator(name==='captain'?'#app':'#adminApp');
             if(await controls.isVisible())throw new Error('Restricted draft controls are visible: '+name+' '+role);
             if(!await page.locator('.global-main-menu-btn').isVisible())throw new Error('Restricted draft page has no visible Main Menu');

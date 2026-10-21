@@ -23,13 +23,13 @@ test('preview guard permits password authentication only in the local session he
 
 // Run the actual page access function against controlled auth/query responses.
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
-function adminAccess({user={id:'owner'},data={owner_id:'owner',state:{}},error=null}={}){
+function adminAccess({user={id:'owner'},data={owner_id:'owner',state:{}},error=null,authError=null,rejectLookup=false}={}){
  const html=fs.readFileSync(path.join(__dirname,'../../admin.html'),'utf8');
  const start=html.indexOf('async function openAdmin(){'),end=html.indexOf('document.getElementById("login").onclick',start);
  const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{style:{display:id==='adminApp'?'none':'block'},textContent:''});return nodes.get(id)};
  let rendered=0;
- const query={select(){return this},eq(){return this},maybeSingle:async()=>({data,error})};
- const context={db:{auth:{getUser:async()=>({data:{user}})},from:()=>query},cfg:{draftId:'test'},document:{getElementById:node},alert(){},fresh:()=>({}),S:{},setupRender(){rendered++},subscribe(){},tick:1};
+ const query={select(){return this},eq(){return this},maybeSingle:async()=>{if(rejectLookup)throw new Error("Network request rejected");return {data,error}}};
+ const context={db:{auth:{getUser:async()=>({data:{user},error:authError})},from:()=>query},cfg:{draftId:'test'},document:{getElementById:node},alert(){},fresh:()=>({}),S:{},setupRender(){rendered++},subscribe(){},tick:1};
  vm.runInNewContext(html.slice(start,end),context);
  return {run:()=>context.openAdmin(),node,rendered:()=>rendered};
 }
@@ -61,3 +61,17 @@ test('missing or malformed captain assignments show guidance without opening dra
  }
 });
 test('captain assignment for team zero is accepted',async()=>assert.equal(await captainAccess({team_index:0}).run(),true));
+
+test('signed-out commissioner page reports sign-in instead of connecting',async()=>{
+ const page=adminAccess({user:null});await page.run();assert.equal(page.node('connection').textContent,'SIGN IN');
+});
+test('wrong commissioner account reports no access instead of connecting',async()=>{
+ const page=adminAccess({data:{owner_id:'another-owner',state:{}}});await page.run();assert.equal(page.node('connection').textContent,'NO ACCESS');
+});
+test('commissioner lookup failures show recovery guidance without leaving controls visible',async()=>{
+ for(const options of [{data:null,error:{message:'Query unavailable'}},{rejectLookup:true},{user:null,authError:{message:'Authentication service unavailable'}}]){
+  const page=adminAccess(options);await page.run();
+  assert.equal(page.node('connection').textContent,'UNAVAILABLE');assert.match(page.node('authMsg').textContent,/try again/i);
+  assert.equal(page.node('adminApp').style.display,'none');assert.equal(page.rendered(),0);
+ }
+});
