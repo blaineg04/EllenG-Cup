@@ -3864,7 +3864,7 @@ function normalPoints(values){
  }
  return out;
 }
-function validTeamScore(score){return score!==null&&score!==undefined&&typeof score!=="boolean"&&String(score).trim()!==""&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=(isSplitPair()?40:20)}
+function validTeamScore(score){return score!==null&&score!==undefined&&typeof score!=="boolean"&&String(score).trim()!==""&&Number.isSafeInteger(Number(score))&&Number(score)>=1&&Number(score)<=(isSplitPair()?40:20)}
 function pointsForHole(h){
  if(h===null||h===undefined||typeof h==="boolean"||String(h).trim()===""||!Number.isInteger(Number(h))||Number(h)<1||Number(h)>18)return Array(teams.length).fill(null);
  h=Number(h);
