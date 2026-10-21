@@ -53,3 +53,23 @@ test('no leaderboard points until every team submits a valid score',()=>{
  assert.deepEqual(points([4,40,6],{splitPair:true}),[3,1,2]);
  assert.deepEqual(points([4,41,6],{splitPair:true}),[null,null,null]);
 });
+
+test('leaderboard thru ignores blank and invalid scores',()=>{
+ const start=html.indexOf('function normalPoints(values){');
+ const end=html.indexOf('function renderLiveHoleScores(){',start);
+ assert.ok(end>start,'Unable to locate totals function');
+ const ctx={
+  teams:[{name:'One'},{name:'Two'}],
+  scores:[{team_index:0,hole:1,score:4},{team_index:1,hole:1,score:5},{team_index:0,hole:2,score:''},{team_index:1,hole:2,score:0}],
+  tournament:{gator_hole:18,final_cargo_team:null},
+  isSplitPair:()=>false
+ };
+ vm.runInNewContext(html.slice(start,end),ctx);
+ let results=Array.from(ctx.totals());
+ assert.equal(results[0].thru,1);
+ assert.equal(results[1].thru,1);
+ ctx.scores[2].score=4;ctx.scores[3].score=5;
+ results=Array.from(ctx.totals());
+ assert.equal(results[0].thru,2);
+ assert.equal(results[1].thru,2);
+});
