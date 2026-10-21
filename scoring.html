@@ -3869,6 +3869,7 @@ function pointsForHole(h){
  // Split-Pair combines two valid pair scores; all displays use the same validation.
  const vals=teams.map((_,i)=>{const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));return r?Number(r.score):NaN});
  const n=teams.length;
+ if(!n)return [];
  if(vals.filter(Number.isFinite).length<n)return Array(n).fill(null);
  if(tournament&&Number(tournament.gator_hole)===h){
    const out=Array(n).fill(null), valid=vals.filter(Number.isFinite); if(!valid.length)return out;
