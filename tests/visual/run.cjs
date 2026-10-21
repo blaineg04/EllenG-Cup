@@ -75,6 +75,19 @@ async function verifyNavigation(page, width, capture, prefix = '') {
   await page.locator(home).click();
   await openMore();
   await capture(prefix+'more-menu');
+  const unreadable = await page.locator('.more-sheet-head h3, #moreAdminBtn:not(.hidden) strong').evaluateAll(elements => {
+    const luminance = rgb => {
+      const linear = rgb.map(v => {v/=255;return v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4;});
+      return linear[0]*0.2126+linear[1]*0.7152+linear[2]*0.0722;
+    };
+    return elements.filter(e => {
+      const rgb=getComputedStyle(e).color.match(/[\d.]+/g).slice(0,3).map(Number);
+      // Check against the darkest endpoint of the light menu surfaces.
+      const a=luminance(rgb),b=luminance([247,242,232]);
+      return (Math.max(a,b)+0.05)/(Math.min(a,b)+0.05)<4.5;
+    }).map(e=>e.textContent.trim());
+  });
+  if(unreadable.length)throw new Error('More menu text lacks contrast: '+unreadable.join(', '));
   await page.locator('#moreMenuClose').click();
   await page.locator('#moreMenuBackdrop').waitFor({state:'hidden'});
   if(mobile){await openMore();await page.locator('[data-more-view="course"]').click();}
