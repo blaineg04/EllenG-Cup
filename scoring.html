@@ -3883,8 +3883,9 @@ function pointsForHole(h){
  return normalPoints(vals);
 }
 function finalCargoBonus(){const raw=tournament?.final_cargo_points;const n=Number(raw);return raw===null||raw===undefined||typeof raw==="boolean"||String(raw).trim()===""||!Number.isSafeInteger(n)||n<0?6:n}
+function isFinalCargoTeam(i){const raw=tournament?.final_cargo_team;return raw!==null&&raw!==undefined&&typeof raw!=="boolean"&&String(raw).trim()!==""&&Number.isInteger(Number(raw))&&Number(raw)>=0&&Number(raw)<teams.length&&Number(raw)===i}
 function totals(){
- return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));if(r)thru=Math.max(thru,h)}if(tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===i)pts+=finalCargoBonus();return{team:i,pts,thru}})
+ return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));if(r)thru=Math.max(thru,h)}if(isFinalCargoTeam(i))pts+=finalCargoBonus();return{team:i,pts,thru}})
 }
 function renderLiveHoleScores(){
  const activeHoles=Array.from({length:18},(_,i)=>i+1).filter(h=>scores.some(x=>Number.isInteger(Number(x.team_index))&&Number(x.team_index)>=0&&Number(x.team_index)<teams.length&&Number(x.hole)===h&&validTeamScore(x.score)));
@@ -4210,7 +4211,7 @@ function renderLeaderboard(){
  const arr=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
  const board=$("leaderboard");
  if(board) board.dataset.teamCount=String(arr.length);
- board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===x.team?` <span class="badge">+${finalCargoBonus()} Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
+ board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${isFinalCargoTeam(x.team)?` <span class="badge">+${finalCargoBonus()} Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
  renderLiveHoleScores();
 }
 function trashTime(ts){
