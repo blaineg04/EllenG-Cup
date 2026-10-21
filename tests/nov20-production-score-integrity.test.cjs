@@ -333,3 +333,16 @@ test('golf result label distinguishes albatross from four under par',()=>{
  assert.equal(ctx.relativeGolf(2,4).label,'Eagle');
  assert.equal(ctx.relativeGolf(3,4).label,'Birdie');
 });
+
+test('golf result labels reject stroke totals beyond the supported score ceiling',()=>{
+ const start=html.indexOf('function relativeGolf(score,par){');
+ const end=html.indexOf('function pointScaleText(){',start);
+ const ctx={};
+ vm.runInNewContext(html.slice(start,end),ctx);
+ for(const score of [41,'41',100,Number.MAX_SAFE_INTEGER]){
+  const result=ctx.relativeGolf(score,4);
+  assert.equal(result.rel,'—');
+  assert.equal(result.label,'');
+ }
+ assert.equal(ctx.relativeGolf(40,4).rel,'+36');
+});
