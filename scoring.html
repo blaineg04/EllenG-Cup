@@ -3882,7 +3882,7 @@ function pointsForHole(h){
  }
  return normalPoints(vals);
 }
-function finalCargoBonus(){const raw=tournament?.final_cargo_points;const n=Number(raw);return raw===null||raw===undefined||String(raw).trim()===""||!Number.isFinite(n)||n<0?6:n}
+function finalCargoBonus(){const raw=tournament?.final_cargo_points;const n=Number(raw);return raw===null||raw===undefined||typeof raw==="boolean"||String(raw).trim()===""||!Number.isSafeInteger(n)||n<0?6:n}
 function totals(){
  return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));if(r)thru=Math.max(thru,h)}if(tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===i)pts+=finalCargoBonus();return{team:i,pts,thru}})
 }
