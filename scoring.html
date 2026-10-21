@@ -3845,7 +3845,7 @@ function currentPars(){
 }
 function parForHole(h){return currentPars()[h-1]||4}
 function relativeGolf(score,par){
- if(score==null||typeof score==="boolean"||String(score).trim()===""||!Number.isFinite(Number(score))||Number(score)<=0)return {rel:"—",label:""};
+ if(score==null||typeof score==="boolean"||String(score).trim()===""||!Number.isSafeInteger(Number(score))||Number(score)<=0)return {rel:"—",label:""};
  score=Number(score); par=Number(par);
  const d=score-par, rel=d===0?"0":d>0?`+${d}`:`−${Math.abs(d)}`;
  if(score===1)return {rel,label:"Hole in One"};
