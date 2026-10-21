@@ -25,7 +25,7 @@ function previewRequestAllowed(request, allowSignIn = false) {
   return url.pathname==='/functions/v1/player-admin'&&body.action==='list'&&Object.keys(body).every(k=>['draft_id','action'].includes(k));
 }
 function auditDOM() {
-  const scope=document.querySelector('#broadcastOverlay.open')||document.querySelector('#appHub:not(.hidden)')||document.querySelector('body.extras-screen-active #extrasView:not(.hidden)')||document;
+  const scope=document.querySelector('#broadcastOverlay.open')||document.querySelector('#moreMenuBackdrop.open .more-sheet')||document.querySelector('#appHub:not(.hidden)')||document.querySelector('body.extras-screen-active #extrasView:not(.hidden)')||document;
   const label = e => e.id ? `#${e.id}` : `${e.tagName.toLowerCase()}.${String(e.className).trim().split(/\s+/).join('.')}: ${(e.textContent || '').trim().slice(0,70)}`;
   const visible = e => { const r=e.getBoundingClientRect(),s=getComputedStyle(e);const closed=e.closest('details:not([open])');if(closed&&!closed.querySelector('summary')?.contains(e))return false;if(s.opacity==='0')return false;return r.width>0&&r.height>0&&s.visibility!=='hidden'&&s.display!=='none'&&e.getClientRects().length>0; };
   const clipped = [], overlaps = [], outside = [], fixedNavOcclusions = [];
@@ -62,6 +62,36 @@ async function serve() {
   });
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   return {server,origin:`http://127.0.0.1:${server.address().port}`};
+}
+// Exercise visible controls, never force clicks or invoke handlers directly.
+async function verifyNavigation(page, width, capture, prefix = '') {
+  const mobile = width < 700;
+  const home = mobile ? '[data-mobile-view="home"]' : '.tab[data-view="home"]';
+  const more = mobile ? '#mobileMoreBtn' : '#desktopMoreBtn';
+  const openMore = async () => {
+    await page.locator(more).click();
+    await page.locator('#moreMenuBackdrop.open').waitFor({state:'visible'});
+  };
+  await page.locator(home).click();
+  await openMore();
+  await capture(prefix+'more-menu');
+  await page.locator('#moreMenuClose').click();
+  await page.locator('#moreMenuBackdrop').waitFor({state:'hidden'});
+  if(mobile){await openMore();await page.locator('[data-more-view="course"]').click();}
+  else await page.locator('.tab[data-view="course"]').click();
+  await page.locator('#courseView:not(.hidden)').waitFor({state:'visible'});
+  await openMore();
+  await page.locator('[data-more-view="rankings"]').click();
+  await page.locator('#rankingsView:not(.hidden)').waitFor({state:'visible'});
+  await page.locator('#moreMenuBackdrop').waitFor({state:'hidden'});
+  await openMore();
+  await page.locator('#openBroadcast').click();
+  await page.locator('#broadcastOverlay.open').waitFor({state:'visible'});
+  await page.locator('#closeBroadcast').click();
+  await page.locator('#broadcastOverlay').waitFor({state:'hidden'});
+  await page.locator(home).click();
+  await page.locator('#homeView:not(.hidden)').waitFor({state:'visible'});
+  console.log(`${width} ${prefix}real navigation: Course, Rankings, Broadcast and return Home passed`);
 }
 async function main() {
   const live=!!process.env.ELLENG_PREVIEW_URL;
@@ -119,6 +149,7 @@ async function main() {
         await page.locator('#hubScoring').click();
         await page.locator('#appHub').waitFor({state:'hidden'});
         await capture('home');
+        await verifyNavigation(page,width,capture);
         // Use the app's event handlers without submitting or saving anything. Navigation reachability is audited separately in screenshots.
         for(const view of ['leaderboard','teams','players','course','progress','clubhouse','trash','scoring','admin','rankings']){
           const sel=view==='rankings'?`[data-more-view="${view}"]`:`.tab[data-view="${view}"]`;
@@ -148,6 +179,7 @@ async function main() {
           await page.goto(host.origin+'/scoring.html?visualRole=player#hub');
           await page.locator('#appHub:not(.hidden)').waitFor();await page.locator('#hubScoring').click();
           await page.locator('#appHub').waitFor({state:'hidden'});await capture('player-home');
+          await verifyNavigation(page,width,capture,'player-');
           await page.locator(width<700?'[data-mobile-view="leaderboard"]':'.tab[data-view="leaderboard"]').click();
           await page.locator('#leaderboardView:not(.hidden)').waitFor();await capture('player-my-score');
         }
