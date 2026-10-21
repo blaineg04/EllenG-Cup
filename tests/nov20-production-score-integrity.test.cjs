@@ -136,6 +136,7 @@ test('Final Cargo leaderboard badge uses configured bonus instead of fixed six',
   teams:[{name:'Gators'},{name:'Herons'}],
   tournament:{final_cargo_team:0,final_cargo_points:9},
   totals:()=>[{team:0,pts:12,thru:18},{team:1,pts:4,thru:18}],
+  finalCargoBonus:()=>9,
   pointScaleText:()=> '2–1',
   esc:x=>String(x),
   renderLiveHoleScores:()=>{},
@@ -225,4 +226,19 @@ test('official points reject holes outside the playable 1–18 range',()=>{
   assert.deepEqual(Array.from(ctx.pointsForHole(h)),[null,null],String(h));
  }
  assert.deepEqual(Array.from(ctx.pointsForHole('19')),[null,null]);
+});
+
+test('Final Cargo bonus stays finite and honors an explicit zero',()=>{
+ const start=html.indexOf('function finalCargoBonus(){');
+ const end=html.indexOf('function totals(){',start);
+ assert.ok(start>=0&&end>start);
+ const ctx={tournament:{final_cargo_points:0}};
+ vm.runInNewContext(html.slice(start,end),ctx);
+ assert.equal(ctx.finalCargoBonus(),0);
+ for(const bad of ['invalid','Infinity',-4,'',null,undefined]){
+  ctx.tournament.final_cargo_points=bad;
+  assert.equal(ctx.finalCargoBonus(),6,String(bad));
+ }
+ ctx.tournament.final_cargo_points=9;
+ assert.equal(ctx.finalCargoBonus(),9);
 });
