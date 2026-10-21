@@ -138,3 +138,27 @@ test('sign-out ignores another click while the auth request is pending',async()=
  finally{resolve({error:null});await Promise.all([first,second]);}
  assert.equal(page.node('hubSignOutBtn').disabled,false);assert.equal(page.node('logoutBtn').disabled,false);assert.equal(page.viewer(),1);
 });
+
+function mainSignIn({email='visual@example.invalid',password='test-only-password',authenticate=async()=>({data:{user:{id:'visual-user'}},error:null})}={}){
+ const html=fs.readFileSync(path.join(__dirname,'../../scoring.html'),'utf8');
+ const start=html.indexOf('$("loginBtn").addEventListener("click",async()=>{'),end=html.indexOf('$("changeAccountPasswordBtn").addEventListener',start);
+ const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{value:id==='email'?email:id==='password'?password:'',disabled:false,textContent:id==='loginBtn'?'Sign In':'',addEventListener(event,fn){this.onclick=fn}});return nodes.get(id)};
+ let requests=0,opened=0;const context={$:node,user:null,db:{auth:{signInWithPassword:async args=>{requests++;return authenticate(args)}}},usernameToAuthEmail:name=>name+'@example.invalid',enterApp:async()=>{opened++},console:{error(){}}};
+ vm.runInNewContext(html.slice(start,end),context);return {run:()=>node('loginBtn').onclick(),node,context,requests:()=>requests,opened:()=>opened};
+}
+test('main sign-in clears the password after authenticated success',async()=>{
+ const page=mainSignIn();await page.run();assert.equal(page.opened(),1);assert.equal(page.node('password').value,'');assert.equal(page.node('loginBtn').disabled,false);
+});
+test('main sign-in does not submit blank credentials or duplicate a pending request',async()=>{
+ const empty=mainSignIn({email:''});await empty.run();assert.equal(empty.requests(),0);
+ let resolve;const pending=new Promise(r=>{resolve=r});const page=mainSignIn({authenticate:()=>pending});const first=page.run(),second=page.run();
+ try{assert.equal(page.requests(),1);assert.equal(page.node('loginBtn').disabled,true);}
+ finally{resolve({data:{user:{id:'visual-user'}},error:null});await Promise.all([first,second]);}
+ assert.equal(page.opened(),1);assert.equal(page.node('loginBtn').disabled,false);
+});
+test('main sign-in recovers from a rejected request without entering the app',async()=>{
+ const page=mainSignIn({authenticate:async()=>{throw new Error('Network unavailable')}});await page.run();assert.equal(page.opened(),0);assert.equal(page.context.user,null);assert.equal(page.node('loginBtn').disabled,false);assert.match(page.node('loginMsg').textContent,/unavailable/i);
+});
+test('main sign-in rejects an auth response that contains no user',async()=>{
+ const page=mainSignIn({authenticate:async()=>({data:{user:null},error:null})});await page.run();assert.equal(page.opened(),0);assert.equal(page.context.user,null);assert.match(page.node('loginMsg').textContent,/no user session/i);assert.equal(page.node('loginBtn').disabled,false);
+});

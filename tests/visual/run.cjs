@@ -202,6 +202,11 @@ async function main() {
         if(!live){
           await page.goto(host.origin+'/scoring.html?visualSignedOut=1');
           await page.locator('#loginCard').waitFor({state:'visible'});await capture('sign-in');
+          await page.locator('#email').fill('visual@example.invalid');await page.locator('#password').fill('invalid-test-password');
+          await page.locator('#loginBtn').click();
+          await page.waitForFunction(()=>document.querySelector('#loginMsg')?.textContent==='Invalid login credentials');
+          if(!await page.locator('#loginBtn').isEnabled())throw new Error('Main sign-in did not recover from invalid credentials');
+          await capture('main-sign-in-error');
           await page.goto(host.origin+'/scoring.html?visualRole=player#hub');
           await page.locator('#appHub:not(.hidden)').waitFor();await page.locator('#hubScoring').click();
           await page.locator('#appHub').waitFor({state:'hidden'});await capture('player-home');
