@@ -3882,8 +3882,9 @@ function pointsForHole(h){
  }
  return normalPoints(vals);
 }
+function finalCargoBonus(){const raw=tournament?.final_cargo_points;const n=Number(raw);return raw===null||raw===undefined||String(raw).trim()===""||!Number.isFinite(n)||n<0?6:n}
 function totals(){
- return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));if(r)thru=Math.max(thru,h)}if(tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===i)pts+=Number(tournament.final_cargo_points||6);return{team:i,pts,thru}})
+ return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));if(r)thru=Math.max(thru,h)}if(tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===i)pts+=finalCargoBonus();return{team:i,pts,thru}})
 }
 function renderLiveHoleScores(){
  const activeHoles=Array.from({length:18},(_,i)=>i+1).filter(h=>scores.some(x=>Number.isInteger(Number(x.team_index))&&Number(x.team_index)>=0&&Number(x.team_index)<teams.length&&Number(x.hole)===h&&validTeamScore(x.score)));
@@ -4103,7 +4104,7 @@ function renderTournamentAwards(){
   ['BIRDIE LEADER',birds&&birds.value?teams[birds.ti]?.name:'—',birds&&birds.value?`${birds.value} birdie${birds.value===1?'':'s'}`:'No birdies yet',birds?.ti],
   ['EAGLE WATCH',eagles&&eagles.value?teams[eagles.ti]?.name:'—',eagles&&eagles.value?`${eagles.value} eagle${eagles.value===1?'':'s'}`:'No eagles yet',eagles?.ti],
   ['GATOR KILLER',gatorWinner?gatorWinner.names:'—',gatorWinner?`Hole ${gatorHole} • ${gatorWinner.score} strokes`:(tournament?.gator_revealed?'Waiting on all teams':'Gator Hole still secret'),null],
-  ['CARGO KING',tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?(teams[Number(tournament.final_cargo_team)]?.name||'—'):'—',tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`+${Number(tournament.final_cargo_points||6)} Final Cargo Shot points`:'Not awarded yet',Number(tournament?.final_cargo_team)]
+  ['CARGO KING',tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?(teams[Number(tournament.final_cargo_team)]?.name||'—'):'—',tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`+${finalCargoBonus()} Final Cargo Shot points`:'Not awarded yet',Number(tournament?.final_cargo_team)]
  ];
  root.innerHTML=cards.map(c=>`<div class="award-card" style="--accent:${Number.isInteger(c[3])?teamAccent(c[3]):'var(--gold)'}"><div class="award-kicker">${esc(c[0])}</div><strong>${esc(c[1]||'—')}</strong><span>${esc(c[2])}</span></div>`).join('');
  if($("awardsStatus"))$("awardsStatus").textContent=String(tournament?.status||'setup').toUpperCase()==='COMPLETE'?'FINAL':'LIVE';
@@ -4209,7 +4210,7 @@ function renderLeaderboard(){
  const arr=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
  const board=$("leaderboard");
  if(board) board.dataset.teamCount=String(arr.length);
- board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===x.team?` <span class="badge">+${Number(tournament.final_cargo_points||6)} Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
+ board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===x.team?` <span class="badge">+${finalCargoBonus()} Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
  renderLiveHoleScores();
 }
 function trashTime(ts){
@@ -5418,7 +5419,7 @@ function renderHome(){
  if($("homeFormatSub"))$("homeFormatSub").textContent=formatConfirmed?(isSplitPair()?"Two 2-man pairs • both scores count":"Front 9 Scramble • Back 9 Shamble"):"";
  const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Gator Hole: Hole ${Number(tournament.gator_hole)}. `:"Gator Hole is still secret. ";
  let cargo="Final Cargo Shot has not been awarded.";
- if(tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""){const ti=Number(tournament.final_cargo_team);cargo=`Final Cargo Shot: ${teams[ti]?.name||`Team ${ti+1}`} +${Number(tournament.final_cargo_points||6)} points.`}
+ if(tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""){const ti=Number(tournament.final_cargo_team);cargo=`Final Cargo Shot: ${teams[ti]?.name||`Team ${ti+1}`} +${finalCargoBonus()} points.`}
  if($("homeSpecialText"))$("homeSpecialText").textContent=gator+cargo;
 }
 
