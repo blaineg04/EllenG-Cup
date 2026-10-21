@@ -162,3 +162,25 @@ test('main sign-in recovers from a rejected request without entering the app',as
 test('main sign-in rejects an auth response that contains no user',async()=>{
  const page=mainSignIn({authenticate:async()=>({data:{user:null},error:null})});await page.run();assert.equal(page.opened(),0);assert.equal(page.context.user,null);assert.match(page.node('loginMsg').textContent,/no user session/i);assert.equal(page.node('loginBtn').disabled,false);
 });
+
+function selfSavePage(kind,response){
+ const html=fs.readFileSync(path.join(__dirname,'../../scoring.html'),'utf8');
+ const name=kind==='score'?'saveSelfScore':'saveSelfHandicap';
+ const start=html.indexOf(`async function ${name}(`),end=html.indexOf(kind==='score'?'async function resetGolferPin(':'async function saveSelfScore(',start);
+ const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{value:id==='selfScoreHole'?'1':id==='selfScoreInput'?'4':id==='selfBandSelect'?'A':id==='selfHandicapInput'?'8':'4',textContent:'',disabled:false});return nodes.get(id)};
+ const statuses=[];const context={$:node,currentGolferIndex:0,scoreSaveBusy:false,DRAFT_ID:'draft',TOURNAMENT_ID:'tournament',navigator:{onLine:true},db:{functions:{invoke:async()=>response}},setSyncStatus:(status)=>statuses.push(status),bandFromHandicapValue:()=> 'A',loadBase:async()=>{},loadScores:async()=>{},renderAll(){},draftState:{teams:[{name:'Test team'}]},golfRelativeLabel:()=> 'E',golfScoreTerm:()=> 'Par',parForHole:()=>4};
+ vm.runInNewContext(html.slice(start,end),context);
+ return {run:()=>context[name](),statuses,node,context};
+}
+test('rejected personal score and handicap saves keep the error sync status',async()=>{
+ for(const kind of ['score','handicap']){
+  const page=selfSavePage(kind,{data:null,error:{message:'Permission denied'}});await page.run();
+  assert.equal(page.statuses.at(-1),'error',kind);assert.match(page.node(kind==='score'?'selfScoreMsg':'selfHandicapMsg').textContent,/Permission denied/);
+  assert.equal(page.node(kind==='score'?'saveSelfScore':'saveSelfHandicap').disabled,false);
+ }
+});
+test('successful personal score and handicap saves finish with saved status',async()=>{
+ for(const kind of ['score','handicap']){
+  const page=selfSavePage(kind,{data:{mode:'team',team_index:0,band:'A',golfer_name:'Test golfer',handicap:'8'},error:null});await page.run();assert.equal(page.statuses.at(-1),'saved',kind);
+ }
+});

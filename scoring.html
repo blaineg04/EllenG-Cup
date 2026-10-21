@@ -5130,8 +5130,9 @@ async function saveSelfHandicap(){
    selfHandicapEditing=false;selfHandicapDraftValue="";
    renderAll();
    msg.textContent=data.band?`Saved. ${data.golfer_name}: ${data.band} (${data.band==="A"?"0–9":data.band==="B"?"10–17":data.band==="C"?"18–25":"26+"})${data.handicap!==""?` • Handicap ${data.handicap}`:""}.`:`Saved. ${data.golfer_name} is Unranked.`;
+   setSyncStatus("saved","Saved ✓");
  }catch(e){msg.textContent=e?.message||"Unable to update handicap.";setSyncStatus("error","Save failed")}
- finally{btn.disabled=false;btn.textContent="Save My Handicap";if(!String(msg.textContent||"").toLowerCase().includes("unable"))setSyncStatus("saved","Saved ✓")}
+ finally{btn.disabled=false;btn.textContent="Save My Handicap";}
 }
 async function saveSelfScore(clear=false){
  const msg=$("selfScoreMsg"),btn=$("saveSelfScore");if(scoreSaveBusy){msg.textContent="A score is already saving — please wait.";return}
@@ -5154,13 +5155,14 @@ async function saveSelfScore(clear=false){
      else if(data.mode==="split_pair")msg.textContent=`Saved your Pair ${Number(data.pair_index)+1} score for Hole ${h}: ${raw} strokes (${summary}).`;
      else msg.textContent=`Saved ${draftState?.teams?.[data.team_index]?.name||"your team"} score for Hole ${h}: ${raw} strokes (${summary}).`;
    }
+   setSyncStatus("saved","Saved ✓");
  }catch(e){
    if(!navigator.onLine || /fetch|network|timeout|failed/i.test(String(e?.message||""))){
      queueOfflineScore({action:"update_score",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,hole:h,score});
      msg.textContent="Saved offline — it will sync automatically when connection returns.";setSyncStatus("saving","Queued offline");
    }else{msg.textContent=e?.message||"Unable to save score.";setSyncStatus("error","Save failed")}
  }
- finally{btn.disabled=false;scoreSaveBusy=false;if(!String(msg.textContent||"").toLowerCase().includes("unable")&&!String(msg.textContent||"").includes("offline"))setSyncStatus("saved","Saved ✓")}
+ finally{btn.disabled=false;scoreSaveBusy=false;}
 }
 async function resetGolferPin(i){
  if(!isCommissioner)return;
