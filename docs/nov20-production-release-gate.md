@@ -46,3 +46,11 @@ Supabase free-project quota prevents a third hosted QA project without modifying
 - Previous Vercel deploy can potentially be restored, but actual rollback operation and DB compatibility have **not** been exercised; this is a recorded reference, not proof of recovery.
 - Verified PR dependency chain: PR #1 → `main`; PR #4 → PR #1 branch; PR #6 → PR #4 branch. All are draft, unmerged.
 - CI `ddbfef20`: scoring and disposable PostgreSQL passed; responsive job skipped. Last seven-width synthetic suite passed at `980deabe`.
+
+## Hosted database backup audit — 2026-10-22
+Read-only inspection of PR #1 workflows `.github/workflows/docker-volume-backup.yml` and `.github/workflows/docker-volume-restore-test.yml`:
+- They operate on **local Docker/Colima volumes on the Mac runner**, using a private archive directory. The restore workflow checks selected temporary volume copies, not a hosted Supabase recovery point.
+- The workflow references a local `fairwayos-pg-1-1` container for safety inspection: this is **not** permission to modify FairwayOS; do not invoke these jobs for EllenG's hosted rollback.
+- Neither workflow establishes a recoverable backup of hosted EllenG Supabase project `xepccqedhbucpbwuykoc`. A green Docker-volume job must not satisfy the hosted DB restore gate.
+- The hosted database restoration method, necessary access, retention, point-in-time capabilities, and ability to restore to a separate environment are **not verified**. Do not claim them or execute a restore.
+- Avoid repeating these Docker workflows; user wants a no-Docker, no-paid-services path. Release preparation must prioritize a production app-only rollout with database changes deferred where possible, and a documented hosted-backup verification before any SQL migration.
