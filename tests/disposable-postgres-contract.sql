@@ -70,3 +70,22 @@ BEGIN
   THEN RAISE EXCEPTION 'Unsigned save changed accepted draft data'; END IF;
   RAISE NOTICE 'PASS: missing session rejected and original state preserved';
 END $$;
+
+-- An authorized commissioner must not be able to mutate a different draft.
+INSERT INTO acceptance.drafts VALUES ('other-disposable','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','{"picks":[]}'::jsonb,'2026-10-22 00:00:00+00');
+DO $$
+DECLARE before_state jsonb;
+BEGIN
+  SELECT state INTO before_state FROM acceptance.drafts WHERE id='other-disposable';
+  PERFORM set_config('acceptance.actor','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',true);
+  BEGIN
+    PERFORM acceptance.save_state_if_fresh('other-disposable','2026-10-22 00:00:00+00','{"picks":[99]}'::jsonb);
+    RAISE EXCEPTION 'Cross-draft save incorrectly succeeded';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='Cross-draft save incorrectly succeeded' THEN RAISE; END IF;
+    IF SQLERRM<>'Commissioner access required' THEN RAISE; END IF;
+  END;
+  IF (SELECT state FROM acceptance.drafts WHERE id='other-disposable') IS DISTINCT FROM before_state
+  THEN RAISE EXCEPTION 'Cross-draft state was altered'; END IF;
+  RAISE NOTICE 'PASS: cross-draft owner isolation';
+END $$;
