@@ -56,6 +56,12 @@ test('sign-out immediately revokes health display and clears stale requests',()=
  assert.match(page,/Session ended or account changed/);
 });
 test('stale subscription callback cannot set healthy after sign-out',()=>{
- assert.match(page,/if\(!authorizedUser\|\|epoch!==inspectionEpoch\)return/);
- assert.match(page,/if\(epoch!==inspectionEpoch\|\|!authorizedUser\)return/);
+ assert.match(page,/if\(authorizedUser!==account\|\|epoch!==inspectionEpoch\)return/);
+ assert.match(page,/if\(epoch!==inspectionEpoch\|\|authorizedUser!==account\)return/);
+});
+
+test('refresh work remains bound to the original commissioner account',()=>{
+ assert.match(page,/const account=authorizedUser/);
+ assert.match(page,/epoch!==inspectionEpoch\|\|authorizedUser!==account/);
+ assert.match(page,/authorizedUser!==account\|\|epoch!==inspectionEpoch/);
 });
