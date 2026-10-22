@@ -72,7 +72,7 @@ const authMessage=document.getElementById("auth-message");
 const signIn=document.getElementById("signin");
 const form=document.getElementById("signin-form");
 const dashboard=document.getElementById("dashboard");
-let client,channel,refreshing=false,authorizedUser=null;
+let client,channel,refreshing=false,authorizedUser=null,inspectionEpoch=0;
 function setStatus(id,state,detail){
  const badge=document.getElementById(id+"-status");
  badge.dataset.state=state;
@@ -80,6 +80,7 @@ function setStatus(id,state,detail){
  document.getElementById(id+"-detail").textContent=detail;
 }
 function reset(){
+ inspectionEpoch++;
  setStatus("database","unverified","Awaiting inspection");
  setStatus("draft","unverified","Draft timestamp unavailable.");
  setStatus("realtime","unverified","Not connected.");
@@ -103,11 +104,13 @@ async function verifyCommissioner(){
 }
 async function refresh(){
  if(refreshing||!authorizedUser)return;
+ const epoch=inspectionEpoch;
  refreshing=true;document.getElementById("refresh").disabled=true;
  try{
   // Reauthorize each refresh; do not trust a stale browser-only session.
-  if(!await verifyCommissioner())return;
+  if(!await verifyCommissioner()||epoch!==inspectionEpoch)return;
   const {data,error}=await client.from("elleng_drafts").select("updated_at").eq("id",config.draftId).maybeSingle();
+  if(epoch!==inspectionEpoch||!authorizedUser)return;
   if(error||!data){setStatus("database","unavailable","Could not read the configured draft. Check Supabase availability, access and project configuration.");setStatus("draft","unverified","Draft timestamp unavailable.");}
   else{
    setStatus("database","healthy","Read-only draft query succeeded.");
@@ -118,17 +121,19 @@ async function refresh(){
    }else setStatus("draft","warning","Draft timestamp missing or invalid.");
   }
   if(channel){await client.removeChannel(channel);channel=null;}
+  if(epoch!==inspectionEpoch||!authorizedUser)return;
   setStatus("realtime","unverified","Connecting to Realtime…");
   channel=client.channel("health-inspection-"+Date.now())
    .on("postgres_changes",{event:"*",schema:"public",table:"elleng_drafts",filter:"id=eq."+config.draftId},()=>{})
    .subscribe(status=>{
-    if(!authorizedUser)return;
+    if(!authorizedUser||epoch!==inspectionEpoch)return;
     if(status==="SUBSCRIBED")setStatus("realtime","healthy","This device subscribed successfully. Multi-device delivery is unverified.");
     else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED")setStatus("realtime","warning","Realtime subscription "+status.toLowerCase().replace("_"," ")+".");
    });
   setStatus("offline",navigator.onLine?"unverified":"warning",navigator.onLine?"This device reports being online. Pending score submissions cannot yet be measured.":"This device reports being offline. Do not assume scores are saved.");
   document.getElementById("checked-at").textContent="Last attempted inspection: "+new Date().toLocaleString();
  }catch(e){
+  if(epoch!==inspectionEpoch)return;
   setStatus("database","unavailable","Inspection failed. Confirm authentication and network access.");
  }finally{refreshing=false;document.getElementById("refresh").disabled=false;}
 }
@@ -146,6 +151,11 @@ form.addEventListener("submit",async event=>{
 (async()=>{
  if(!config.supabaseUrl||!apiKey||!window.supabase){authMessage.textContent="Supabase configuration unavailable.";return;}
  client=window.supabase.createClient(config.supabaseUrl,apiKey);
+ client.auth.onAuthStateChange((event,session)=>{
+  if(event==="SIGNED_OUT"||(authorizedUser&&session?.user?.id&&session.user.id!==authorizedUser)){
+   reset();authMessage.textContent="Session ended or account changed. Sign in again.";
+  }
+ });
  form.hidden=false;
  if(await verifyCommissioner())await refresh();
 })();
