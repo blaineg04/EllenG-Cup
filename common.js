@@ -71,10 +71,8 @@ function canBand(t,b){
 async function load(){let {data,error}=await db.from("elleng_drafts").select("state").eq("id",cfg.draftId).single();if(error)throw error;S={...fresh(),...data.state};return S}
 async function save(){let {error}=await db.from("elleng_drafts").upsert({id:cfg.draftId,state:S,updated_at:new Date().toISOString()});if(error)throw error}
 function subscribe(cb){
- let receivedEvent=false;
  const channel=db.channel("elleng-"+cfg.draftId)
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_drafts",filter:"id=eq."+cfg.draftId},async()=>{
-   receivedEvent=true;
    try{await load();cb()}catch(e){console.error("Draft realtime refresh failed",e)}
   })
   .subscribe(async st=>{
