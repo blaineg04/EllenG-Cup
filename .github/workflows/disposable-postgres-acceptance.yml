@@ -43,6 +43,15 @@ jobs:
           test "$second_result" = wrong_turn
           count="$(sudo -u postgres psql -X -At -d "$db" -c "select count(*) from acceptance.picks where draft_id='disposable-only' and golfer=7;")"
           test "$count" = 1
+          # Advance the turn legitimately, then retry the original golfer when Team 0 is on clock again.
+          # This verifies duplicate rejection independently of the wrong-turn check.
+          next_pick="$(sudo -u postgres psql -X -At -d "$db" -c "select acceptance.try_pick('disposable-only',8,1);")"
+          test "$next_pick" = accepted
+          duplicate_result="$(sudo -u postgres psql -X -At -d "$db" -c "select acceptance.try_pick('disposable-only',7,0);")"
+          test "$duplicate_result" = already_picked
+          count="$(sudo -u postgres psql -X -At -d "$db" -c "select count(*) from acceptance.picks where draft_id='disposable-only';")"
+          test "$count" = 2
+          echo 'PASS: attempted re-pick rejected after turn cycles back.'
           rm -f /tmp/elleng-first-"$GITHUB_RUN_ID" /tmp/elleng-second-"$GITHUB_RUN_ID"
           echo 'PASS: one accepted pick, conflicting attempt rejected, one durable row.'
           echo 'Full Supabase Auth/RLS and two-device checks remain pending.'
