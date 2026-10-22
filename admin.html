@@ -14,18 +14,38 @@
 <section id="setup" class="card"><h2>Golfer & Team Setup</h2><div style="overflow:auto"><table><thead><tr><th>#</th><th>Golfer</th><th>HCP</th><th>Band</th></tr></thead><tbody id="grows"></tbody></table></div><h3>Teams</h3><table><tbody id="trows"></tbody></table><div class="actions" style="margin-top:10px"><select id="dtype"><option value="snake">Snake Draft</option><option value="straight">Straight Draft</option></select><select id="tlen"><option>30</option><option>45</option><option selected>60</option><option>90</option><option>120</option></select><button id="saveSetup" class="gold">Save Setup & Go Live</button></div></section>
 <section id="live" class="grid" style="display:none"><div class="card"><h2>Available Golfers</h2><div id="pool"></div></div><div class="card"><div class="bar"><div><strong id="onclock"></strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div class="muted">Pick clock</div></div></div><div id="teams" class="teams"></div></div></section></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script>
+let draftUpdatedAt=null;
+let savingDraft=false;
+load=async function(){
+ const {data,error}=await db.from("elleng_drafts").select("state,updated_at").eq("id",cfg.draftId).single();
+ if(error)throw error;
+ if(savingDraft)return S;
+ draftUpdatedAt=data.updated_at;
+ S={...fresh(),...data.state};
+ return S;
+};
 async function secureSave(){
- const {data:{user}}=await db.auth.getUser();
- if(!user) throw new Error("Commissioner sign-in required.");
- let {data:existing}=await db.from("elleng_drafts").select("owner_id").eq("id",cfg.draftId).maybeSingle();
- if(!existing){
-   let {error}=await db.from("elleng_drafts").insert({id:cfg.draftId,owner_id:user.id,state:S,updated_at:new Date().toISOString()});
-   if(error) throw error;
- } else {
-   if(existing.owner_id!==user.id) throw new Error("This draft belongs to a different commissioner account.");
-   let {error}=await db.from("elleng_drafts").update({state:S,updated_at:new Date().toISOString()}).eq("id",cfg.draftId);
-   if(error) throw error;
- }
+ if(savingDraft)throw new Error("A draft save is already in progress.");
+ savingDraft=true;
+ try{
+  const {data:{user},error:authError}=await db.auth.getUser();
+  if(authError)throw authError;
+  if(!user)throw new Error("Commissioner sign-in required.");
+  if(draftUpdatedAt===null){
+   const {data,error}=await db.from("elleng_drafts").insert({id:cfg.draftId,owner_id:user.id,state:S,updated_at:new Date().toISOString()}).select("updated_at").single();
+   if(error)throw error;
+   draftUpdatedAt=data.updated_at;
+  }else{
+   const {data,error}=await db.rpc("elleng_save_state_if_fresh",{p_draft_id:cfg.draftId,p_expected_updated_at:draftUpdatedAt,p_state:S});
+   if(error)throw error;
+   const saved=Array.isArray(data)?data[0]:data;
+   if(!saved?.updated_at)throw new Error("Draft save was not confirmed.");
+   draftUpdatedAt=saved.updated_at;
+  }
+ }catch(error){
+  alert("Draft was not saved. "+(error?.message||"Please reload before trying again.")+" Reload the page before making another change.");
+  throw error;
+ }finally{savingDraft=false}
 }
 save=secureSave;
 
@@ -47,10 +67,10 @@ async function openAdmin(){
   if(authError)throw authError;
   const user=authData?.user;
   if(!user){status.textContent="SIGN IN";return}
-  const {data,error}=await db.from("elleng_drafts").select("state,owner_id").eq("id",cfg.draftId).maybeSingle();
+  const {data,error}=await db.from("elleng_drafts").select("state,owner_id,updated_at").eq("id",cfg.draftId).maybeSingle();
   if(error)throw error;
   if(data?.owner_id && data.owner_id!==user.id){status.textContent="NO ACCESS";msg.textContent="This draft is owned by another commissioner account. Return to Main Menu or sign in with the commissioner account.";return}
-  if(data)S={...fresh(),...data.state};
+  if(data){S={...fresh(),...data.state};draftUpdatedAt=data.updated_at;}else draftUpdatedAt=null;
   loginCard.style.display="none";app.style.display="block";status.textContent="READY";
   setupRender();subscribe(()=>{if(liveMode)liveRender();else setupRender()});
   if(!tick)tick=setInterval(()=>{if(liveMode)drawClock()},500);
