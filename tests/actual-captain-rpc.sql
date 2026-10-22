@@ -169,3 +169,31 @@ AS $function$
   join lateral (select (r #>> '{}')::int as idx) x on true
   where coalesce((p_state->'golfers'->x.idx)->>'band','') in ('A','B');
 $function$;
+
+INSERT INTO public.elleng_drafts(id,owner_id,state) VALUES ('captain-qa','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+'{"draftType":"snake","draftRules":"open","timerPaused":false,"timerLength":60,"golferCount":4,"picks":[],"golfers":[{"name":"A"},{"name":"B"},{"name":"C"},{"name":"D"}],"teams":[{"roster":[]},{"roster":[]}]}'::jsonb);
+INSERT INTO public.elleng_captains VALUES ('captain-qa','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',0),('captain-qa','cccccccc-cccc-cccc-cccc-cccccccccccc',1);
+DO $qa$
+DECLARE v_state jsonb;
+BEGIN
+ PERFORM set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',true);
+ v_state:=public.elleng_make_pick('captain-qa',0);
+ IF jsonb_array_length(v_state->'picks')<>1 OR (v_state->'golfers'->0->>'team')<>'0' THEN RAISE EXCEPTION 'Captain 0 pick failed'; END IF;
+ BEGIN
+   PERFORM public.elleng_make_pick('captain-qa',2);
+   RAISE EXCEPTION 'Wrong turn accepted';
+ EXCEPTION WHEN raise_exception THEN IF SQLERRM <> 'It is not your team''s turn' THEN RAISE; END IF; END;
+ PERFORM set_config('elleng.test_actor','cccccccc-cccc-cccc-cccc-cccccccccccc',true);
+ v_state:=public.elleng_make_pick('captain-qa',1);
+ IF jsonb_array_length(v_state->'picks')<>2 THEN RAISE EXCEPTION 'Captain 1 pick failed'; END IF;
+ BEGIN
+   PERFORM public.elleng_make_pick('captain-qa',1);
+   RAISE EXCEPTION 'Duplicate golfer accepted';
+ EXCEPTION WHEN raise_exception THEN IF SQLERRM <> 'Golfer has already been drafted' THEN RAISE; END IF; END;
+ PERFORM set_config('elleng.test_actor','dddddddd-dddd-dddd-dddd-dddddddddddd',true);
+ BEGIN
+   PERFORM public.elleng_make_pick('captain-qa',2);
+   RAISE EXCEPTION 'Unassigned captain accepted';
+ EXCEPTION WHEN raise_exception THEN IF SQLERRM <> 'Captain is not assigned to a team' THEN RAISE; END IF; END;
+ RAISE NOTICE 'PASS: real captain RPC enforces turns, duplicate rejection, and captain assignment';
+END $qa$;
