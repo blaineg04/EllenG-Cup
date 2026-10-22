@@ -52,6 +52,17 @@ jobs:
           count="$(sudo -u postgres psql -X -At -d "$db" -c "select count(*) from acceptance.picks where draft_id='disposable-only';")"
           test "$count" = 2
           echo 'PASS: attempted re-pick rejected after turn cycles back.'
+          # The next team must retain its turn when a duplicate is rejected.
+          current_turn="$(sudo -u postgres psql -X -At -d "$db" -c "select current_team from acceptance.turns where draft_id='disposable-only';")"
+          test "$current_turn" = 0
+          pick_count="$(sudo -u postgres psql -X -At -d "$db" -c "select count(*) from acceptance.picks where draft_id='disposable-only';")"
+          test "$pick_count" = 2
+          third_pick="$(sudo -u postgres psql -X -At -d "$db" -c "select acceptance.try_pick('disposable-only',9,0);")"
+          test "$third_pick" = accepted
+          current_turn="$(sudo -u postgres psql -X -At -d "$db" -c "select current_team from acceptance.turns where draft_id='disposable-only';")"
+          test "$current_turn" = 1
+          echo 'PASS: rejected duplicate preserves turn; subsequent eligible pick advances it.'
+
           rm -f /tmp/elleng-first-"$GITHUB_RUN_ID" /tmp/elleng-second-"$GITHUB_RUN_ID"
           echo 'PASS: one accepted pick, conflicting attempt rejected, one durable row.'
           echo 'Full Supabase Auth/RLS and two-device checks remain pending.'
