@@ -32,11 +32,11 @@ jobs:
         run: node --test tests/nov20-production-score-integrity.test.cjs
 
   responsive-layout:
-    # Keep execution on the existing MacBook; never run fork code on it.
+    # Only same-repository authorized release/fix branches can use the MacBook runner; never run fork code on it.
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/release/nov20-score-integrity-20261020') ||
       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/release/nov20-score-integrity-20261020') ||
-      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'release/nov20-score-integrity-20261020')
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (github.event.pull_request.head.ref == 'release/nov20-score-integrity-20261020' || github.event.pull_request.head.ref == 'fix/nov20-commissioner-test-fixture-20261022'))
     runs-on: [self-hosted, macOS]
     permissions:
       contents: read
