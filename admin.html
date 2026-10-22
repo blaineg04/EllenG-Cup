@@ -17,9 +17,12 @@
 let draftUpdatedAt=null;
 let savingDraft=false;
 load=async function(){
+ if(savingDraft)return S;
  const {data,error}=await db.from("elleng_drafts").select("state,updated_at").eq("id",cfg.draftId).single();
  if(error)throw error;
  if(savingDraft)return S;
+ // An older realtime response must never roll back a successfully saved draft.
+ if(draftUpdatedAt&&new Date(data.updated_at).getTime()<new Date(draftUpdatedAt).getTime())return S;
  draftUpdatedAt=data.updated_at;
  S={...fresh(),...data.state};
  return S;
