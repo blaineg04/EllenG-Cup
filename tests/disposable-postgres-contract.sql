@@ -52,3 +52,21 @@ BEGIN
   THEN RAISE EXCEPTION 'Non-owner altered saved state'; END IF;
   RAISE NOTICE 'PASS: confirmed readback, stale conflict rejection, unauthorized caller rejection';
 END $$;
+
+-- Reject unsigned requests and preserve the last accepted version.
+DO $$
+DECLARE saved jsonb; old_version timestamptz;
+BEGIN
+  SELECT state,updated_at INTO saved,old_version FROM acceptance.drafts WHERE id='disposable-only';
+  PERFORM set_config('acceptance.actor','',true);
+  BEGIN
+    PERFORM acceptance.save_state_if_fresh('disposable-only',old_version,'{"picks":[100]}'::jsonb);
+    RAISE EXCEPTION 'Missing-session save incorrectly succeeded';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='Missing-session save incorrectly succeeded' THEN RAISE; END IF;
+    IF SQLERRM<>'Sign in required' THEN RAISE; END IF;
+  END;
+  IF (SELECT state FROM acceptance.drafts WHERE id='disposable-only') IS DISTINCT FROM saved
+  THEN RAISE EXCEPTION 'Unsigned save changed accepted draft data'; END IF;
+  RAISE NOTICE 'PASS: missing session rejected and original state preserved';
+END $$;
