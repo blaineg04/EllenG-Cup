@@ -14,3 +14,9 @@ test('draft visibly distinguishes channel failures',()=>{
  for(const status of ['CHANNEL_ERROR','TIMED_OUT','CLOSED'])assert.ok(block.includes(status));
  assert.match(block,/"RECONNECTING"/);
 });
+
+test('draft status strip follows channel state and failed catch-up',()=>{
+ assert.match(block,/getElementById\("draftStatusStrip"\)/);
+ assert.match(block,/strip\.classList\.add\(st==="SUBSCRIBED"/);
+ assert.match(block,/strip\.classList\.add\("status-offline"\)/);
+});
