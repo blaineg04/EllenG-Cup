@@ -74,3 +74,15 @@ jobs:
           colima list
           colima status || true
           sysctl -n hw.memsize
+      - name: Verify isolated test commands can use the existing Colima engine
+        shell: bash
+        env:
+          DOCKER_CONTEXT: colima
+        run: |
+          set -euo pipefail
+          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          docker info --format 'Engine {{.ServerVersion}}; CPUs {{.NCPU}}; memory bytes {{.MemTotal}}'
+          docker system df
+          docker ps --format 'Container {{.Names}}; status {{.Status}}'
+          colima ssh -- df -h /
+          npm view supabase@2.121.0 version engines --json
