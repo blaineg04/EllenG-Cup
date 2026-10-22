@@ -97,9 +97,10 @@ function subscribe(cb){
    // Catch up after subscription/reconnection: changes during the outage
    // cannot be recovered from a fresh Postgres Changes subscription alone.
    if(st==="SUBSCRIBED"){
-    try{await load();cb();
+    try{await load();
      if(el){el.textContent="LIVE";el.className="online"}
      if(strip){strip.classList.remove("status-connecting","status-offline");strip.classList.add("status-live")}
+     cb()
     }catch(e){
      console.error("Draft resubscription refresh failed",e);
      if(el){el.textContent="SYNC ERROR";el.className="offline"}
