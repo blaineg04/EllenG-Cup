@@ -1,0 +1,39 @@
+name: EllenG current-branch synthetic responsive acceptance
+on:
+  push:
+    branches: ['development/disposable-postgres-acceptance-20261022']
+    paths: ['.github/workflows/elleng-development-responsive.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: elleng-development-responsive
+  cancel-in-progress: true
+jobs:
+  seven-width-synthetic:
+    if: github.repository == 'blaineg04/EllenG-Cup' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install pinned browser test dependency (no Docker)
+        run: npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
+      - name: Install Chromium
+        run: tests/visual/node_modules/.bin/playwright install chromium
+      - name: Enforce fixture-only browser safety
+        run: node --test tests/visual/safety.test.cjs
+      - name: Run current-branch responsive suite with synthetic data
+        env:
+          ELLENG_PREVIEW_URL: ''
+          ELLENG_VISUAL_STORAGE_STATE: ''
+        run: node tests/visual/run.cjs
+      - name: Upload screenshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: elleng-development-responsive-${{ github.sha }}
+          path: visual-results/
+          retention-days: 1
+          if-no-files-found: warn
