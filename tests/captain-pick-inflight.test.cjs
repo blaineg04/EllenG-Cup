@@ -14,3 +14,7 @@ test('pick failure catches refresh failure and eventually restores interaction',
  assert.match(pick,/try\{await load\(\)\}catch\(refreshError\)/);
  assert.match(pick,/finally\s*\{/);
 });
+
+test('realtime render cannot reactivate drafting during an in-flight pick',()=>{
+ assert.match(s,/mine=!done&&t===myTeam&&!S\.timerPaused&&!pickInFlight/);
+});
