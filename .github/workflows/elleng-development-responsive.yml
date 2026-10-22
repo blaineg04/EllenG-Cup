@@ -12,15 +12,27 @@ on:
       - 'common.js'
       - 'style.css'
       - 'tests/visual/**'
+  pull_request:
+    branches: ['main']
+    paths:
+      - '.github/workflows/elleng-development-responsive.yml'
+      - 'index.html'
+      - 'draft.html'
+      - 'captain.html'
+      - 'admin.html'
+      - 'scoring.html'
+      - 'common.js'
+      - 'style.css'
+      - 'tests/visual/**'
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: elleng-development-responsive
+  group: elleng-development-responsive-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   seven-width-synthetic:
-    if: github.repository == 'blaineg04/EllenG-Cup' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    if: github.repository == 'blaineg04/EllenG-Cup' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.head_ref == 'release-candidate/nov20-app-only-20261022'))
     runs-on: [self-hosted, macOS]
     timeout-minutes: 20
     steps:
