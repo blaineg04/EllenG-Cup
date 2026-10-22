@@ -17,7 +17,7 @@ test('commissioner session and ownership are verified before showing dashboard',
  assert.match(page,/data\.owner_id!==user\.id/);
  assert.match(page,/dashboard\.hidden=true/);
  assert.match(page,/dashboard\.hidden=false/);
- assert.match(page,/if\(!await verifyCommissioner\(\)\)return/);
+ assert.match(page,/if\(!await verifyCommissioner\(\)\|\|epoch!==inspectionEpoch\)return/);
 });
 test('read-only checks cannot mutate draft or scoring records',()=>{
  assert.ok(inline);
