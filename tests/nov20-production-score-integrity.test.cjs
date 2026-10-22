@@ -411,3 +411,24 @@ test('populated featured matchup renders tied fractional points without a startu
  assert.match(element.innerHTML,/1\.5 points apart/);
 });
 
+
+function scoreRefresh({failTable=null,rejectTable=null,signedIn=true}={}){
+ const start=html.indexOf('async function loadScores(){'),end=html.indexOf('function teamOptions(',start);
+ const old={team:[{score:4}],player:[{score:5}],pair:[{score:6}]};
+ const fresh={elleng_team_scores:[{score:7}],elleng_player_hole_scores:[{score:8}],elleng_pair_hole_scores:[{score:9}]};
+ const reads=[];
+ const context={scores:old.team,playerScores:old.player,pairScores:old.pair,user:signedIn?{id:'test-user'}:null,TOURNAMENT_ID:'test-tournament',db:{from(table){reads.push(table);return {select(){return this},eq:async()=>{if(table===rejectTable)throw Error('Read interrupted');return {data:fresh[table],error:table===failTable?{message:'Read denied'}:null}}}}}};
+ vm.runInNewContext(html.slice(start,end),context);return {run:()=>context.loadScores(),context,old,fresh,reads};
+}
+test('failed score detail refresh preserves the last complete client data set',async()=>{
+ for(const options of [{failTable:'elleng_player_hole_scores'},{failTable:'elleng_pair_hole_scores'},{rejectTable:'elleng_player_hole_scores'},{failTable:'elleng_team_scores'}]){
+  const page=scoreRefresh(options);await assert.rejects(page.run());
+  assert.equal(page.context.scores,page.old.team,JSON.stringify(options));assert.equal(page.context.playerScores,page.old.player);assert.equal(page.context.pairScores,page.old.pair);
+ }
+});
+test('successful score refresh replaces all score collections together',async()=>{
+ const page=scoreRefresh();await page.run();assert.equal(page.context.scores,page.fresh.elleng_team_scores);assert.equal(page.context.playerScores,page.fresh.elleng_player_hole_scores);assert.equal(page.context.pairScores,page.fresh.elleng_pair_hole_scores);
+});
+test('signed-out score refresh clears private score details without querying them',async()=>{
+ const page=scoreRefresh({signedIn:false});await page.run();assert.deepEqual(page.reads,['elleng_team_scores']);assert.equal(page.context.scores,page.fresh.elleng_team_scores);assert.equal(page.context.playerScores.length,0);assert.equal(page.context.pairScores.length,0);
+});

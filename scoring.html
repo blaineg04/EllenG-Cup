@@ -4732,14 +4732,16 @@ async function loadBase(){
 }
 async function loadScores(){
  const {data,error}=await db.from("elleng_team_scores").select("*").eq("tournament_id",TOURNAMENT_ID);
- if(error)throw error;scores=data||[];
+ if(error)throw error;
+ let nextPlayerScores=[],nextPairScores=[];
  if(user){
   const [{data:ps,error:pe},{data:pairs,error:pairError}]=await Promise.all([
     db.from("elleng_player_hole_scores").select("*").eq("tournament_id",TOURNAMENT_ID),
     db.from("elleng_pair_hole_scores").select("*").eq("tournament_id",TOURNAMENT_ID)
   ]);
-  if(pe)throw pe;if(pairError)throw pairError;playerScores=ps||[];pairScores=pairs||[];
- }else {playerScores=[];pairScores=[];}
+  if(pe)throw pe;if(pairError)throw pairError;nextPlayerScores=ps||[];nextPairScores=pairs||[];
+ }
+ scores=data||[];playerScores=nextPlayerScores;pairScores=nextPairScores;
 }
 function teamOptions(selected=""){return '<option value="">Available / Unassigned</option>'+teams.map((t,i)=>`<option value="${i}" ${String(selected)===String(i)?"selected":""}>${esc(t.name)}</option>`).join("")}
 function draftGolferCount(){let n=Number(draftState?.golferCount||draftState?.golfers?.length||24);return Math.max(8,Math.min(36,Number.isInteger(n)?n:24))}
