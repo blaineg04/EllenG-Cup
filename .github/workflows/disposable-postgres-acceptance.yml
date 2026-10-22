@@ -62,6 +62,25 @@ jobs:
           current_turn="$(sudo -u postgres psql -X -At -d "$db" -c "select current_team from acceptance.turns where draft_id='disposable-only';")"
           test "$current_turn" = 1
           echo 'PASS: rejected duplicate preserves turn; subsequent eligible pick advances it.'
+          # Two simultaneous *different* golfers from the same team must not
+          # both be accepted for a single turn (a distinct lost-update case).
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -c "insert into acceptance.turns values ('second-race',0);"
+          first_file="$(mktemp)"
+          second_file="$(mktemp)"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -At -d "$db" -c "select acceptance.try_pick('second-race',21,0,2);" > "$first_file" &
+          first_pid=$!
+          sleep 0.4
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -At -d "$db" -c "select acceptance.try_pick('second-race',22,0);" > "$second_file" &
+          second_pid=$!
+          wait "$first_pid"
+          wait "$second_pid"
+          test "$(cat "$first_file")" = accepted
+          test "$(cat "$second_file")" = wrong_turn
+          test "$(sudo -u postgres psql -X -At -d "$db" -c "select count(*) from acceptance.picks where draft_id='second-race';")" = 1
+          test "$(sudo -u postgres psql -X -At -d "$db" -c "select current_team from acceptance.turns where draft_id='second-race';")" = 1
+          rm -f "$first_file" "$second_file"
+          echo 'PASS: competing different-golfer submissions cannot consume one team turn twice.'
+
 
           rm -f /tmp/elleng-first-"$GITHUB_RUN_ID" /tmp/elleng-second-"$GITHUB_RUN_ID"
           echo 'PASS: one accepted pick, conflicting attempt rejected, one durable row.'
