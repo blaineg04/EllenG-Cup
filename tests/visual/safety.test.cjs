@@ -210,7 +210,7 @@ test('commissioner saves use version checked RPC and reject a stale write',async
  });
  vm.runInContext(html.slice(start,end),ctx);
  vm.runInContext("draftUpdatedAt='2026-10-22T10:00:00.000Z'",ctx);
- await assert.rejects(vm.runInContext('secureSave()',ctx),/Concurrent draft update/);
+ await assert.rejects(vm.runInContext('secureSave()',ctx),error=>error?.message==='Concurrent draft update');
  assert.equal(calls,1);
  assert.equal(captured[0].name,'elleng_save_state_if_fresh');
  assert.equal(captured[0].args.p_expected_updated_at,'2026-10-22T10:00:00.000Z');
