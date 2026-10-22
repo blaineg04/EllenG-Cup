@@ -38,3 +38,11 @@ Development PR [#6](https://github.com/blaineg04/EllenG-Cup/pull/6) based on `fi
 
 ## Current blocker and next action
 Supabase free-project quota prevents a third hosted QA project without modifying existing subscriptions. Do not disable FairwayOS or EllenG Cup. Continue developing a completely local/CI-hosted isolated authentication fixture, or obtain a separate explicitly approved QA environment. Browser-only synthetic tests **do not** replace the authenticated release gate.
+
+## Verified production rollback reference — October 22
+- Vercel project: `elleng-cup` (`prj_wpcMGLHuH21jWarwziP1mo85RBcC`).
+- Last listed READY production deployment: `dpl_FbiibvrkEcsYBvT6EojMxxrtNwYs`, source branch `main`, full SHA `27efe937a0e7f12fae1a2750dc6a7fcc983832df`.
+- Current production alias: `https://elleng-cup.vercel.app` (do not alter until gates pass).
+- Previous Vercel deploy can potentially be restored, but actual rollback operation and DB compatibility have **not** been exercised; this is a recorded reference, not proof of recovery.
+- Verified PR dependency chain: PR #1 → `main`; PR #4 → PR #1 branch; PR #6 → PR #4 branch. All are draft, unmerged.
+- CI `ddbfef20`: scoring and disposable PostgreSQL passed; responsive job skipped. Last seven-width synthetic suite passed at `980deabe`.
