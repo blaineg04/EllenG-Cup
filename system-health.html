@@ -80,6 +80,9 @@ function setStatus(id,state,detail){
  document.getElementById(id+"-detail").textContent=detail;
 }
 function reset(){
+ setStatus("database","unverified","Awaiting inspection");
+ setStatus("draft","unverified","Draft timestamp unavailable.");
+ setStatus("realtime","unverified","Not connected.");
  dashboard.hidden=true;signIn.hidden=false;form.hidden=false;authorizedUser=null;
  if(channel&&client){client.removeChannel(channel);channel=null;}
 }
@@ -92,6 +95,9 @@ async function verifyCommissioner(){
  const {data,error}=await client.from("elleng_drafts").select("owner_id").eq("id",config.draftId).maybeSingle();
  if(error){reset();authMessage.textContent="Unable to verify commissioner access. No health details are available.";return false;}
  if(!data||data.owner_id!==user.id){reset();authMessage.textContent="This account is not the commissioner for the configured draft.";return false;}
+ // A sign-out or account switch while the query was pending must not reveal the page.
+ const {data:latest,error:latestError}=await client.auth.getUser();
+ if(latestError||latest?.user?.id!==user.id){reset();authMessage.textContent="Session changed. Please sign in again.";return false;}
  authorizedUser=user.id;signIn.hidden=true;dashboard.hidden=false;
  return true;
 }
@@ -127,6 +133,8 @@ async function refresh(){
  }finally{refreshing=false;document.getElementById("refresh").disabled=false;}
 }
 document.getElementById("refresh").addEventListener("click",refresh);
+window.addEventListener("offline",()=>{if(authorizedUser)setStatus("offline","warning","This device reports being offline. Do not assume scores are saved.");});
+window.addEventListener("online",()=>{if(authorizedUser)setStatus("offline","unverified","Connection returned. Pending score submissions cannot yet be measured.");});
 form.addEventListener("submit",async event=>{
  event.preventDefault();
  authMessage.textContent="Signing in…";
