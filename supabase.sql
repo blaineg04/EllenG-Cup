@@ -25,22 +25,15 @@ grant select on public.elleng_captains to authenticated;
 drop policy if exists "public read" on public.elleng_drafts;
 drop policy if exists "authenticated insert" on public.elleng_drafts;
 drop policy if exists "authorized update" on public.elleng_drafts;
+drop policy if exists "elleng_owner_update" on public.elleng_drafts;
 create policy "public read" on public.elleng_drafts for select to anon,authenticated using(true);
 create policy "authenticated insert" on public.elleng_drafts for insert to authenticated
 with check ((select auth.uid())=owner_id);
-create policy "authorized update" on public.elleng_drafts for update to authenticated
-using (
-  (select auth.uid())=owner_id OR exists(
-    select 1 from public.elleng_captains c
-    where c.draft_id=elleng_drafts.id and c.user_id=(select auth.uid())
-  )
-)
-with check (
-  (select auth.uid())=owner_id OR exists(
-    select 1 from public.elleng_captains c
-    where c.draft_id=elleng_drafts.id and c.user_id=(select auth.uid())
-  )
-);
+-- Captains select draft state, but must make picks via validated RPCs,
+-- not unrestricted draft-row UPDATE.
+create policy "elleng_owner_update" on public.elleng_drafts for update to authenticated
+using ((select auth.uid())=owner_id)
+with check ((select auth.uid())=owner_id);
 
 drop policy if exists "captain sees own assignment" on public.elleng_captains;
 create policy "captain sees own assignment" on public.elleng_captains for select to authenticated
