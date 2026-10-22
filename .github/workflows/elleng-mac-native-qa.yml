@@ -34,7 +34,7 @@ jobs:
             done
             if test -z "$found"; then
               echo "BLOCKED: native PostgreSQL binaries not installed; no software was installed."
-              exit 0
+              exit 1
             fi
             export PATH="$found:$PATH"
           fi
