@@ -56,9 +56,36 @@ function drawClock(){let x=remaining();document.getElementById("clock").textCont
 async function pick(i){if(savingDraft)return;const total=totalPicks();if(S.timerPaused||S.picks.length>=total)return;let t=order(S.picks.length),g=S.golfers[i];if(!g||g.team!=null||!canBand(t,g.band))return;const before=structuredClone(S);g.team=t;S.teams[t].roster.push(i);S.picks.push({golfer:i,team:t});S.timerPaused=false;S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();try{await save();liveRender()}catch(e){S=before;liveRender()}}
 document.getElementById("saveSetup").onclick=async()=>{document.querySelectorAll("[data-n]").forEach(x=>S.golfers[+x.dataset.n].name=x.value.trim());document.querySelectorAll("[data-h]").forEach(x=>S.golfers[+x.dataset.h].hcp=x.value);document.querySelectorAll("[data-b]").forEach(x=>S.golfers[+x.dataset.b].band=x.value);document.querySelectorAll("[data-tn]").forEach(x=>S.teams[+x.dataset.tn].name=x.value||"Team "+(+x.dataset.tn+1));document.querySelectorAll("[data-tc]").forEach(x=>S.teams[+x.dataset.tc].captain=x.value);S.draftType=document.getElementById("dtype").value;S.timerLength=+document.getElementById("tlen").value;S.timerPaused=false;S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();await save();liveMode=true;document.getElementById("setup").style.display="none";document.getElementById("live").style.display="grid";liveRender()};
 document.getElementById("setupBtn").onclick=()=>{liveMode=false;document.getElementById("live").style.display="none";document.getElementById("setup").style.display="block";setupRender()};
-document.getElementById("undo").onclick=async()=>{let p=S.picks.pop();if(!p)return;S.golfers[p.golfer].team=null;S.teams[p.team].roster=S.teams[p.team].roster.filter(x=>x!==p.golfer);S.timerPaused=false;S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();await save();if(liveMode)liveRender()};
-document.getElementById("pause").onclick=async()=>{if(S.timerPaused){S.timerPaused=false;S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString()}else{S.timerLength=remaining();S.timerPaused=true;S.timerEndsAt=null}await save();liveRender()};
-document.getElementById("resetClock").onclick=async()=>{S.timerLength=+document.getElementById("tlen").value||60;S.timerPaused=false;S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();await save();liveRender()};
+async function saveCommissionerAction(change){
+ if(savingDraft)return;
+ const before=structuredClone(S);
+ try{
+  if(change()===false)return;
+  await save();
+  if(liveMode)liveRender();
+ }catch(error){
+  S=before;
+  if(liveMode)liveRender();
+ }
+}
+document.getElementById("undo").onclick=()=>saveCommissionerAction(()=>{
+ const p=S.picks.at(-1);
+ if(!p)return false;
+ S.picks.pop();
+ S.golfers[p.golfer].team=null;
+ S.teams[p.team].roster=S.teams[p.team].roster.filter(x=>x!==p.golfer);
+ S.timerPaused=false;
+ S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();
+});
+document.getElementById("pause").onclick=()=>saveCommissionerAction(()=>{
+ if(S.timerPaused){S.timerPaused=false;S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString()}
+ else{S.timerLength=remaining();S.timerPaused=true;S.timerEndsAt=null}
+});
+document.getElementById("resetClock").onclick=()=>saveCommissionerAction(()=>{
+ S.timerLength=+document.getElementById("tlen").value||60;
+ S.timerPaused=false;
+ S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();
+});
 async function openAdmin(){
  const loginCard=document.getElementById("loginCard"),app=document.getElementById("adminApp"),msg=document.getElementById("authMsg"),status=document.getElementById("connection");
  loginCard.style.display="block";app.style.display="none";msg.textContent="";status.textContent="VERIFYING";
