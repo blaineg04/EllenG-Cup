@@ -38,6 +38,22 @@ jobs:
           captain_db="${db}_captain"
           sudo -u postgres createdb "$captain_db"
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$captain_db" -f tests/actual-captain-rpc.sql
+          # Exercise the actual RPC with two concurrent transactions, not the simplified model.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$captain_db" -c "insert into public.elleng_drafts(id,owner_id,state) values('race-qa','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','{\"draftType\":\"snake\",\"draftRules\":\"open\",\"timerPaused\":false,\"timerLength\":60,\"golferCount\":3,\"picks\":[],\"golfers\":[{\"name\":\"A\"},{\"name\":\"B\"},{\"name\":\"C\"}],\"teams\":[{\"roster\":[]},{\"roster\":[]}]}');insert into public.elleng_captains values('race-qa','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',0),('race-qa','cccccccc-cccc-cccc-cccc-cccccccccccc',1);"
+          race_first="$(mktemp)"
+          race_second="$(mktemp)"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$captain_db" -c "begin; select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false);select public.elleng_make_pick('race-qa',0);select pg_sleep(2);commit;" > "$race_first" 2>&1 &
+          race_pid=$!
+          sleep 0.5
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$captain_db" -c "select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false);select public.elleng_make_pick('race-qa',1);" > "$race_second" 2>&1; then
+            echo 'FAIL: second same-team draft pick unexpectedly succeeded'
+            exit 1
+          fi
+          wait "$race_pid"
+          grep -q "It is not your team's turn" "$race_second"
+          test "$(sudo -u postgres psql -X -At -d "$captain_db" -c "select jsonb_array_length(state->'picks') from public.elleng_drafts where id='race-qa';")" = 1
+          rm -f "$race_first" "$race_second"
+          echo 'PASS: actual captain RPC row lock rejects concurrent second same-team pick.'
           sudo -u postgres dropdb "$captain_db"
           # The exact proposed migration must fail when score-table RLS is off.
           # Use another disposable DB so this cannot affect the positive cases.
