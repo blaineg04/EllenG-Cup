@@ -1,0 +1,30 @@
+name: Disposable PostgreSQL acceptance contract
+on:
+  push:
+    branches: ['development/disposable-postgres-acceptance-20261022']
+    paths: ['tests/disposable-postgres-contract.sql', '.github/workflows/disposable-postgres-acceptance.yml']
+  pull_request:
+    paths: ['tests/disposable-postgres-contract.sql', '.github/workflows/disposable-postgres-acceptance.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run disposable native PostgreSQL contract without Docker
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql postgresql-client >/dev/null
+          pg_version="$(ls /etc/postgresql | sort -V | tail -1)"
+          sudo pg_ctlcluster "$pg_version" main start || sudo pg_ctlcluster "$pg_version" main status
+          db="elleng_ci_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          cleanup() { sudo -u postgres dropdb --if-exists "$db" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          sudo -u postgres createdb "$db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-postgres-contract.sql
+          echo 'PASS: disposable PostgreSQL contract; full Supabase Auth/RLS and two-device checks remain pending.'
