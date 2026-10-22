@@ -1,0 +1,128 @@
+name: Disposable PostgreSQL acceptance contract
+on:
+  push:
+    branches: ['development/disposable-postgres-acceptance-20261022']
+    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', 'tests/disposable-draft-order.sql', 'tests/disposable-realtime-publication.sql', 'tests/disposable-realtime-migration.sql', 'tests/disposable-realtime-negative.sql', 'tests/actual-commissioner-rpc.sql', 'tests/actual-captain-rpc.sql', 'docs/proposed-realtime-publication-migration.sql', 'tests/reference-schema-security.test.cjs', 'tests/realtime-client-reconnect.test.cjs', 'tests/draft-reconnect.test.cjs', 'tests/captain-pick-inflight.test.cjs', 'tests/draft-subscribe-behavior.test.cjs', 'tests/draft-timer-behavior.test.cjs', 'tests/draft-two-client-simulation.test.cjs', 'common.js', 'captain.html', 'scoring.html', 'supabase.sql', '.github/workflows/disposable-postgres-acceptance.yml']
+  pull_request:
+    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', 'tests/disposable-draft-order.sql', 'tests/disposable-realtime-publication.sql', 'tests/disposable-realtime-migration.sql', 'tests/disposable-realtime-negative.sql', 'tests/actual-commissioner-rpc.sql', 'tests/actual-captain-rpc.sql', 'docs/proposed-realtime-publication-migration.sql', 'tests/reference-schema-security.test.cjs', 'tests/realtime-client-reconnect.test.cjs', 'tests/draft-reconnect.test.cjs', 'tests/captain-pick-inflight.test.cjs', 'common.js', 'captain.html', 'scoring.html', 'supabase.sql', '.github/workflows/disposable-postgres-acceptance.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check reference schema RLS and team-size guardrails
+        run: node --test tests/reference-schema-security.test.cjs tests/realtime-client-reconnect.test.cjs tests/draft-reconnect.test.cjs tests/captain-pick-inflight.test.cjs tests/draft-subscribe-behavior.test.cjs tests/draft-timer-behavior.test.cjs tests/draft-two-client-simulation.test.cjs
+      - name: Run disposable native PostgreSQL contract without Docker
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql postgresql-client >/dev/null
+          pg_version="$(ls /etc/postgresql | sort -V | tail -1)"
+          sudo pg_ctlcluster "$pg_version" main start || sudo pg_ctlcluster "$pg_version" main status
+          db="elleng_ci_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          cleanup() { sudo -u postgres dropdb --if-exists "$db" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_negative" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_captain" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          sudo -u postgres createdb "$db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-postgres-contract.sql
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-draft-concurrency.sql
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-draft-order.sql
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-realtime-publication.sql
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-realtime-migration.sql
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/actual-commissioner-rpc.sql
+          # Use a separate isolated database to avoid fixture function/table collisions.
+          captain_db="${db}_captain"
+          sudo -u postgres createdb "$captain_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$captain_db" -f tests/actual-captain-rpc.sql
+          # Exercise the actual RPC with two concurrent transactions, not the simplified model.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$captain_db" -c "insert into public.elleng_drafts(id,owner_id,state) values('race-qa','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','{\"draftType\":\"snake\",\"draftRules\":\"open\",\"timerPaused\":false,\"timerLength\":60,\"golferCount\":3,\"picks\":[],\"golfers\":[{\"name\":\"A\"},{\"name\":\"B\"},{\"name\":\"C\"}],\"teams\":[{\"roster\":[]},{\"roster\":[]}]}');insert into public.elleng_captains values('race-qa','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',0),('race-qa','cccccccc-cccc-cccc-cccc-cccccccccccc',1);"
+          race_first="$(mktemp)"
+          race_second="$(mktemp)"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$captain_db" -c "begin; select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false);select public.elleng_make_pick('race-qa',0);select pg_sleep(2);commit;" > "$race_first" 2>&1 &
+          race_pid=$!
+          sleep 0.5
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$captain_db" -c "select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false);select public.elleng_make_pick('race-qa',1);" > "$race_second" 2>&1; then
+            echo 'FAIL: second same-team draft pick unexpectedly succeeded'
+            exit 1
+          fi
+          wait "$race_pid"
+          grep -q "It is not your team's turn" "$race_second"
+          test "$(sudo -u postgres psql -X -At -d "$captain_db" -c "select jsonb_array_length(state->'picks') from public.elleng_drafts where id='race-qa';")" = 1
+          rm -f "$race_first" "$race_second"
+          echo 'PASS: actual captain RPC row lock rejects concurrent second same-team pick.'
+          sudo -u postgres dropdb "$captain_db"
+          # The exact proposed migration must fail when score-table RLS is off.
+          # Use another disposable DB so this cannot affect the positive cases.
+          neg_db="${db}_negative"
+          sudo -u postgres createdb "$neg_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$neg_db" -c "create table public.elleng_player_hole_scores(id int);create table public.elleng_pair_hole_scores(id int);alter table public.elleng_player_hole_scores enable row level security;create publication supabase_realtime for table public.elleng_player_hole_scores;"
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$neg_db" -f tests/disposable-realtime-negative.sql > /tmp/elleng-negative-"$GITHUB_RUN_ID".log 2>&1; then
+            echo 'FAIL: migration accepted score table without RLS'
+            exit 1
+          fi
+          grep -q 'Missing RLS-enabled source table: elleng_pair_hole_scores' /tmp/elleng-negative-"$GITHUB_RUN_ID".log
+          test "$(sudo -u postgres psql -X -At -d "$neg_db" -c "select count(*) from pg_publication_tables where pubname='supabase_realtime' and tablename='elleng_pair_hole_scores';")" = 0
+          sudo -u postgres dropdb "$neg_db"
+          rm -f /tmp/elleng-negative-"$GITHUB_RUN_ID".log
+          echo 'PASS: actual migration rejected RLS-disabled table without publishing it.'
+          # Separate concurrent database sessions compete for the same pick.
+          # The delayed winner holds a row lock; the second caller must not duplicate it.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -At -d "$db" -c "select acceptance.try_pick('disposable-only',7,0,2);" > /tmp/elleng-first-"$GITHUB_RUN_ID" &
+          first_pid=$!
+          sleep 0.4
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -At -d "$db" -c "select acceptance.try_pick('disposable-only',7,0);" > /tmp/elleng-second-"$GITHUB_RUN_ID" &
+          second_pid=$!
+          wait "$first_pid"
+          wait "$second_pid"
+          first_result="$(cat /tmp/elleng-first-"$GITHUB_RUN_ID")"
+          second_result="$(cat /tmp/elleng-second-"$GITHUB_RUN_ID")"
+          test "$first_result" = accepted
+          test "$second_result" = wrong_turn
+          count="$(sudo -u postgres psql -X -At -d "$db" -c "select count(*) from acceptance.picks where draft_id='disposable-only' and golfer=7;")"
+          test "$count" = 1
+          # Advance the turn legitimately, then retry the original golfer when Team 0 is on clock again.
+          # This verifies duplicate rejection independently of the wrong-turn check.
+          next_pick="$(sudo -u postgres psql -X -At -d "$db" -c "select acceptance.try_pick('disposable-only',8,1);")"
+          test "$next_pick" = accepted
+          duplicate_result="$(sudo -u postgres psql -X -At -d "$db" -c "select acceptance.try_pick('disposable-only',7,0);")"
+          test "$duplicate_result" = already_picked
+          count="$(sudo -u postgres psql -X -At -d "$db" -c "select count(*) from acceptance.picks where draft_id='disposable-only';")"
+          test "$count" = 2
+          echo 'PASS: attempted re-pick rejected after turn cycles back.'
+          # The next team must retain its turn when a duplicate is rejected.
+          current_turn="$(sudo -u postgres psql -X -At -d "$db" -c "select current_team from acceptance.turns where draft_id='disposable-only';")"
+          test "$current_turn" = 0
+          pick_count="$(sudo -u postgres psql -X -At -d "$db" -c "select count(*) from acceptance.picks where draft_id='disposable-only';")"
+          test "$pick_count" = 2
+          third_pick="$(sudo -u postgres psql -X -At -d "$db" -c "select acceptance.try_pick('disposable-only',9,0);")"
+          test "$third_pick" = accepted
+          current_turn="$(sudo -u postgres psql -X -At -d "$db" -c "select current_team from acceptance.turns where draft_id='disposable-only';")"
+          test "$current_turn" = 1
+          echo 'PASS: rejected duplicate preserves turn; subsequent eligible pick advances it.'
+          # Two simultaneous *different* golfers from the same team must not
+          # both be accepted for a single turn (a distinct lost-update case).
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -c "insert into acceptance.turns values ('second-race',0);"
+          first_file="$(mktemp)"
+          second_file="$(mktemp)"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -At -d "$db" -c "select acceptance.try_pick('second-race',21,0,2);" > "$first_file" &
+          first_pid=$!
+          sleep 0.4
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -At -d "$db" -c "select acceptance.try_pick('second-race',22,0);" > "$second_file" &
+          second_pid=$!
+          wait "$first_pid"
+          wait "$second_pid"
+          test "$(cat "$first_file")" = accepted
+          test "$(cat "$second_file")" = wrong_turn
+          test "$(sudo -u postgres psql -X -At -d "$db" -c "select count(*) from acceptance.picks where draft_id='second-race';")" = 1
+          test "$(sudo -u postgres psql -X -At -d "$db" -c "select current_team from acceptance.turns where draft_id='second-race';")" = 1
+          rm -f "$first_file" "$second_file"
+          echo 'PASS: competing different-golfer submissions cannot consume one team turn twice.'
+
+
+          rm -f /tmp/elleng-first-"$GITHUB_RUN_ID" /tmp/elleng-second-"$GITHUB_RUN_ID"
+          echo 'PASS: one accepted pick, conflicting attempt rejected, one durable row.'
+          echo 'Full Supabase Auth/RLS and two-device checks remain pending.'

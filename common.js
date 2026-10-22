@@ -70,6 +70,46 @@ function canBand(t,b){
 
 async function load(){let {data,error}=await db.from("elleng_drafts").select("state").eq("id",cfg.draftId).single();if(error)throw error;S={...fresh(),...data.state};return S}
 async function save(){let {error}=await db.from("elleng_drafts").upsert({id:cfg.draftId,state:S,updated_at:new Date().toISOString()});if(error)throw error}
-function subscribe(cb){return db.channel("elleng-"+cfg.draftId).on("postgres_changes",{event:"*",schema:"public",table:"elleng_drafts",filter:"id=eq."+cfg.draftId},async()=>{await load();cb()}).subscribe(st=>{const el=document.getElementById("connection");if(el){el.textContent=st==="SUBSCRIBED"?"LIVE":"CONNECTING";el.className=st==="SUBSCRIBED"?"online":"offline"}})}
+function subscribe(cb){
+ const channel=db.channel("elleng-"+cfg.draftId)
+  .on("postgres_changes",{event:"*",schema:"public",table:"elleng_drafts",filter:"id=eq."+cfg.draftId},async()=>{
+   try{await load();cb()}catch(e){
+    console.error("Draft realtime refresh failed",e);
+    const indicator=document.getElementById("connection");
+    if(indicator){indicator.textContent="SYNC ERROR";indicator.className="offline"}
+    document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
+    const statusStrip=document.getElementById("draftStatusStrip");
+    if(statusStrip){statusStrip.classList.remove("status-live","status-connecting");statusStrip.classList.add("status-offline")}
+   }
+  })
+  .subscribe(async st=>{
+   const el=document.getElementById("connection");
+   if(el){
+    el.textContent=st==="SUBSCRIBED"?"SYNCING":st==="CHANNEL_ERROR"||st==="TIMED_OUT"||st==="CLOSED"?"RECONNECTING":"CONNECTING";
+    el.className="offline";
+   }
+   if(st!=="SUBSCRIBED")document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
+   const strip=document.getElementById("draftStatusStrip");
+   if(strip){
+    strip.classList.remove("status-live","status-connecting","status-offline");
+    strip.classList.add(st==="SUBSCRIBED"?"status-connecting":st==="CHANNEL_ERROR"||st==="TIMED_OUT"||st==="CLOSED"?"status-offline":"status-connecting");
+   }
+   // Catch up after subscription/reconnection: changes during the outage
+   // cannot be recovered from a fresh Postgres Changes subscription alone.
+   if(st==="SUBSCRIBED"){
+    try{await load();
+     if(el){el.textContent="LIVE";el.className="online"}
+     if(strip){strip.classList.remove("status-connecting","status-offline");strip.classList.add("status-live")}
+     cb()
+    }catch(e){
+     console.error("Draft resubscription refresh failed",e);
+     if(el){el.textContent="SYNC ERROR";el.className="offline"}
+     document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
+     if(strip){strip.classList.remove("status-live","status-connecting");strip.classList.add("status-offline")}
+    }
+   }
+  });
+ return channel;
+}
 function remaining(){if(S.timerPaused||!S.timerEndsAt)return S.timerLength;return Math.max(0,Math.ceil((new Date(S.timerEndsAt)-Date.now())/1000))}
 function esc(x){return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}

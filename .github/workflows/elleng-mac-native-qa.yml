@@ -1,0 +1,59 @@
+name: EllenG isolated Mac native PostgreSQL preflight
+on:
+  push:
+    branches: ['development/disposable-postgres-acceptance-20261022']
+    paths: ['.github/workflows/elleng-mac-native-qa.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: elleng-mac-native-qa
+  cancel-in-progress: false
+jobs:
+  native-database-preflight:
+    # Never run fork submissions on a private self-hosted machine.
+    if: github.repository == 'blaineg04/EllenG-Cup' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check a safe Docker-free ephemeral PostgreSQL option
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          echo "Host architecture: $(uname -m)"
+          echo "No production database or existing PostgreSQL service will be started, stopped, or modified."
+          if ! command -v initdb >/dev/null 2>&1 || ! command -v pg_ctl >/dev/null 2>&1 || ! command -v psql >/dev/null 2>&1; then
+            echo "Native PostgreSQL not available on PATH. Checking typical Homebrew installations."
+            found=""
+            for bin in /usr/local/opt/postgresql@17/bin /opt/homebrew/opt/postgresql@17/bin /usr/local/opt/postgresql@16/bin /opt/homebrew/opt/postgresql@16/bin /usr/local/opt/postgresql/bin /opt/homebrew/opt/postgresql/bin; do
+              if test -x "$bin/initdb" && test -x "$bin/pg_ctl" && test -x "$bin/psql"; then found="$bin"; break; fi
+            done
+            if test -z "$found"; then
+              echo "BLOCKED: native PostgreSQL binaries not installed; no software was installed."
+              exit 1
+            fi
+            export PATH="$found:$PATH"
+          fi
+          echo "PostgreSQL: $(psql --version)"
+          # Start only a unique private, temporary cluster/socket with no TCP listener.
+          umask 077
+          tmp="$(mktemp -d "${RUNNER_TEMP:-/tmp}/elleng-native-qa.XXXXXX")"
+          cluster="$tmp/data"
+          socket="$tmp/socket"
+          mkdir -p "$socket"
+          cleanup() {
+            if test -f "$cluster/postmaster.pid"; then pg_ctl -D "$cluster" -m immediate stop >/dev/null 2>&1 || true; fi
+            rm -rf "$tmp"
+          }
+          trap cleanup EXIT
+          initdb -D "$cluster" -A trust -U elleng_ci >/dev/null
+          pg_ctl -D "$cluster" -o "-c listen_addresses='' -k '$socket' -c unix_socket_permissions=0700" -l "$tmp/postgres.log" start >/dev/null
+          createdb -h "$socket" -U elleng_ci elleng_ci
+          psql -X -h "$socket" -U elleng_ci -v ON_ERROR_STOP=1 -d elleng_ci -f tests/disposable-postgres-contract.sql
+          psql -X -h "$socket" -U elleng_ci -v ON_ERROR_STOP=1 -d elleng_ci -f tests/disposable-draft-concurrency.sql
+          psql -X -h "$socket" -U elleng_ci -v ON_ERROR_STOP=1 -d elleng_ci -f tests/disposable-draft-order.sql
+          echo "PASS: native Mac isolated draft contract; no Docker, no public listener, no real account or production database."
