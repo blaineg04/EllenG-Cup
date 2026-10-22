@@ -47,3 +47,10 @@ test('Realtime change refreshes synthetic draft state',async()=>{
  assert.equal(h.stats().refreshes,1);
  assert.equal(h.stats().rendered,1);
 });
+
+test('failed Realtime event refresh visibly reports out-of-sync state',async()=>{
+ const h=harness();await h.emit('SUBSCRIBED');h.fail();await h.change();
+ assert.equal(h.connection.textContent,'SYNC ERROR');
+ assert.ok(h.classes.has('status-offline'));
+ assert.equal(h.stats().rendered,1);
+});
