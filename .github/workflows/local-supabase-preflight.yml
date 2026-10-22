@@ -35,3 +35,31 @@ jobs:
           fi
           node --version
           npm --version
+      - name: Check Docker and available local runtime tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          if [ -d /Applications/Docker.app ]; then
+            echo "Docker Desktop: installed"
+          else
+            echo "Docker Desktop: not installed"
+          fi
+          if command -v docker >/dev/null 2>&1; then
+            docker --version
+            if docker info --format '{{.ServerVersion}}' 2>/dev/null; then
+              echo "Docker engine: ready"
+            else
+              echo "Docker engine: not reachable"
+            fi
+          else
+            echo "Docker CLI: not installed on PATH"
+          fi
+          for tool in brew colima podman; do
+            if command -v "$tool" >/dev/null 2>&1; then
+              printf '%s: installed\\n' "$tool"
+            else
+              printf '%s: absent\\n' "$tool"
+            fi
+          done
+          df -h / | tail -1
