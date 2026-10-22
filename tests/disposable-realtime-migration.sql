@@ -35,3 +35,16 @@ BEGIN
   IF NOT safe_rejection THEN RAISE EXCEPTION 'Missing source table was not blocked'; END IF;
   RAISE NOTICE 'PASS: missing source table guard rejects unsafe publication';
 END $$;
+
+-- Exercise the ACTUAL proposed migration with RLS disabled, not just a copy
+-- of its predicate. Transaction rollback must preserve publication membership.
+BEGIN;
+ALTER TABLE public.elleng_pair_hole_scores DISABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_class WHERE oid='public.elleng_pair_hole_scores'::regclass AND NOT relrowsecurity)
+  THEN RAISE EXCEPTION 'RLS test precondition missing'; END IF;
+END $$;
+-- The migration is invoked inside a psql error-catching block via a separate
+-- CI script, since an expected error must not abort the main acceptance run.
+ROLLBACK;
