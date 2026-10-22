@@ -36,3 +36,14 @@ test('provides accessible inspection and narrow-phone sizing',()=>{
  assert.match(page,/minmax\(min\(100%,280px\),1fr\)/);
  assert.match(page,/@media\(max-width:360px\)/);
 });
+
+test('an account switch during asynchronous authorization cannot reveal health information',()=>{
+ assert.match(page,/const \{data:latest,error:latestError\}=await client\.auth\.getUser\(\)/);
+ assert.match(page,/latest\?\.user\?\.id!==user\.id/);
+ assert.match(page,/Session changed\. Please sign in again\./);
+});
+test('network status updates do not assert that offline submissions were saved',()=>{
+ assert.match(page,/addEventListener\("offline"/);
+ assert.match(page,/addEventListener\("online"/);
+ assert.match(page,/Pending score submissions cannot yet be measured/);
+});
