@@ -794,7 +794,7 @@ document.getElementById("signin").onclick=async()=>{
     document.getElementById("login").style.display="none";
     document.getElementById("app").style.display="block";
     await load();render();
-    if(status)status.textContent="LIVE";
+    if(status)status.textContent="CONNECTING";
     subscribe(render);setInterval(draw,500);
   }catch(e){
     document.getElementById("login").style.display="block";document.getElementById("app").style.display="none";
@@ -813,7 +813,7 @@ document.getElementById("soundToggle").onclick=enableDraftSound;
       document.getElementById("app").style.display="block";
       await load();
       render();
-      if(status)status.textContent="LIVE";
+      if(status)status.textContent="CONNECTING";
       subscribe(render);
       setInterval(draw,500);
     }else{
