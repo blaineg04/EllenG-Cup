@@ -1,0 +1,4 @@
+tests/visual/node_modules/
+visual-results/
+playwright/.auth/
+*.storage-state.json

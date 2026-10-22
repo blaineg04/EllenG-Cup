@@ -1,0 +1,63 @@
+name: November 20 score integrity
+on:
+  push:
+    branches: ['release/nov20-score-integrity-20261020']
+    paths: ['scoring.html', 'draft.html', 'captain.html', 'admin.html', 'style.css', 'common.js', 'config.js', 'tests/**', '.github/workflows/nov20-score-integrity.yml']
+  pull_request:
+    paths:
+      - 'scoring.html'
+      - 'tests/nov20-production-score-integrity.test.cjs'
+      - 'tests/visual/**'
+      - 'draft.html'
+      - 'admin.html'
+      - 'config.js'
+      - 'captain.html'
+      - 'style.css'
+      - 'common.js'
+      - '.github/workflows/nov20-score-integrity.yml'
+  workflow_dispatch:
+# Avoid duplicate captures competing for the same MacBook.
+concurrency:
+  group: nov20-validation-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  scoring-regression:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Node is installed
+        run: node --version
+      - name: Run isolated scoring regression tests
+        run: node --test tests/nov20-production-score-integrity.test.cjs
+
+  responsive-layout:
+    # Keep execution on the existing MacBook; never run fork code on it.
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/release/nov20-score-integrity-20261020') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/release/nov20-score-integrity-20261020') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'release/nov20-score-integrity-20261020')
+    runs-on: [self-hosted, macOS]
+    permissions:
+      contents: read
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install pinned Playwright test dependency
+        run: npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
+      - name: Install Chromium without Docker
+        run: tests/visual/node_modules/.bin/playwright install chromium
+      - name: Validate visual test safety and scoring
+        run: node --test tests/nov20-production-score-integrity.test.cjs tests/visual/safety.test.cjs
+      - name: Capture seven-width layout matrix using isolated data
+        run: node tests/visual/run.cjs
+      - name: Save synthetic screenshots and layout report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: elleng-responsive-${{ github.sha }}
+          path: visual-results/
+          retention-days: 1
+          if-no-files-found: warn
