@@ -2,9 +2,9 @@ name: Disposable PostgreSQL acceptance contract
 on:
   push:
     branches: ['development/disposable-postgres-acceptance-20261022']
-    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', 'tests/disposable-draft-order.sql', '.github/workflows/disposable-postgres-acceptance.yml']
+    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', 'tests/disposable-draft-order.sql', 'tests/reference-schema-security.test.cjs', 'supabase.sql', '.github/workflows/disposable-postgres-acceptance.yml']
   pull_request:
-    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', 'tests/disposable-draft-order.sql', '.github/workflows/disposable-postgres-acceptance.yml']
+    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', 'tests/disposable-draft-order.sql', 'tests/reference-schema-security.test.cjs', 'supabase.sql', '.github/workflows/disposable-postgres-acceptance.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -14,6 +14,8 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
+      - name: Check reference schema RLS and team-size guardrails
+        run: node --test tests/reference-schema-security.test.cjs
       - name: Run disposable native PostgreSQL contract without Docker
         shell: bash
         run: |
