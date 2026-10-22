@@ -25,3 +25,16 @@ test('running draft uses a fixed absolute deadline across reconnects',()=>{
 test('expired draft timer cannot display negative seconds',()=>{
  assert.equal(clock({timerPaused:false,timerLength:60,timerEndsAt:'2026-10-22T12:00:00Z'},Date.parse('2026-10-22T12:01:00Z')),0);
 });
+
+test('timer on separate simulated clients derives identical remaining seconds',()=>{
+ const state={timerPaused:false,timerLength:60,timerEndsAt:'2026-10-22T12:00:45Z'};
+ const now=Date.parse('2026-10-22T12:00:20Z');
+ assert.equal(clock(structuredClone(state),now),clock(structuredClone(state),now));
+ assert.equal(clock(state,now),25);
+});
+test('clock only resumes from the saved deadline when unpaused',()=>{
+ const now=Date.parse('2026-10-22T12:00:30Z');
+ const state={timerPaused:true,timerLength:40,timerEndsAt:'2026-10-22T12:00:45Z'};
+ assert.equal(clock(state,now),40);
+ assert.equal(clock({...state,timerPaused:false},now),15);
+});
