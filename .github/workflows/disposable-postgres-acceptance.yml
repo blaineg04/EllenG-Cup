@@ -2,9 +2,9 @@ name: Disposable PostgreSQL acceptance contract
 on:
   push:
     branches: ['development/disposable-postgres-acceptance-20261022']
-    paths: ['tests/disposable-postgres-contract.sql', '.github/workflows/disposable-postgres-acceptance.yml']
+    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', '.github/workflows/disposable-postgres-acceptance.yml']
   pull_request:
-    paths: ['tests/disposable-postgres-contract.sql', '.github/workflows/disposable-postgres-acceptance.yml']
+    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', '.github/workflows/disposable-postgres-acceptance.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -27,4 +27,22 @@ jobs:
           trap cleanup EXIT
           sudo -u postgres createdb "$db"
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-postgres-contract.sql
-          echo 'PASS: disposable PostgreSQL contract; full Supabase Auth/RLS and two-device checks remain pending.'
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-draft-concurrency.sql
+          # Separate concurrent database sessions compete for the same pick.
+          # The delayed winner holds a row lock; the second caller must not duplicate it.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -At -d "$db" -c "select acceptance.try_pick('disposable-only',7,0,2);" > /tmp/elleng-first-"$GITHUB_RUN_ID" &
+          first_pid=$!
+          sleep 0.4
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -At -d "$db" -c "select acceptance.try_pick('disposable-only',7,0);" > /tmp/elleng-second-"$GITHUB_RUN_ID" &
+          second_pid=$!
+          wait "$first_pid"
+          wait "$second_pid"
+          first_result="$(cat /tmp/elleng-first-"$GITHUB_RUN_ID")"
+          second_result="$(cat /tmp/elleng-second-"$GITHUB_RUN_ID")"
+          test "$first_result" = accepted
+          test "$second_result" = wrong_turn
+          count="$(sudo -u postgres psql -X -At -d "$db" -c "select count(*) from acceptance.picks where draft_id='disposable-only' and golfer=7;")"
+          test "$count" = 1
+          rm -f /tmp/elleng-first-"$GITHUB_RUN_ID" /tmp/elleng-second-"$GITHUB_RUN_ID"
+          echo 'PASS: one accepted pick, conflicting attempt rejected, one durable row.'
+          echo 'Full Supabase Auth/RLS and two-device checks remain pending.'
