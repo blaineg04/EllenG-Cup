@@ -10,7 +10,7 @@ jobs:
   compatibility:
     if: github.ref == 'refs/heads/release/nov20-score-integrity-20261020'
     runs-on: [self-hosted, macOS]
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - name: Check native runtime requirements without installing services
         shell: bash
@@ -63,3 +63,15 @@ jobs:
             fi
           done
           df -h / | tail -1
+      - name: Start installed Docker Desktop and check engine resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          docker desktop --help
+          if ! docker info --format '{{.ServerVersion}}' >/dev/null 2>&1; then
+            docker desktop start --help
+            docker desktop start
+          fi
+          docker info --format 'Engine {{.ServerVersion}}; CPUs {{.NCPU}}; memory bytes {{.MemTotal}}'
+          docker system df
