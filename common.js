@@ -85,19 +85,22 @@ function subscribe(cb){
   .subscribe(async st=>{
    const el=document.getElementById("connection");
    if(el){
-    el.textContent=st==="SUBSCRIBED"?"LIVE":st==="CHANNEL_ERROR"||st==="TIMED_OUT"||st==="CLOSED"?"RECONNECTING":"CONNECTING";
-    el.className=st==="SUBSCRIBED"?"online":"offline";
+    el.textContent=st==="SUBSCRIBED"?"SYNCING":st==="CHANNEL_ERROR"||st==="TIMED_OUT"||st==="CLOSED"?"RECONNECTING":"CONNECTING";
+    el.className="offline";
    }
    if(st!=="SUBSCRIBED")document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
    const strip=document.getElementById("draftStatusStrip");
    if(strip){
     strip.classList.remove("status-live","status-connecting","status-offline");
-    strip.classList.add(st==="SUBSCRIBED"?"status-live":st==="CHANNEL_ERROR"||st==="TIMED_OUT"||st==="CLOSED"?"status-offline":"status-connecting");
+    strip.classList.add(st==="SUBSCRIBED"?"status-connecting":st==="CHANNEL_ERROR"||st==="TIMED_OUT"||st==="CLOSED"?"status-offline":"status-connecting");
    }
    // Catch up after subscription/reconnection: changes during the outage
    // cannot be recovered from a fresh Postgres Changes subscription alone.
    if(st==="SUBSCRIBED"){
-    try{await load();cb()}catch(e){
+    try{await load();cb();
+     if(el){el.textContent="LIVE";el.className="online"}
+     if(strip){strip.classList.remove("status-connecting","status-offline");strip.classList.add("status-live")}
+    }catch(e){
      console.error("Draft resubscription refresh failed",e);
      if(el){el.textContent="SYNC ERROR";el.className="offline"}
      document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
