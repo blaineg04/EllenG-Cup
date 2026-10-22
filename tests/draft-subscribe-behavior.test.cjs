@@ -61,3 +61,11 @@ test('lost Realtime connection immediately disables pending captain selection bu
  await h.emit('CHANNEL_ERROR');
  assert.equal(h.stats().buttonDisabled,true);
 });
+
+test('subscription shows SYNCING until fresh state finishes loading',async()=>{
+ const h=harness();const inProgress=h.emit('SUBSCRIBED');
+ assert.equal(h.connection.textContent,'SYNCING');
+ await inProgress;
+ assert.equal(h.connection.textContent,'LIVE');
+ assert.ok(h.classes.has('status-live'));
+});
