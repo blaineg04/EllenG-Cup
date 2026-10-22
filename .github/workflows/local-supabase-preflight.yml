@@ -86,16 +86,16 @@ jobs:
           docker ps --format 'Container {{.Names}}; status {{.Status}}'
           colima ssh -- df -h /
           npm view supabase@2.121.0 version engines --json
-      - name: Prepare pinned Supabase CLI without starting a database
+      - name: Verify existing service and storage after isolated startup attempt
         shell: bash
         env:
           DOCKER_CONTEXT: colima
         run: |
           set -euo pipefail
           export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
-          cli_work="$(mktemp -d "$RUNNER_TEMP/elleng-cli.XXXXXX")"
-          cd "$cli_work"
-          npm exec --yes --package=supabase@2.121.0 -- supabase --version
-          npm exec --yes --package=supabase@2.121.0 -- supabase init --help
-          npm exec --yes --package=supabase@2.121.0 -- supabase start --help
-          npm exec --yes --package=supabase@2.121.0 -- supabase functions serve --help
+          docker ps --format 'Container {{.Names}}; status {{.Status}}'
+          docker inspect fairwayos-pg-1-1 --format 'FairwayOS running: {{.State.Running}}; started: {{.State.StartedAt}}'
+          docker network ls --filter name=elleng-smoke --format '{{.Name}}'
+          docker image ls --filter reference='supabase/*' --format '{{.Repository}}:{{.Tag}} {{.Size}}'
+          df -h / | tail -1
+          colima ssh -- df -h /var/lib/docker /var/lib/containerd || true

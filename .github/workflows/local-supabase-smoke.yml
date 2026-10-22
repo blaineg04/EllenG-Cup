@@ -21,6 +21,11 @@ jobs:
           umask 077
           export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
           docker info --format 'Docker engine {{.ServerVersion}}'
+          free_kib="$(df -k / | tail -1 | awk '{print $4}')"
+          if [ "$free_kib" -lt 15728640 ]; then
+            echo "Local Supabase startup blocked: reserve at least 15 GiB of free host space before pulling images."
+            exit 1
+          fi
           smoke_dir="$(mktemp -d "$RUNNER_TEMP/elleng-smoke.XXXXXX")"
           cd "$smoke_dir"
           smoke_network="elleng-smoke-$GITHUB_RUN_ID"
