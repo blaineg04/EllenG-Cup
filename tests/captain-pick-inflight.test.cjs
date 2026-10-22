@@ -18,3 +18,9 @@ test('pick failure catches refresh failure and eventually restores interaction',
 test('realtime render cannot reactivate drafting during an in-flight pick',()=>{
  assert.match(s,/mine=!done&&t===myTeam&&!S\.timerPaused&&!pickInFlight/);
 });
+
+test('failed authoritative refresh keeps captain drafting disabled',()=>{
+ assert.match(s,/mine=!done&&t===myTeam&&!S\.timerPaused&&!pickInFlight&&!pickSyncFailed/);
+ assert.match(pick,/catch\(refreshError\)\{pickSyncFailed=true/);
+ assert.match(pick,/Reload this page before drafting again/);
+});
