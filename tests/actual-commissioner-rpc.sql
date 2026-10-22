@@ -25,7 +25,7 @@ begin
   returning d.state, d.updated_at;
   if not found then raise exception 'This tournament changed on another device. Reload before saving again.' using errcode='40001'; end if;
 end;
-$function$
+$function$;
 
 INSERT INTO public.elleng_drafts VALUES
 ('qa-draft','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','{"picks":[]}'::jsonb,'2026-10-22T00:00:00Z');
