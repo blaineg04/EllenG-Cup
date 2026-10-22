@@ -3,7 +3,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const s=fs.readFileSync('captain.html','utf8');
-const pick=s.slice(s.indexOf('let pickInFlight=false;'),s.indexOf('document.getElementById("signin").onclick'));
+const pick=s.slice(s.indexOf('let pickInFlight=false'),s.indexOf('document.getElementById("signin").onclick'));
 test('captain cannot submit overlapping pick requests on repeated taps',()=>{
  assert.match(pick,/if\(pickInFlight\)return/);
  assert.match(pick,/pickInFlight=true/);
@@ -11,7 +11,7 @@ test('captain cannot submit overlapping pick requests on repeated taps',()=>{
  assert.match(pick,/finally\s*\{\s*pickInFlight=false;\s*render\(\)/);
 });
 test('pick failure catches refresh failure and eventually restores interaction',()=>{
- assert.match(pick,/try\{await load\(\)\}catch\(refreshError\)/);
+ assert.match(pick,/try\{await load\(\);pickSyncFailed=false\}catch\(refreshError\)/);
  assert.match(pick,/finally\s*\{/);
 });
 
