@@ -1,0 +1,24 @@
+name: EllenG system health preview tests
+on:
+  push:
+    branches: ['development/admin-system-health-20261022']
+    paths:
+      - 'system-health.html'
+      - 'tests/system-health.test.cjs'
+      - '.github/workflows/system-health-tests.yml'
+  pull_request:
+    paths:
+      - 'system-health.html'
+      - 'tests/system-health.test.cjs'
+      - '.github/workflows/system-health-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  safety-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate read-only health page
+        run: node --test tests/system-health.test.cjs
