@@ -1,0 +1,34 @@
+name: Local Supabase compatibility
+on:
+  push:
+    branches: ['release/nov20-score-integrity-20261020']
+    paths: ['.github/workflows/local-supabase-preflight.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compatibility:
+    if: github.ref == 'refs/heads/release/nov20-score-integrity-20261020'
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 5
+    steps:
+      - name: Check native runtime requirements without installing services
+        shell: bash
+        run: |
+          set -euo pipefail
+          architecture="$(uname -m)"
+          macos_version="$(sw_vers -productVersion)"
+          printf 'Architecture: %s\nmacOS: %s\n' "$architecture" "$macos_version"
+          if [ "$architecture" = "arm64" ] && [ "${macos_version%%.*}" -ge 14 ]; then
+            echo "Native platform requirement: PASS"
+          else
+            echo "Native platform requirement: UNSUPPORTED"
+          fi
+          if command -v supabase >/dev/null 2>&1; then
+            supabase --version
+            supabase --help
+          else
+            echo "Supabase CLI: not installed on PATH"
+          fi
+          node --version
+          npm --version
