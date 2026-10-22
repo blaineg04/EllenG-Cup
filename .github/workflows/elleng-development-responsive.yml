@@ -1,7 +1,7 @@
 name: EllenG current-branch synthetic responsive acceptance
 on:
   push:
-    branches: ['development/disposable-postgres-acceptance-20261022']
+    branches: ['development/disposable-postgres-acceptance-20261022', 'release-candidate/nov20-app-only-20261022']
     paths:
       - '.github/workflows/elleng-development-responsive.yml'
       - 'index.html'
@@ -28,7 +28,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: elleng-development-responsive-${{ github.ref }}
+  group: elleng-development-responsive-${{ github.ref_name }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   seven-width-synthetic:
