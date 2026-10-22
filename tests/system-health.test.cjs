@@ -47,3 +47,15 @@ test('network status updates do not assert that offline submissions were saved',
  assert.match(page,/addEventListener\("online"/);
  assert.match(page,/Pending score submissions cannot yet be measured/);
 });
+
+test('sign-out immediately revokes health display and clears stale requests',()=>{
+ assert.match(page,/onAuthStateChange\(\(event,session\)=>/);
+ assert.match(page,/event==="SIGNED_OUT"/);
+ assert.match(page,/inspectionEpoch\+\+/);
+ assert.match(page,/epoch!==inspectionEpoch/);
+ assert.match(page,/Session ended or account changed/);
+});
+test('stale subscription callback cannot set healthy after sign-out',()=>{
+ assert.match(page,/if\(!authorizedUser\|\|epoch!==inspectionEpoch\)return/);
+ assert.match(page,/if\(epoch!==inspectionEpoch\|\|!authorizedUser\)return/);
+});
