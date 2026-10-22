@@ -63,15 +63,14 @@ jobs:
             fi
           done
           df -h / | tail -1
-      - name: Start installed Docker Desktop and check engine resources
+      - name: Inspect installed container engines without changing profiles
         shell: bash
         run: |
           set -euo pipefail
           export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
-          docker desktop --help
-          if ! docker info --format '{{.ServerVersion}}' >/dev/null 2>&1; then
-            docker desktop start --help
-            docker desktop start
-          fi
-          docker info --format 'Engine {{.ServerVersion}}; CPUs {{.NCPU}}; memory bytes {{.MemTotal}}'
-          docker system df
+          docker desktop status || true
+          docker context ls --format '{{.Name}}'
+          colima version
+          colima list
+          colima status || true
+          sysctl -n hw.memsize
