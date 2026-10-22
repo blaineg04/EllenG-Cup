@@ -5676,7 +5676,15 @@ function subscribeLive(){
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_player_hole_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e)}})
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_pair_hole_scores",filter:`tournament_id=eq.${TOURNAMENT_ID}`},async()=>{try{await loadScores();renderAll()}catch(e){console.error(e)}})
   .on("postgres_changes",{event:"UPDATE",schema:"public",table:"elleng_tournaments",filter:`id=eq.${TOURNAMENT_ID}`},async p=>{tournament=p.new;renderAll()});
- liveChannel.subscribe();
+ // The Realtime channel can reconnect after a device sleeps or loses coverage.
+ // Re-read server state on subscription, and never silently label channel failure healthy.
+ liveChannel.subscribe(status=>{
+  if(status==="SUBSCRIBED"){
+   if(!document.hidden)syncLive().catch(e=>console.warn("Realtime catch-up failed",e));
+  }else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
+   setSyncStatus("error","Realtime reconnecting");
+  }
+ });
 }
 
 
