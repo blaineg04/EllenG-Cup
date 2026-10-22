@@ -201,6 +201,7 @@ test('commissioner saves use version checked RPC and reject a stale write',async
  let calls=0;
  const captured=[];
  const ctx=vm.createContext({
+  cfg:{draftId:'elleng-cup'},
   S:{picks:[{golfer:1,team:0}]},
   fresh:()=>({}),
   alert:()=>{},
@@ -209,7 +210,7 @@ test('commissioner saves use version checked RPC and reject a stale write',async
  });
  vm.runInContext(html.slice(start,end),ctx);
  vm.runInContext("draftUpdatedAt='2026-10-22T10:00:00.000Z'",ctx);
- await assert.rejects(vm.runInContext('secureSave()',ctx),/Concurrent draft update/);
+ await assert.rejects(vm.runInContext('secureSave()',ctx),error=>error?.message==='Concurrent draft update');
  assert.equal(calls,1);
  assert.equal(captured[0].name,'elleng_save_state_if_fresh');
  assert.equal(captured[0].args.p_expected_updated_at,'2026-10-22T10:00:00.000Z');
@@ -224,6 +225,7 @@ test('commissioner refuses overlapping saves until the first finishes',async()=>
  let release,called=0;
  const pending=new Promise(resolve=>{release=resolve});
  const ctx=vm.createContext({
+  cfg:{draftId:'elleng-cup'},
   S:{picks:[]},fresh:()=>({}),alert:()=>{},
   db:{auth:{getUser:async()=>({data:{user:{id:'commissioner'}},error:null})},
    rpc:async()=>{called++;return pending}}

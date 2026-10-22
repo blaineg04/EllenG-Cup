@@ -107,7 +107,16 @@ async function verifyNavigation(page, width, capture, prefix = '') {
   // Wait for the menu backdrop to finish closing before a real desktop Home click.
   // At 1024px it can briefly intercept pointer events during the transition.
   await page.locator('#moreMenuBackdrop').waitFor({state:'hidden'});
-  await page.locator(home).click();
+  try {
+    await page.locator(home).click({timeout:5000});
+  } catch (error) {
+    const diagnostic=await page.locator(home).evaluate(el=>{
+      const r=el.getBoundingClientRect(),x=Math.max(0,Math.min(innerWidth-1,r.left+r.width/2)),y=Math.max(0,Math.min(innerHeight-1,r.top+r.height/2));
+      const hit=document.elementFromPoint(x,y),cs=getComputedStyle(el);
+      return {width:innerWidth,scrollY,homeRect:{top:r.top,bottom:r.bottom,left:r.left,right:r.right},hitTag:hit?.tagName,hitId:hit?.id,hitClass:String(hit?.className||''),homePointerEvents:cs.pointerEvents,homePosition:cs.position};
+    });
+    throw new Error('Desktop Home click blocked after Extras: '+JSON.stringify(diagnostic)+'; '+error.message);
+  }
   await page.locator('#homeView:not(.hidden)').waitFor({state:'visible'});
   await page.locator('#moreMenuBackdrop').waitFor({state:'hidden'});
   await openMore();
