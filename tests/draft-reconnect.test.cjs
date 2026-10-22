@@ -8,6 +8,7 @@ test('draft reloads persisted state when Realtime subscription reconnects',()=>{
  assert.match(block,/st==="SUBSCRIBED"/);
  assert.match(block,/await load\(\);cb\(\)/);
  assert.match(block,/Draft resubscription refresh failed/);
+ assert.match(block,/el\.textContent="SYNC ERROR"/);
 });
 test('draft visibly distinguishes channel failures',()=>{
  for(const status of ['CHANNEL_ERROR','TIMED_OUT','CLOSED'])assert.ok(block.includes(status));
