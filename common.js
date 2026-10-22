@@ -77,6 +77,7 @@ function subscribe(cb){
     console.error("Draft realtime refresh failed",e);
     const indicator=document.getElementById("connection");
     if(indicator){indicator.textContent="SYNC ERROR";indicator.className="offline"}
+    document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
     const statusStrip=document.getElementById("draftStatusStrip");
     if(statusStrip){statusStrip.classList.remove("status-live","status-connecting");statusStrip.classList.add("status-offline")}
    }
@@ -87,6 +88,7 @@ function subscribe(cb){
     el.textContent=st==="SUBSCRIBED"?"LIVE":st==="CHANNEL_ERROR"||st==="TIMED_OUT"||st==="CLOSED"?"RECONNECTING":"CONNECTING";
     el.className=st==="SUBSCRIBED"?"online":"offline";
    }
+   if(st!=="SUBSCRIBED")document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
    const strip=document.getElementById("draftStatusStrip");
    if(strip){
     strip.classList.remove("status-live","status-connecting","status-offline");
@@ -98,6 +100,7 @@ function subscribe(cb){
     try{await load();cb()}catch(e){
      console.error("Draft resubscription refresh failed",e);
      if(el){el.textContent="SYNC ERROR";el.className="offline"}
+     document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
      if(strip){strip.classList.remove("status-live","status-connecting");strip.classList.add("status-offline")}
     }
    }
