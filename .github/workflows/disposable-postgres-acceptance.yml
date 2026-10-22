@@ -2,9 +2,9 @@ name: Disposable PostgreSQL acceptance contract
 on:
   push:
     branches: ['development/disposable-postgres-acceptance-20261022']
-    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', 'tests/disposable-draft-order.sql', 'tests/disposable-realtime-publication.sql', 'tests/disposable-realtime-migration.sql', 'tests/disposable-realtime-negative.sql', 'tests/actual-commissioner-rpc.sql', 'docs/proposed-realtime-publication-migration.sql', 'tests/reference-schema-security.test.cjs', 'tests/realtime-client-reconnect.test.cjs', 'scoring.html', 'supabase.sql', '.github/workflows/disposable-postgres-acceptance.yml']
+    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', 'tests/disposable-draft-order.sql', 'tests/disposable-realtime-publication.sql', 'tests/disposable-realtime-migration.sql', 'tests/disposable-realtime-negative.sql', 'tests/actual-commissioner-rpc.sql', 'tests/actual-captain-rpc.sql', 'docs/proposed-realtime-publication-migration.sql', 'tests/reference-schema-security.test.cjs', 'tests/realtime-client-reconnect.test.cjs', 'scoring.html', 'supabase.sql', '.github/workflows/disposable-postgres-acceptance.yml']
   pull_request:
-    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', 'tests/disposable-draft-order.sql', 'tests/disposable-realtime-publication.sql', 'tests/disposable-realtime-migration.sql', 'tests/disposable-realtime-negative.sql', 'tests/actual-commissioner-rpc.sql', 'docs/proposed-realtime-publication-migration.sql', 'tests/reference-schema-security.test.cjs', 'tests/realtime-client-reconnect.test.cjs', 'scoring.html', 'supabase.sql', '.github/workflows/disposable-postgres-acceptance.yml']
+    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', 'tests/disposable-draft-order.sql', 'tests/disposable-realtime-publication.sql', 'tests/disposable-realtime-migration.sql', 'tests/disposable-realtime-negative.sql', 'tests/actual-commissioner-rpc.sql', 'tests/actual-captain-rpc.sql', 'docs/proposed-realtime-publication-migration.sql', 'tests/reference-schema-security.test.cjs', 'tests/realtime-client-reconnect.test.cjs', 'scoring.html', 'supabase.sql', '.github/workflows/disposable-postgres-acceptance.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -25,7 +25,7 @@ jobs:
           pg_version="$(ls /etc/postgresql | sort -V | tail -1)"
           sudo pg_ctlcluster "$pg_version" main start || sudo pg_ctlcluster "$pg_version" main status
           db="elleng_ci_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
-          cleanup() { sudo -u postgres dropdb --if-exists "$db" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_negative" >/dev/null 2>&1 || true; }
+          cleanup() { sudo -u postgres dropdb --if-exists "$db" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_negative" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_captain" >/dev/null 2>&1 || true; }
           trap cleanup EXIT
           sudo -u postgres createdb "$db"
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-postgres-contract.sql
@@ -34,6 +34,11 @@ jobs:
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-realtime-publication.sql
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-realtime-migration.sql
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/actual-commissioner-rpc.sql
+          # Use a separate isolated database to avoid fixture function/table collisions.
+          captain_db="${db}_captain"
+          sudo -u postgres createdb "$captain_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$captain_db" -f tests/actual-captain-rpc.sql
+          sudo -u postgres dropdb "$captain_db"
           # The exact proposed migration must fail when score-table RLS is off.
           # Use another disposable DB so this cannot affect the positive cases.
           neg_db="${db}_negative"
