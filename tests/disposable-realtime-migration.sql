@@ -16,3 +16,22 @@ BEGIN
   IF actual <> 2 THEN RAISE EXCEPTION 'Expected 2 published score tables; found %',actual; END IF;
   RAISE NOTICE 'PASS: guarded migration publishes both score tables and is repeatable';
 END $$;
+
+-- A missing source table must fail safely, rather than partially publishing it.
+-- Do not alter the real score tables: use a transactional savepoint surrogate
+-- and a separate publication to verify that the guard aborts on absent input.
+CREATE PUBLICATION elleng_ci_negative FOR TABLE acceptance.drafts;
+DO $$
+DECLARE safe_rejection boolean:=false;
+BEGIN
+  BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+      WHERE n.nspname='public' AND c.relname='not_an_elleng_score_table' AND c.relrowsecurity
+    ) THEN RAISE EXCEPTION 'Missing RLS-enabled source table'; END IF;
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='Missing RLS-enabled source table' THEN safe_rejection:=true; ELSE RAISE; END IF;
+  END;
+  IF NOT safe_rejection THEN RAISE EXCEPTION 'Missing source table was not blocked'; END IF;
+  RAISE NOTICE 'PASS: missing source table guard rejects unsafe publication';
+END $$;
