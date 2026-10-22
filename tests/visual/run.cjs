@@ -104,6 +104,9 @@ async function verifyNavigation(page, width, capture, prefix = '') {
   await openMore();
   await page.locator('[data-more-view="extras"]').click();
   await page.locator('#extrasView:not(.hidden)').waitFor({state:'visible'});
+  // Wait for the menu backdrop to finish closing before a real desktop Home click.
+  // At 1024px it can briefly intercept pointer events during the transition.
+  await page.locator('#moreMenuBackdrop').waitFor({state:'hidden'});
   await page.locator(home).click();
   await page.locator('#homeView:not(.hidden)').waitFor({state:'visible'});
   await page.locator('#moreMenuBackdrop').waitFor({state:'hidden'});
