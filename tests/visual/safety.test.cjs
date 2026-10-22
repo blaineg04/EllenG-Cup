@@ -192,3 +192,49 @@ test('successful personal score and handicap saves finish with saved status',asy
  test('unacknowledged network score failures remain queued for retry',async()=>{
  const page=selfSavePage('score',{data:null,error:{message:'Network request failed'}});await page.run();assert.equal(page.queued.length,1);assert.match(page.node('selfScoreMsg').textContent,/offline/);
  });
+
+test('commissioner saves use version checked RPC and reject a stale write',async()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../../admin.html'),'utf8');
+ const start=html.indexOf('let draftUpdatedAt=null;');
+ const end=html.indexOf('let liveMode=false',start);
+ assert.ok(start>=0&&end>start,'Commissioner versioned save functions missing');
+ let calls=0;
+ const captured=[];
+ const ctx=vm.createContext({
+  S:{picks:[{golfer:1,team:0}]},
+  fresh:()=>({}),
+  alert:()=>{},
+  db:{auth:{getUser:async()=>({data:{user:{id:'commissioner'}},error:null})},
+   rpc:async(name,args)=>{calls++;captured.push({name,args});return {data:null,error:{message:'Concurrent draft update'}}}}
+ });
+ vm.runInContext(html.slice(start,end),ctx);
+ vm.runInContext("draftUpdatedAt='2026-10-22T10:00:00.000Z'",ctx);
+ await assert.rejects(vm.runInContext('secureSave()',ctx),/Concurrent draft update/);
+ assert.equal(calls,1);
+ assert.equal(captured[0].name,'elleng_save_state_if_fresh');
+ assert.equal(captured[0].args.p_expected_updated_at,'2026-10-22T10:00:00.000Z');
+ assert.equal(ctx.S.picks.length,1);
+ assert.equal(vm.runInContext('savingDraft',ctx),false);
+});
+
+test('commissioner refuses overlapping saves until the first finishes',async()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../../admin.html'),'utf8');
+ const start=html.indexOf('let draftUpdatedAt=null;');
+ const end=html.indexOf('let liveMode=false',start);
+ let release,called=0;
+ const pending=new Promise(resolve=>{release=resolve});
+ const ctx=vm.createContext({
+  S:{picks:[]},fresh:()=>({}),alert:()=>{},
+  db:{auth:{getUser:async()=>({data:{user:{id:'commissioner'}},error:null})},
+   rpc:async()=>{called++;return pending}}
+ });
+ vm.runInContext(html.slice(start,end),ctx);
+ vm.runInContext("draftUpdatedAt='2026-10-22T10:00:00.000Z'",ctx);
+ const first=vm.runInContext('secureSave()',ctx);
+ await assert.rejects(vm.runInContext('secureSave()',ctx),/already in progress/);
+ release({data:{updated_at:'2026-10-22T10:00:01.000Z'},error:null});
+ await first;
+ assert.equal(called,1);
+ assert.equal(vm.runInContext('savingDraft',ctx),false);
+ assert.equal(vm.runInContext('draftUpdatedAt',ctx),'2026-10-22T10:00:01.000Z');
+});
