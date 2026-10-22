@@ -432,3 +432,24 @@ test('successful score refresh replaces all score collections together',async()=
 test('signed-out score refresh clears private score details without querying them',async()=>{
  const page=scoreRefresh({signedIn:false});await page.run();assert.deepEqual(page.reads,['elleng_team_scores']);assert.equal(page.context.scores,page.fresh.elleng_team_scores);assert.equal(page.context.playerScores.length,0);assert.equal(page.context.pairScores.length,0);
 });
+
+function personalClear({busy=false,assigned=true,linked=true,invoke=async()=>({data:{},error:null})}={}){
+ const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{value:id==='selfScoreHole'?'1':id==='selfScoreInput'?'4':'',textContent:'',disabled:false,addEventListener(event,fn){this.click=fn}});return nodes.get(id)};
+ let requests=0;const context={$:node,scoreSaveBusy:busy,currentGolferIndex:linked?0:null,selfGolferTeamIndex:()=>assigned?0:null,renderSelfGolfScore(){},setSyncStatus(){},DRAFT_ID:'test-draft',TOURNAMENT_ID:'test-tournament',navigator:{onLine:true},db:{functions:{invoke:async(...args)=>{requests++;return invoke(...args)}}},loadBase:async()=>{},loadScores:async()=>{},renderAll(){},queueOfflineScore(){}};
+ const a=html.indexOf('async function saveSelfScore('),b=html.indexOf('async function resetGolferPin(',a);vm.runInNewContext(html.slice(a,b),context);
+ const c=html.indexOf('$("clearSelfScore").addEventListener("click",async()=>{'),d=html.indexOf('syncSelfScoreParToHole();',c);vm.runInNewContext(html.slice(c,d),context);
+ return {run:()=>node('clearSelfScore').click(),node,context,requests:()=>requests};
+}
+test('personal clear preserves typed entry while another score save is pending',async()=>{
+ const page=personalClear({busy:true});await page.run();assert.equal(page.node('selfScoreInput').value,'4');assert.equal(page.requests(),0);assert.match(page.node('selfScoreMsg').textContent,/already saving/);
+});
+test('rejected personal clear keeps the typed score for recovery',async()=>{
+ const page=personalClear({invoke:async()=>({data:null,error:{message:'Permission denied'}})});await page.run();assert.equal(page.node('selfScoreInput').value,'4');assert.equal(page.requests(),1);assert.match(page.node('selfScoreMsg').textContent,/Permission denied/);
+});
+test('completed personal clear preserves a newer entry after hole navigation',async()=>{
+ let release;const pending=new Promise(r=>{release=r});let body;const page=personalClear({invoke:async(_,args)=>{body=args.body;return pending}});const task=page.run();page.node('selfScoreHole').value='2';page.node('selfScoreInput').value='7';release({data:{},error:null});await task;
+ assert.equal(body.hole,1);assert.equal(body.score,'');assert.equal(page.node('selfScoreInput').value,'7');assert.match(page.node('selfScoreMsg').textContent,/Hole 1/);
+});
+test('personal clear removes an acknowledged current entry and keeps local-only clearing available',async()=>{
+ for(const options of [{},{assigned:false},{linked:false}]){const page=personalClear(options);await page.run();assert.equal(page.node('selfScoreInput').value,'');assert.equal(page.requests(),options.assigned===false||options.linked===false?0:1);}
+});

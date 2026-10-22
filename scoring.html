@@ -5154,7 +5154,10 @@ async function saveSelfScore(clear=false){
    if(error)throw error;if(data?.error)throw new Error(data.error);
    scoreAccepted=true;
    await loadBase();await loadScores();renderAll();
-   if(clear){$("selfScoreInput").value="";renderSelfGolfScore();msg.textContent=`Score cleared for Hole ${h}.`;}
+   if(clear){
+     if(Number($("selfScoreHole").value)===h&&$("selfScoreInput").value.trim()===raw){$("selfScoreInput").value="";renderSelfGolfScore();}
+     msg.textContent=`Score cleared for Hole ${h}.`;
+   }
    else {
      const par=Number($("selfScoreParSelect")?.value||parForHole(h)||4),diff=Number(raw)-par,summary=`${golfRelativeLabel(diff)} • ${golfScoreTerm(diff,Number(raw),par)}`;
      if(data.mode==="player_shamble")msg.textContent=`Saved your personal shamble score for Hole ${h}: ${raw} strokes (${summary}).`;
@@ -5949,11 +5952,13 @@ $("selfScoreInput").addEventListener("input",renderSelfGolfScore);
 $("saveSelfScore").addEventListener("click",()=>saveSelfScore(false));
 $("clearSelfScore").addEventListener("click",async()=>{
  const input=$("selfScoreInput"),msg=$("selfScoreMsg"),h=Number($("selfScoreHole")?.value||1);
- if(input)input.value="";
- renderSelfGolfScore();
- if(currentGolferIndex==null){if(msg)msg.textContent=`Entry cleared for Hole ${h}.`;return;}
- const ti=selfGolferTeamIndex(currentGolferIndex);
- if(ti==null){if(msg)msg.textContent=`Entry cleared for Hole ${h}.`;return;}
+ if(scoreSaveBusy){if(msg)msg.textContent="A score is already saving — please wait.";return;}
+ if(currentGolferIndex==null||selfGolferTeamIndex(currentGolferIndex)==null){
+   if(input)input.value="";
+   renderSelfGolfScore();
+   if(msg)msg.textContent=`Entry cleared for Hole ${h}.`;
+   return;
+ }
  await saveSelfScore(true);
 });
 syncSelfScoreParToHole();
