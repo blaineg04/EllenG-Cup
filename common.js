@@ -73,7 +73,13 @@ async function save(){let {error}=await db.from("elleng_drafts").upsert({id:cfg.
 function subscribe(cb){
  const channel=db.channel("elleng-"+cfg.draftId)
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_drafts",filter:"id=eq."+cfg.draftId},async()=>{
-   try{await load();cb()}catch(e){console.error("Draft realtime refresh failed",e)}
+   try{await load();cb()}catch(e){
+    console.error("Draft realtime refresh failed",e);
+    const indicator=document.getElementById("connection");
+    if(indicator){indicator.textContent="SYNC ERROR";indicator.className="offline"}
+    const statusStrip=document.getElementById("draftStatusStrip");
+    if(statusStrip){statusStrip.classList.remove("status-live","status-connecting");statusStrip.classList.add("status-offline")}
+   }
   })
   .subscribe(async st=>{
    const el=document.getElementById("connection");
