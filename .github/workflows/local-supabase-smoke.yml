@@ -1,0 +1,53 @@
+name: Local Supabase smoke test
+on:
+  push:
+    branches: ['release/nov20-score-integrity-20261020']
+    paths: ['.github/workflows/local-supabase-smoke.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  local-stack:
+    if: github.ref == 'refs/heads/release/nov20-score-integrity-20261020'
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 12
+    env:
+      DOCKER_CONTEXT: colima
+    steps:
+      - name: Start and health-check a disposable localhost-only stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          docker info --format 'Docker engine {{.ServerVersion}}'
+          free_kib="$(df -k / | tail -1 | awk '{print $4}')"
+          if [ "$free_kib" -lt 15728640 ]; then
+            echo "Local Supabase startup blocked: reserve at least 15 GiB of free host space before pulling images."
+            exit 1
+          fi
+          smoke_dir="$(mktemp -d "$RUNNER_TEMP/elleng-smoke.XXXXXX")"
+          cd "$smoke_dir"
+          smoke_network="elleng-smoke-$GITHUB_RUN_ID"
+          cli() { npm exec --yes --package=supabase@2.121.0 -- supabase "$@"; }
+          cleanup() {
+            cli stop --no-backup > "$smoke_dir/stop.log" 2>&1 || true
+            docker network rm "$smoke_network" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          cli init --yes
+          node - <<'NODE'
+          const fs=require('fs');
+          const p='supabase/config.toml';
+          let s=fs.readFileSync(p,'utf8');
+          s=s.replace(/5432([0-9])/g,(_,n)=>'5632'+n);
+          fs.writeFileSync(p,s);
+          NODE
+          docker network create -o com.docker.network.bridge.host_binding_ipv4=127.0.0.1 "$smoke_network" >/dev/null
+          echo "Starting isolated EllenG services; existing containers remain untouched."
+          cli start --network-id "$smoke_network" --exclude studio,postgres-meta,imgproxy,storage-api,mailpit,logflare,vector,supavisor --output json > "$smoke_dir/start.json"
+          curl --fail --silent --show-error http://127.0.0.1:56321/auth/v1/health
+          echo
+          echo "LOCAL_AUTH_HEALTH=PASS"
+          docker ps --format 'Container {{.Names}}; status {{.Status}}'
+          echo "Disposable local stack health check complete."

@@ -1,4 +1,5 @@
--- EllenG Cup: Commissioner + six captain accounts + public spectators
+-- EllenG Cup: commissioner, up to nine captain accounts, and public spectators
+-- Baseline reference only. Verify existing production schema before any migration.
 create table if not exists public.elleng_drafts (
   id text primary key,
   owner_id uuid references auth.users(id),
@@ -8,7 +9,7 @@ create table if not exists public.elleng_drafts (
 create table if not exists public.elleng_captains (
   draft_id text not null references public.elleng_drafts(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
-  team_index integer not null check (team_index between 0 and 5),
+  team_index integer not null check (team_index between 0 and 8),
   primary key (draft_id,user_id),
   unique (draft_id,team_index)
 );
@@ -24,22 +25,15 @@ grant select on public.elleng_captains to authenticated;
 drop policy if exists "public read" on public.elleng_drafts;
 drop policy if exists "authenticated insert" on public.elleng_drafts;
 drop policy if exists "authorized update" on public.elleng_drafts;
+drop policy if exists "elleng_owner_update" on public.elleng_drafts;
 create policy "public read" on public.elleng_drafts for select to anon,authenticated using(true);
 create policy "authenticated insert" on public.elleng_drafts for insert to authenticated
 with check ((select auth.uid())=owner_id);
-create policy "authorized update" on public.elleng_drafts for update to authenticated
-using (
-  (select auth.uid())=owner_id OR exists(
-    select 1 from public.elleng_captains c
-    where c.draft_id=elleng_drafts.id and c.user_id=(select auth.uid())
-  )
-)
-with check (
-  (select auth.uid())=owner_id OR exists(
-    select 1 from public.elleng_captains c
-    where c.draft_id=elleng_drafts.id and c.user_id=(select auth.uid())
-  )
-);
+-- Captains select draft state, but must make picks via validated RPCs,
+-- not unrestricted draft-row UPDATE.
+create policy "elleng_owner_update" on public.elleng_drafts for update to authenticated
+using ((select auth.uid())=owner_id)
+with check ((select auth.uid())=owner_id);
 
 drop policy if exists "captain sees own assignment" on public.elleng_captains;
 create policy "captain sees own assignment" on public.elleng_captains for select to authenticated
@@ -51,7 +45,7 @@ do $$ begin
  alter publication supabase_realtime add table public.elleng_drafts;
 exception when duplicate_object then null; end $$;
 
--- After creating 6 captain users in Authentication > Users,
+-- After creating the required captain users in Authentication > Users,
 -- add their UUIDs below in SQL Editor:
 -- insert into public.elleng_captains(draft_id,user_id,team_index) values
 -- ('elleng-cup','CAPTAIN_1_UUID',0),
@@ -60,3 +54,6 @@ exception when duplicate_object then null; end $$;
 -- ('elleng-cup','CAPTAIN_4_UUID',3),
 -- ('elleng-cup','CAPTAIN_5_UUID',4),
 -- ('elleng-cup','CAPTAIN_6_UUID',5);
+-- For seven to nine teams, assign indices 6, 7 and 8 as needed.
+-- Existing deployments require a separately reviewed migration; editing this file
+-- does not modify Supabase.

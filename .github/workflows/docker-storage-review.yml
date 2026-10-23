@@ -1,0 +1,58 @@
+name: Docker storage review
+on:
+  push:
+    branches: ['release/nov20-score-integrity-20261020']
+    paths: ['.github/workflows/docker-storage-review.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  storage-review:
+    if: github.ref == 'refs/heads/release/nov20-score-integrity-20261020'
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 5
+    env:
+      DOCKER_CONTEXT: colima
+    steps:
+      - name: Inventory volume metadata and references without reading database contents
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          node - <<'NODE'
+          const {execFileSync}=require('node:child_process');
+          const docker=(...args)=>execFileSync('docker',args,{encoding:'utf8',maxBuffer:8*1024*1024});
+          const ids=docker('ps','-aq').trim().split(/\s+/).filter(Boolean);
+          const containers=ids.length?JSON.parse(docker('inspect',...ids)):[];
+          const refs=new Set(containers.flatMap(c=>(c.Mounts||[]).filter(m=>m.Type==='volume').map(m=>m.Name)));
+          console.log('CONTAINER_REFERENCES',JSON.stringify(containers.map(c=>({name:c.Name,running:c.State.Running,started:c.State.StartedAt,volumes:(c.Mounts||[]).filter(m=>m.Type==='volume').map(m=>m.Name)}))));
+          const names=docker('volume','ls','-q').trim().split(/\s+/).filter(Boolean);
+          const volumes=names.length?JSON.parse(docker('volume','inspect',...names)):[];
+          console.log('VOLUME_REVIEW',JSON.stringify(volumes.map(v=>({name:v.Name,created:v.CreatedAt,referenced:refs.has(v.Name),composeProject:v.Labels?.['com.docker.compose.project']||null,composeVolume:v.Labels?.['com.docker.compose.volume']||null}))));
+          console.log('VOLUME_COUNTS',JSON.stringify({total:volumes.length,referenced:volumes.filter(v=>refs.has(v.Name)).length,unreferenced:volumes.filter(v=>!refs.has(v.Name)).length}));
+          console.log(docker('system','df','-v'));
+          NODE
+          colima ssh -- df -h /var/lib/docker
+          df -h / | tail -1
+      - name: Read only PostgreSQL volume structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          colima ssh -- sudo sh -c '
+            for d in /var/lib/docker/volumes/*/_data; do
+              [ -d "$d" ] || continue
+              n="${d%/_data}"; n="${n##*/}"
+              if [ -f "$d/PG_VERSION" ]; then
+                printf "PG_VOLUME %s version=" "$n"
+                cat "$d/PG_VERSION"
+                printf "STRUCTURE %s " "$n"
+                for f in base global pg_wal pg_xact postgresql.auto.conf postmaster.pid; do
+                  [ ! -e "$d/$f" ] || printf "%s " "$f"
+                done
+                printf "\\n"
+              else
+                printf "OTHER_VOLUME %s\\n" "$n"
+              fi
+            done
+          '

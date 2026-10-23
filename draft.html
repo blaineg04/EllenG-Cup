@@ -797,7 +797,7 @@ function setDraftConnectionStatus(state,label){
 
 (async()=>{
  try{
-   await load();setDraftConnectionStatus("live","LIVE");render();subscribe(render);setInterval(draw,500);
+   await load();setDraftConnectionStatus("connecting","CONNECTING");render();subscribe(render);setInterval(draw,500);
  }catch(e){
    console.error("Draft load error:",e);
    setDraftConnectionStatus("offline","OFFLINE");
