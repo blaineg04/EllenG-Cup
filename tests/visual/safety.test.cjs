@@ -315,3 +315,16 @@ test('18-hole shamble awards cumulative points from every golfer, with Gator dou
  ctx.playerScores.pop();
  assert.equal(vm.runInContext('pointsForHole(1)[1]',ctx),null,'Incomplete roster has no official team total');
 });
+
+test('staged golfer endpoint writes individual shamble scores on holes 1 through 18 only',()=>{
+ const endpoint=fs.readFileSync(path.join(__dirname,'../../supabase/functions/golfer-handicap/index.ts'),'utf8');
+ const action=endpoint.slice(endpoint.indexOf('if(action==="update_score")'));
+ const shamble=action.slice(action.indexOf('// For the 18-hole shamble'));
+ assert.match(action,/hole<1\|\|hole>18/,'Reject out-of-range holes');
+ assert.match(action,/ownGolfer\(draft\)/,'Require authenticated linked golfer');
+ assert.match(action,/roster\.includes\(golferIndex\)/,'Enforce team roster identity');
+ assert.match(shamble,/elleng_player_hole_scores/,'Save individual score rows');
+ assert.match(shamble,/golfer_index:golferIndex/,'Preserve unique golfer scores');
+ assert.doesNotMatch(shamble,/service\.from\("elleng_team_scores"\)/,'Never derive lowest-ball team rows for shamble');
+ assert.doesNotMatch(shamble,/if\(hole<=9\)/,'All 18 holes use individual shamble scoring');
+});
