@@ -3929,16 +3929,15 @@ function renderLiveHoleScores(){
 function scoreClass(rel){if(!rel||rel==="—")return "";if(rel==="0")return "score-even";return rel.startsWith("−")?"score-good":"score-bad"}
 function projectedTotals(){
  const official=totals();
- const out=teams.map((_,i)=>({team:i,official:official[i]?.pts||0,projected:official[i]?.pts||0,thru:official[i]?.thru||0,provisionalHoles:0}));
- for(let h=1;h<=18;h++){
-   const vals=teams.map((_,i)=>{const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));return r?Number(r.score):NaN});
-   const entered=vals.filter(Number.isFinite).length;
-   if(!entered||entered===teams.length)continue;
-   vals.forEach((v,i)=>{if(Number.isFinite(v))out[i].provisionalHoles++});
- }
- return out.sort((a,b)=>b.projected-a.projected||b.thru-a.thru||a.team-b.team);
+ return teams.map((_,i)=>{
+  const provisionalHoles=Array.from({length:18},(_,h)=>h+1).filter(h=>{
+   if(pointsForHole(h)[i]!==null)return false;
+   const roster=teamRosterGolfers(i);
+   return roster.some(g=>playerScores.some(x=>Number(x.team_index)===i&&Number(x.golfer_index)===g.index&&Number(x.hole)===h));
+  }).length;
+  return {team:i,official:official[i]?.pts||0,projected:official[i]?.pts||0,thru:official[i]?.thru||0,provisionalHoles};
+ }).sort((a,b)=>b.projected-a.projected||b.thru-a.thru||a.team-b.team);
 }
-
 function latestTournamentMoment(){
  const ev=(scores||[]).filter(x=>validTeamScore(x.score)&&x.hole!==null&&x.hole!==undefined&&typeof x.hole!=="boolean"&&String(x.hole).trim()!==""&&Number.isInteger(Number(x.hole))&&Number(x.hole)>=1&&Number(x.hole)<=18&&x.team_index!==null&&x.team_index!==undefined&&typeof x.team_index!=="boolean"&&String(x.team_index).trim()!==""&&Number.isInteger(Number(x.team_index))&&Number(x.team_index)>=0&&Number(x.team_index)<teams.length).map(x=>{const h=Number(x.hole),ti=Number(x.team_index),g=relativeGolf(Number(x.score),parForHole(h));return {h,ti,score:Number(x.score),g}}).sort((a,b)=>b.h-a.h||b.ti-a.ti)[0];
  if(!ev)return 'Waiting for the first score to be posted.';
@@ -3947,7 +3946,7 @@ function latestTournamentMoment(){
 function renderBroadcast(){
  const ov=$("broadcastOverlay");if(!ov)return;const arr=projectedTotals();const official=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team),leader=official[0],hasLeader=leader&&leader.pts>0;
  $("broadcastTicker").textContent=latestTournamentMoment();
- $("broadcastStandings").innerHTML=arr.map((x,n)=>`<div class="broadcast-row"><div class="b-rank">${n+1}</div><div><strong><span class="mini-team-dot" style="background:${teamAccent(x.team)}"></span>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div style="opacity:.65;font-size:12px">${x.provisionalHoles?'Pending • no points yet':'Official posted holes'}</div></div><div class="b-pts">${x.projected.toFixed(x.projected%1?1:0)} pts</div><div class="b-thru">${x.thru?`Thru ${x.thru}`:'—'}</div></div>`).join('')||'<div style="opacity:.75">Waiting for scores…</div>';
+ $("broadcastStandings").innerHTML=arr.map((x,n)=>`<div class="broadcast-row"><div class="b-rank">${n+1}</div><div><strong><span class="mini-team-dot" style="background:${teamAccent(x.team)}"></span>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div style="opacity:.65;font-size:12px">${x.provisionalHoles?'Awaiting remaining golfer scores':'Official posted holes'}</div></div><div class="b-pts">${x.projected.toFixed(x.projected%1?1:0)} pts</div><div class="b-thru">${x.thru?`Thru ${x.thru}`:'—'}</div></div>`).join('')||'<div style="opacity:.75">Waiting for scores…</div>';
  $("broadcastLeader").textContent=hasLeader?(teams[leader.team]?.name||'—'):'—';$("broadcastLeaderSub").textContent=hasLeader?`${leader.pts.toFixed(leader.pts%1?1:0)} official Cup pts • Thru ${leader.thru||0}`:'No official Cup points yet';
  $("broadcastCourse").textContent=tournamentCourseLabel()||"Course not selected";
  let complete=0;for(let h=1;h<=18;h++){if(teams.length&&pointsForHole(h).every(p=>p!==null))complete++}$("broadcastHoles").textContent=`${complete} / 18`;
