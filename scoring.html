@@ -3911,7 +3911,7 @@ function totals(){
 function renderLiveHoleScores(){
  const activeHoles=Array.from({length:18},(_,i)=>i+1).filter(h=>isSplitPair()
   ?scores.some(x=>Number(x.hole)===h&&validTeamScore(x.score))
-  :playerScores.some(x=>Number(x.hole)===h&&Number.isInteger(Number(x.score))&&Number(x.score)>=1&&Number(x.score)<=20));
+  :teams.some((_,teamIndex)=>teamRosterGolfers(teamIndex).some(g=>playerScores.some(x=>Number(x.team_index)===teamIndex&&Number(x.golfer_index)===g.index&&Number(x.hole)===h&&Number.isInteger(Number(x.score))&&Number(x.score)>=1&&Number(x.score)<=20))));
  if(!activeHoles.length){$("liveHoleScores").innerHTML='<div class="note">No scores entered yet.</div>';return}
  $("liveHoleScores").innerHTML=activeHoles.map(h=>{
   const par=parForHole(h),pts=pointsForHole(h),count=pts.filter(p=>p!==null).length,official=count===teams.length;
