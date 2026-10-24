@@ -286,3 +286,32 @@ test('captain submits at most one pick while the server response is pending',asy
  assert.equal(renders,1);
  assert.equal(ctx.S.picks.length,1);
 });
+
+test('18-hole shamble awards cumulative points from every golfer, with Gator doubling',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../../scoring.html'),'utf8');
+ const start=html.indexOf('function individualCupPoints(');
+ const end=html.indexOf('function finalCargoBonus()',start);
+ assert.ok(start>=0&&end>start,'Cumulative shamble scoring functions missing');
+ const ctx=vm.createContext({
+  teams:[{name:'Team 1'},{name:'Team 2'}],
+  draftState:{teams:[{roster:[0,1]},{roster:[2,3]}],golfers:[{name:'A'},{name:'B'},{name:'C'},{name:'D'}]},
+  playerScores:[],tournament:{gator_hole:null},
+  scores:[],parForHole:()=>4,isSplitPair:()=>false,
+  teamRosterGolfers:i=>i===0?[{index:0},{index:1}]:[{index:2},{index:3}]
+ });
+ vm.runInContext(html.slice(start,end),ctx);
+ const pts=(st,par)=>vm.runInContext('individualCupPoints('+JSON.stringify(st)+','+par+')',ctx);
+ for(const [st,score] of [[2,5],[3,4],[4,3],[5,2],[6,1],[7,0]])assert.equal(pts(st,4),score);
+ assert.equal(pts('',4),null);
+ ctx.playerScores=[
+  {team_index:0,golfer_index:0,hole:1,score:3},
+  {team_index:0,golfer_index:1,hole:1,score:4},
+  {team_index:1,golfer_index:2,hole:1,score:5},
+  {team_index:1,golfer_index:3,hole:1,score:6}
+ ];
+ assert.deepEqual(Array.from(vm.runInContext('pointsForHole(1)',ctx)),[7,3]);
+ ctx.tournament.gator_hole=1;
+ assert.deepEqual(Array.from(vm.runInContext('pointsForHole(1)',ctx)),[14,6]);
+ ctx.playerScores.pop();
+ assert.equal(vm.runInContext('pointsForHole(1)[1]',ctx),null,'Incomplete roster has no official team total');
+});
