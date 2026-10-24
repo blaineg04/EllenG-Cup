@@ -240,3 +240,21 @@ test('commissioner refuses overlapping saves until the first finishes',async()=>
  assert.equal(vm.runInContext('savingDraft',ctx),false);
  assert.equal(vm.runInContext('draftUpdatedAt',ctx),'2026-10-22T10:00:01.000Z');
 });
+
+test('commissioner ignores an older realtime snapshot after a confirmed draft save',async()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../../admin.html'),'utf8');
+ const start=html.indexOf('let draftUpdatedAt=null;');
+ const end=html.indexOf('let liveMode=false',start);
+ assert.ok(start>=0&&end>start,'Commissioner synchronization functions missing');
+ const ctx=vm.createContext({
+  cfg:{draftId:'test-draft'},
+  S:{picks:[{golfer:1,team:0}]},
+  fresh:()=>({}),
+  db:{from:()=>({select(){return this},eq(){return this},single:async()=>({data:{updated_at:'2026-10-22T10:00:00Z',state:{picks:[]}},error:null})})}
+ });
+ vm.runInContext(html.slice(start,end),ctx);
+ vm.runInContext("draftUpdatedAt='2026-10-22T10:00:01Z'",ctx);
+ await vm.runInContext('load()',ctx);
+ assert.equal(ctx.S.picks.length,1,'Stale refresh must not erase confirmed pick');
+ assert.equal(vm.runInContext('draftUpdatedAt',ctx),'2026-10-22T10:00:01Z');
+});
