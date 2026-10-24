@@ -3888,10 +3888,11 @@ function individualPointsForTeamHole(teamIndex,h){
  });
  if(values.some(p=>p===null))return null;
  const pts=values.reduce((sum,p)=>sum+p,0);
- return Number(tournament?.gator_hole)===h?pts*2:pts;
+ const g=tournament?.gator_hole;
+ return g!==null&&g!==undefined&&typeof g!=="boolean"&&String(g).trim()!==""&&Number(g)===h?pts*2:pts;
 }
 function pointsForHole(h){
- if(!Number.isInteger(Number(h))||Number(h)<1||Number(h)>18)return Array(teams.length).fill(null);
+ if(h===null||h===undefined||typeof h==="boolean"||String(h).trim()===""||!Number.isInteger(Number(h))||Number(h)<1||Number(h)>18)return Array(teams.length).fill(null);
  if(!isSplitPair())return teams.map((_,i)=>individualPointsForTeamHole(i,Number(h)));
  const vals=teams.map((_,i)=>{const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===Number(h)&&validTeamScore(x.score));return r?Number(r.score):NaN});
  if(vals.filter(Number.isFinite).length<teams.length)return Array(teams.length).fill(null);
