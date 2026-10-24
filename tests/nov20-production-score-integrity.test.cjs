@@ -20,8 +20,14 @@ function pendingHoleSave(kind,clear=false){
 }
 for(const kind of ['shamble','split-pair'])for(const clear of [false,true])test(`${kind} ${clear?'clear':'save'} keeps the original hole after navigation during a pending request`,async()=>{
  const page=pendingHoleSave(kind,clear);const operation=page.run();await Promise.resolve();page.context.hole=page.initial+1;page.release();await operation;
- assert.equal(page.writes.length,2);assert.ok(page.writes.every(write=>write.hole===page.initial),JSON.stringify(page.writes));
- const team=page.writes[1];assert.equal(team.table,'elleng_team_scores');assert.equal(team.operation,clear?'delete':'upsert');if(!clear)assert.equal(team.score,kind==='shamble'?4:9);
+ assert.equal(page.writes.length,kind==='shamble'?1:2);assert.ok(page.writes.every(write=>write.hole===page.initial),JSON.stringify(page.writes));
+ if(kind==='shamble'){
+  assert.equal(page.writes[0].table,'elleng_player_hole_scores','Shamble must never overwrite low-ball team scores');
+  assert.equal(page.writes[0].operation,clear?'delete':'upsert');
+ }else{
+  const team=page.writes[1];assert.equal(team.table,'elleng_team_scores');
+  assert.equal(team.operation,clear?'delete':'upsert');if(!clear)assert.equal(team.score,9);
+ }
 });
 const from=html.indexOf('function normalPoints(values){');
 const to=html.indexOf('function totals(){',from);
