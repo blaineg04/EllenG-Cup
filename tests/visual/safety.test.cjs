@@ -258,3 +258,31 @@ test('commissioner ignores an older realtime snapshot after a confirmed draft sa
  assert.equal(ctx.S.picks.length,1,'Stale refresh must not erase confirmed pick');
  assert.equal(vm.runInContext('draftUpdatedAt',ctx),'2026-10-22T10:00:01Z');
 });
+
+test('captain submits at most one pick while the server response is pending',async()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../../captain.html'),'utf8');
+ const start=html.indexOf('let captainPickSaving=false;');
+ const end=html.indexOf('document.getElementById("signin").onclick',start);
+ assert.ok(start>=0&&end>start,'Captain pick handler missing');
+ let resolvePick,requests=0,renders=0;
+ const pending=new Promise(resolve=>{resolvePick=resolve});
+ const buttons=[{disabled:false},{disabled:false}];
+ const ctx=vm.createContext({
+  S:{timerPaused:false,golfers:[{name:'Sample golfer'}],teams:[{name:'Team 1'}]},
+  myTeam:0,cfg:{draftId:'test-draft'},draftSoundEnabled:false,lastSoundPickCount:null,
+  db:{rpc:async()=>{requests++;return pending}},
+  document:{querySelectorAll:()=>buttons},
+  confirm:()=>true,alert:()=>{},fresh:()=>({}),render:()=>{renders++},
+  load:async()=>{},console
+ });
+ vm.runInContext(html.slice(start,end),ctx);
+ const first=vm.runInContext('pick(0)',ctx);
+ await vm.runInContext('pick(0)',ctx);
+ assert.equal(requests,1);
+ assert.ok(buttons.every(button=>button.disabled));
+ resolvePick({data:{picks:[{golfer:0,team:0}]},error:null});
+ await first;
+ assert.equal(vm.runInContext('captainPickSaving',ctx),false);
+ assert.equal(renders,1);
+ assert.equal(ctx.S.picks.length,1);
+});
