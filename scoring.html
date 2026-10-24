@@ -3908,19 +3908,21 @@ function totals(){
  });
 }
 function renderLiveHoleScores(){
- const activeHoles=Array.from({length:18},(_,i)=>i+1).filter(h=>scores.some(x=>Number.isInteger(Number(x.team_index))&&Number(x.team_index)>=0&&Number(x.team_index)<teams.length&&Number(x.hole)===h&&validTeamScore(x.score)));
+ const activeHoles=Array.from({length:18},(_,i)=>i+1).filter(h=>isSplitPair()
+  ?scores.some(x=>Number(x.hole)===h&&validTeamScore(x.score))
+  :playerScores.some(x=>Number(x.hole)===h&&Number.isInteger(Number(x.score))&&Number(x.score)>=1&&Number(x.score)<=20));
  if(!activeHoles.length){$("liveHoleScores").innerHTML='<div class="note">No scores entered yet.</div>';return}
  $("liveHoleScores").innerHTML=activeHoles.map(h=>{
-  const par=parForHole(h);
-  const vals=teams.map((t,i)=>{const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));return {name:t.name,score:r?.score??null}});
-  const count=vals.filter(v=>v.score!=null).length, official=count===teams.length;
-  const rows=vals.map(v=>{
-    const g=relativeGolf(v.score,par);
-    return `<div class="row between" style="padding:5px 0;border-top:1px solid var(--line)"><span>${esc(v.name)}</span><div style="text-align:right"><strong>${v.score==null?'—':`${esc(g.rel)} • ${esc(g.label)}`}</strong>${v.score==null?'':`<div class="status">${esc(v.score)} strokes</div>`}</div></div>`;
-  }).join('');
-  const gator=tournament&&tournament.gator_revealed&&Number(tournament.gator_hole)===h;
-  return `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff"><div class="row between"><strong>Hole ${h} • Par ${par}${gator?' 🐊':''}</strong><span class="badge" style="${official?'background:#2f7d4a;color:#fff':count>0?'background:#d4af37;color:#10263d':''}">${official?'OFFICIAL':count+'/'+teams.length+' ENTERED'}</span></div><div style="margin-top:8px">${rows}</div><div class="status" style="margin-top:7px">${official?'Cup points posted.':'Scores are live; Cup points pending remaining teams.'}</div></div>`
- }).join('');
+  const par=parForHole(h),pts=pointsForHole(h),count=pts.filter(p=>p!==null).length,official=count===teams.length;
+  const rows=teams.map((t,i)=>{
+   const roster=teamRosterGolfers(i),entered=roster.filter(g=>playerScores.some(x=>Number(x.team_index)===i&&Number(x.golfer_index)===g.index&&Number(x.hole)===h));
+   const pair=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));
+   const label=pts[i]===null?(isSplitPair()?(pair?"Pending":"—"):`${entered.length}/${roster.length} golfers`):`${pts[i]} pts`;
+   return `<div class="row between" style="padding:5px 0;border-top:1px solid var(--line)"><span>${esc(t.name)}</span><strong>${esc(label)}</strong></div>`;
+  }).join("");
+  const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)===h;
+  return `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff"><div class="row between"><strong>Hole ${h} • Par ${par}${gator?" 🐊":""}</strong><span class="badge">${official?"ALL TEAMS SCORED":count+" / "+teams.length+" TEAMS"}</span></div><div style="margin-top:8px">${rows}</div><div class="status" style="margin-top:7px">Individual golfer points contribute to each completed team total.</div></div>`;
+ }).join("");
 }
 
 function scoreClass(rel){if(!rel||rel==="—")return "";if(rel==="0")return "score-even";return rel.startsWith("−")?"score-good":"score-bad"}
