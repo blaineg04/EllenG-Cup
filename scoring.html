@@ -3221,7 +3221,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div style="margin-top:12px"><label><small>Choose team</small><select id="digitalScorecardTeam" style="max-width:360px"></select></label></div>
   <div id="digitalScorecard" class="scorecard-wrap"></div><div class="row" style="margin-top:12px"><button id="shareTeamScorecard" class="secondary" type="button">📤 Share Team Scorecard</button><span id="shareScorecardMsg" class="status"></span></div>
 </div>
-<div class="card note"><strong>Special scoring:</strong> The Gator Hole awards 12 points to the lowest team, split equally only if the low score is tied. Final Cargo Shot adds 6 points to the winning team.</div>
+<div class="card note"><strong>Special scoring:</strong> Gator Hole doubles the points earned by every golfer on that hole. Final Cargo Shot adds 6 points to the winning team.</div>
 </section>
 
 <section id="teamsView" class="view hidden">
@@ -3489,7 +3489,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
     <label><small>Course routing</small><select id="courseRouteSelect"><option value="front-back">Front → Back</option><option value="links-front">Links → Front</option><option value="links-back">Links → Back</option></select></label>
     <label><small>Tournament status</small><select id="statusSelect"><option value="setup">Setup</option><option value="live">Live</option><option value="complete">Complete</option><option value="archived">Archived</option></select></label>
     <label><small>Tournament date</small><input id="tournamentDateInput" type="date"></label>
-    <label><small>Playing format</small><select id="playFormatSelect"><option value="">Select / keep current</option><option value="standard">Standard EllenG — Front 9 Scramble / Back 9 Shamble</option><option value="split_pair">Split-Pair Scramble — two 2-man pairs per 4-man team</option></select></label>
+    <label><small>Playing format</small><select id="playFormatSelect"><option value="">Select / keep current</option><option value="standard">EllenG — 18-Hole Shamble / Individual Points</option><option value="split_pair">Split-Pair Scramble — two 2-man pairs per 4-man team</option></select></label>
     <label><small>Players per team</small><select id="teamSizeSelect"><option value="">Select / keep current</option><option value="2">2-man team</option><option value="3">3-man team</option><option value="4">4-man team</option></select></label>
     <label><small>Number of teams</small><select id="teamCountSelect"><option value="">— Select number of teams —</option><option value="2">2 teams</option><option value="3">3 teams</option><option value="4">4 teams</option><option value="5">5 teams</option><option value="6">6 teams</option><option value="7">7 teams</option><option value="8">8 teams</option><option value="9">9 teams</option></select></label>
     <label><small>Number of golfers</small><select id="golferCountSelect"><option value="">— Select number of golfers —</option><option value="8">8 golfers</option><option value="9">9 golfers</option><option value="10">10 golfers</option><option value="11">11 golfers</option><option value="12">12 golfers</option><option value="13">13 golfers</option><option value="14">14 golfers</option><option value="15">15 golfers</option><option value="16">16 golfers</option><option value="17">17 golfers</option><option value="18">18 golfers</option><option value="19">19 golfers</option><option value="20">20 golfers</option><option value="21">21 golfers</option><option value="22">22 golfers</option><option value="23">23 golfers</option><option value="24">24 golfers</option><option value="25">25 golfers</option><option value="26">26 golfers</option><option value="27">27 golfers</option><option value="28">28 golfers</option><option value="29">29 golfers</option><option value="30">30 golfers</option><option value="31">31 golfers</option><option value="32">32 golfers</option><option value="33">33 golfers</option><option value="34">34 golfers</option><option value="35">35 golfers</option><option value="36">36 golfers</option></select></label>
@@ -3860,7 +3860,7 @@ function relativeGolf(score,par){
  const label=d===-3?"Albatross":d<-3?`${Math.abs(d)} Under Par`:d===-2?"Eagle":d===-1?"Birdie":d===0?"Par":d===1?"Bogey":d===2?"Double Bogey":`+${d}`;
  return {rel,label};
 }
-function pointScaleText(){return Array.from({length:teams.length},(_,i)=>teams.length-i).join("–")}
+function pointScaleText(){return isSplitPair()?Array.from({length:teams.length},(_,i)=>teams.length-i).join("–"):"Eagle 5 • Birdie 4 • Par 3 • Bogey 2 • Double 1"}
 function normalPoints(values){
  const n=teams.length, out=Array(n).fill(null);
  const entered=values.map((v,i)=>({v,i})).filter(x=>Number.isFinite(x.v)).sort((a,b)=>a.v-b.v);
@@ -3873,27 +3873,39 @@ function normalPoints(values){
  return out;
 }
 function validTeamScore(score){return score!==null&&score!==undefined&&typeof score!=="boolean"&&String(score).trim()!==""&&Number.isSafeInteger(Number(score))&&Number(score)>=1&&Number(score)<=(isSplitPair()?40:20)}
+function individualCupPoints(strokes,par){
+ if(strokes===null||strokes===undefined||String(strokes).trim()===""||!Number.isInteger(Number(strokes))||Number(strokes)<1||Number(strokes)>20)return null;
+ const diff=Number(strokes)-Number(par);
+ return diff<=-2?5:diff===-1?4:diff===0?3:diff===1?2:diff===2?1:0;
+}
+function individualPointsForTeamHole(teamIndex,h){
+ const roster=teamRosterGolfers(teamIndex);
+ if(!roster.length)return null;
+ const par=parForHole(h);
+ const values=roster.map(g=>{
+  const r=playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.golfer_index)===g.index&&Number(x.hole)===h);
+  return individualCupPoints(r?.score,par);
+ });
+ if(values.some(p=>p===null))return null;
+ const pts=values.reduce((sum,p)=>sum+p,0);
+ return Number(tournament?.gator_hole)===h?pts*2:pts;
+}
 function pointsForHole(h){
- if(h===null||h===undefined||typeof h==="boolean"||String(h).trim()===""||!Number.isInteger(Number(h))||Number(h)<1||Number(h)>18)return Array(teams.length).fill(null);
- h=Number(h);
- // Split-Pair combines two valid pair scores; all displays use the same validation.
- const vals=teams.map((_,i)=>{const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));return r?Number(r.score):NaN});
- const n=teams.length;
- if(!n)return [];
- if(vals.filter(Number.isFinite).length<n)return Array(n).fill(null);
- if(tournament&&tournament.gator_hole!==null&&tournament.gator_hole!==undefined&&typeof tournament.gator_hole!=="boolean"&&String(tournament.gator_hole).trim()!==""&&Number.isInteger(Number(tournament.gator_hole))&&Number(tournament.gator_hole)===h){
-   const out=Array(n).fill(null), valid=vals.filter(Number.isFinite); if(!valid.length)return out;
-   const low=Math.min(...valid), winners=[];vals.forEach((v,i)=>{if(v===low)winners.push(i)});
-   winners.forEach(i=>out[i]=12/winners.length);
-   vals.forEach((v,i)=>{if(Number.isFinite(v)&&out[i]===null)out[i]=0});
-   return out;
- }
+ if(!Number.isInteger(Number(h))||Number(h)<1||Number(h)>18)return Array(teams.length).fill(null);
+ if(!isSplitPair())return teams.map((_,i)=>individualPointsForTeamHole(i,Number(h)));
+ const vals=teams.map((_,i)=>{const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===Number(h)&&validTeamScore(x.score));return r?Number(r.score):NaN});
+ if(vals.filter(Number.isFinite).length<teams.length)return Array(teams.length).fill(null);
  return normalPoints(vals);
 }
 function finalCargoBonus(){const raw=tournament?.final_cargo_points;const n=Number(raw);return raw===null||raw===undefined||typeof raw==="boolean"||String(raw).trim()===""||!Number.isSafeInteger(n)||n<0?6:n}
 function isFinalCargoTeam(i){const raw=tournament?.final_cargo_team;return raw!==null&&raw!==undefined&&typeof raw!=="boolean"&&String(raw).trim()!==""&&Number.isInteger(Number(raw))&&Number(raw)>=0&&Number(raw)<teams.length&&Number(raw)===i}
 function totals(){
- return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));if(r)thru=Math.max(thru,h)}if(isFinalCargoTeam(i))pts+=finalCargoBonus();return{team:i,pts,thru}})
+ return teams.map((_,i)=>{
+  let pts=0,thru=0;
+  for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!==null){pts+=p;thru=h;}}
+  if(isFinalCargoTeam(i))pts+=finalCargoBonus();
+  return {team:i,pts,thru};
+ });
 }
 function renderLiveHoleScores(){
  const activeHoles=Array.from({length:18},(_,i)=>i+1).filter(h=>scores.some(x=>Number.isInteger(Number(x.team_index))&&Number(x.team_index)>=0&&Number(x.team_index)<teams.length&&Number(x.hole)===h&&validTeamScore(x.score)));
@@ -4509,7 +4521,7 @@ function teamRosterGolfers(teamIndex){
 function renderShambleScoring(par,pts){
  const area=$("shambleScoreArea"), front=$("frontNineScoreGrid");
  if(!area||!front)return;
- if(hole<=9){area.classList.add("hidden");front.classList.remove("hidden");return}
+ if(isSplitPair()){area.classList.add("hidden");front.classList.remove("hidden");return}
  front.classList.add("hidden");area.classList.remove("hidden");
  area.innerHTML=teams.map((t,teamIndex)=>{
    const roster=teamRosterGolfers(teamIndex);
@@ -4527,8 +4539,8 @@ function renderShambleScoring(par,pts){
      return `<div class="shamble-player"><div><strong>${esc(g.name)}</strong></div><div><input class="shamble-player-score" type="number" min="1" max="20" step="1" inputmode="numeric" data-team="${teamIndex}" data-golfer="${g.index}" value="${v}" ${canEditTeam(teamIndex)?"":"disabled"}></div><div style="text-align:right">${v===""?'<span class="status">—</span>':`<strong>${esc(rg.rel)}</strong><div class="status">${esc(rg.label)}</div>`}</div></div>`;
    }).join("");
    const pointText=pts[teamIndex]==null?"—":pts[teamIndex].toFixed(pts[teamIndex]%1?1:0);
-   const summary=complete?`LOW TEAM SCORE: ${low} strokes • ${esc(lowGolf.rel)} ${esc(lowGolf.label)} • ${pointText} Cup pts`:`Waiting on ${entered.filter(Boolean).length}/${roster.length} player scores. Team score posts after everyone finishes.`;
-   return `<div class="shamble-team"><div class="row between"><div><strong>${esc(t.name)}</strong><div class="status">Best tee shot, then everyone plays their own ball.</div></div><span class="badge">LOW SCORE COUNTS</span></div>${rows}<div class="shamble-low">${summary}</div></div>`;
+   const summary=complete?`ALL GOLFERS COUNT • ${pointText} Cup pts`:`Waiting on ${entered.filter(Boolean).length}/${roster.length} player scores. All players earn points.`;
+   return `<div class="shamble-team"><div class="row between"><div><strong>${esc(t.name)}</strong><div class="status">Best tee shot, then everyone plays their own ball.</div></div><span class="badge">ALL PLAYERS COUNT</span></div>${rows}<div class="shamble-low">${summary}</div></div>`;
  }).join("");
  document.querySelectorAll(".shamble-player-score:not([disabled])").forEach(inp=>inp.addEventListener("change",()=>savePlayerShambleScore(Number(inp.dataset.team),Number(inp.dataset.golfer),inp.value)));
 }
@@ -4540,7 +4552,7 @@ function endScoreSave(ok=true){
  scoreSaveBusy=false;setSyncStatus(ok?"saved":"error",ok?"Saved ✓":"Save failed");
 }
 async function savePlayerShambleScore(teamIndex,golferIndex,val){
- if(hole<10||hole>18||!canEditTeam(teamIndex))return;if(!beginScoreSave())return;
+ if(hole<1||hole>18||!canEditTeam(teamIndex))return;if(!beginScoreSave())return;
  const scoreHole=hole;
  const el=$("saveMsg"); el.textContent="Saving shamble score…";
  const score=val===""?null:Number(val);
@@ -4554,18 +4566,7 @@ async function savePlayerShambleScore(teamIndex,golferIndex,val){
      if(error)throw error;
    }
    await loadScores();
-   const roster=teamRosterGolfers(teamIndex);
-   const rows=roster.map(g=>playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===scoreHole&&Number(x.golfer_index)===g.index));
-   if(roster.length&&rows.every(Boolean)){
-     const low=Math.min(...rows.map(x=>Number(x.score)));
-     const {error}=await db.from("elleng_team_scores").upsert({tournament_id:TOURNAMENT_ID,team_index:teamIndex,hole:scoreHole,score:low,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:"tournament_id,team_index,hole"});
-     if(error)throw error;
-   }else{
-     const {error}=await db.from("elleng_team_scores").delete().eq("tournament_id",TOURNAMENT_ID).eq("team_index",teamIndex).eq("hole",scoreHole);
-     if(error)throw error;
-   }
-   await loadScores();
-   el.textContent="Saved. Lowest completed player score becomes the team score.";
+   el.textContent="Saved. Each golfer earns points toward the team total.";
    renderAll();
  }catch(e){el.textContent=e?.message||"Unable to save shamble score.";endScoreSave(false);return}endScoreSave(true)
 }
@@ -4630,7 +4631,7 @@ function renderScoring(){
  if(isSplitPair()){
    $("holeFormat").textContent=`SPLIT-PAIR SCRAMBLE • HOLE ${hole} • PAR ${par} • ${activeTeeLine(hole)}`;
  }else{
-   $("holeFormat").textContent=`${draftTeamSize()}-MAN ${hole<=9?"SCRAMBLE":"SHAMBLE"} • HOLE ${hole} • PAR ${par} • ${activeTeeLine(hole)}`;
+   $("holeFormat").textContent=`18-HOLE SHAMBLE • ALL GOLFER POINTS • HOLE ${hole} • PAR ${par} • ${activeTeeLine(hole)}`;
  }
  const mobileGuide=$("mobileHoleGuide");
  if(mobileGuide){
@@ -4653,9 +4654,9 @@ function renderScoring(){
    return;
  }
  renderShambleScoring(par,pts);
- if(hole>9){
+ if(hole>=1){
    $("scoreRows").innerHTML="";
-   $("entryHint").textContent=isCommissioner?`Back 9 Shamble: enter each golfer's individual score. The app uses the lowest score as the official team score.`:captainTeam!=null?`Back 9 Shamble: enter every golfer's score for ${teams[captainTeam]?.name||"your team"}. The lowest score automatically becomes the team score.`:"Scores are view-only.";
+   $("entryHint").textContent=isCommissioner?`18-Hole Shamble: enter every golfer's strokes. Every golfer earns team points.`:captainTeam!=null?`18-Hole Shamble: enter every golfer's strokes for ${teams[captainTeam]?.name||"your team"}. All points count.`:"Scores are view-only.";
    return;
  }
  $("scoreRows").innerHTML=teams.map((t,i)=>{
@@ -5439,7 +5440,7 @@ function renderHome(){
  if($("homePlayerCount"))$("homePlayerCount").textContent=`${playerCount} player${playerCount===1?"":"s"}`;
  const formatConfirmed=draftState?.playFormatConfirmed===true;
  if($("homeFormat"))$("homeFormat").textContent=formatConfirmed?(isSplitPair()?"Split-Pair Scramble":`${draftTeamSize()}-Man EllenG`):"—";
- if($("homeFormatSub"))$("homeFormatSub").textContent=formatConfirmed?(isSplitPair()?"Two 2-man pairs • both scores count":"Front 9 Scramble • Back 9 Shamble"):"";
+ if($("homeFormatSub"))$("homeFormatSub").textContent=formatConfirmed?(isSplitPair()?"Two 2-man pairs • both scores count":"18-Hole Shamble • All golfer points count"):"";
  const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Gator Hole: Hole ${Number(tournament.gator_hole)}. `:"Gator Hole is still secret. ";
  let cargo="Final Cargo Shot has not been awarded.";
  if(tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""){const ti=Number(tournament.final_cargo_team);cargo=`Final Cargo Shot: ${teams[ti]?.name||`Team ${ti+1}`} +${finalCargoBonus()} points.`}
