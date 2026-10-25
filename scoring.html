@@ -3939,9 +3939,19 @@ function projectedTotals(){
  }).sort((a,b)=>b.projected-a.projected||b.thru-a.thru||a.team-b.team);
 }
 function latestTournamentMoment(){
- const ev=(scores||[]).filter(x=>validTeamScore(x.score)&&x.hole!==null&&x.hole!==undefined&&typeof x.hole!=="boolean"&&String(x.hole).trim()!==""&&Number.isInteger(Number(x.hole))&&Number(x.hole)>=1&&Number(x.hole)<=18&&x.team_index!==null&&x.team_index!==undefined&&typeof x.team_index!=="boolean"&&String(x.team_index).trim()!==""&&Number.isInteger(Number(x.team_index))&&Number(x.team_index)>=0&&Number(x.team_index)<teams.length).map(x=>{const h=Number(x.hole),ti=Number(x.team_index),g=relativeGolf(Number(x.score),parForHole(h));return {h,ti,score:Number(x.score),g}}).sort((a,b)=>b.h-a.h||b.ti-a.ti)[0];
+ const ev=(isSplitPair()?scores:playerScores).filter(x=>{
+  const h=Number(x.hole),ti=Number(x.team_index);
+  if(x.hole==null||typeof x.hole==="boolean"||String(x.hole).trim()===""||!Number.isInteger(h)||h<1||h>18)return false;
+  if(x.team_index==null||typeof x.team_index==="boolean"||String(x.team_index).trim()===""||!Number.isInteger(ti)||ti<0||ti>=teams.length)return false;
+  if(!validTeamScore(x.score))return false;
+  if(!isSplitPair())return teamRosterGolfers(ti).some(g=>Number(g.index)===Number(x.golfer_index));
+  return true;
+ }).map(x=>{const h=Number(x.hole),ti=Number(x.team_index),g=relativeGolf(Number(x.score),parForHole(h));return {h,ti,score:Number(x.score),g,golferIndex:x.golfer_index}})
+ .sort((a,b)=>b.h-a.h||b.ti-a.ti)[0];
  if(!ev)return 'Waiting for the first score to be posted.';
- return `${teams[ev.ti]?.name||`Team ${ev.ti+1}`} • Hole ${ev.h} • ${ev.g.rel} ${ev.g.label||''} • ${ev.score} stroke${ev.score===1?'':'s'}`;
+ const roster=isSplitPair()?[]:teamRosterGolfers(ev.ti);
+ const player=roster.find(g=>Number(g.index)===Number(ev.golferIndex));
+ return `${teams[ev.ti]?.name||`Team ${ev.ti+1}`}${player?` • ${player.name}`:""} • Hole ${ev.h} • ${ev.g.rel} ${ev.g.label||''} • ${ev.score} stroke${ev.score===1?'':'s'}`;
 }
 function renderBroadcast(){
  const ov=$("broadcastOverlay");if(!ov)return;const arr=projectedTotals();const official=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team),leader=official[0],hasLeader=leader&&leader.pts>0;
