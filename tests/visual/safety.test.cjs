@@ -181,12 +181,12 @@ test('rejected personal score and handicap saves keep the error sync status',asy
 });
 test('successful personal score and handicap saves finish with saved status',async()=>{
  for(const kind of ['score','handicap']){
-  const page=selfSavePage(kind,{data:{mode:'team',team_index:0,band:'A',golfer_name:'Test golfer',handicap:'8'},error:null});await page.run();assert.equal(page.statuses.at(-1),'saved',kind);
+  const page=selfSavePage(kind,{data:{ok:true,mode:'player_shamble',team_index:0,band:'A',golfer_name:'Test golfer',handicap:'8'},error:null});await page.run();assert.equal(page.statuses.at(-1),'saved',kind);
  }
 });
 
  test('accepted personal scores are never queued again when the following refresh fails',async()=>{
- const page=selfSavePage('score',{data:{mode:'team',team_index:0},error:null},{refreshError:new Error('Network request failed')});await page.run();
+ const page=selfSavePage('score',{data:{ok:true,mode:'player_shamble',team_index:0},error:null},{refreshError:new Error('Network request failed')});await page.run();
  assert.equal(page.queued.length,0);assert.match(page.node('selfScoreMsg').textContent,/saved.*refresh/i);assert.equal(page.statuses.at(-1),'error');assert.equal(page.context.scoreSaveBusy,false);
  });
  test('unacknowledged network score failures remain queued for retry',async()=>{
