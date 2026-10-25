@@ -4542,8 +4542,6 @@ function renderShambleScoring(par,pts){
    }
    const entered=roster.map(g=>playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===hole&&Number(x.golfer_index)===g.index));
    const complete=entered.every(Boolean);
-   const low=complete?Math.min(...entered.map(x=>Number(x.score))):null;
-   const lowGolf=low==null?null:relativeGolf(low,par);
    const rows=roster.map(g=>{
      const row=playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===hole&&Number(x.golfer_index)===g.index);
      const v=row?.score??"";
