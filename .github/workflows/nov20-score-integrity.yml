@@ -26,12 +26,20 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: Verify checked-out scoring source matches Git commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- scoring.html tests/nov20-production-score-integrity.test.cjs
+          test "$(git hash-object scoring.html)" = "$(git rev-parse HEAD:scoring.html)"
+          grep -q 'ALL GOLFERS COUNT' scoring.html
       - name: Verify Node is installed
         run: node --version
       - name: Run isolated scoring regression tests
         run: node --test tests/nov20-production-score-integrity.test.cjs
 
   responsive-layout:
+    needs: scoring-regression
     # Keep execution on the existing MacBook; never run fork code on it.
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/release/nov20-score-integrity-20261020') ||
@@ -45,6 +53,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Verify checked-out scoring source matches Git commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- scoring.html tests/nov20-production-score-integrity.test.cjs
+          test "$(git hash-object scoring.html)" = "$(git rev-parse HEAD:scoring.html)"
+          grep -q 'ALL GOLFERS COUNT' scoring.html
       - name: Install pinned Playwright test dependency
         run: npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
       - name: Install Chromium without Docker
