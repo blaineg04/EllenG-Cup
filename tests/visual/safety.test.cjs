@@ -328,3 +328,11 @@ test('staged golfer endpoint writes individual shamble scores on holes 1 through
  assert.doesNotMatch(shamble,/service\.from\("elleng_team_scores"\)/,'Never derive lowest-ball team rows for shamble');
  assert.doesNotMatch(shamble,/if\(hole<=9\)/,'All 18 holes use individual shamble scoring');
 });
+
+test('front nine shamble scoring has a staged database constraint migration',()=>{
+ const sql=fs.readFileSync(path.join(__dirname,'../../supabase/migrations/20261024_elleng_18_hole_individual_scores.sql'),'utf8');
+ assert.match(sql,/ALTER TABLE public\.elleng_player_hole_scores/);
+ assert.match(sql,/DROP CONSTRAINT IF EXISTS elleng_player_hole_scores_hole_check/);
+ assert.match(sql,/CHECK \(hole BETWEEN 1 AND 18\)/);
+ assert.doesNotMatch(sql,/TRUNCATE|DELETE FROM|DROP TABLE/i,'Migration must preserve existing scoring records');
+});
