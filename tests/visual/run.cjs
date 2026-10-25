@@ -115,7 +115,10 @@ async function verifyNavigation(page, width, capture, prefix = '') {
   await page.locator('#broadcastOverlay.open').waitFor({state:'visible'});
   await page.locator('#closeBroadcast').click();
   await page.locator('#broadcastOverlay').waitFor({state:'hidden'});
-  await page.locator(home).click();
+  // At the 1024px breakpoint the desktop nav may require scroll positioning after closing broadcast.
+  // Use a genuine Playwright click; never bypass pointer hit-testing with evaluate().click().
+  await page.locator(home).scrollIntoViewIfNeeded();
+  await page.locator(home).click({timeout:15000});
   await page.locator('#homeView:not(.hidden)').waitFor({state:'visible'});
   console.log(`${width} ${prefix}real navigation: Course, Rankings, Extras, Broadcast and return Home passed`);
 }
