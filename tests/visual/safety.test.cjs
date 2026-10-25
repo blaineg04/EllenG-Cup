@@ -358,3 +358,12 @@ test('staged scoring endpoint fails closed for invalid tournament states',()=>{
  assert.doesNotMatch(guard,/\["complete","archived"\]\.includes/,
    'A denylist would allow unknown or malformed tournament states');
 });
+
+test('golfer scoring rejects tournament IDs unrelated to the authenticated draft',()=>{
+ const source=fs.readFileSync(path.join(__dirname,'../../supabase/functions/golfer-handicap/index.ts'),'utf8');
+ const start=source.indexOf('async function activeTournament('),end=source.indexOf('if(action==="reset_pin"',start);
+ assert.ok(start>=0&&end>start,'Missing tournament authorization guard');
+ const guard=source.slice(start,end);
+ assert.match(guard,/select\("team_count,status,draft_id"\)/,'Must load tournament draft binding');
+ assert.match(guard,/String\(data\.draft_id\|\|""\)!==draftId/,'Must reject cross-draft tournament writes');
+});
