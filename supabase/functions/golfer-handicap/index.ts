@@ -41,7 +41,7 @@ Deno.serve(async(req:Request)=>{
   }
 
   if(action==="update_score"){
-    const hole=Number(body?.hole),raw=body?.score==null?"":String(body.score).trim();if(!Number.isInteger(hole)||hole<1||hole>18)return json({error:"Choose a hole from 1 to 18."},400);let score:number|null=null;if(raw!==""){const n=Number(raw);if(!Number.isInteger(n)||n<1||n>20)return json({error:"Enter a score from 1 to 20."},400);score=n}
+    const holeRaw=body?.hole,hole=Number(holeRaw),raw=body?.score==null?"":String(body.score).trim();if(typeof holeRaw==="boolean"||holeRaw===null||holeRaw===undefined||typeof holeRaw==="object"||String(holeRaw).trim()===""||!Number.isInteger(hole)||hole<1||hole>18)return json({error:"Choose a hole from 1 to 18."},400);let score:number|null=null;if(raw!==""){const n=Number(raw);if(!Number.isInteger(n)||n<1||n>20)return json({error:"Enter a score from 1 to 20."},400);score=n}
     const draft=await getDraft();const v=withTeam(await ownGolfer(draft));const golferIndex=v.golferIndex,state=v.state,teamIndex=v.teamIndex,teams=Array.isArray(state.teams)?state.teams:[],roster=rosterIndexes(teams[teamIndex]);if(!roster.includes(golferIndex))return json({error:"Your team roster is not finalized yet."},400);await activeTournament(teamIndex);const format=state?.playFormat==="split_pair"?"split_pair":"standard",now=new Date().toISOString();
     if(format==="split_pair"){
       const pos=roster.indexOf(golferIndex);if(pos<0||pos>3)return json({error:"Your split-pair assignment is not available."},400);const pairIndex=pos<2?0:1;
