@@ -346,3 +346,15 @@ test('staged golfer score endpoint requires a real authenticated player-account 
  assert.match(fn,/if\(!link\)/,'Reject users without a linked golfer');
  assert.doesNotMatch(fn,/isBguyTest|bguy@players\.ellengcup\.app|golfer_index:0/,'No hardcoded test-account bypass');
 });
+
+test('staged scoring endpoint fails closed for invalid tournament states',()=>{
+ const source=fs.readFileSync(path.join(__dirname,'../../supabase/functions/golfer-handicap/index.ts'),'utf8');
+ const start=source.indexOf('async function activeTournament(');
+ const end=source.indexOf('if(action==="reset_pin"',start);
+ assert.ok(start>=0&&end>start,'Missing active tournament guard');
+ const guard=source.slice(start,end);
+ assert.match(guard,/\["setup","live"\]\.includes\(String\(data\.status\|\|""\)\)/,
+   'Only explicit setup and live tournament states may accept scoring');
+ assert.doesNotMatch(guard,/\["complete","archived"\]\.includes/,
+   'A denylist would allow unknown or malformed tournament states');
+});
