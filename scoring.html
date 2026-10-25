@@ -3196,7 +3196,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div class="self-score-summary">
     <div class="self-score-box"><small>Golf Score</small><strong id="selfScoreRelative">—</strong><div id="selfScoreTerm" class="term">Enter strokes</div></div>
   </div>
-  <div class="note" style="margin-top:10px">Standard EllenG: any golfer on the team can update the Front 9 scramble team score. On the Back 9 shamble, each golfer can update only their own individual score. Split-Pair: each golfer can update only their own 2-man pair score.</div>
+  <div class="note" style="margin-top:10px">EllenG shamble: each golfer records their own strokes on all 18 holes, and every golfer earns team points. Split-Pair uses its separate pair-score rules.</div>
   <div class="row" style="margin-top:12px"><button id="saveSelfScore" class="primary" type="button">Save My Score</button><button id="clearSelfScore" class="secondary" type="button">Clear This Score</button></div>
   <div id="selfScoreMsg" class="status" style="margin-top:9px"></div>
 </div>
@@ -5061,11 +5061,8 @@ function renderSelfScoreContext(){
    const pos=roster.findIndex(r=>Number(typeof r==="object"?r?.golferIndex:r)===idx);
    const pair=pos>=0&&pos<2?1:pos>=2&&pos<4?2:null;
    box.textContent=pair?`${g.name} • ${teamName} • Pair ${pair}. Your login can update your 2-man pair score for Hole ${h}.`:`${g.name} • ${teamName}. Your split-pair assignment is not finalized yet.`;
- }else if(h<=9){
-   const row=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null);
-   box.textContent=`${g.name} • ${teamName} • Front 9 Scramble. Your login can update your team's score for Hole ${h}${row?` (current team score: ${row.score})`:""}.`;
  }else{
-   box.textContent=`${g.name} • ${teamName} • Back 9 Shamble. Your login can update only your own individual score for Hole ${h}. The app calculates the team low score after everyone enters theirs.`;
+   box.textContent=`${g.name} • ${teamName} • 18-Hole Shamble. Your login can update your own strokes for Hole ${h}. Every golfer earns points toward the team total.`;
  }
 }
 let selfHandicapEditing=false;
