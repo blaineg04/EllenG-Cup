@@ -30,7 +30,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git diff --exit-code -- scoring.html tests/nov20-production-score-integrity.test.cjs
+          git restore --source=HEAD --worktree -- scoring.html tests/nov20-production-score-integrity.test.cjs tests/visual/safety.test.cjs
+          git diff --exit-code -- scoring.html tests/nov20-production-score-integrity.test.cjs tests/visual/safety.test.cjs
           test "$(git hash-object scoring.html)" = "$(git rev-parse HEAD:scoring.html)"
           grep -q 'ALL GOLFERS COUNT' scoring.html
       - name: Verify Node is installed
@@ -57,7 +58,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git diff --exit-code -- scoring.html tests/nov20-production-score-integrity.test.cjs
+          git restore --source=HEAD --worktree -- scoring.html tests/nov20-production-score-integrity.test.cjs tests/visual/safety.test.cjs
+          git diff --exit-code -- scoring.html tests/nov20-production-score-integrity.test.cjs tests/visual/safety.test.cjs
           test "$(git hash-object scoring.html)" = "$(git rev-parse HEAD:scoring.html)"
           grep -q 'ALL GOLFERS COUNT' scoring.html
       - name: Install pinned Playwright test dependency
