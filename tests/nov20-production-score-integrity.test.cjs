@@ -89,24 +89,22 @@ test('live hole validation rejects empty and invalid scores across formats',()=>
  }
 });
 
-test('broadcast moment ignores invalid scores and malformed team or hole references',()=>{
+test('broadcast moment uses only valid rostered individual shamble scores',()=>{
  const start=html.indexOf('function latestTournamentMoment(){');
  const end=html.indexOf('function renderBroadcast(){',start);
- assert.ok(start>=0&&end>start,'Missing broadcast highlight function');
  const ctx={
-  scores:[{hole:18,team_index:0,score:''},{hole:17,team_index:9,score:3},{hole:16,team_index:0,score:0},{hole:4,team_index:1,score:4}],
-  teams:[{name:'Gators'},{name:'Herons'}],
-  isSplitPair:()=>false,
+  scores:[],
+  playerScores:[{hole:18,team_index:0,golfer_index:0,score:''},{hole:17,team_index:9,golfer_index:9,score:3},{hole:16,team_index:0,golfer_index:99,score:3},{hole:4,team_index:1,golfer_index:1,score:4}],
+  teams:[{name:'Gators'},{name:'Herons'}],isSplitPair:()=>false,
+  teamRosterGolfers:i=>[{index:i,name:i===0?'Gator Golfer':'Heron Golfer'}],
   validTeamScore:score=>score!==null&&score!==undefined&&typeof score!=='boolean'&&String(score).trim()!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20,
-  relativeGolf:(score,par)=>({rel:String(score-par),label:'Par'}),
-  parForHole:()=>4
+  relativeGolf:(score,par)=>({rel:String(score-par),label:'Par'}),parForHole:()=>4
  };
  vm.runInNewContext(html.slice(start,end),ctx);
- assert.match(ctx.latestTournamentMoment(),/Herons.*Hole 4/);
- ctx.scores=[];
+ assert.match(ctx.latestTournamentMoment(),/Herons.*Heron Golfer.*Hole 4/);
+ ctx.playerScores=[];
  assert.equal(ctx.latestTournamentMoment(),'Waiting for the first score to be posted.');
 });
-
 test('leaderboard thru accepts serialized individual score identifiers',()=>{
  const start=html.indexOf('function normalPoints(values){'),end=html.indexOf('function renderLiveHoleScores(){',start);
  const ctx={teams:[{},{}],scores:[],tournament:{gator_hole:null,final_cargo_team:null},isSplitPair:()=>false,parForHole:()=>4,
