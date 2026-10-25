@@ -336,3 +336,13 @@ test('front nine shamble scoring has a staged database constraint migration',()=
  assert.match(sql,/CHECK \(hole BETWEEN 1 AND 18\)/);
  assert.doesNotMatch(sql,/TRUNCATE|DELETE FROM|DROP TABLE/i,'Migration must preserve existing scoring records');
 });
+
+test('staged golfer score endpoint requires a real authenticated player-account link',()=>{
+ const src=fs.readFileSync(path.join(__dirname,'../../supabase/functions/golfer-handicap/index.ts'),'utf8');
+ const start=src.indexOf('async function ownGolfer('),end=src.indexOf('async function requireCommissioner(',start);
+ assert.ok(start>=0&&end>start,'Missing golfer identity authorization');
+ const fn=src.slice(start,end);
+ assert.match(fn,/elleng_player_accounts/,'Look up a real user-to-golfer account link');
+ assert.match(fn,/if\(!link\)/,'Reject users without a linked golfer');
+ assert.doesNotMatch(fn,/isBguyTest|bguy@players\.ellengcup\.app|golfer_index:0/,'No hardcoded test-account bypass');
+});
