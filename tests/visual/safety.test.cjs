@@ -367,3 +367,15 @@ test('golfer scoring rejects tournament IDs unrelated to the authenticated draft
  assert.match(guard,/select\("team_count,status,draft_id"\)/,'Must load tournament draft binding');
  assert.match(guard,/String\(data\.draft_id\|\|""\)!==draftId/,'Must reject cross-draft tournament writes');
 });
+
+test('staged golfer scoring rejects malformed hole selectors before persistence',()=>{
+ const source=fs.readFileSync(path.join(__dirname,'../../supabase/functions/golfer-handicap/index.ts'),'utf8');
+ const start=source.indexOf('if(action==="update_score")'),end=source.indexOf('const draft=await getDraft()',start);
+ assert.ok(start>=0&&end>start,'Missing score input validation');
+ const validation=source.slice(start,end);
+ assert.match(validation,/typeof holeRaw==="boolean"/);
+ assert.match(validation,/holeRaw===null\|\|holeRaw===undefined/);
+ assert.match(validation,/typeof holeRaw==="object"/);
+ assert.match(validation,/String\(holeRaw\)\.trim\(\)===""/);
+ assert.match(validation,/!Number\.isInteger\(hole\)\|\|hole<1\|\|hole>18/);
+});
