@@ -379,3 +379,14 @@ test('staged golfer scoring rejects malformed hole selectors before persistence'
  assert.match(validation,/String\(holeRaw\)\.trim\(\)===""/);
  assert.match(validation,/!Number\.isInteger\(hole\)\|\|hole<1\|\|hole>18/);
 });
+
+test('personal score save requires explicit successful function acknowledgement',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../../scoring.html'),'utf8');
+ const start=html.indexOf('async function saveSelfScore('),end=html.indexOf('function ',start+25);
+ assert.ok(start>=0,'Missing personal score save handler');
+ const handler=html.slice(start,end>start?end:start+2700);
+ assert.match(handler,/data\?\.ok!==true/,'Missing success response must not be shown as saved');
+ assert.match(handler,/player_shamble/,'Only valid scoring response modes are accepted');
+ assert.match(handler,/scoreAccepted=true/,'Success is acknowledged only after validating response');
+ assert.ok(handler.indexOf('data?.ok!==true')<handler.indexOf('scoreAccepted=true'));
+});
