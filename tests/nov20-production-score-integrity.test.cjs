@@ -222,20 +222,16 @@ test('unset Gator Hole never doubles individual points',()=>{
  ctx.tournament.gator_hole=4;
  assert.deepEqual(Array.from(ctx.pointsForHole(4)),[8,4]);
 });
-test('broadcast ignores empty and boolean team identifiers',()=>{
- const start=html.indexOf('function latestTournamentMoment(){');
- const end=html.indexOf('function renderBroadcast(){',start);
- const ctx={
-  teams:[{name:'Gators'},{name:'Herons'}],
-  scores:[{team_index:null,hole:18,score:3},{team_index:false,hole:17,score:3},{team_index:'',hole:16,score:3},{team_index:1,hole:4,score:4}],
+test('broadcast ignores malformed individual golfer team identifiers',()=>{
+ const start=html.indexOf('function latestTournamentMoment(){'),end=html.indexOf('function renderBroadcast(){',start);
+ const ctx={teams:[{name:'Gators'},{name:'Herons'}],scores:[],isSplitPair:()=>false,
+  playerScores:[{team_index:null,golfer_index:1,hole:18,score:3},{team_index:false,golfer_index:1,hole:17,score:3},{team_index:'',golfer_index:1,hole:16,score:3},{team_index:1,golfer_index:1,hole:4,score:4}],
+  teamRosterGolfers:i=>[{index:i,name:'Golfer'}],
   validTeamScore:score=>Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20,
-  relativeGolf:()=>({rel:'0',label:'Par'}),
-  parForHole:()=>4
- };
+  relativeGolf:()=>({rel:'0',label:'Par'}),parForHole:()=>4};
  vm.runInNewContext(html.slice(start,end),ctx);
  assert.match(ctx.latestTournamentMoment(),/Herons.*Hole 4/);
 });
-
 test('golf result labels reject fractional and unsafe strokes',()=>{
  const start=html.indexOf('function relativeGolf(score,par){');
  const end=html.indexOf('function pointScaleText(){',start);
