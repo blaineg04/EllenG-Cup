@@ -131,4 +131,11 @@ test('expired clock submits at most one automatic pick while server response is 
  await first;
  assert.equal(refreshes,1);
  assert.equal(vm.runInContext('autoPickPending',context),false);
+ // A second immediate clock tick must respect the cooldown after the first RPC settles.
+ await vm.runInContext('advanceExpiredDraft()',context);
+ assert.equal(calls,1,'a second immediate tick must not repeat the auto-pick');
+ // A completed draft must never submit an automatic pick, even after cooldown.
+ vm.runInContext('S.picks=[0,1,2,3,4];autoPickLastAttempt=0',context);
+ await vm.runInContext('advanceExpiredDraft()',context);
+ assert.equal(calls,1,'completed draft must not issue another auto-pick');
 });
