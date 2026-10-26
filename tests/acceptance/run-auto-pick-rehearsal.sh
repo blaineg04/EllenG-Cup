@@ -21,6 +21,8 @@ rehearsal=tests/acceptance/auto-pick-balance-rehearsal.sql
  echo 'BEGIN;'
  cat "$migration"
  sed -e '/^BEGIN;$/d' -e '/^ROLLBACK;$/d' "$rehearsal"
+ # Verify the function is actually callable and its signature remains available.
+ echo "DO \\\$\\\$ BEGIN IF to_regprocedure('public.elleng_auto_pick(text)') IS NULL THEN RAISE EXCEPTION 'Missing auto pick function'; END IF; RAISE NOTICE 'PASS: auto-pick function exists after migration'; END \\\$\\\$;"
  echo 'ROLLBACK;'
 } | "$PSQL" -X -w -v ON_ERROR_STOP=1 -h localhost -p 5432 -d "$DB_NAME"
 echo 'PASS: local auto-pick migration rehearsed and rolled back'
