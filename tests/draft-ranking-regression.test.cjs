@@ -33,3 +33,11 @@ test('banded fallback offers a legal remaining rank with uneven roster mix',()=>
  vm.runInContext('S.golfers.forEach((g,i)=>{if(i!==4)g.team=0;});S.teams[0].roster=[0,1,2,3]',c);
  assert.equal(c.canBand(2,'A'),true);
 });
+
+test('captain pick path rejects stale, off-turn, and ineligible attempts before calling draft RPC',()=>{
+ const captain=fs.readFileSync(path.join(__dirname,'../captain.html'),'utf8');
+ const start=captain.indexOf('async function pick(i){');const rpc=captain.indexOf('db.rpc("elleng_make_pick"',start);
+ assert.ok(start>=0&&rpc>start);
+ const pre=captain.slice(start,rpc);
+ for(const guard of ['currentTeam!==myTeam','golfer.team!=null','!canBand(currentTeam,golfer.band)','S.picks.length>=totalPicks()'])assert.ok(pre.includes(guard),guard);
+});
