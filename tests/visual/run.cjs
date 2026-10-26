@@ -118,7 +118,17 @@ async function verifyNavigation(page, width, capture, prefix = '') {
   // At the 1024px breakpoint the desktop nav may require scroll positioning after closing broadcast.
   // Use a genuine Playwright click; never bypass pointer hit-testing with evaluate().click().
   await page.locator(home).scrollIntoViewIfNeeded();
-  await page.locator(home).click({timeout:15000});
+  // Fail with a useful hit-test report if another element blocks genuine navigation.
+  try{await page.locator(home).click({timeout:5000});}
+  catch(error){
+    const hit=await page.locator(home).evaluate(el=>{
+      const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+      const top=document.elementFromPoint(x,y);
+      const info=node=>node?{tag:node.tagName,id:node.id,className:String(node.className),pointerEvents:getComputedStyle(node).pointerEvents}:null;
+      return {target:info(el),hit:info(top),center:{x,y},backdrop:getComputedStyle(document.getElementById('moreMenuBackdrop')).display,broadcast:getComputedStyle(document.getElementById('broadcastOverlay')).display};
+    });
+    throw new Error('Home tab blocked after broadcast close: '+JSON.stringify(hit)+'; '+error.message);
+  }
   await page.locator('#homeView:not(.hidden)').waitFor({state:'visible'});
   console.log(`${width} ${prefix}real navigation: Course, Rankings, Extras, Broadcast and return Home passed`);
 }
