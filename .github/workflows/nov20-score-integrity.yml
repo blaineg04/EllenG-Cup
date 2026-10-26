@@ -37,7 +37,7 @@ jobs:
       - name: Verify Node is installed
         run: node --version
       - name: Run isolated scoring regression tests
-        run: node --test tests/nov20-production-score-integrity.test.cjs tests/golfer-function-contract.test.cjs
+        run: node --test tests/nov20-production-score-integrity.test.cjs tests/golfer-function-contract.test.cjs tests/draft-ranking-regression.test.cjs
 
   responsive-layout:
     needs: scoring-regression
@@ -67,7 +67,7 @@ jobs:
       - name: Install Chromium without Docker
         run: tests/visual/node_modules/.bin/playwright install chromium
       - name: Validate visual test safety and scoring
-        run: node --test tests/nov20-production-score-integrity.test.cjs tests/golfer-function-contract.test.cjs tests/visual/safety.test.cjs
+        run: node --test tests/nov20-production-score-integrity.test.cjs tests/golfer-function-contract.test.cjs tests/draft-ranking-regression.test.cjs tests/visual/safety.test.cjs
       - name: Capture seven-width layout matrix using isolated data
         run: node tests/visual/run.cjs
       - name: Save synthetic screenshots and layout report
