@@ -41,3 +41,19 @@ test('captain pick path rejects stale, off-turn, and ineligible attempts before 
  const pre=captain.slice(start,rpc);
  for(const guard of ['currentTeam!==myTeam','golfer.team!=null','!canBand(currentTeam,golfer.band)','S.picks.length>=totalPicks()'])assert.ok(pre.includes(guard),guard);
 });
+
+test('draft clock is derived from shared deadline and pauses consistently',()=>{
+ const a=draft(3,9),b=draft(3,9);
+ const deadline=new Date(Date.now()+60000).toISOString();
+ for(const ctx of [a,b])vm.runInContext(`S.timerPaused=false;S.timerLength=60;S.timerEndsAt=${JSON.stringify(deadline)}`,ctx);
+ const x=a.remaining(),y=b.remaining();
+ assert.ok(Math.abs(x-y)<=1,`two viewers disagree: ${x}, ${y}`);
+ assert.ok(x>=58&&x<=60);
+ for(const ctx of [a,b])vm.runInContext('S.timerPaused=true;S.timerLength=27;S.timerEndsAt=null',ctx);
+ assert.equal(a.remaining(),27);assert.equal(b.remaining(),27);
+});
+test('expired draft timer floors at zero, never becomes negative',()=>{
+ const c=draft(2,4);
+ vm.runInContext('S.timerPaused=false;S.timerEndsAt=new Date(Date.now()-9000).toISOString()',c);
+ assert.equal(c.remaining(),0);
+});
