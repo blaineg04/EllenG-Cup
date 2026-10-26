@@ -28,3 +28,21 @@ test('invalid strokes and closed tournaments are rejected before writing scores'
  assert.match(update,/Number\.isInteger\(n\)/);
  assert.match(source,/\["setup","live"\]\.includes/);
 });
+
+test('commissioner-only actions verify ownership before returning',()=>{
+ assert.match(source,/async function requireCommissioner\(\)/);
+ assert.match(source,/draft\.owner_id!==user\.id/);
+ assert.match(source,/if\(action==="reset_pin"\|\|action==="issue_activation"\)/);
+ assert.match(source,/const draft=await requireCommissioner\(\)/);
+});
+test('player handicap edits require account linkage and an atomic verified save',()=>{
+ const handicap=source.slice(source.indexOf('if(action==="update_handicap")'),source.indexOf('if(action==="update_score")'));
+ assert.match(handicap,/ownGolfer\(draft\)/);
+ assert.match(handicap,/elleng_patch_golfer_atomic/);
+ assert.match(handicap,/savedHcp!==handicap\|\|savedBand!==band/);
+});
+test('score submissions require active tournament and matching draft association',()=>{
+ assert.match(update,/await activeTournament\(teamIndex\)/);
+ assert.match(source,/String\(data\.draft_id\|\|""\)!==draftId/);
+ assert.match(source,/teamIndex>=count/);
+});
