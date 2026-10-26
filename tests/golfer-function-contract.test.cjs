@@ -46,3 +46,14 @@ test('score submissions require active tournament and matching draft association
  assert.match(source,/String\(data\.draft_id\|\|""\)!==draftId/);
  assert.match(source,/teamIndex>=count/);
 });
+
+test('roster parsing rejects null, empty, negative and fractional golfer IDs',()=>{
+ const vm=require('node:vm');
+ const start=source.indexOf('function rosterIndexes(');
+ const end=source.indexOf('\n\nDeno.serve(',start);
+ assert.ok(start>=0&&end>start,'Cannot locate roster helper');
+ const ctx={};
+ vm.runInNewContext(source.slice(start,end),ctx);
+ const result=Array.from(ctx.rosterIndexes({roster:[0,1,{golferIndex:2},{golferIndex:"3"},{golferIndex:null},{golferIndex:""},{golferIndex:-1},{golferIndex:1.5},{golferIndex:true},{golferIndex:"nope"}]}));
+ assert.deepEqual(result,[0,1,2,3]);
+});
