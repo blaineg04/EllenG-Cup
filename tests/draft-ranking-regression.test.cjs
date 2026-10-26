@@ -139,3 +139,13 @@ test('expired clock submits at most one automatic pick while server response is 
  await vm.runInContext('advanceExpiredDraft()',context);
  assert.equal(calls,1,'completed draft must not issue another auto-pick');
 });
+
+test('staged database auto-pick uses the same minimum penalty eligibility as captain picks',()=>{
+ const sql=fs.readFileSync(path.join(__dirname,'../supabase/migrations/20261026_elleng_auto_pick_balance_alignment.sql'),'utf8');
+ assert.match(sql,/CREATE OR REPLACE FUNCTION public\.elleng_auto_pick/);
+ assert.match(sql,/v_candidate_penalty := public\.elleng_pick_balance_penalty\(v_state,v_turn,v_band\)/);
+ assert.match(sql,/v_candidate_penalty < v_min_penalty/);
+ assert.match(sql,/v_candidate_penalty = v_min_penalty/);
+ assert.match(sql,/for update;/);
+ assert.match(sql,/now\(\) < v_deadline/);
+});
