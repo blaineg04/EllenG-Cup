@@ -10,7 +10,7 @@
 <input id="password" type="password" autocomplete="current-password" placeholder="Password" style="max-width:240px">
 <button id="login" class="gold">Sign In</button>
 </div><div id="authMsg" class="muted"></div></div>
-<div id="adminApp" style="display:none"><div class="card"><div class="actions"><button id="setupBtn" class="alt">Setup</button><button id="undo" class="gold">Undo Pick</button><button id="pause" class="alt">Pause/Resume</button><button id="resetClock" class="alt">Reset Clock</button></div></div>
+<div id="adminApp" style="display:none"><div id="draftActionError" role="alert" aria-live="assertive" class="muted" style="display:none;padding:12px;margin:8px 0;border:2px solid #b45309;border-radius:8px;background:#fff4df;color:#733600;font-weight:700"></div><div class="card"><div class="actions"><button id="setupBtn" class="alt">Setup</button><button id="undo" class="gold">Undo Pick</button><button id="pause" class="alt">Pause/Resume</button><button id="resetClock" class="alt">Reset Clock</button></div></div>
 <section id="setup" class="card"><h2>Golfer & Team Setup</h2><div style="overflow:auto"><table><thead><tr><th>#</th><th>Golfer</th><th>HCP</th><th>Band</th></tr></thead><tbody id="grows"></tbody></table></div><h3>Teams</h3><table><tbody id="trows"></tbody></table><div class="actions" style="margin-top:10px"><select id="dtype"><option value="snake">Snake Draft</option><option value="straight">Straight Draft</option></select><select id="tlen"><option>30</option><option>45</option><option selected>60</option><option>90</option><option>120</option></select><button id="saveSetup" class="gold">Save Setup & Go Live</button></div></section>
 <section id="live" class="grid" style="display:none"><div class="card"><h2>Available Golfers</h2><div id="pool"></div></div><div class="card"><div class="bar"><div><strong id="onclock"></strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div class="muted">Pick clock</div></div></div><div id="teams" class="teams"></div></div></section></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script>
@@ -89,14 +89,16 @@ async function saveCommissionerAction(change){
  const before=structuredClone(S);
  try{
   if(change()===false)return;
+  const errorBanner=document.getElementById("draftActionError");
+  if(errorBanner){errorBanner.textContent="";errorBanner.style.display="none"}
   await save();
   if(liveMode)liveRender();
  }catch(error){
   S=before;
   if(liveMode)liveRender();
   // A failed commissioner action must not look like a successful pause, undo or reset.
-  const msg=document.getElementById("authMsg");
-  if(msg)msg.textContent="Draft change was not saved. Reload before trying again.";
+  const msg=document.getElementById("draftActionError");
+  if(msg){msg.textContent="Draft change was not saved. Reload before trying again.";msg.style.display="block"}
  }
 }
 document.getElementById("undo").onclick=()=>saveCommissionerAction(()=>{
