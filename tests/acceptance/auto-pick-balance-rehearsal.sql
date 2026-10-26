@@ -31,4 +31,29 @@ BEGIN
   END IF;
   RAISE NOTICE 'PASS: automatic pick candidate priority matches manual penalty rule';
 END $$;
+-- Regression: when the current team already has C, prefer an A/B band
+-- rather than selecting a second C while another team has zero C golfers.
+DO $
+DECLARE
+  s jsonb := '{
+    "teams":[{"roster":[0]},{"roster":[]}],
+    "golfers":[
+      {"name":"C1","band":"C","team":0},
+      {"name":"A1","band":"A","team":null},
+      {"name":"B1","band":"B","team":null},
+      {"name":"C2","band":"C","team":null}
+    ]
+  }'::jsonb;
+  a_penalty integer;
+  b_penalty integer;
+  c_penalty integer;
+BEGIN
+  a_penalty := public.elleng_pick_balance_penalty(s,0,'A');
+  b_penalty := public.elleng_pick_balance_penalty(s,0,'B');
+  c_penalty := public.elleng_pick_balance_penalty(s,0,'C');
+  IF NOT (a_penalty = b_penalty AND a_penalty < c_penalty) THEN
+    RAISE EXCEPTION 'Expected A/B minimum penalty below C; got A %, B %, C %', a_penalty,b_penalty,c_penalty;
+  END IF;
+  RAISE NOTICE 'PASS: A/B tie wins over duplicate C band';
+END $;
 ROLLBACK;
