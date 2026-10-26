@@ -91,3 +91,17 @@ test('realtime draft refresh failure is reported instead of silently losing sync
  assert.match(subscriber,/SYNC ERROR/);
  assert.match(subscriber,/console\.error/);
 });
+
+test('commissioner auto-pick is authorized, throttled, and invoked only on expired live draft',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../admin.html'),'utf8');
+ const begin=html.indexOf('async function advanceExpiredDraft()');
+ const end=html.indexOf('async function pick(i)',begin);
+ assert.ok(begin>=0&&end>begin);
+ const code=html.slice(begin,end);
+ assert.match(code,/autoPickPending\|\|savingDraft\|\|!liveMode\|\|S\.timerPaused/);
+ assert.match(code,/remaining\(\)>0/);
+ assert.match(code,/S\.picks\.length>=totalPicks\(\)/);
+ assert.match(code,/autoPickLastAttempt<5000/);
+ assert.match(code,/db\.rpc\("elleng_auto_pick",\{p_draft_id:cfg\.draftId\}\)/);
+ assert.match(code,/if\(x===0\)void advanceExpiredDraft\(\)/);
+});
