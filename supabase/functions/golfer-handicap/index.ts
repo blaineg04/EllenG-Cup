@@ -2,7 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
 const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,"Content-Type":"application/json"}});
 function bandFromHandicap(n:number){return n<=9?"A":n<=17?"B":n<=25?"C":"D"}
-function rosterIndexes(team:any){return (Array.isArray(team?.roster)?team.roster:[]).map((r:any)=>Number.isInteger(r)?Number(r):(r&&typeof r==="object"&&Number.isInteger(Number(r.golferIndex))?Number(r.golferIndex):null)).filter((x:any)=>x!==null)}
+function rosterIndexes(team:any){return (Array.isArray(team?.roster)?team.roster:[]).map((r:any)=>{const value=Number.isInteger(r)?r:(r&&typeof r==="object"?r.golferIndex:null);if(value===null||value===undefined||typeof value==="boolean"||String(value).trim()==="")return null;const index=Number(value);return Number.isSafeInteger(index)&&index>=0?index:null}).filter((x:any)=>x!==null)}
 
 Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response("ok",{headers:cors});
