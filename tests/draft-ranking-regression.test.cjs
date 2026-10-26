@@ -22,7 +22,7 @@ test('snake and standard order remain deterministic for dynamic team counts',()=
  }
 });
 test('banded drafting favors teams with fewer A/B players and open mode remains selectable',()=>{
- const c=draft(2,4);vm.runInContext('S.teams[0].roster=[0];S.golfers[0].team=0',c);
+ const c=draft(2,8);vm.runInContext('S.teams[0].roster=[0];S.golfers[0].team=0',c);
  assert.equal(c.canBand(0,'A'),false);
  assert.equal(c.canBand(1,'A'),true);
  vm.runInContext('S.draftRules="open"',c);
