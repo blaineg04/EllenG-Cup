@@ -39,6 +39,17 @@ jobs:
       - name: Run isolated scoring regression tests
         run: node --test tests/nov20-production-score-integrity.test.cjs tests/golfer-function-contract.test.cjs tests/draft-ranking-regression.test.cjs
 
+  isolated-database-rehearsal:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Rehearse auto-pick SQL on local restored database and roll back
+        shell: bash
+        run: bash tests/acceptance/run-auto-pick-rehearsal.sh
+
   responsive-layout:
     needs: scoring-regression
     # Keep execution on the existing MacBook; never run fork code on it.
