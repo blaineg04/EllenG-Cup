@@ -25,3 +25,12 @@
 | Refresh & reconnection | Reload both devices and recover from connection loss | Same persisted result, no lost or double submission |
 
 **Release evidence:** record backend ID (nonproduction only), database constraint, function version, Git SHA, each case PASS/FAIL, screenshots and sanitized query outputs. A green UI-only CI suite does not replace this acceptance matrix.
+
+## Verified local rehearsal evidence — October 26, 2026
+
+- GitHub scoring/responsive CI #279 completed successfully at commit `93163083576c61783d9e1a1dce5db0bb76d6849e`.
+- User ran `tests/acceptance/local-18-hole-database-rehearsal.sql` against the isolated local `elleng_restore_test` database restored from the private backup.
+- Terminal output showed `PASS: holes 1 and 10 save independently, hole 19 rejected` followed by `ROLLBACK`.
+- Local recovered count verification matched: 1 draft, 1 tournament, 29 golfer account links, 6 captain rows, and 0 individual/team/pair score rows.
+- Scope limit: test exercised SQL storage constraints only; it did not authenticate two distinct users, call the deployed Edge Function, inspect live leaderboard, or test realtime subscriptions.
+- **Release remains blocked pending separate authenticated multi-device acceptance evidence.** Never infer this evidence from green CI or the local SQL rehearsal.
