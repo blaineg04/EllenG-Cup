@@ -80,3 +80,14 @@ test('commissioner save failure appears in the visible authenticated draft panel
  assert.match(action,/getElementById\("draftActionError"\)/);
  assert.match(action,/msg\.style\.display="block"/);
 });
+
+test('realtime draft refresh failure is reported instead of silently losing sync',()=>{
+ const common=fs.readFileSync(path.join(__dirname,'../common.js'),'utf8');
+ const start=common.indexOf('function subscribe(cb)');
+ const end=common.indexOf('function remaining()',start);
+ assert.ok(start>=0&&end>start);
+ const subscriber=common.slice(start,end);
+ assert.match(subscriber,/try\{await load\(\);cb\(\)\}catch\(error\)/);
+ assert.match(subscriber,/SYNC ERROR/);
+ assert.match(subscriber,/console\.error/);
+});
