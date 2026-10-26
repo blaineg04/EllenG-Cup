@@ -105,3 +105,30 @@ test('commissioner auto-pick is authorized, throttled, and invoked only on expir
  assert.match(code,/db\.rpc\("elleng_auto_pick",\{p_draft_id:cfg\.draftId\}\)/);
  assert.match(code,/if\(x===0\)void advanceExpiredDraft\(\)/);
 });
+
+test('expired clock submits at most one automatic pick while server response is pending',async()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../admin.html'),'utf8');
+ const begin=html.indexOf('let autoPickPending=false');
+ const end=html.indexOf('async function pick(i)',begin);
+ assert.ok(begin>=0&&end>begin,'Auto-pick handler missing');
+ let resolveRPC, calls=0,refreshes=0;
+ const pending=new Promise(resolve=>{resolveRPC=resolve});
+ const banner={textContent:'',style:{display:'none'}};
+ const context=vm.createContext({
+  S:{timerPaused:false,timerEndsAt:new Date(Date.now()-10000).toISOString(),picks:[]},
+  savingDraft:false,liveMode:true,cfg:{draftId:'mock-draft'},
+  remaining:()=>0,totalPicks:()=>5,
+  db:{rpc:async(name,args)=>{assert.equal(name,'elleng_auto_pick');assert.equal(args.p_draft_id,'mock-draft');calls++;return pending}},
+  load:async()=>{refreshes++},liveRender:()=>{},
+  document:{getElementById:id=>id==='draftActionError'?banner:{textContent:'',style:{}}},
+  console,Date
+ });
+ vm.runInContext(html.slice(begin,end),context);
+ const first=vm.runInContext('advanceExpiredDraft()',context);
+ await vm.runInContext('advanceExpiredDraft()',context);
+ assert.equal(calls,1,'concurrent clock ticks must not submit duplicate RPCs');
+ resolveRPC({data:{},error:null});
+ await first;
+ assert.equal(refreshes,1);
+ assert.equal(vm.runInContext('autoPickPending',context),false);
+});
