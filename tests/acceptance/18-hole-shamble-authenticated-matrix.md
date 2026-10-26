@@ -1,8 +1,8 @@
 # EllenG Cup — authenticated 18-hole scoring acceptance matrix
 
-**Status:** Test plan only. No tests against a migrated Supabase backend have been executed.
+**Status (2026-10-26):** The live database migration has been applied and the deployed `golfer-handicap` function is v12 with JWT verification enabled. CI #267 passed scoring and responsive tests. **No authenticated two-golfer end-to-end acceptance test has been executed.** The production tournament remains score-free; do not run these cases against its records.
 
-**Preconditions:** isolated Supabase project/branch with the staged migration and `golfer-handicap` Edge Function; two distinct test golfers linked to a shared drafted team; another team; commissioner and captain test sessions; two authenticated devices. Do not use production tournament scores.
+**Preconditions:** An isolated local or separate no-cost test database/service with the 18-hole migration and the exact v12 function logic; two distinct test golfers linked to a shared drafted team; another team; commissioner and captain test sessions; two authenticated devices. The production database is already migrated but is **not** an acceptable target for destructive acceptance cases. Do not use production tournament scores or production golfer accounts for rehearsal. The local backup restore proved recoverability of tournament tables, **not** Supabase Auth or Edge Function behavior.
 
 | Case | Action | Expected evidence |
 | --- | --- | --- |
