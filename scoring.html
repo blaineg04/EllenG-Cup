@@ -1529,6 +1529,79 @@ html.broadcast-active,body.broadcast-active{overflow:hidden!important;height:100
 }
 </style>
 
+<style id="commissioner-team-login-alignment">
+/* Keep the captain-login form on the same vertical rhythm in every team card. */
+#teamEditor .editor-card{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto repeat(4,auto) auto auto auto;
+  align-content:start;
+  row-gap:8px;
+  min-width:0;
+}
+#teamEditor .editor-card h3{margin:0}
+#teamEditor .editor-card > label{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  min-width:0;
+  margin:0;
+}
+#teamEditor .editor-card > label small,
+#teamEditor .identity-editor label small{
+  display:block;
+  line-height:1.35;
+  min-height:1.35em;
+}
+#teamEditor .editor-card > label input{
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  margin:0;
+  min-height:44px;
+}
+#teamEditor .editor-card > .row{
+  margin-top:0!important;
+  align-items:stretch;
+}
+#teamEditor .editor-card > .row button{
+  min-height:48px;
+  height:100%;
+  line-height:1.2;
+  white-space:normal;
+}
+#teamEditor .editor-card > .status{
+  margin-top:0!important;
+  min-height:1.4em;
+  line-height:1.4;
+}
+#teamEditor .identity-editor{
+  margin-top:0;
+  align-items:end;
+  min-width:0;
+}
+#teamEditor .identity-editor label{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  min-width:0;
+}
+#teamEditor .identity-editor input{
+  box-sizing:border-box;
+  margin:0;
+  min-height:44px;
+}
+@media(max-width:700px){
+  #teamEditor .editor-card > .row{
+    display:grid;
+    grid-template-columns:minmax(0,1.35fr) minmax(0,.85fr);
+    gap:8px;
+  }
+  #teamEditor .editor-card > .row button{width:100%;min-width:0;padding-inline:8px}
+}
+</style>
+
 <style id="player-simplicity-v2712">
 /* v2.7.12 — player-facing simplicity pass. Commissioner controls are unchanged. */
 .player-essentials-card{border-left:5px solid var(--gold)!important}
