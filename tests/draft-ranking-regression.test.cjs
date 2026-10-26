@@ -68,3 +68,15 @@ test('failed commissioner pause, undo, or clock reset reports failure instead of
  assert.match(handler,/S=before/);
  assert.match(handler,/Draft change was not saved/);
 });
+
+test('commissioner save failure appears in the visible authenticated draft panel',()=>{
+ const html=fs.readFileSync(path.join(__dirname,'../admin.html'),'utf8');
+ const app=html.indexOf('<div id="adminApp"');
+ const banner=html.indexOf('id="draftActionError"',app);
+ const setup=html.indexOf('id="setup"',app);
+ assert.ok(app>=0&&banner>app&&banner<setup,'Error banner must be inside the visible commissioner app');
+ assert.match(html.slice(banner,setup),/role="alert"/);
+ const action=html.slice(html.indexOf('async function saveCommissionerAction('),html.indexOf('document.getElementById("undo").onclick'));
+ assert.match(action,/getElementById\("draftActionError"\)/);
+ assert.match(action,/msg\.style\.display="block"/);
+});
