@@ -2,10 +2,12 @@ name: November 20 score integrity
 on:
   push:
     branches: ['release/nov20-score-integrity-20261020']
-    paths: ['scoring.html', 'draft.html', 'captain.html', 'admin.html', 'style.css', 'common.js', 'config.js', 'tests/**', '.github/workflows/nov20-score-integrity.yml']
+    paths: ['scoring.html', 'draft.html', 'captain.html', 'admin.html', 'style.css', 'common.js', 'config.js', 'tests/**', 'supabase/functions/**', 'supabase/migrations/**', '.github/workflows/nov20-score-integrity.yml']
   pull_request:
     paths:
       - 'scoring.html'
+      - 'supabase/functions/**'
+      - 'supabase/migrations/**'
       - 'tests/nov20-production-score-integrity.test.cjs'
       - 'tests/visual/**'
       - 'draft.html'
