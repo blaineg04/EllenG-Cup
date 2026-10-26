@@ -185,6 +185,24 @@ async function main() {
           await page.locator(sel).evaluate(e=>e.click());
           await page.locator(`#${view}View:not(.hidden)`).waitFor({timeout:5000});
           await capture(view);
+          if(view==='admin' && !live && width>=701){
+            const alignment=await page.evaluate(()=>{
+              const cards=[...document.querySelectorAll('#teamEditor .editor-card')].filter(e=>e.getBoundingClientRect().width>0);
+              const fields=['[data-team-name]','[data-team-captain]','[data-team-email]','[data-team-password]','[data-create-captain]','.identity-editor'];
+              const bounds=cards.slice(0,2).map(card=>fields.map(selector=>{
+                const el=card.querySelector(selector);return el?el.getBoundingClientRect().top:null;
+              }));
+              return {count:cards.length,fields,bounds};
+            });
+            if(alignment.count>=2){
+              for(let i=0;i<alignment.fields.length;i++){
+                const [a,b]=alignment.bounds.map(x=>x[i]);
+                if(a===null||b===null||Math.abs(a-b)>3)throw new Error(
+                  'Commissioner team cards misaligned at '+alignment.fields[i]+': '+a+' vs '+b+' (width '+width+')'
+                );
+              }
+            }
+          }
         }
         await page.locator('#playerExtrasToggle').evaluate(e=>e.click());
         await page.locator('#extrasView:not(.hidden)').waitFor({timeout:5000});
