@@ -94,6 +94,9 @@ async function saveCommissionerAction(change){
  }catch(error){
   S=before;
   if(liveMode)liveRender();
+  // A failed commissioner action must not look like a successful pause, undo or reset.
+  const msg=document.getElementById("authMsg");
+  if(msg)msg.textContent="Draft change was not saved. Reload before trying again.";
  }
 }
 document.getElementById("undo").onclick=()=>saveCommissionerAction(()=>{
