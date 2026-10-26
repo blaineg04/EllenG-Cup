@@ -33,7 +33,7 @@ BEGIN
 END $$;
 -- Regression: when the current team already has C, prefer an A/B band
 -- rather than selecting a second C while another team has zero C golfers.
-DO $
+DO $$
 DECLARE
   s jsonb := '{
     "teams":[{"roster":[0]},{"roster":[]}],
@@ -55,5 +55,5 @@ BEGIN
     RAISE EXCEPTION 'Expected A/B minimum penalty below C; got A %, B %, C %', a_penalty,b_penalty,c_penalty;
   END IF;
   RAISE NOTICE 'PASS: A/B tie wins over duplicate C band';
-END $;
+END $$;
 ROLLBACK;
