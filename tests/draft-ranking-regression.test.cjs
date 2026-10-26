@@ -57,3 +57,14 @@ test('expired draft timer floors at zero, never becomes negative',()=>{
  vm.runInContext('S.timerPaused=false;S.timerEndsAt=new Date(Date.now()-9000).toISOString()',c);
  assert.equal(c.remaining(),0);
 });
+
+test('failed commissioner pause, undo, or clock reset reports failure instead of silently succeeding',()=>{
+ const admin=fs.readFileSync(path.join(__dirname,'../admin.html'),'utf8');
+ const start=admin.indexOf('async function saveCommissionerAction(change){');
+ const end=admin.indexOf('document.getElementById("undo").onclick',start);
+ assert.ok(start>=0&&end>start);
+ const handler=admin.slice(start,end);
+ assert.match(handler,/catch\(error\)/);
+ assert.match(handler,/S=before/);
+ assert.match(handler,/Draft change was not saved/);
+});
