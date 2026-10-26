@@ -268,7 +268,8 @@ test('captain submits at most one pick while the server response is pending',asy
  const pending=new Promise(resolve=>{resolvePick=resolve});
  const buttons=[{disabled:false},{disabled:false}];
  const ctx=vm.createContext({
-  S:{timerPaused:false,golfers:[{name:'Sample golfer'}],teams:[{name:'Team 1'}]},
+  S:{timerPaused:false,picks:[],golfers:[{name:'Sample golfer',band:'A',team:null}],teams:[{name:'Team 1',roster:[]}]},
+  order:()=>0,totalPicks:()=>1,canBand:()=>true,
   myTeam:0,cfg:{draftId:'test-draft'},draftSoundEnabled:false,lastSoundPickCount:null,
   db:{rpc:async()=>{requests++;return pending}},
   document:{querySelectorAll:()=>buttons},
