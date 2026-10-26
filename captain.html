@@ -783,6 +783,14 @@ let captainPickSaving=false;
 async function pick(i){
  if(captainPickSaving)return;
  if(S.timerPaused){alert("The draft is paused. Wait for the Commissioner to start or resume it.");return}
+ // The server RPC is authoritative; this also blocks stale or manually invoked client picks.
+ const currentTeam=order(S.picks.length);
+ const golfer=S.golfers[i];
+ if(S.picks.length>=totalPicks()||currentTeam!==myTeam||!golfer||golfer.team!=null||!canBand(currentTeam,golfer.band)){
+  alert("This pick is no longer available. Refresh the draft board.");
+  try{await load();render()}catch(e){console.error("Draft refresh failed:",e)}
+  return;
+ }
  if(!confirm("Draft "+(S.golfers[i]?.name||"this golfer")+" for "+(S.teams[myTeam]?.name||"your team")+"?"))return;
  captainPickSaving=true;
  document.querySelectorAll("#pool [data-p]").forEach(button=>button.disabled=true);
