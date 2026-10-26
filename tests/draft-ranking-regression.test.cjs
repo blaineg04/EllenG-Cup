@@ -2,7 +2,7 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const src=fs.readFileSync(path.join(__dirname,'../common.js'),'utf8');
-const prefix=src.slice(0,src.indexOf('async function load()'));
+const prefix=src.slice(0,src.indexOf('async function load()')) + '\n' + src.slice(src.indexOf('function remaining(){'),src.indexOf('function esc('));
 function draft(teamCount,golferCount,type='snake',rules='banded'){
  const ctx={window:{ELLENG_CONFIG:{supabaseUrl:'https://example.invalid',supabaseAnonKey:'test',defaultTeamCount:teamCount,defaultGolferCount:golferCount},supabase:{createClient:()=>({})}}};
  vm.createContext(ctx);vm.runInContext(prefix,ctx);
