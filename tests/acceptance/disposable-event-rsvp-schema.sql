@@ -20,7 +20,9 @@ insert into auth.users(id) values
 ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
 ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'),
 ('cccccccc-cccc-cccc-cccc-cccccccccccc');
-insert into public.elleng_drafts(id,owner_id) values('draft-1','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+insert into public.elleng_drafts(id,owner_id,state)
+values('draft-1','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+'{"picks":[],"golfers":[{"name":"Golfer 0"},{"name":"Golfer 1"},{"name":"Golfer 2"},{"name":"Golfer 3"},{"name":"Golfer 4"}]}'::jsonb);
 insert into public.elleng_tournaments(id,draft_id) values('nov20','draft-1'),('next','draft-1');
 insert into public.elleng_event_rsvps(tournament_id,user_id,golfer_index,status) values
 ('nov20','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',0,'playing'),
