@@ -178,3 +178,20 @@ test('a second disconnect after recovery prevents stale draft updates',async()=>
  assert.equal(viewer.state().picks.length,1);
  assert.equal(viewer.indicator.textContent,'LIVE');
 });
+
+test('a failed subscription cannot enable controls or apply a new pick',async()=>{
+ const server={state:fresh()};
+ const viewer=startClient(server);
+ await viewer.status('SUBSCRIBED');
+ await viewer.status('CLOSED');
+ server.state.picks.push({team:0,golfer:0});
+ server.state.golfers[0].team=0;
+ server.state.teams[0].roster.push(0);
+ await viewer.change();
+ assert.equal(viewer.indicator.textContent,'RECONNECTING');
+ assert.equal(viewer.buttons[0].disabled,true);
+ assert.equal(viewer.state().picks.length,0);
+ await viewer.status('SUBSCRIBED');
+ assert.equal(viewer.state().picks.length,1);
+ assert.equal(viewer.indicator.textContent,'LIVE');
+});
