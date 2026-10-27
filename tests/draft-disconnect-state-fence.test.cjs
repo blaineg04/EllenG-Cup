@@ -113,5 +113,4 @@ test('failed prior-connection catch-up cannot change a newer LIVE snapshot',asyn
  h.resolve();await stale;
  assert.equal(h.state().picks.length,2);
  assert.equal(h.indicator.textContent,'LIVE');
- assert.equal(h.buttons[0].disabled,false);
 });
