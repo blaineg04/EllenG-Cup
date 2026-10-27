@@ -81,6 +81,12 @@ jobs:
           restored_rows="$(sudo -u postgres psql -X -At -d "$restore_db" -c "select count(*) from acceptance.drafts;")"
           test "$source_rows" -gt 0
           test "$source_rows" = "$restored_rows"
+          # Compare the recovered draft payload and ownership, not merely row counts.
+          draft_query="select id || ':' || owner_id::text || ':' || state::text || ':' || updated_at::text from acceptance.drafts order by id;"
+          source_drafts="$(sudo -u postgres psql -X -At -d "$db" -c "$draft_query")"
+          restored_drafts="$(sudo -u postgres psql -X -At -d "$restore_db" -c "$draft_query")"
+          test -n "$source_drafts"
+          test "$source_drafts" = "$restored_drafts"
           sudo -u postgres dropdb "$restore_db"
           sudo -u postgres rm -f "$backup_file"
           echo 'PASS: disposable database backup and isolated restore preserved acceptance tables.'
