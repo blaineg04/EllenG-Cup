@@ -47,3 +47,12 @@ Updated: 2026-10-22. This is a checklist of **unverified live evidence**, not an
 For each item, record: date, scenario, isolated backend/project (non-secret ID only), tested commit SHA, devices/browsers, expected/actual result, screenshots or sanitized traces, pass/fail, owner, and unresolved blockers.
 
 **Release decision:** Synthetic CI success alone is insufficient. Do not merge or deploy until the applicable authenticated checks and backup/rollback evidence pass.
+
+## October 27 read-only EllenG Supabase inspection
+
+- Connected project: `xepccqedhbucpbwuykoc` (EllenG Cup connection only); project reported ACTIVE_HEALTHY.
+- All 14 returned `public` tables have RLS enabled. This does **not** prove policies are correct or that each authenticated role is restricted properly.
+- The existing `elleng_drafts` and `elleng_tournaments` tables each contain one record, and `elleng_captains` contains six records. Treat these as potentially live; do not modify or use them as disposable test fixtures.
+- Read-only schema inspection confirmed draft `id`, `owner_id`, `state`, `status`, and captain `draft_id`, `user_id`, `team_index` fields.
+- **Isolation gate remains blocked:** no separately verified disposable backend, test draft, or test authentication identities. Do not infer readiness from RLS-enabled flags or synthetic CI.
+- Next acceptance step: verify an isolated backend/project and authenticated commissioner/captain test accounts, then run the existing checklist and capture sanitized evidence. Never write to the live `elleng-cup` draft.
