@@ -19,7 +19,7 @@ create unique index if not exists elleng_event_approved_golfer_unique
 alter table public.elleng_event_rsvps enable row level security;
 -- Database guard: a player cannot submit a fabricated approved RSVP through any write path.
 create or replace function public.elleng_event_rsvp_approval_guard()
-returns trigger language plpgsql security invoker set search_path = '' as $
+returns trigger language plpgsql security invoker set search_path = '' as $rsvp_guard$
 begin
  if tg_op='INSERT' and (new.approval_status <> 'pending' or new.approved_by is not null) then
    raise exception 'New RSVP must begin pending';
@@ -30,7 +30,7 @@ begin
  end if;
  return new;
 end;
-$;
+$rsvp_guard$;
 drop trigger if exists elleng_event_rsvp_approval_guard on public.elleng_event_rsvps;
 create trigger elleng_event_rsvp_approval_guard before insert or update on public.elleng_event_rsvps
 for each row execute function public.elleng_event_rsvp_approval_guard();
