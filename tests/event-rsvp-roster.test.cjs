@@ -24,4 +24,6 @@ test('invalid inputs fail closed',()=>{
  assert.throws(()=>approvedGolferIndices(null,event),TypeError);
  assert.throws(()=>approvedGolferIndices([],''),/Tournament ID/);
  assert.throws(()=>approvedGolferIndices([row('alice',-1)],event),/Verified golfer index/);
+ assert.throws(()=>approvedGolferIndices([row('alice',1,'unknown')],event),/Invalid RSVP status/);
+ assert.throws(()=>approvedGolferIndices([row('alice',1,'playing','unknown')],event),/Invalid approval status/);
 });
