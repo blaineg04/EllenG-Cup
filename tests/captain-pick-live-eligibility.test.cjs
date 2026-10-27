@@ -12,7 +12,7 @@ function harness(){
  const state={timerPaused:false,picks:[],golfers:[{name:'Synthetic golfer',team:null,band:'A'}],teams:[{name:'A',roster:[]},{name:'B',roster:[]}]};
  const connection={textContent:'LIVE'},calls=[],messages=[],buttons=[{disabled:false}];
  let confirmAction=()=>true,rendered=0;
- const ctx={S:state,myTeam:0,cfg:{draftId:'synthetic-only'},fresh:()=>state,
+ const ctx={S:state,myTeam:0,captainUserId:'captain-a',cfg:{draftId:'synthetic-only'},fresh:()=>state,
   order:()=>0,totalPicks:()=>1,canBand:()=>true,
   db:{rpc:async(name,args)=>{calls.push({name,args});return {data:state,error:null}}},
   document:{getElementById:id=>id==='connection'?connection:null,querySelectorAll:()=>buttons},
@@ -53,4 +53,54 @@ test('disconnect during captain confirmation prevents stale submission',async()=
 test('golfer assigned during confirmation cannot be drafted again',async()=>{
  const h=harness();h.onConfirm(()=>{h.state.golfers[0].team=1;return true});
  await h.pick(0);assert.equal(h.calls.length,0);
+});
+
+function authHarness(){
+ const elements={login:{style:{display:'none'}},app:{style:{display:'block'}},
+  connection:{textContent:'LIVE'},msg:{textContent:''}};
+ const buttons=[{disabled:false}];
+ let callback;
+ const ctx={myTeam:0,captainUserId:'captain-a',pickSyncFailed:false,
+  document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons},
+  db:{auth:{onAuthStateChange:cb=>{callback=cb}}}};
+ const start=source.indexOf('function revokeCaptainSession()');
+ const end=source.indexOf('(async()=>{',start);
+ assert.ok(start>0&&end>start,'captain auth change guard must be installed');
+ vm.createContext(ctx);
+ vm.runInContext(source.slice(start,end),ctx);
+ assert.equal(typeof callback,'function');
+ return {ctx,elements,buttons,change:(event,session)=>callback(event,session)};
+}
+test('captain signout immediately revokes draft controls',()=>{
+ const h=authHarness();h.change('SIGNED_OUT',null);
+ assert.equal(h.ctx.myTeam,null);
+ assert.equal(h.ctx.captainUserId,null);
+ assert.equal(h.ctx.pickSyncFailed,true);
+ assert.equal(h.elements.app.style.display,'none');
+ assert.equal(h.elements.login.style.display,'block');
+ assert.equal(h.elements.connection.textContent,'SIGN IN');
+ assert.equal(h.buttons[0].disabled,true);
+});
+test('switching to a different signed-in user revokes prior captain access',()=>{
+ const h=authHarness();h.change('SIGNED_IN',{user:{id:'captain-b'}});
+ assert.equal(h.ctx.captainUserId,null);
+ assert.equal(h.ctx.pickSyncFailed,true);
+ assert.match(h.elements.msg.textContent,/Sign in again/);
+});
+test('same-user token refresh retains captain controls',()=>{
+ const h=authHarness();h.change('TOKEN_REFRESHED',{user:{id:'captain-a'}});
+ assert.equal(h.ctx.captainUserId,'captain-a');
+ assert.equal(h.ctx.pickSyncFailed,false);
+ assert.equal(h.elements.app.style.display,'block');
+ assert.equal(h.buttons[0].disabled,false);
+});
+test('token refresh without a verified user fails closed',()=>{
+ const h=authHarness();h.change('TOKEN_REFRESHED',null);
+ assert.equal(h.ctx.captainUserId,null);
+ assert.equal(h.buttons[0].disabled,true);
+});
+test('captain pick requires a verified captain identity even if realtime says LIVE',async()=>{
+ const h=harness();h.ctx.captainUserId=null;
+ await h.pick(0);
+ assert.equal(h.calls.length,0);
 });
