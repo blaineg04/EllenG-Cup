@@ -4598,7 +4598,7 @@ async function savePairScore(teamIndex,pairIndex,val){
  if(!isSplitPair()||!canEditTeam(teamIndex))return;if(!beginScoreSave())return;
  const scoreHole=hole;
  const el=$("saveMsg");el.textContent="Saving pair score…";
- const score=val===""?null:Number(val);
+ const score=String(val??"").trim()===""?null:Number(val);
  try{
    if(score===null){
      const {error}=await db.from("elleng_pair_hole_scores").delete().eq("tournament_id",TOURNAMENT_ID).eq("hole",scoreHole).eq("team_index",teamIndex).eq("pair_index",pairIndex);if(error)throw error;
