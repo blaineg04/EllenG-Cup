@@ -70,6 +70,9 @@ jobs:
           restored_tables="$(sudo -u postgres psql -X -At -d "$restore_db" -c "select count(*) from pg_tables where schemaname='acceptance';")"
           test "$source_tables" -gt 0
           test "$source_tables" = "$restored_tables"
+          source_schema="$(sudo -u postgres pg_dump --schema-only --no-owner --no-privileges -n acceptance -d "$db" | sed '/^--/d;/^$/d;/^\\\\restrict /d;/^\\\\unrestrict /d')"
+          restored_schema="$(sudo -u postgres pg_dump --schema-only --no-owner --no-privileges -n acceptance -d "$restore_db" | sed '/^--/d;/^$/d;/^\\\\restrict /d;/^\\\\unrestrict /d')"
+          test "$source_schema" = "$restored_schema"
           sudo -u postgres dropdb "$restore_db"
           sudo -u postgres rm -f "$backup_file"
           echo 'PASS: disposable database backup and isolated restore preserved acceptance tables.'
