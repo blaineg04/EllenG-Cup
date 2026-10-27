@@ -138,3 +138,14 @@ test('successful Realtime event recovers LIVE after transient draft read failure
  assert.ok(!h.classes.has('status-offline'));
  assert.equal(h.stats().rendered,2);
 });
+
+test('remote pick event freezes old turn controls until authoritative refresh completes',async()=>{
+ const h=harness();
+ await h.emit('SUBSCRIBED');
+ h.pause();
+ const remote=h.change();
+ assert.equal(h.stats().buttonDisabled,true,'stale captain choice must be disabled during remote refresh');
+ assert.equal(h.stats().rendered,1,'no speculative redraw before the server responds');
+ h.resume();await remote;
+ assert.equal(h.stats().rendered,2,'fresh snapshot triggers normal eligibility redraw');
+});
