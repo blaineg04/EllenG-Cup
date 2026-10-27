@@ -24,12 +24,12 @@ jobs:
           set -euo pipefail
           export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
           if ! command -v codex >/dev/null; then
-            echo "BLOCKED: Codex CLI is not installed on the self-hosted runner." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
+            echo "BLOCKED: Codex CLI is not installed on the self-hosted runner." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
           if ! codex login status >/dev/null 2>&1; then
-            echo "BLOCKED: Codex CLI needs an interactive ChatGPT sign-in on the Mac (not an API key)." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
+            echo "BLOCKED: Codex CLI needs an interactive ChatGPT sign-in on the Mac (not an API key)." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
           echo "Local Codex CLI detected. Sign-in exists; model quota may still block execution." >> "$GITHUB_STEP_SUMMARY"
       - name: Stage safe agent task
@@ -57,12 +57,12 @@ jobs:
           # existing ChatGPT CLI sign-in, never put credentials in GitHub.
           unset CODEX_HOME
           if ! command -v codex >/dev/null || ! codex login status >/dev/null 2>&1; then
-            echo "No authenticated local Codex; skipped without charge." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
+            echo "BLOCKED: Codex is unavailable or unsigned. No code changes produced." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
           fi
           codex exec --sandbox workspace-write --skip-git-repo-check - < "$RUNNER_TEMP/elleng-agent-task.txt" || {
-            echo "Agent run failed or hit quota; no deployment or push occurred." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
+            echo "Agent run failed or hit quota; no deployment or push occurred." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
           }
           git diff --check
           git status --short >> "$GITHUB_STEP_SUMMARY"
