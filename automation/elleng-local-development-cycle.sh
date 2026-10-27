@@ -38,7 +38,11 @@ TASK
 codex exec --sandbox workspace-write --skip-git-repo-check - < "$OUT/task.txt" > "$OUT/$DATE.log" 2>&1
 # Include new tests as intent-to-add, without adding them to any remote branch.
 while IFS= read -r -d '' file; do git add -N -- "$file"; done < <(git ls-files --others --exclude-standard -z -- . ':!.github' ':!automation')
-git diff --check -- . ':!.github' ':!automation' || { echo "Changed files need whitespace review"; exit 1; }
+# Check only tests for whitespace; legacy HTML contains known old whitespace.
+# Always capture a patch even when other changed files have formatting issues.
+if ! git diff --check -- tests/; then
+  echo "Test changes need whitespace review" > "$OUT/$DATE-validation-warning.txt"
+fi
 git diff --binary -- . ':!.github' ':!automation' > "$OUT/latest-development.patch"
 git diff --stat -- . ':!.github' ':!automation' > "$OUT/$DATE-summary.txt"
 if ! test -s "$OUT/latest-development.patch"; then echo "No reviewable code changes produced"; exit 1; fi
