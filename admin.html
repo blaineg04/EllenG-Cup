@@ -11,9 +11,15 @@
 <button id="login" class="gold">Sign In</button>
 </div><div id="authMsg" class="muted"></div></div>
 <div id="adminApp" style="display:none"><div class="card"><div class="actions"><button id="setupBtn" class="alt">Setup</button><button id="undo" class="gold">Undo Pick</button><button id="pause" class="alt">Pause/Resume</button><button id="resetClock" class="alt">Reset Clock</button></div></div>
-<section id="setup" class="card"><h2>Golfer & Team Setup</h2><div style="overflow:auto"><table><thead><tr><th>#</th><th>Golfer</th><th>HCP</th><th>Band</th></tr></thead><tbody id="grows"></tbody></table></div><h3>Teams</h3><table><tbody id="trows"></tbody></table><div class="actions" style="margin-top:10px"><select id="dtype"><option value="snake">Snake Draft</option><option value="straight">Straight Draft</option></select><select id="tlen"><option>30</option><option>45</option><option selected>60</option><option>90</option><option>120</option></select><button id="saveSetup" class="gold">Save Setup & Go Live</button></div></section>
+<section id="setup" class="card"><h2>Golfer & Team Setup</h2>
+<div class="actions" style="justify-content:flex-start;align-items:end;flex-wrap:wrap">
+<label for="setupTeamCount">Teams <input id="setupTeamCount" type="number" min="2" max="36" step="1" style="width:90px"></label>
+<label for="setupGolferCount">Golfer slots <input id="setupGolferCount" type="number" min="2" max="500" step="1" style="width:100px"></label>
+<button id="applySetupSize" type="button" class="alt">Apply &amp; Save Counts</button></div>
+<p id="setupSizeMsg" class="muted" role="status" aria-live="polite">Change counts before drafting. Existing names and captain assignments are protected. RSVP enrollment is not yet connected to live draft setup.</p>
+<div style="overflow:auto"><table><thead><tr><th>#</th><th>Golfer</th><th>HCP</th><th>Band</th></tr></thead><tbody id="grows"></tbody></table></div><h3>Teams</h3><table><tbody id="trows"></tbody></table><div class="actions" style="margin-top:10px"><select id="dtype"><option value="snake">Snake Draft</option><option value="straight">Straight Draft</option></select><select id="tlen"><option>30</option><option>45</option><option selected>60</option><option>90</option><option>120</option></select><button id="saveSetup" class="gold">Save Setup & Go Live</button></div></section>
 <section id="live" class="grid" style="display:none"><div class="card"><h2>Available Golfers</h2><div id="pool"></div></div><div class="card"><div class="bar"><div><strong id="onclock"></strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div class="muted">Pick clock</div></div></div><div id="teams" class="teams"></div></div></section></div></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script src="draft-setup-config.js"></script><script>
 let draftUpdatedAt=null;
 let savingDraft=false;
 let commissionerAuthEpoch=0,commissionerOpenId=0,commissionerUserId=null;let commissionerChannel=null;
@@ -64,7 +70,7 @@ async function secureSave(){
 save=secureSave;
 
 let liveMode=false,tick;
-function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map((g,i)=>`<tr><td>${i+1}</td><td><input data-n="${i}" value="${esc(g.name)}"></td><td><input data-h="${i}" type="number" step=".1" value="${esc(g.hcp)}"></td><td><select data-b="${i}">${bands.map(b=>`<option ${g.band===b?"selected":""}>${b}</option>`).join("")}</select></td></tr>`).join("");document.getElementById("trows").innerHTML=S.teams.map((t,i)=>`<tr><td>Team ${i+1}</td><td><input data-tn="${i}" value="${esc(t.name)}"></td><td><input data-tc="${i}" placeholder="Captain" value="${esc(t.captain)}"></td></tr>`).join("");document.getElementById("dtype").value=S.draftType;document.getElementById("tlen").value=S.timerLength}
+function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map((g,i)=>`<tr><td>${i+1}</td><td><input data-n="${i}" value="${esc(g.name)}"></td><td><input data-h="${i}" type="number" step=".1" value="${esc(g.hcp)}"></td><td><select data-b="${i}"><option value="" ${!g.band?"selected":""}>Unranked</option>${bands.map(b=>`<option ${g.band===b?"selected":""}>${b}</option>`).join("")}</select></td></tr>`).join("");document.getElementById("trows").innerHTML=S.teams.map((t,i)=>`<tr><td>Team ${i+1}</td><td><input data-tn="${i}" value="${esc(t.name)}"></td><td><input data-tc="${i}" placeholder="Captain" value="${esc(t.captain)}"></td></tr>`).join("");document.getElementById("dtype").value=S.draftType;document.getElementById("tlen").value=S.timerLength;document.getElementById("setupTeamCount").value=S.teams.length;document.getElementById("setupGolferCount").value=S.golfers.length}
 function liveRender(){let total=S.golfers.filter(g=>g.name&&g.name.trim()).length,teamCount=S.teams.length,done=S.picks.length>=total,t=done?0:order(S.picks.length);document.getElementById("onclock").textContent=done?"DRAFT COMPLETE":"ON THE CLOCK: "+S.teams[t].name;document.getElementById("meta").textContent=done?"All rosters complete":`Round ${Math.floor(S.picks.length/Math.max(1,teamCount))+1} • Pick ${S.picks.length+1}`;document.getElementById("pool").innerHTML=S.golfers.map((g,i)=>({...g,i})).filter(g=>g.name&&g.team==null).map(g=>`<div class="player"><strong>${esc(g.name)}</strong><span class="badge">${g.band}</span><span class="muted">${esc(g.hcp||"—")}</span><button data-p="${g.i}" ${!done&&canBand(t,g.band)?"":"disabled"}>${done?"Complete":canBand(t,g.band)?"Draft":"Limit"}</button></div>`).join("");document.getElementById("teams").innerHTML=S.teams.map((tm,i)=>`<div class="team"><div class="teamhead"><strong>${esc(tm.name)}</strong><div class="muted" style="color:#ddd">${esc(tm.captain)}</div><div style="font-size:11px">${bands.map(b=>b+" "+tbc(i,b)).join(" • ")}</div></div><div class="roster">${Array.from({length:teamCapacity(i)},(_,j)=>{let g=S.golfers[tm.roster[j]];return g?`<div class="slot"><strong>${esc(g.name)}</strong> <span class="badge">${g.band}</span><div class="muted">HCP ${esc(g.hcp||"—")}</div></div>`:`<div class="slot muted">Open roster spot</div>`}).join("")}</div></div>`).join("");document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>pick(+b.dataset.p));drawClock()}
 function drawClock(){let x=remaining();document.getElementById("clock").textContent=Math.floor(x/60)+":"+String(x%60).padStart(2,"0");document.getElementById("clock").style.color=x<=10?"#9b2f2f":""}
 // Fence all optimistic commissioner actions to the verified login that began them.
@@ -82,6 +88,38 @@ async function pick(i){
  try{await save();if(sameCommissionerAction(actionEpoch,actionUserId))liveRender()}
  catch(e){if(!sameCommissionerAction(actionEpoch,actionUserId))return;S=before;liveRender()}
 }
+function readSetupFields(){
+  document.querySelectorAll("[data-n]").forEach(x=>S.golfers[+x.dataset.n].name=x.value.trim());
+  document.querySelectorAll("[data-h]").forEach(x=>S.golfers[+x.dataset.h].hcp=x.value);
+  document.querySelectorAll("[data-b]").forEach(x=>S.golfers[+x.dataset.b].band=x.value);
+  document.querySelectorAll("[data-tn]").forEach(x=>S.teams[+x.dataset.tn].name=x.value||"Team "+(+x.dataset.tn+1));
+  document.querySelectorAll("[data-tc]").forEach(x=>S.teams[+x.dataset.tc].captain=x.value);
+  S.draftType=document.getElementById("dtype").value;
+  S.timerLength=+document.getElementById("tlen").value;
+}
+document.getElementById("applySetupSize").onclick=async()=>{
+ if(savingDraft)return;
+ const actionEpoch=commissionerAuthEpoch,actionUserId=commissionerUserId;
+ if(!sameCommissionerAction(actionEpoch,actionUserId))return;
+ const button=document.getElementById("applySetupSize"),message=document.getElementById("setupSizeMsg");
+ const before=structuredClone(S);
+ button.disabled=true;
+ try{
+  readSetupFields();
+  const teamCount=Number(document.getElementById("setupTeamCount").value);
+  const golferCount=Number(document.getElementById("setupGolferCount").value);
+  S=EllenGDraftSetup.resizeDraftSetup(S,teamCount,golferCount);
+  await save();
+  if(!sameCommissionerAction(actionEpoch,actionUserId))return;
+  setupRender();
+  message.textContent="Saved "+teamCount+" teams and "+golferCount+" golfer slots. Enter golfer names and bands before going live.";
+ }catch(error){
+  if(sameCommissionerAction(actionEpoch,actionUserId)){
+   S=before;setupRender();
+   message.textContent=error?.message||"Unable to change draft counts.";
+  }
+ }finally{button.disabled=false}
+};
 document.getElementById("saveSetup").onclick=async()=>{
  if(savingDraft)return;
  const actionEpoch=commissionerAuthEpoch,actionUserId=commissionerUserId;
@@ -90,13 +128,10 @@ document.getElementById("saveSetup").onclick=async()=>{
  const button=document.getElementById("saveSetup");
  button.disabled=true;
  try{
-  document.querySelectorAll("[data-n]").forEach(x=>S.golfers[+x.dataset.n].name=x.value.trim());
-  document.querySelectorAll("[data-h]").forEach(x=>S.golfers[+x.dataset.h].hcp=x.value);
-  document.querySelectorAll("[data-b]").forEach(x=>S.golfers[+x.dataset.b].band=x.value);
-  document.querySelectorAll("[data-tn]").forEach(x=>S.teams[+x.dataset.tn].name=x.value||"Team "+(+x.dataset.tn+1));
-  document.querySelectorAll("[data-tc]").forEach(x=>S.teams[+x.dataset.tc].captain=x.value);
-  S.draftType=document.getElementById("dtype").value;
-  S.timerLength=+document.getElementById("tlen").value;
+  readSetupFields();
+  const named=S.golfers.filter(g=>g.name&&g.name.trim());
+  if(named.length<S.teams.length)throw new Error("Enter at least one golfer per team before starting the draft.");
+  if(named.some(g=>!bands.includes(g.band)))throw new Error("Set a handicap band for each named golfer before starting the draft.");
   S.timerPaused=false;
   S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();
   await save();
@@ -106,7 +141,7 @@ document.getElementById("saveSetup").onclick=async()=>{
   document.getElementById("live").style.display="grid";
   liveRender();
  }catch(error){
-  if(sameCommissionerAction(actionEpoch,actionUserId))S=before;
+  if(sameCommissionerAction(actionEpoch,actionUserId)){S=before;document.getElementById("setupSizeMsg").textContent=error?.message||"Setup was not saved.";}
  }finally{
   button.disabled=false;
  }
