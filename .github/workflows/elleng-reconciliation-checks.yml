@@ -42,3 +42,16 @@ jobs:
         # Keep results visible; do not rewrite product rules just to clear this diagnostic.
         continue-on-error: true
         run: node --test tests/scoring-branch-compatibility.test.cjs
+  cross-device-race-characterization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Record concurrent-client race gap (expected to fail until atomic backend fix)
+        continue-on-error: true
+        run: node --test tests/shamble-cross-device-race-characterization.test.cjs
