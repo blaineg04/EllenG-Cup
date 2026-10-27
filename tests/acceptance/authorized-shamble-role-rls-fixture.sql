@@ -44,6 +44,19 @@ BEGIN
  IF public.elleng_test_authorized_shamble('fixture',0,10,1,2)<>2 THEN RAISE EXCEPTION 'Wrong team score'; END IF;
  RAISE NOTICE 'PASS: actual non-owner PostgreSQL role + RLS atomic write';
 END $check$;
+-- A role permitted to run SECURITY INVOKER must NOT be able to bypass
+-- function authorization by inserting directly into the score table.
+DO $raw_guard$
+DECLARE denied boolean:=false;
+BEGIN
+ BEGIN
+  INSERT INTO public.elleng_player_hole_scores
+   (tournament_id,hole,team_index,golfer_index,score,updated_by,updated_at)
+  VALUES ('fixture',10,9,99,2,auth.uid(),now());
+ EXCEPTION WHEN insufficient_privilege OR check_violation THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'SECURITY GAP: raw cross-team score insert bypassed authorized RPC'; END IF;
+ RAISE NOTICE 'PASS: direct score table bypass denied';
+END $raw_guard$;
 RESET ROLE;
 SELECT set_config('elleng.test_uid','',false);
 SET LOCAL ROLE elleng_fixture_anon;
