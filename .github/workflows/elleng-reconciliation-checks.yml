@@ -199,10 +199,24 @@ jobs:
       - name: Execute atomic RPC under actual PostgreSQL roles and RLS
         run: psql -X -v ON_ERROR_STOP=1 -f tests/acceptance/authorized-shamble-role-rls-fixture.sql
 
+  draft-rehearsal-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail closed on reconnect, verify shared draft state and captain pick safety
+        run: |
+          node --test tests/draft-reconnect.test.cjs tests/draft-subscribe-behavior.test.cjs tests/draft-two-client-simulation.test.cjs tests/draft-timer-behavior.test.cjs tests/captain-pick-inflight.test.cjs tests/realtime-client-reconnect.test.cjs
+
   release-readiness-summary:
     name: Nonproduction readiness summary
     if: ${{ always() }}
-    needs: [existing-release-regressions, cross-device-race-characterization, atomic-prototype-fixture, atomic-concurrency, atomic-client-adapter, authorized-proposal-static, atomic-auth-security-gate, authorized-sql-fixture, atomic-browser-contract, atomic-real-role-rls]
+    needs: [existing-release-regressions, cross-device-race-characterization, atomic-prototype-fixture, atomic-concurrency, atomic-client-adapter, authorized-proposal-static, atomic-auth-security-gate, authorized-sql-fixture, atomic-browser-contract, atomic-real-role-rls, draft-rehearsal-regressions]
     runs-on: ubuntu-latest
     timeout-minutes: 3
     env:
@@ -216,6 +230,7 @@ jobs:
       J7: ${{ needs.authorized-sql-fixture.result }}
       J8: ${{ needs.atomic-browser-contract.result }}
       J9: ${{ needs.atomic-real-role-rls.result }}
+      J10: ${{ needs.draft-rehearsal-regressions.result }}
     steps:
       - name: Publish readiness evidence and outstanding gates
         shell: bash
@@ -237,6 +252,7 @@ jobs:
             echo "| authorized-sql-fixture | $J7 |"
             echo "| atomic-browser-contract | $J8 |"
             echo "| atomic-real-role-rls | $J9 |"
+            echo "| draft-rehearsal-regressions | $J10 |"
             echo ""
             echo "### Still required before any production approval"
             echo "- Authenticated Supabase/PostgREST testing against a separate nonproduction environment"
