@@ -182,10 +182,10 @@ const actionEnd=source.indexOf('// Invalidate pending commissioner lookups',acti
 assert.ok(actionStart>0&&actionEnd>actionStart);
 function actionHarness(){
  const state={picks:[],golfers:[{name:'Synthetic',team:null,band:'A'}],teams:[{name:'A',roster:[]}],timerPaused:false,timerLength:60,timerEndsAt:null};
- const els={saveSetup:{disabled:false},setup:{style:{display:'block'}},live:{style:{display:'none'}},setupBtn:{},undo:{},pause:{},resetClock:{},dtype:{value:'snake'},tlen:{value:'60'}};
+ const els={saveSetup:{disabled:false},applySetupSize:{disabled:false},setupTeamCount:{value:'2'},setupGolferCount:{value:'2'},setupSizeMsg:{textContent:''},setup:{style:{display:'block'}},live:{style:{display:'none'}},setupBtn:{},undo:{},pause:{},resetClock:{},dtype:{value:'snake'},tlen:{value:'60'}};
  const pending=[];let renders=0;
  const ctx={S:state,savingDraft:false,commissionerAuthEpoch:0,commissionerUserId:'commissioner-a',
-  liveMode:false,structuredClone,Date,order:()=>0,totalPicks:()=>1,canBand:()=>true,remaining:()=>30,
+  liveMode:false,structuredClone,Date,EllenGDraftSetup:require('../draft-setup-config.js'),order:()=>0,totalPicks:()=>1,canBand:()=>true,remaining:()=>30,
   save:()=>new Promise((resolve,reject)=>pending.push({resolve,reject})),
   document:{getElementById:id=>els[id],querySelectorAll:()=>[]},liveRender:()=>renders++,setupRender:()=>{}};
  vm.createContext(ctx);
@@ -275,4 +275,21 @@ test('current commissioner rejected pick restores the prior roster and redraws l
  h.pending[0].reject(Error('synthetic conflict'));await work;
  assert.equal(JSON.stringify(h.ctx.S),before);
  assert.equal(h.renders(),1);
+});
+
+test('old commissioner resize save cannot update replacement login controls',async()=>{
+ const h=actionHarness(),work=h.els.applySetupSize.onclick();
+ assert.equal(h.pending.length,1,'resize must use secure save');
+ const next=h.switchUser();
+ h.pending[0].resolve();await work;
+ assert.equal(h.ctx.S,next);
+ assert.equal(h.els.setupSizeMsg.textContent,'');
+});
+test('current commissioner resize failure restores original setup',async()=>{
+ const h=actionHarness(),original=h.ctx.S,work=h.els.applySetupSize.onclick();
+ assert.equal(h.pending.length,1);
+ h.pending[0].reject(Error('synthetic save failure'));await work;
+ assert.deepEqual(h.ctx.S,original);
+ assert.equal(h.els.applySetupSize.disabled,false);
+ assert.match(h.els.setupSizeMsg.textContent,/synthetic save failure/);
 });
