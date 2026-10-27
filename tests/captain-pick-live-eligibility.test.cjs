@@ -119,7 +119,8 @@ test('delayed captain role lookup cannot restore access after signout',async()=>
  vm.createContext(ctx);
  vm.runInContext(source.slice(start,end)+';this.checkCaptain=whoami;',ctx);
  const pending=ctx.checkCaptain();
- await Promise.resolve();
+ // vm-context async continuations may run after the outer test's microtask turn.
+ await new Promise(resolve=>setImmediate(resolve));
  assert.equal(typeof resolveAssignment,'function');
  ctx.captainAuthEpoch++;
  resolveAssignment({data:{team_index:0},error:null});
@@ -162,9 +163,9 @@ test('older overlapping captain role lookup cannot overwrite newer assignment',a
  vm.createContext(ctx);
  vm.runInContext(source.slice(start,end)+';this.checkCaptain=whoami;',ctx);
  const first=ctx.checkCaptain();
- await Promise.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
  const second=ctx.checkCaptain();
- await Promise.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
  assert.equal(resolvers.length,2,'both lookups must reach the assignment query');
  resolvers[1]({data:{team_index:1},error:null});
  assert.equal(await second,true);
