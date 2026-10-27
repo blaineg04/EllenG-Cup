@@ -26,3 +26,9 @@ test('existing incomplete Shamble roster clears the derived team score',()=>{
 test('blank and whitespace-only score inputs use the clear path instead of numeric zero',()=>{
   assert.match(source,/String\(val\?\?""\)\.trim\(\)===""\?null:Number\(val\)/);
 });
+
+test('split-pair empty input also clears rather than writing numeric zero',()=>{
+ const a=html.indexOf('async function savePairScore('),b=html.indexOf('function renderScoring(',a);
+ assert.ok(a>=0&&b>a);
+ assert.match(html.slice(a,b),/String\(val\?\?""\)\.trim\(\)===""\?null:Number\(val\)/);
+});
