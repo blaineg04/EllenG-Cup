@@ -12,8 +12,8 @@ Status: **NOT ENABLED**. This checklist applies only to `blaineg04/EllenG-Cup` d
 
 ## Release gates before enabling event mode
 
-1. Confirm that the live `elleng_tournaments.id` really matches `TOURNAMENT_ID` and references `DRAFT_ID`; never infer from the frontend constant alone.
-2. Confirm that every enrolled golfer index refers to the canonical permanent golfer directory for that event and matches the signed-in Supabase account. The proposed commissioner enrollment RPC now validates that the draft state contains a named golfer at the requested index. Verify the real event's canonical golfer directory is represented by that draft-state array before rollout; a disposable fixture alone cannot establish this mapping.
+1. **Verified read-only on the dedicated EllenG Supabase project (2026-10-27):** `elleng_tournaments.id='elleng-cup-live'` references `elleng_drafts.id='elleng-cup'`. Recheck before deployment if identifiers change.
+2. **Directory shape verified read-only (2026-10-27):** the linked live draft has a `state.golfers` array of 34 objects, including `name`. The proposed commissioner enrollment RPC checks a named entry at the requested index. **Still required:** independently verify each account-to-golfer association and approval; do not infer identity from array position alone.
 3. Review SQL functions, grants, RLS and commissioner ownership against the real isolated EllenG Supabase schema. The proposed SQL is not deployed. Revoke/withhold browser EXECUTE grants until authenticated testing validates the intended access paths.
 4. Migrate or reconcile existing draft-scoped RSVP rows to the event-scoped table with a one-time, reversible mapping reviewed by the commissioner. Never infer approval from legacy Playing status; new approvals must start pending.
 5. Run two-account authenticated tests: own RSVP; cross-account denial; commissioner enrollment and approval; unapproved Playing excluded from draft; cleared RSVP excluded; draft first-pick lock; second event isolation.
