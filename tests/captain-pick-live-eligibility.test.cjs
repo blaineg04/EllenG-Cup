@@ -231,7 +231,7 @@ test('old captain RPC cleanup cannot unlock a new captain pending pick',async()=
  assert.equal(vm.runInContext('pickInFlight',h.ctx),false,'sign-out releases old session UI lock');
  h.ctx.captainUserId='captain-b';
  h.ctx.myTeam=0;
- h.ctx.pickSyncFailed=false;
+ vm.runInContext('pickSyncFailed=false;',h.ctx);
  h.connection.textContent='LIVE';
  const newPick=h.pick(0);
  assert.equal(h.calls.length,2,'new verified captain can submit while old RPC is pending');
