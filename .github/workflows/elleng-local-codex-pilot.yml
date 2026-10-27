@@ -22,11 +22,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$HOME/.volta/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"
+          # GitHub runner shells do not necessarily load interactive shell PATH.
+          for candidate in "$HOME/.nvm/versions/node"/*/bin/codex "$HOME/.local/share/mise/installs/node"/*/bin/codex \
+              "/Applications/Codex.app/Contents/Resources/codex" \
+              "/Applications/Codex.app/Contents/MacOS/codex"; do
+            if test -x "$candidate"; then
+              export PATH="$(dirname "$candidate"):$PATH"
+              break
+            fi
+          done
           if ! command -v codex >/dev/null; then
-            echo "BLOCKED: Codex CLI is not installed on the self-hosted runner." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "BLOCKED: Codex executable not found in runner PATH or common Mac locations; it may still exist in an interactive shell." | tee -a "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
+          echo "Codex executable: $(command -v codex)" >> "$GITHUB_STEP_SUMMARY"
           if ! codex login status >/dev/null 2>&1; then
             echo "BLOCKED: Codex CLI needs an interactive ChatGPT sign-in on the Mac (not an API key)." | tee -a "$GITHUB_STEP_SUMMARY"
             exit 1
@@ -52,7 +62,16 @@ jobs:
           CODEX_HOME: ${{ runner.temp }}/elleng-codex-home
         run: |
           set -euo pipefail
-          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$HOME/.volta/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"
+          # GitHub runner shells do not necessarily load interactive shell PATH.
+          for candidate in "$HOME/.nvm/versions/node"/*/bin/codex "$HOME/.local/share/mise/installs/node"/*/bin/codex \
+              "/Applications/Codex.app/Contents/Resources/codex" \
+              "/Applications/Codex.app/Contents/MacOS/codex"; do
+            if test -x "$candidate"; then
+              export PATH="$(dirname "$candidate"):$PATH"
+              break
+            fi
+          done
           # CODEX_HOME is intentionally not set here: use the runner user's
           # existing ChatGPT CLI sign-in, never put credentials in GitHub.
           unset CODEX_HOME
