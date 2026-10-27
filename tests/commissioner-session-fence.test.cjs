@@ -185,7 +185,7 @@ function actionHarness(){
  const els={saveSetup:{disabled:false},applySetupSize:{disabled:false},setupTeamCount:{value:'2'},setupGolferCount:{value:'2'},setupSizeMsg:{textContent:''},setup:{style:{display:'block'}},live:{style:{display:'none'}},setupBtn:{},undo:{},pause:{},resetClock:{},dtype:{value:'snake'},tlen:{value:'60'}};
  const pending=[];let renders=0;
  const ctx={S:state,savingDraft:false,commissionerAuthEpoch:0,commissionerUserId:'commissioner-a',
-  liveMode:false,structuredClone,Date,EllenGDraftSetup:require('../draft-setup-config.js'),order:()=>0,totalPicks:()=>1,canBand:()=>true,remaining:()=>30,
+  liveMode:false,structuredClone,Date,bands:['A','B','C','D'],EllenGDraftSetup:require('../draft-setup-config.js'),order:()=>0,totalPicks:()=>1,canBand:()=>true,remaining:()=>30,
   save:()=>new Promise((resolve,reject)=>pending.push({resolve,reject})),
   document:{getElementById:id=>els[id],querySelectorAll:()=>[]},liveRender:()=>renders++,setupRender:()=>{}};
  vm.createContext(ctx);
@@ -286,7 +286,7 @@ test('old commissioner resize save cannot update replacement login controls',asy
  assert.equal(h.els.setupSizeMsg.textContent,'');
 });
 test('current commissioner resize failure restores original setup',async()=>{
- const h=actionHarness(),original=h.ctx.S,work=h.els.applySetupSize.onclick();
+ const h=actionHarness(),original=structuredClone(h.ctx.S),work=h.els.applySetupSize.onclick();
  assert.equal(h.pending.length,1);
  h.pending[0].reject(Error('synthetic save failure'));await work;
  assert.deepEqual(h.ctx.S,original);
