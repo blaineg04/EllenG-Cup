@@ -77,7 +77,8 @@ function subscribe(cb){
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_drafts",filter:"id=eq."+cfg.draftId},async()=>{
    const epoch=connectionEpoch;
    if(!connected)return;
-   try{await load();if(epoch!==connectionEpoch||!connected)return;cb()}catch(e){
+   // A response started before disconnect must not overwrite the in-memory draft.
+   try{await load(()=>epoch===connectionEpoch&&connected);if(epoch!==connectionEpoch||!connected)return;cb()}catch(e){
     if(epoch!==connectionEpoch||!connected)return;
     console.error("Draft realtime refresh failed",e);
     const indicator=document.getElementById("connection");
@@ -104,7 +105,7 @@ function subscribe(cb){
    // Catch up after subscription/reconnection: changes during the outage
    // cannot be recovered from a fresh Postgres Changes subscription alone.
    if(st==="SUBSCRIBED"){
-    try{await load();
+    try{await load(()=>epoch===connectionEpoch&&connected);
      if(epoch!==connectionEpoch||!connected)return;
      if(el){el.textContent="LIVE";el.className="online"}
      if(strip){strip.classList.remove("status-connecting","status-offline");strip.classList.add("status-live")}
