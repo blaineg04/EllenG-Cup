@@ -7,7 +7,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const source=fs.readFileSync('common.js','utf8');
 const subscribeCode=source.slice(source.indexOf('function subscribe(cb)'),source.indexOf('function remaining()'));
-const draftCode=source.slice(source.indexOf('async function load()'),source.indexOf('function subscribe(cb)'));
+const draftCode=source.slice(source.indexOf('let latestLoadRequest=0;'),source.indexOf('function subscribe(cb)'));
 const fresh=()=>({picks:[],teams:[{roster:[]},{roster:[]}],golfers:[{name:'Synthetic golfer',team:null}],timerPaused:true,timerLength:60});
 function startClient(server){
  const indicator={textContent:'',className:''};
