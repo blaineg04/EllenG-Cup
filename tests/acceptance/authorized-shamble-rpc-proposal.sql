@@ -46,9 +46,12 @@ BEGIN
     OR cardinality(v_roster)<>(SELECT count(DISTINCT golfer) FROM unnest(v_roster) golfer)
     OR p_golfer_index<>ALL(v_roster)
  THEN RAISE EXCEPTION 'Golfer not assigned to team' USING ERRCODE='42501'; END IF;
- -- Every writer must obtain the same tournament lock before mutation.
- PERFORM 1 FROM public.elleng_tournaments t
- WHERE t.id=p_tournament_id FOR UPDATE;
+ -- Transaction-scoped advisory lock serializes participating scoring RPCs
+ -- without giving scorer roles UPDATE privileges on tournament configuration.
+ -- A hash collision only causes extra serialization, never an unsafe bypass.
+ PERFORM pg_catalog.pg_advisory_xact_lock(
+   pg_catalog.hashtextextended('elleng-shamble:' || p_tournament_id, 0)
+ );
  IF p_score IS NULL THEN
   DELETE FROM public.elleng_player_hole_scores
   WHERE tournament_id=p_tournament_id AND team_index=p_team_index AND hole=p_hole AND golfer_index=p_golfer_index;
