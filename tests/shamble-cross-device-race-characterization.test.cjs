@@ -11,14 +11,14 @@ const end=html.indexOf('function renderPairScoring(',start);
 assert.ok(start>=0&&end>start);
 test('two clients cannot overwrite the latest Shamble low-ball score with stale derivation',async()=>{
  const player=new Map([[0,5],[1,5]]);
- let releaseA;const pauseA=new Promise(r=>releaseA=r);
+ let releaseA,signalA;const pauseA=new Promise(r=>releaseA=r);const atSnapshot=new Promise(r=>signalA=r);
  let aPaused=false;
  let teamScore=5;
  function client(id){
   const ctx={hole:10,scoreSaveBusy:false,user:{id:String(id)},TOURNAMENT_ID:'synthetic',playerScores:[],
    canEditTeam:()=>true,beginScoreSave:()=>true,endScoreSave:()=>{},$:()=>({textContent:''}),
    renderAll:()=>{},teamRosterGolfers:()=>[{index:0},{index:1}],
-   loadScores:async()=>{const snapshot=[...player].map(([golfer_index,score])=>({team_index:0,hole:10,golfer_index,score})); if(id==='A'&&!aPaused){aPaused=true;await pauseA;}ctx.playerScores=snapshot;},
+   loadScores:async()=>{const snapshot=[...player].map(([golfer_index,score])=>({team_index:0,hole:10,golfer_index,score})); if(id==='A'&&!aPaused){aPaused=true;signalA();await pauseA;}ctx.playerScores=snapshot;},
    db:{from(table){return {
     upsert:async row=>{if(table==='elleng_player_hole_scores')player.set(row.golfer_index,row.score);else teamScore=row.score;return {error:null}},
     delete(){throw Error('not used')}
@@ -28,8 +28,8 @@ test('two clients cannot overwrite the latest Shamble low-ball score with stale 
  }
  const a=client('A'),b=client('B');
  const aTask=a.savePlayerShambleScore(0,0,'3');
- // A's load is paused before reading the current rows.
- await Promise.resolve();
+ // Wait until A has captured its old snapshot before B commits.
+ await atSnapshot;
  await b.savePlayerShambleScore(0,1,'2');
  releaseA();
  await aTask;
