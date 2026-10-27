@@ -28,3 +28,19 @@ test("commissioner approval allows playing only and rejects captain approval",()
  assert.deepEqual(approvedRoster([approved],"nov20",golfers),[0]);
  assert.throws(()=>approve(row("nov20","b",1,"out","pending"),"approved",{role:"commissioner",user_id:"commissioner-id"}),/Only playing/);
 });
+
+test("changing RSVP status clears approver identity as well as approval",()=>{
+ const original={...row("nov20","a",0),approved_by:"commissioner-id"};
+ const changed=changeStatus(original,"maybe");
+ assert.equal(changed.approval_status,"pending");
+ assert.equal(changed.approved_by,null);
+ assert.equal(changed.status,"maybe");
+});
+test("unchanged RSVP status preserves existing approval and approver",()=>{
+ const original={...row("nov20","a",0),approved_by:"commissioner-id"};
+ assert.deepEqual(changeStatus(original,"playing"),original);
+});
+test("unrelated event payloads cannot invalidate selected roster",()=>{
+ const unrelated={tournament_id:"next",user_id:"other",golfer_index:-1,status:"invalid"};
+ assert.deepEqual(approvedRoster([unrelated,row("nov20","a",0)],"nov20",golfers),[0]);
+});
