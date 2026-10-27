@@ -35,10 +35,17 @@
     }
     return indices.sort((a,b)=>a-b);
   }
+  function approve(record,decision,actor){
+    const r=normalize(record);
+    if(!actor||actor.role!=="commissioner"||!actor.user_id)throw new Error("Commissioner authorization required");
+    if(decision!=="approved"&&decision!=="declined")throw new Error("Invalid approval decision");
+    if(decision==="approved"&&r.status!=="playing")throw new Error("Only playing RSVPs may be approved");
+    return {...r,approval_status:decision,approved_by:actor.user_id};
+  }
   function changeStatus(record,status){
     const r=normalize(record);
     if(!validStatuses.has(status))throw new Error("Invalid RSVP status");
     return {...r,status,approval_status:status===r.status?r.approval_status:"pending"};
   }
-  return Object.freeze({approvedRoster,changeStatus,normalize});
+  return Object.freeze({approvedRoster,approve,changeStatus,normalize});
 });
