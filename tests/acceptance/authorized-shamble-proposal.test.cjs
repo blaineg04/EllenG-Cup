@@ -17,3 +17,7 @@ test('staged RPC holds transaction lock and does not grant browser execution',()
  assert.match(sql,/REVOKE ALL ON FUNCTION/);
  assert.doesNotMatch(sql,/GRANT EXECUTE/);
 });
+
+test('staged RPC rejects a missing hole explicitly',()=>{
+ assert.match(sql,/p_hole\s+IS\s+NULL/i);
+});
