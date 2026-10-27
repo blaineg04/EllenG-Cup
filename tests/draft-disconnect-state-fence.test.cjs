@@ -114,3 +114,22 @@ test('failed prior-connection catch-up cannot change a newer LIVE snapshot',asyn
  assert.equal(h.state().picks.length,2);
  assert.equal(h.indicator.textContent,'LIVE');
 });
+
+test('out-of-order refreshes after reconnect keep the newest snapshot',async()=>{
+ const server={state:fresh()},h=start(server);
+ await h.emit('SUBSCRIBED');
+ await h.emit('CHANNEL_ERROR');
+ h.defer(true);
+ server.state.picks.push({golfer:0,team:0});
+ const older=h.emit('SUBSCRIBED');
+ assert.equal(h.pending(),1);
+ server.state.picks.push({golfer:1,team:1});
+ const newer=h.change();
+ assert.equal(h.pending(),2);
+ h.resolve();await older;
+ assert.equal(h.state().picks.length,0,'superseded reconnect read cannot render');
+ assert.equal(h.indicator.textContent,'SYNCING');
+ h.resolve();await newer;
+ assert.equal(h.state().picks.length,2);
+ assert.equal(h.indicator.textContent,'LIVE');
+});
