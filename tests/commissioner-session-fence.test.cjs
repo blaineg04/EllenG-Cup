@@ -213,3 +213,22 @@ test('current commissioner failed pause still rolls back optimistic change',asyn
  h.pending[0].reject(Error('synthetic conflict'));await work;
  assert.equal(JSON.stringify(h.ctx.S),before);
 });
+
+test('old commissioner successful pick cannot render or alter a replacement login',async()=>{
+ const h=actionHarness(),work=h.ctx.doPick(0);
+ assert.equal(h.pending.length,1);
+ const next=h.switchUser();
+ h.pending[0].resolve();await work;
+ assert.equal(h.ctx.S,next);
+ assert.deepEqual(next.picks,[{golfer:99}]);
+ assert.equal(h.renders(),0);
+});
+test('old commissioner failed setup save cannot change replacement login view',async()=>{
+ const h=actionHarness(),work=h.els.saveSetup.onclick();
+ assert.equal(h.pending.length,1);
+ const next=h.switchUser();
+ h.pending[0].reject(Error('synthetic conflict'));await work;
+ assert.equal(h.ctx.S,next);
+ assert.equal(h.ctx.liveMode,false);
+ assert.equal(h.els.live.style.display,'none');
+});
