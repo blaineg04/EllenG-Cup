@@ -56,3 +56,10 @@ For each item, record: date, scenario, isolated backend/project (non-secret ID o
 - Read-only schema inspection confirmed draft `id`, `owner_id`, `state`, `status`, and captain `draft_id`, `user_id`, `team_index` fields.
 - **Isolation gate remains blocked:** no separately verified disposable backend, test draft, or test authentication identities. Do not infer readiness from RLS-enabled flags or synthetic CI.
 - Next acceptance step: verify an isolated backend/project and authenticated commissioner/captain test accounts, then run the existing checklist and capture sanitized evidence. Never write to the live `elleng-cup` draft.
+
+## October 27 read-only draft RLS policy review
+
+- `elleng_drafts` INSERT policies (`authenticated insert`, `elleng_owner_insert`) both require `auth.uid() = owner_id`; the UPDATE policy requires the same predicate in both USING and WITH CHECK.
+- `elleng_captains` owner-management ALL policy requires the authenticated user to own the corresponding draft, in both USING and WITH CHECK. Captain SELECT policies allow their own assignment or the draft owner.
+- `elleng_drafts` SELECT policy `authenticated can read draft` uses `true` for **all authenticated users**. Confirm this matches intended spectator/privacy rules; do not tighten it without testing legitimate read paths.
+- This is a **static policy inspection**, not an authenticated role test. Policy interactions, RPC permissions, simultaneous picks, and real-device authorization remain unverified. No policies were modified.
