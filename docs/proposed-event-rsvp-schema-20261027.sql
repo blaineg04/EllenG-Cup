@@ -17,6 +17,23 @@ create unique index if not exists elleng_event_approved_golfer_unique
  on public.elleng_event_rsvps(tournament_id,golfer_index)
  where status='playing' and approval_status='approved';
 alter table public.elleng_event_rsvps enable row level security;
+-- Database guard: a player cannot submit a fabricated approved RSVP through any write path.
+create or replace function public.elleng_event_rsvp_approval_guard()
+returns trigger language plpgsql security invoker set search_path = '' as $
+begin
+ if tg_op='INSERT' and (new.approval_status <> 'pending' or new.approved_by is not null) then
+   raise exception 'New RSVP must begin pending';
+ end if;
+ if tg_op='UPDATE' and (new.status is distinct from old.status or new.golfer_index is distinct from old.golfer_index) then
+   new.approval_status := 'pending';
+   new.approved_by := null;
+ end if;
+ return new;
+end;
+$;
+drop trigger if exists elleng_event_rsvp_approval_guard on public.elleng_event_rsvps;
+create trigger elleng_event_rsvp_approval_guard before insert or update on public.elleng_event_rsvps
+for each row execute function public.elleng_event_rsvp_approval_guard();
 revoke all on public.elleng_event_rsvps from public,anon,authenticated;
 grant select,insert,update,delete on public.elleng_event_rsvps to authenticated;
 -- Reading event attendance is limited to the player and the draft owner.
