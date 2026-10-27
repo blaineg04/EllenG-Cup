@@ -173,3 +173,28 @@ jobs:
           node-version: '22'
       - name: Require single browser atomic RPC and no unsafe fallback
         run: node --test tests/acceptance/shamble-browser-atomic-contract.test.cjs
+  atomic-real-role-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: isolated-test-only
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Execute atomic RPC under actual PostgreSQL roles and RLS
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/acceptance/authorized-shamble-role-rls-fixture.sql
