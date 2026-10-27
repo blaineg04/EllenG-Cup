@@ -133,6 +133,8 @@ async function verifyNavigation(page, width, capture, prefix = '') {
   await page.locator('#broadcastOverlay.open').waitFor({state:'visible'});
   await page.locator('#closeBroadcast').click();
   await page.locator('#broadcastOverlay').waitFor({state:'hidden'});
+  // Fullscreen exit is asynchronous; verify it is finished before the real Home click.
+  await page.waitForFunction(() => !document.fullscreenElement, {timeout:5000});
   await page.locator(home).click();
   await page.locator('#homeView:not(.hidden)').waitFor({state:'visible'});
   console.log(`${width} ${prefix}real navigation: Course, Rankings, Extras, Broadcast and return Home passed`);
