@@ -82,6 +82,13 @@ function subscribe(cb){
    // A remote pick may have changed the active turn. Freeze stale local choices
    // until the authoritative snapshot is applied and the UI re-renders.
    document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
+   // A realtime notification means the visible draft is stale until catch-up.
+   // Disable programmatic picks too: captain eligibility checks the LIVE status,
+   // not just whether a button is disabled.
+   const pendingIndicator=document.getElementById("connection");
+   if(pendingIndicator){pendingIndicator.textContent="SYNCING";pendingIndicator.className="offline"}
+   const pendingStrip=document.getElementById("draftStatusStrip");
+   if(pendingStrip){pendingStrip.classList.remove("status-live","status-offline");pendingStrip.classList.add("status-connecting")}
    // A response started before disconnect must not overwrite the in-memory draft.
    try{let applied=false;await load(()=>epoch===connectionEpoch&&connected&&isCurrent(),()=>{applied=true});if(epoch!==connectionEpoch||!connected||!isCurrent()||!applied)return;
     // Only an applied authoritative refresh may restore LIVE after a transient error.

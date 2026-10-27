@@ -15,7 +15,7 @@ function startClient(server){
  const strip={classList:{add:v=>classNames.add(v),remove:(...v)=>v.forEach(n=>classNames.delete(n))}};
  let onChange,onStatus,renderCount=0;
  const channel={on(_event,_filter,fn){onChange=fn;return this},subscribe(fn){onStatus=fn;return this}};
- const db={channel:()=>channel,from:()=>({select:()=>({eq:()=>({single:async()=>({data:{state:structuredClone(server.state)},error:null})})})})};
+ const db={channel:()=>channel,from:()=>({select:()=>({eq:()=>({single:async()=>server.readState?server.readState():({data:{state:structuredClone(server.state)},error:null})})})})};
  const ctx={db,cfg:{draftId:'synthetic-draft'},S:fresh(),fresh,console:{error:()=>{}},
   document:{getElementById:id=>id==='connection'?indicator:id==='draftStatusStrip'?strip:null,querySelectorAll:()=>draftButtons}};
  vm.createContext(ctx);
@@ -361,4 +361,42 @@ test('reconnecting captain converges after a pick and subsequent timer reset',as
  assert.equal(reconnecting.state().timerEndsAt,'2026-11-13T18:05:00Z');
  assert.equal(reconnecting.state().timerEndsAt,live.state().timerEndsAt);
  assert.deepEqual(Array.from(reconnecting.state().teams[0].roster),[0]);
+});
+
+test('remote draft notification blocks picks while the server snapshot is pending',async()=>{
+ const server={state:fresh()};
+ const viewer=startClient(server);
+ await viewer.status('SUBSCRIBED');
+ assert.equal(viewer.indicator.textContent,'LIVE');
+ let release;
+ server.readState=()=>new Promise(resolve=>{release=resolve});
+ const pending=viewer.change();
+ assert.equal(typeof release,'function');
+ assert.equal(viewer.indicator.textContent,'SYNCING','stale LIVE must be revoked synchronously');
+ assert.equal(viewer.buttons[0].disabled,true);
+ assert.ok(viewer.strip.has('status-connecting'));
+ assert.equal(viewer.strip.has('status-live'),false);
+ server.state.picks.push({team:0,golfer:0});
+ release({data:{state:structuredClone(server.state)},error:null});
+ await pending;
+ assert.equal(viewer.state().picks.length,1);
+ assert.equal(viewer.indicator.textContent,'LIVE');
+ assert.ok(viewer.strip.has('status-live'));
+});
+
+test('failed realtime catch-up stays read-only until a successful later refresh',async()=>{
+ const server={state:fresh()};
+ const viewer=startClient(server);
+ await viewer.status('SUBSCRIBED');
+ server.readState=async()=>({data:null,error:new Error('Synthetic refresh failure')});
+ await viewer.change();
+ assert.equal(viewer.indicator.textContent,'SYNC ERROR');
+ assert.equal(viewer.buttons[0].disabled,true);
+ assert.ok(viewer.strip.has('status-offline'));
+ server.readState=null;
+ server.state.picks.push({team:0,golfer:0});
+ await viewer.change();
+ assert.equal(viewer.indicator.textContent,'LIVE');
+ assert.equal(viewer.state().picks.length,1);
+ assert.ok(viewer.strip.has('status-live'));
 });
