@@ -827,8 +827,20 @@ async function pick(i){
   const {data,error}=await db.rpc("elleng_make_pick",{p_draft_id:cfg.draftId,p_golfer_index:i});
   if(!sameCaptainSession())return;
   if(error)throw error;
-  S={...fresh(),...data};
-  pickSyncFailed=false;
+  // An RPC result may predate a pick committed by another captain while
+  // this request was in flight. Re-read the authoritative draft rather than
+  // rolling a newer Realtime snapshot back to the older RPC response.
+  try{
+   await load(sameCaptainSession);
+   if(!sameCaptainSession())return;
+   pickSyncFailed=false;
+  }catch(refreshError){
+   if(!sameCaptainSession())return;
+   pickSyncFailed=true;
+   console.error("Captain post-pick refresh failed",refreshError);
+   alert("Pick was submitted, but the latest draft could not be loaded. Reload this page before drafting again.");
+   return;
+  }
   if(draftSoundEnabled){gatorGrowl();lastSoundPickCount=S.picks.length}
  }catch(e){
   if(!sameCaptainSession())return;

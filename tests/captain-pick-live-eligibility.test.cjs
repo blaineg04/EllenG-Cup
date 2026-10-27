@@ -11,17 +11,17 @@ const pickSource=source.slice(start,end);
 function harness(){
  const state={timerPaused:false,picks:[],golfers:[{name:'Synthetic golfer',team:null,band:'A'}],teams:[{name:'A',roster:[]},{name:'B',roster:[]}]};
  const connection={textContent:'LIVE'},calls=[],messages=[],buttons=[{disabled:false}];
- let confirmAction=()=>true,rendered=0,holdRpc=false,resolveRpc,loadCount=0;
+ let confirmAction=()=>true,rendered=0,holdRpc=false,resolveRpc,loadCount=0,loadError=null;
  const ctx={S:state,myTeam:0,captainUserId:'captain-a',captainAuthEpoch:0,cfg:{draftId:'synthetic-only'},fresh:()=>state,
   order:()=>0,totalPicks:()=>1,canBand:()=>true,
   db:{rpc:async(name,args)=>{calls.push({name,args});if(holdRpc)return new Promise(resolve=>{resolveRpc=resolve});return {data:state,error:null}}},
   document:{getElementById:id=>id==='connection'?connection:null,querySelectorAll:()=>buttons},
   confirm:()=>confirmAction(),alert:msg=>messages.push(msg),render:()=>rendered++,
-  draftSoundEnabled:false,load:async()=>{loadCount++},console:{error:()=>{}}};
+  draftSoundEnabled:false,load:async()=>{loadCount++;if(loadError)throw loadError},console:{error:()=>{}}};
  vm.createContext(ctx);
  vm.runInContext(pickSource+';this.submitPick=pick;',ctx);
  return {ctx,state,connection,calls,messages,buttons,pick:i=>ctx.submitPick(i),
-  onConfirm:fn=>{confirmAction=fn},rendered:()=>rendered,holdRpc:()=>{holdRpc=true},releaseRpc:response=>resolveRpc(response),loads:()=>loadCount};
+  onConfirm:fn=>{confirmAction=fn},rendered:()=>rendered,holdRpc:()=>{holdRpc=true},releaseRpc:response=>resolveRpc(response),loads:()=>loadCount,failLoad:error=>{loadError=error}};
 }
 test('eligible live captain submits exactly one authorized RPC',async()=>{
  const h=harness();await h.pick(0);
@@ -212,4 +212,28 @@ test('rejected old pick RPC after sign-out does not refresh or alert as the old 
  assert.equal(h.loads(),0);
  assert.equal(h.messages.length,0);
  assert.equal(h.rendered(),0);
+});
+
+test('successful pick RPC cannot roll back a newer Realtime draft snapshot',async()=>{
+ const h=harness();h.holdRpc();
+ const pending=h.pick(0);
+ assert.equal(h.calls.length,1);
+ // Another captain has already made the following pick before our RPC reply arrives.
+ h.ctx.S={...h.state,picks:[{golfer:0,team:0},{golfer:1,team:1}]};
+ h.releaseRpc({data:{...h.state,picks:[{golfer:0,team:0}]},error:null});
+ await pending;
+ assert.equal(h.ctx.S.picks.length,2,'stale RPC response must not overwrite a newer server snapshot');
+ assert.equal(h.loads(),1,'successful pick must request authoritative state');
+ assert.equal(h.messages.length,0);
+});
+test('successful pick with failed post-save refresh fails closed without claiming the pick failed',async()=>{
+ const h=harness();h.failLoad(new Error('synthetic network failure'));
+ await h.pick(0);
+ assert.equal(h.calls.length,1);
+ assert.equal(h.loads(),1,'do not repeatedly retry a failed read');
+ assert.equal(vm.runInContext('pickSyncFailed',h.ctx),true);
+ assert.match(h.messages[0],/Pick was submitted, but the latest draft could not be loaded/);
+ h.connection.textContent='LIVE';
+ await h.pick(0);
+ assert.equal(h.calls.length,1,'unsafe second pick must remain blocked');
 });
