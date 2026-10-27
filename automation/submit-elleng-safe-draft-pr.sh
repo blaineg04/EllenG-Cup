@@ -35,7 +35,10 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 # A fresh local clone from the trusted base commit prevents unrelated dirty files
 # from leaking into the proposed PR.
-git clone --quiet --no-local --branch "$BASE" "$ROOT" "$TMP/pr"
+git clone --quiet --no-local --no-checkout --branch "$BASE" "$ROOT" "$TMP/pr"
+git -C "$TMP/pr" sparse-checkout init --cone
+git -C "$TMP/pr" sparse-checkout set tests docs
+git -C "$TMP/pr" checkout -q "$BASE"
 cd "$TMP/pr"
 git switch -c "$BRANCH"
 # The local clone defaults to a filesystem origin; explicitly target only this repository.
