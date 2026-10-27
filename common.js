@@ -72,20 +72,22 @@ let latestLoadRequest=0;
 async function load(isCurrent=()=>true,onApplied=()=>{}){const request=++latestLoadRequest;let {data,error}=await db.from("elleng_drafts").select("state").eq("id",cfg.draftId).single();if(error)throw error;if(request===latestLoadRequest&&isCurrent()){S={...fresh(),...data.state};onApplied()}return S}
 async function save(){let {error}=await db.from("elleng_drafts").upsert({id:cfg.draftId,state:S,updated_at:new Date().toISOString()});if(error)throw error}
 function subscribe(cb){
+ // Optional session guard: a disposed captain listener must not update state or status.
+ const isCurrent=typeof cb.isCurrent==='function'?()=>cb.isCurrent():()=>true;
  let connectionEpoch=0,connected=false;
  const channel=db.channel("elleng-"+cfg.draftId)
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_drafts",filter:"id=eq."+cfg.draftId},async()=>{
    const epoch=connectionEpoch;
-   if(!connected)return;
+   if(!connected||!isCurrent())return;
    // A response started before disconnect must not overwrite the in-memory draft.
-   try{let applied=false;await load(()=>epoch===connectionEpoch&&connected,()=>{applied=true});if(epoch!==connectionEpoch||!connected||!applied)return;
+   try{let applied=false;await load(()=>epoch===connectionEpoch&&connected&&isCurrent(),()=>{applied=true});if(epoch!==connectionEpoch||!connected||!isCurrent()||!applied)return;
     // Only an applied authoritative refresh may restore LIVE after a transient error.
     const indicator=document.getElementById("connection");
     if(indicator){indicator.textContent="LIVE";indicator.className="online"}
     const strip=document.getElementById("draftStatusStrip");
     if(strip){strip.classList.remove("status-connecting","status-offline");strip.classList.add("status-live")}
     cb()}catch(e){
-    if(epoch!==connectionEpoch||!connected)return;
+    if(epoch!==connectionEpoch||!connected||!isCurrent())return;
     console.error("Draft realtime refresh failed",e);
     const indicator=document.getElementById("connection");
     if(indicator){indicator.textContent="SYNC ERROR";indicator.className="offline"}
@@ -95,6 +97,7 @@ function subscribe(cb){
    }
   })
   .subscribe(async st=>{
+   if(!isCurrent())return;
    const epoch=++connectionEpoch;
    connected=st==="SUBSCRIBED";
    const el=document.getElementById("connection");
@@ -111,13 +114,13 @@ function subscribe(cb){
    // Catch up after subscription/reconnection: changes during the outage
    // cannot be recovered from a fresh Postgres Changes subscription alone.
    if(st==="SUBSCRIBED"){
-    try{let applied=false;await load(()=>epoch===connectionEpoch&&connected,()=>{applied=true});
-     if(epoch!==connectionEpoch||!connected||!applied)return;
+    try{let applied=false;await load(()=>epoch===connectionEpoch&&connected&&isCurrent(),()=>{applied=true});
+     if(epoch!==connectionEpoch||!connected||!isCurrent()||!applied)return;
      if(el){el.textContent="LIVE";el.className="online"}
      if(strip){strip.classList.remove("status-connecting","status-offline");strip.classList.add("status-live")}
      cb()
     }catch(e){
-     if(epoch!==connectionEpoch||!connected)return;
+     if(epoch!==connectionEpoch||!connected||!isCurrent())return;
      console.error("Draft resubscription refresh failed",e);
      if(el){el.textContent="SYNC ERROR";el.className="offline"}
      document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
