@@ -76,6 +76,11 @@ jobs:
           restored_columns="$(sudo -u postgres psql -X -At -d "$restore_db" -c "$catalog_query")"
           test -n "$source_columns"
           test "$source_columns" = "$restored_columns"
+          # Verify actual row data survives, not only schema definitions.
+          source_rows="$(sudo -u postgres psql -X -At -d "$db" -c "select count(*) from acceptance.drafts;")"
+          restored_rows="$(sudo -u postgres psql -X -At -d "$restore_db" -c "select count(*) from acceptance.drafts;")"
+          test "$source_rows" -gt 0
+          test "$source_rows" = "$restored_rows"
           sudo -u postgres dropdb "$restore_db"
           sudo -u postgres rm -f "$backup_file"
           echo 'PASS: disposable database backup and isolated restore preserved acceptance tables.'
