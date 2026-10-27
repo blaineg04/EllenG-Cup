@@ -81,5 +81,5 @@ test('captain re-login replaces channel without duplicate listeners or cross-acc
 test('both captain login paths use managed realtime subscriptions',()=>{
  assert.equal(s.split('startCaptainSubscription();').length-1,2);
  assert.doesNotMatch(s,/subscribe\(render\)/);
- assert.match(s,/function revokeCaptainSession\(\)\{\s*captainAuthEpoch\+\+;\s*stopCaptainSubscription\(\)/);
+ assert.match(s,/function revokeCaptainSession\(\)\{\s*captainAuthEpoch\+\+;[\s\S]*?pickRequestEpoch\+\+;\s*pickInFlight=false;\s*stopCaptainSubscription\(\)/);
 });
