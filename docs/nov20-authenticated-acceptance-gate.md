@@ -2,6 +2,14 @@
 
 Updated: 2026-10-27. **Owner-requested readiness target: Friday, October 30, 2026, for draft and scoring together.** November 20 remains the tournament date. This checklist tracks **unverified live evidence**, not an assertion that the tournament is ready.
 
+## October 27 updated CI evidence (read-only)
+
+- Commit `4535f276`: scoring reconciliation run `40561623668` **passed**; release-candidate safe checks run `40561623705` **passed** (synthetic and seven-width visual matrix).
+- Commit `d6067c18`: disposable native PostgreSQL acceptance run `40563950932` **passed**; the workflow now reacts to authorized shamble contract changes.
+- Commit `130eed50`: release-candidate safe checks run `40565021792` **passed**.
+- Commit `0ff5b348`: expanded release candidate synthetic-acceptance job **passed** in run `40565345836`; seven-width visual-matrix job was **still in progress when recorded**. This expanded job executes `tests/*.test.cjs` and `tests/acceptance/*.test.cjs`.
+- **Do not treat any of the above as authenticated device or live-backend validation.** No disposable commissioner/captain identities or safe hosted write-test environment have been verified; the release gate remains blocked pending that evidence.
+
 ## Verified automated evidence
 
 - Current development branch `development/nov20-release-reconciliation-20261026`: draft/scoring reconciliation checks passed at `b9d7386` (GitHub Actions run 40515850192); responsive synthetic browser acceptance passed at `07376887` (run 40511950148). These checks do **not** certify authenticated end-to-end use.
