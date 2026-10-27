@@ -422,3 +422,25 @@ test('concurrent captain refreshes never restore an older draft snapshot',async(
  assert.equal(captain.state().picks.length,1,'older response must not roll back newer server state');
  assert.equal(captain.indicator.textContent,'LIVE');
 });
+
+
+test('obsolete refresh failure cannot override a newer successful LIVE state',async()=>{
+ const server={state:fresh()};
+ const captain=startClient(server);
+ await captain.status('SUBSCRIBED');
+ const readers=[];
+ server.readState=()=>new Promise(resolve=>readers.push(resolve));
+ const stale=captain.change();
+ const current=captain.change();
+ server.state.picks.push({team:0,golfer:0});
+ server.state.golfers[0].team=0;
+ server.state.teams[0].roster.push(0);
+ readers[1]({data:{state:structuredClone(server.state)},error:null});
+ await current;
+ assert.equal(captain.indicator.textContent,'LIVE');
+ readers[0]({data:null,error:new Error('obsolete network failure')});
+ await stale;
+ assert.equal(captain.indicator.textContent,'LIVE','stale error must not mark current state offline');
+ assert.equal(captain.state().picks.length,1);
+ assert.ok(captain.strip.has('status-live'));
+});
