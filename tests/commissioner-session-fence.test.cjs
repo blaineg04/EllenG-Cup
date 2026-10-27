@@ -250,3 +250,18 @@ test('old commissioner rejected pick cannot reenable stale draft controls in rep
  assert.equal(h.renders(),0);
  assert.deepEqual(next.picks,[{golfer:99}]);
 });
+
+test('current commissioner successful pick renders exactly once',async()=>{
+ const h=actionHarness(),work=h.ctx.doPick(0);
+ assert.equal(h.pending.length,1);
+ h.pending[0].resolve();await work;
+ assert.equal(h.ctx.S.picks.length,1);
+ assert.equal(h.renders(),1);
+});
+test('current commissioner successful pause retains paused state',async()=>{
+ const h=actionHarness(),work=h.els.pause.onclick();
+ assert.equal(h.pending.length,1);
+ h.pending[0].resolve();await work;
+ assert.equal(h.ctx.S.timerPaused,true);
+ assert.equal(h.renders(),1);
+});
