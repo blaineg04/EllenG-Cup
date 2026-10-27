@@ -82,7 +82,7 @@ function signInPage(kind,{email='visual@example.invalid',password='test-only-pas
  const start=html.indexOf(`document.getElementById("${buttonId}").onclick=`),end=html.indexOf(kind==='admin'?'(async()=>':'document.getElementById("soundToggle").onclick',start);
  const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{value:id==='email'?email:id===passwordId?password:'',textContent:id===buttonId?'Sign In':'',disabled:false,style:{}});return nodes.get(id)};
  let requests=0,opened=0;
- const context={document:{getElementById:node},db:{auth:{signInWithPassword:async args=>{requests++;return authenticate(args)}}},openAdmin:async()=>{opened++},whoami:async()=>true,load:async()=>{},render(){opened++},subscribe(){},setInterval(){},draw(){},commissionerAuthEpoch:0,captainAuthEpoch:0,commissionerUserId:null,captainUserId:null,console:{error(){}}};
+ const context={document:{getElementById:node},db:{auth:{signInWithPassword:async args=>{requests++;return authenticate(args)}}},openAdmin:async()=>{opened++},whoami:async()=>{context.captainUserId='visual-captain';return true},load:async()=>{},render(){opened++},subscribe(){},startCaptainSubscription(){},setInterval(){},draw(){},commissionerAuthEpoch:0,captainAuthEpoch:0,commissionerUserId:null,captainUserId:null,console:{error(){}}};
  vm.runInNewContext(html.slice(start,end),context);
  return {click:()=>node(buttonId).onclick(),button:()=>node(buttonId),password:()=>node(passwordId),message:()=>node(messageId),requests:()=>requests,opened:()=>opened};
 }
