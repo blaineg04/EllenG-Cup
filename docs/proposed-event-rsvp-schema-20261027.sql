@@ -13,6 +13,10 @@ create table if not exists public.elleng_event_rsvps (
  primary key (tournament_id,user_id),
  constraint approval_requires_playing check (approval_status <> 'approved' or status='playing')
 );
+-- A golfer may have only one account claim per event, including pending RSVPs.
+-- The database unique index also closes concurrent first-claim races.
+create unique index if not exists elleng_event_golfer_identity_unique
+ on public.elleng_event_rsvps(tournament_id,golfer_index);
 create unique index if not exists elleng_event_approved_golfer_unique
  on public.elleng_event_rsvps(tournament_id,golfer_index)
  where status='playing' and approval_status='approved';
