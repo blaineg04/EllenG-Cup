@@ -47,3 +47,7 @@ git diff --binary -- . ':!.github' ':!automation' > "$OUT/latest-development.pat
 git diff --stat -- . ':!.github' ':!automation' > "$OUT/$DATE-summary.txt"
 if ! test -s "$OUT/latest-development.patch"; then echo "No reviewable code changes produced"; exit 1; fi
 echo "Cycle completed: $DATE (review-only local patch)"
+if ! "$HOME/elleng-local-autodev-control/review.sh"; then
+  echo "REVIEW BLOCKED: saved patch retained locally; no GitHub change attempted" >&2
+  exit 1
+fi
