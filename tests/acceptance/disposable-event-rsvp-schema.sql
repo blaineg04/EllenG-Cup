@@ -41,4 +41,36 @@ begin
   if sqlerrm='Unauthorized initial approval was accepted' then raise; end if;
  end;
 end $$;
-select 'PASS: event RSVP schema fixture' as result;
+-- Validate commissioner approval function in the disposable database.
+\\i docs/proposed-event-rsvp-commissioner-approval-rpc-20261027.sql
+-- Simulate Supabase's auth.uid() using a session setting, only in this fixture.
+create or replace function auth.uid() returns uuid language sql stable
+as 'select nullif(current_setting(''test.actor'',true),'''')::uuid';
+select set_config('test.actor','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',false);
+update public.elleng_event_rsvps set status='playing' where tournament_id='nov20';
+select public.elleng_approve_event_rsvp('nov20','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','approved');
+do $check$
+begin
+ if not exists(select 1 from public.elleng_event_rsvps where tournament_id='nov20' and approval_status='approved' and approved_by='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa') then
+  raise exception 'Commissioner approval did not persist';
+ end if;
+end $check$;
+select set_config('test.actor','cccccccc-cccc-cccc-cccc-cccccccccccc',false);
+do $check$
+begin
+ begin
+  perform public.elleng_approve_event_rsvp('nov20','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','declined');
+  raise exception 'Non-commissioner was allowed to approve';
+ exception when insufficient_privilege then null;
+ end;
+end $check$;
+select set_config('test.actor','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',false);
+do $check$
+begin
+ begin
+  perform public.elleng_approve_event_rsvp('next','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','approved');
+  raise exception 'Out RSVP was allowed to be approved';
+ exception when invalid_parameter_value then null;
+ end;
+end $check$;
+select 'PASS: event RSVP schema and commissioner approval fixture' as result;
