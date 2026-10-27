@@ -68,8 +68,22 @@
    if(result.error) throw result.error;
    return result.data;
  }
- function approvedGolferIndices(rows){
-   return [...new Set((rows||[]).filter(r=>r&&r.status==='playing'&&r.approval_status==='approved'&&Number.isInteger(r.golfer_index)&&r.golfer_index>=0).map(r=>r.golfer_index))];
+ function approvedGolferIndices(rows,tournamentId){
+   if(!Array.isArray(rows)) throw new TypeError('RSVP rows must be an array');
+   const id=requireId(tournamentId,'Tournament ID');
+   const users=new Set(), golfers=new Set(), approved=[];
+   for(const row of rows){
+     if(!row||row.tournament_id!==id) continue;
+     requireId(row.user_id,'Account ID');
+     const index=requireIndex(row.golfer_index);
+     if(users.has(row.user_id)) throw new Error('Duplicate RSVP account in event');
+     users.add(row.user_id);
+     if(row.status!=='playing'||row.approval_status!=='approved') continue;
+     if(golfers.has(index)) throw new Error('Duplicate approved golfer in event');
+     golfers.add(index);
+     approved.push(index);
+   }
+   return approved.sort((a,b)=>a-b);
  }
  return Object.freeze({list,counts,submit,clear,enroll,decide,approvedGolferIndices});
 });
