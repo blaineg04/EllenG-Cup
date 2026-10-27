@@ -15,29 +15,32 @@ INSERT INTO public.elleng_tournaments VALUES('fixture','draft','live',2);
 \i tests/acceptance/authorized-shamble-rpc-proposal.sql
 SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000002',false);
 DO $check$
-DECLARE v integer;
+DECLARE v integer; denied boolean;
 BEGIN
  v:=public.elleng_test_authorized_shamble('fixture',0,10,0,4);
  IF v IS NOT NULL THEN RAISE EXCEPTION 'Incomplete roster scored'; END IF;
  v:=public.elleng_test_authorized_shamble('fixture',0,10,1,2);
  IF v<>2 THEN RAISE EXCEPTION 'Expected team low score 2, got %',v; END IF;
+ denied:=false;
  BEGIN
    PERFORM public.elleng_test_authorized_shamble('fixture',1,10,2,3);
-   RAISE EXCEPTION 'Other team write unexpectedly succeeded';
- EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Other team write unexpectedly succeeded'; END IF;
+ denied:=false;
  BEGIN
    PERFORM public.elleng_test_authorized_shamble('fixture',0,10,3,3);
-   RAISE EXCEPTION 'Non-rostered golfer unexpectedly accepted';
- EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Non-rostered golfer unexpectedly accepted'; END IF;
  RAISE NOTICE 'PASS: assigned captain, derived score, other team and roster guards';
 END $check$;
 SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000003',false);
 DO $check$
+DECLARE denied boolean:=false;
 BEGIN
  BEGIN
   PERFORM public.elleng_test_authorized_shamble('fixture',0,10,0,3);
-  RAISE EXCEPTION 'Unauthorized account accepted';
- EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Unauthorized account accepted'; END IF;
  RAISE NOTICE 'PASS: unrelated authenticated identity rejected';
 END $check$;
 SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000001',false);
