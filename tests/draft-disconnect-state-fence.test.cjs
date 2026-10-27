@@ -10,7 +10,7 @@ const c=src.indexOf('function subscribe(cb)'),d=src.indexOf('function remaining(
 assert.ok(a>=0&&b>a&&c>b&&d>c);
 const code=src.slice(a,b)+'\n'+src.slice(c,d)+'\nthis.connect=subscribe;this.state=()=>S;';
 const fresh=()=>({picks:[],teams:[],golfers:[],timerPaused:true});
-function start(server){
+function start(server,sessionIsCurrent=()=>true){
  let status,change,rendered=0,delay=false;
  const pending=[],indicator={textContent:'',className:''},buttons=[{disabled:false}];
  const strip={classList:{add:()=>{},remove:()=>{}}};
@@ -22,7 +22,8 @@ function start(server){
  const ctx={db,cfg:{draftId:'synthetic-only'},S:fresh(),fresh,console:{error:()=>{}},
   document:{getElementById:id=>id==='connection'?indicator:id==='draftStatusStrip'?strip:null,
    querySelectorAll:()=>buttons}};
- vm.createContext(ctx);vm.runInContext(code,ctx);ctx.connect(()=>rendered++);
+ vm.createContext(ctx);vm.runInContext(code,ctx);
+ const onRender=()=>rendered++;onRender.isCurrent=sessionIsCurrent;ctx.connect(onRender);
  return {emit:s=>status(s),change:()=>change(),state:()=>ctx.state(),defer:x=>delay=x,
   resolve:()=>{const next=pending.shift();assert.ok(next);next()},
   pending:()=>pending.length,rendered:()=>rendered,indicator,buttons};
@@ -132,4 +133,25 @@ test('out-of-order refreshes after reconnect keep the newest snapshot',async()=>
  h.resolve();await newer;
  assert.equal(h.state().picks.length,2);
  assert.equal(h.indicator.textContent,'LIVE');
+});
+
+test('captain session revocation fences a queued realtime read and later status events',async()=>{
+ const authorized={value:true},server={state:fresh()};
+ const h=start(server,()=>authorized.value);
+ await h.emit('SUBSCRIBED');
+ assert.equal(h.rendered(),1);
+ h.defer(true);
+ server.state.picks.push({golfer:0,team:0});
+ const stale=h.change();
+ assert.equal(h.pending(),1);
+ authorized.value=false;
+ h.indicator.textContent='SIGN IN'; // Captain revocation owns the visible status.
+ h.resolve();await stale;
+ assert.equal(h.state().picks.length,0,'revoked session must not apply an in-flight read');
+ assert.equal(h.rendered(),1,'revoked session must not render');
+ assert.equal(h.indicator.textContent,'SIGN IN','revoked status must not return to LIVE');
+ await h.emit('SUBSCRIBED');
+ await h.change();
+ assert.equal(h.pending(),0,'disposed subscription must not request more draft data');
+ assert.equal(h.indicator.textContent,'SIGN IN');
 });
