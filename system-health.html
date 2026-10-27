@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b2437">
+<title>EllenG Cup — System Health (Preview)</title>
+<link rel="stylesheet" href="./style.css">
+<style>
+:root{color-scheme:dark}
+body{margin:0;background:#0b2437;color:#f7f5ed;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+.health-wrap{max-width:980px;margin:0 auto;padding:clamp(14px,3vw,32px)}
+.health-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.health-header a{color:#ffe4a0;min-height:44px;display:inline-flex;align-items:center}
+.health-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:14px;margin-top:20px}
+.health-card{padding:18px;border:1px solid #577080;border-radius:14px;background:#17364b;min-width:0}
+.health-card h2{font-size:1.05rem;margin:0 0 8px;color:#fff}
+.health-card p{margin:8px 0 0;overflow-wrap:anywhere;line-height:1.5}
+.health-label{display:inline-block;border:1px solid #d0d9db;border-radius:999px;padding:5px 12px;font-weight:700}
+.health-label[data-state=healthy]{color:#baf9d5;border-color:#55c596}
+.health-label[data-state=warning]{color:#ffdf9a;border-color:#dbaf53}
+.health-label[data-state=unavailable]{color:#ffb7b7;border-color:#e38484}
+.health-label[data-state=unverified]{color:#d7e2eb}
+.muted{color:#cbd8e0}
+button{min-height:44px;padding:10px 18px;border:0;border-radius:9px;font-weight:700;cursor:pointer}
+button:disabled{cursor:wait;opacity:.7}
+input{min-height:44px;max-width:100%;padding:8px;font-size:16px}
+.signin{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+#dashboard[hidden],#signin[hidden]{display:none!important}
+@media(max-width:360px){.health-wrap{padding:12px}.health-card{padding:14px}}
+</style>
+</head>
+<body>
+<main class="health-wrap">
+<header class="health-header">
+<div><h1>EllenG Cup — System Health</h1><p class="muted">Read-only preview · not a certification of tournament readiness</p></div>
+<a href="./admin.html">← Commissioner</a>
+</header>
+<section id="signin" aria-labelledby="signin-title">
+<h2 id="signin-title">Commissioner sign-in required</h2>
+<p class="muted" id="auth-message" role="status">Checking session…</p>
+<form id="signin-form" class="signin" hidden>
+<input id="email" type="email" autocomplete="username" aria-label="Email" placeholder="Email" required>
+<input id="password" type="password" autocomplete="current-password" aria-label="Password" placeholder="Password" required>
+<button type="submit">Sign in</button>
+</form>
+</section>
+<section id="dashboard" hidden aria-label="System inspection">
+<p>This is a safe read-only inspection. It does not submit test scores, mutate draft state, or verify backups.</p>
+<button id="refresh" type="button">Refresh checks</button>
+<p class="muted" id="checked-at" role="status"></p>
+<div class="health-grid">
+<section class="health-card"><h2>Database / Draft Read</h2><span class="health-label" id="database-status" data-state="unverified">Not verified</span><p id="database-detail">Awaiting inspection</p></section>
+<section class="health-card"><h2>Draft data freshness</h2><span class="health-label" id="draft-status" data-state="unverified">Not verified</span><p id="draft-detail">A stale draft is not necessarily an outage between events.</p></section>
+<section class="health-card"><h2>Realtime subscription</h2><span class="health-label" id="realtime-status" data-state="unverified">Not verified</span><p id="realtime-detail">Connection health is not proof every client received every score.</p></section>
+<section class="health-card"><h2>Scoring writes</h2><span class="health-label" data-state="unverified">Not verified</span><p>Only an authenticated, read-after-write multi-device test can establish score-save reliability. No live score is changed here.</p></section>
+<section class="health-card"><h2>Device offline submissions</h2><span class="health-label" id="offline-status" data-state="unverified">Not verified</span><p id="offline-detail">An authoritative scoring queue is not yet connected to this dashboard.</p></section>
+<section class="health-card"><h2>Backups / restore</h2><span class="health-label" data-state="unverified">Not verified</span><p>Backup success and restore rehearsal need protected server-side verification. No client-side claim is made.</p></section>
+<section class="health-card"><h2>Deployment / rollback</h2><span class="health-label" data-state="unverified">Not verified</span><p>A trusted server-provided release identifier and verified rollback evidence are not yet connected.</p></section>
+</div>
+<h2>Pre-event release gate</h2>
+<p>Before November 13: verify draft and commissioner/captain access. Before November 20: test scoring, realtime, offline retry, backup restore, responsive layouts, and rollback on an isolated environment.</p>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
+<script>
+"use strict";
+const config=window.ELLENG_CONFIG||{};
+const apiKey=config.supabasePublishableKey||config.supabaseAnonKey;
+const authMessage=document.getElementById("auth-message");
+const signIn=document.getElementById("signin");
+const form=document.getElementById("signin-form");
+const dashboard=document.getElementById("dashboard");
+let client,channel,refreshing=false,authorizedUser=null,inspectionEpoch=0;
+function setStatus(id,state,detail){
+ const badge=document.getElementById(id+"-status");
+ badge.dataset.state=state;
+ badge.textContent={healthy:"Healthy",warning:"Warning",unavailable:"Unavailable",unverified:"Not verified"}[state];
+ document.getElementById(id+"-detail").textContent=detail;
+}
+function reset(){
+ inspectionEpoch++;
+ setStatus("database","unverified","Awaiting inspection");
+ setStatus("draft","unverified","Draft timestamp unavailable.");
+ setStatus("realtime","unverified","Not connected.");
+ dashboard.hidden=true;signIn.hidden=false;form.hidden=false;authorizedUser=null;
+ if(channel&&client){client.removeChannel(channel);channel=null;}
+}
+async function verifyCommissioner(){
+ const {data:{user},error:userError}=await client.auth.getUser();
+ if(userError||!user){reset();authMessage.textContent="Sign in to check your access.";return false;}
+ // The user owns this draft if its owner_id matches the authenticated Supabase identity.
+ // The queried row is publicly readable under current RLS, so this UI gate is NOT
+ // a substitute for protected server-side monitoring APIs and their RLS policies.
+ const {data,error}=await client.from("elleng_drafts").select("owner_id").eq("id",config.draftId).maybeSingle();
+ if(error){reset();authMessage.textContent="Unable to verify commissioner access. No health details are available.";return false;}
+ if(!data||data.owner_id!==user.id){reset();authMessage.textContent="This account is not the commissioner for the configured draft.";return false;}
+ // A sign-out or account switch while the query was pending must not reveal the page.
+ const {data:latest,error:latestError}=await client.auth.getUser();
+ if(latestError||latest?.user?.id!==user.id){reset();authMessage.textContent="Session changed. Please sign in again.";return false;}
+ authorizedUser=user.id;signIn.hidden=true;dashboard.hidden=false;
+ return true;
+}
+async function refresh(){
+ if(refreshing||!authorizedUser)return;
+ const epoch=inspectionEpoch;
+ const account=authorizedUser;
+ refreshing=true;document.getElementById("refresh").disabled=true;
+ try{
+  // Reauthorize each refresh; do not trust a stale browser-only session.
+  if(!await verifyCommissioner()||epoch!==inspectionEpoch)return;
+  const {data,error}=await client.from("elleng_drafts").select("updated_at").eq("id",config.draftId).maybeSingle();
+  if(epoch!==inspectionEpoch||authorizedUser!==account)return;
+  if(error||!data){setStatus("database","unavailable","Could not read the configured draft. Check Supabase availability, access and project configuration.");setStatus("draft","unverified","Draft timestamp unavailable.");}
+  else{
+   setStatus("database","healthy","Read-only draft query succeeded.");
+   const timestamp=Date.parse(data.updated_at);
+   if(Number.isFinite(timestamp)){
+    const age=Math.max(0,Math.round((Date.now()-timestamp)/86400000));
+    setStatus("draft","unverified","Last draft change: "+new Date(timestamp).toLocaleString()+" ("+age+" days ago). Inactivity by itself is not a failure.");
+   }else setStatus("draft","warning","Draft timestamp missing or invalid.");
+  }
+  if(channel){await client.removeChannel(channel);channel=null;}
+  if(epoch!==inspectionEpoch||!authorizedUser)return;
+  setStatus("realtime","unverified","Connecting to Realtime…");
+  channel=client.channel("health-inspection-"+Date.now())
+   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_drafts",filter:"id=eq."+config.draftId},()=>{})
+   .subscribe(status=>{
+    if(authorizedUser!==account||epoch!==inspectionEpoch)return;
+    if(status==="SUBSCRIBED")setStatus("realtime","healthy","This device subscribed successfully. Multi-device delivery is unverified.");
+    else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED")setStatus("realtime","warning","Realtime subscription "+status.toLowerCase().replace("_"," ")+".");
+   });
+  setStatus("offline",navigator.onLine?"unverified":"warning",navigator.onLine?"This device reports being online. Pending score submissions cannot yet be measured.":"This device reports being offline. Do not assume scores are saved.");
+  document.getElementById("checked-at").textContent="Last attempted inspection: "+new Date().toLocaleString();
+ }catch(e){
+  if(epoch!==inspectionEpoch||authorizedUser!==account)return;
+  setStatus("database","unavailable","Inspection failed. Confirm authentication and network access.");
+ }finally{refreshing=false;document.getElementById("refresh").disabled=false;}
+}
+document.getElementById("refresh").addEventListener("click",refresh);
+window.addEventListener("offline",()=>{if(authorizedUser)setStatus("offline","warning","This device reports being offline. Do not assume scores are saved.");});
+window.addEventListener("online",()=>{if(authorizedUser)setStatus("offline","unverified","Connection returned. Pending score submissions cannot yet be measured.");});
+form.addEventListener("submit",async event=>{
+ event.preventDefault();
+ authMessage.textContent="Signing in…";
+ const {error}=await client.auth.signInWithPassword({email:document.getElementById("email").value,password:document.getElementById("password").value});
+ document.getElementById("password").value="";
+ if(error){authMessage.textContent="Sign-in failed.";return;}
+ if(await verifyCommissioner())await refresh();
+});
+(async()=>{
+ if(!config.supabaseUrl||!apiKey||!window.supabase){authMessage.textContent="Supabase configuration unavailable.";return;}
+ client=window.supabase.createClient(config.supabaseUrl,apiKey);
+ client.auth.onAuthStateChange((event,session)=>{
+  if(event==="SIGNED_OUT"||(authorizedUser&&session?.user?.id&&session.user.id!==authorizedUser)){
+   reset();authMessage.textContent="Session ended or account changed. Sign in again.";
+  }
+ });
+ form.hidden=false;
+ if(await verifyCommissioner())await refresh();
+})();
+</script>
+</body></html>
