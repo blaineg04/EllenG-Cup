@@ -55,3 +55,23 @@ test('both clients observe a shared deadline after state refresh',async()=>{
  assert.equal(first.state().timerEndsAt,second.state().timerEndsAt);
  assert.equal(first.state().timerPaused,false);
 });
+
+test('a disconnected viewer cannot apply draft changes until resubscribed',async()=>{
+ const server={state:fresh()};
+ const captain=startClient(server),viewer=startClient(server);
+ await captain.status('SUBSCRIBED');
+ await viewer.status('SUBSCRIBED');
+ await viewer.status('CHANNEL_ERROR');
+ server.state.picks.push({team:0,golfer:0});
+ server.state.golfers[0].team=0;
+ server.state.teams[0].roster.push(0);
+ await viewer.change();
+ assert.equal(viewer.indicator.textContent,'RECONNECTING');
+ assert.equal(viewer.buttons[0].disabled,true);
+ assert.equal(viewer.state().picks.length,0,'disconnected client must not apply updates');
+ await captain.change();
+ assert.equal(captain.state().picks.length,1);
+ await viewer.status('SUBSCRIBED');
+ assert.equal(viewer.state().picks.length,1,'reconnected client catches up');
+ assert.equal(viewer.indicator.textContent,'LIVE');
+});
