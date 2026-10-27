@@ -9,9 +9,15 @@ const html=fs.readFileSync(path.join(__dirname,'..','scoring.html'),'utf8');
 function pendingHoleSave(kind,clear=false){
  const start=html.indexOf('async function '+(kind==='shamble'?'savePlayerShambleScore':'savePairScore')+'(');
  const end=html.indexOf(kind==='shamble'?'function renderPairScoring(':'function renderScoring(',start);
- let release;const pending=new Promise(resolve=>{release=resolve});let first=true;const writes=[];
+ let release;const pending=new Promise(resolve=>release=resolve);let first=true;const writes=[];
  const finish=()=>{if(first){first=false;return pending}return Promise.resolve({error:null})};
- const db={from(table){return {upsert(row){writes.push({table,hole:row.hole,score:row.score,operation:'upsert'});return finish()},delete(){const filters={};return {eq(key,value){filters[key]=value;return this},then(resolve,reject){writes.push({table,hole:filters.hole,operation:'delete'});return finish().then(resolve,reject)}}}}}};
+ const db={
+  rpc(name,payload){writes.push({table:'rpc',hole:payload.p_hole,score:payload.p_score,operation:name});return finish()},
+  from(table){if(kind==='shamble')throw Error('Unsafe raw Shamble table write');return {
+   upsert(row){writes.push({table,hole:row.hole,score:row.score,operation:'upsert'});return finish()},
+   delete(){const filters={};return {eq(key,value){filters[key]=value;return this},then(resolve,reject){writes.push({table,hole:filters.hole,operation:'delete'});return finish().then(resolve,reject)}}}
+  }}
+ };
  const initial=kind==='shamble'?10:1;
  const rows=[];for(const h of [initial,initial+1])for(let i=0;i<(kind==='shamble'?4:2);i++)if(!(clear&&h===initial&&i===0))rows.push({team_index:0,hole:h,golfer_index:i,pair_index:i,score:h===initial?i+4:i+8});
  const context={hole:initial,db,TOURNAMENT_ID:'test-tournament',user:{id:'test-user'},canEditTeam:()=>true,isSplitPair:()=>true,beginScoreSave:()=>true,endScoreSave(){},$:()=>({textContent:''}),loadScores:async()=>{},teamRosterGolfers:()=>[0,1,2,3].map(index=>({index})),playerScores:rows,pairScores:rows,renderAll(){}};
@@ -19,9 +25,16 @@ function pendingHoleSave(kind,clear=false){
  return {context,writes,initial,release:()=>release({error:null}),run:()=>kind==='shamble'?context.savePlayerShambleScore(0,0,clear?'':'4'):context.savePairScore(0,0,clear?'':'4')};
 }
 for(const kind of ['shamble','split-pair'])for(const clear of [false,true])test(`${kind} ${clear?'clear':'save'} keeps the original hole after navigation during a pending request`,async()=>{
- const page=pendingHoleSave(kind,clear);const operation=page.run();await Promise.resolve();page.context.hole=page.initial+1;page.release();await operation;
- assert.equal(page.writes.length,2);assert.ok(page.writes.every(write=>write.hole===page.initial),JSON.stringify(page.writes));
- const team=page.writes[1];assert.equal(team.table,'elleng_team_scores');assert.equal(team.operation,clear?'delete':'upsert');if(!clear)assert.equal(team.score,kind==='shamble'?4:9);
+ const page=pendingHoleSave(kind,clear),operation=page.run();await Promise.resolve();page.context.hole=page.initial+1;page.release();await operation;
+ const expectedCount=kind==='shamble'?1:2;
+ assert.equal(page.writes.length,expectedCount);assert.ok(page.writes.every(write=>write.hole===page.initial),JSON.stringify(page.writes));
+ if(kind==='shamble'){
+  assert.equal(page.writes[0].operation,'elleng_test_authorized_shamble');
+  assert.equal(page.writes[0].score,clear?null:4);
+ }else{
+  const team=page.writes[1];assert.equal(team.table,'elleng_team_scores');
+  assert.equal(team.operation,clear?'delete':'upsert');if(!clear)assert.equal(team.score,9);
+ }
 });
 const from=html.indexOf('function normalPoints(values){');
 const to=html.indexOf('function totals(){',from);
