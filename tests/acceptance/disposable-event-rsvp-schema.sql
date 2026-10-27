@@ -141,7 +141,7 @@ select 'PASS: event RSVP schema and commissioner approval fixture' as result;
 -- Validate player-owned submission and draft-lock behavior in the disposable DB.
 \i docs/proposed-event-rsvp-player-submit-rpc-20261027.sql
 -- Restore an open draft after the preceding negative lock tests.
-update public.elleng_drafts set state=jsonb_set(state,'{picks}','[]'::jsonb,true) where id='draft-1';
+update public.elleng_drafts set state=jsonb_set(jsonb_set(jsonb_set(state,'{picks}','[]'::jsonb,true),'{rosterLocked}','false'::jsonb,true),'{draftStarted}','false'::jsonb,true) where id='draft-1';
 select set_config('test.actor','cccccccc-cccc-cccc-cccc-cccccccccccc',false);
 do $identity$
 begin
@@ -182,7 +182,7 @@ begin
  end if;
 end $player$;
 -- Even a simultaneous first-claim race must be rejected by a database index.
-update public.elleng_drafts set state=jsonb_set(state,'{picks}','[]'::jsonb,true) where id='draft-1';
+update public.elleng_drafts set state=jsonb_set(jsonb_set(jsonb_set(state,'{picks}','[]'::jsonb,true),'{rosterLocked}','false'::jsonb,true),'{draftStarted}','false'::jsonb,true) where id='draft-1';
 insert into auth.users(id) values('dddddddd-dddd-dddd-dddd-dddddddddddd');
 select set_config('test.actor','dddddddd-dddd-dddd-dddd-dddddddddddd',false);
 do $identity$
@@ -254,7 +254,7 @@ begin
  end;
 end $enroll$;
 -- Clearing attendance must retain the trusted golfer/account link.
-update public.elleng_drafts set state=jsonb_set(state,'{picks}','[]'::jsonb,true) where id='draft-1';
+update public.elleng_drafts set state=jsonb_set(jsonb_set(jsonb_set(state,'{picks}','[]'::jsonb,true),'{rosterLocked}','false'::jsonb,true),'{draftStarted}','false'::jsonb,true) where id='draft-1';
 \i docs/proposed-event-rsvp-clear-rpc-20261027.sql
 select set_config('test.actor','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',false);
 select public.elleng_clear_event_rsvp('nov20');
