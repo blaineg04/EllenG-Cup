@@ -53,7 +53,8 @@ test('roster parsing rejects null, empty, negative and fractional golfer IDs',()
  const end=source.indexOf('\n\nDeno.serve(',start);
  assert.ok(start>=0&&end>start,'Cannot locate roster helper');
  const ctx={};
- vm.runInNewContext(source.slice(start,end),ctx);
+ const js=source.slice(start,end).replace(/:any\b/g,'');
+ vm.runInNewContext(js,ctx);
  const result=Array.from(ctx.rosterIndexes({roster:[0,1,{golferIndex:2},{golferIndex:"3"},{golferIndex:null},{golferIndex:""},{golferIndex:-1},{golferIndex:1.5},{golferIndex:true},{golferIndex:"nope"}]}));
  assert.deepEqual(result,[0,1,2,3]);
 });
