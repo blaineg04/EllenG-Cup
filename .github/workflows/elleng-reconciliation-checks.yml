@@ -1,0 +1,27 @@
+name: EllenG scoring branch reconciliation checks
+on:
+  push:
+    branches: ['development/nov20-release-reconciliation-20261026']
+    paths:
+      - 'tests/**'
+      - 'scoring.html'
+      - 'admin.html'
+      - 'captain.html'
+      - 'common.js'
+      - '.github/workflows/elleng-reconciliation-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run original release and incoming scoring regression suites
+        run: node --test tests/*.test.cjs
