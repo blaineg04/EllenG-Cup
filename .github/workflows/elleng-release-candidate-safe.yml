@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - release-candidate/nov20-app-only-20261022
+      - development/nov20-release-reconciliation-20261026
     paths:
       - 'tests/**'
       - 'common.js'
