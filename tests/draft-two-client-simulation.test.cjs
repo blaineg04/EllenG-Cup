@@ -300,3 +300,24 @@ test('one captain reconnecting does not interrupt a second captain live subscrip
  assert.equal(captainB.state().picks.length,1);
  assert.equal(captainB.indicator.textContent,'LIVE');
 });
+
+test('a captain catches up on picks made during two consecutive outages',async()=>{
+ const server={state:fresh()};
+ server.state.golfers.push({name:'Second synthetic golfer',team:null});
+ const captain=startClient(server);
+ await captain.status('SUBSCRIBED');
+ for(let i=0;i<2;i++){
+  await captain.status(i===0?'TIMED_OUT':'CHANNEL_ERROR');
+  server.state.picks.push({team:i,golfer:i});
+  server.state.golfers[i].team=i;
+  server.state.teams[i].roster.push(i);
+  await captain.change();
+  assert.equal(captain.state().picks.length,i,'offline state cannot apply missed pick');
+  assert.equal(captain.buttons[0].disabled,true);
+  await captain.status('SUBSCRIBED');
+  assert.equal(captain.state().picks.length,i+1);
+  assert.equal(captain.indicator.textContent,'LIVE');
+ }
+ assert.deepEqual(Array.from(captain.state().teams[0].roster),[0]);
+ assert.deepEqual(Array.from(captain.state().teams[1].roster),[1]);
+});
