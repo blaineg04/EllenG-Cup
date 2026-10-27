@@ -55,6 +55,7 @@ test('failed Realtime event refresh visibly reports out-of-sync state',async()=>
  assert.equal(h.connection.textContent,'SYNC ERROR');
  assert.ok(h.classes.has('status-offline'));
  assert.equal(h.stats().rendered,1);
+ assert.equal(h.stats().buttonDisabled,true,'failed remote refresh must not leave stale picks clickable');
 });
 
 test('lost Realtime connection immediately disables pending captain selection buttons',async()=>{
