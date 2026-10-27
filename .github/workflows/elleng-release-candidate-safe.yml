@@ -1,0 +1,33 @@
+name: EllenG release candidate safe checks
+on:
+  push:
+    branches:
+      - release-candidate/nov20-app-only-20261022
+    paths:
+      - 'tests/**'
+      - 'common.js'
+      - 'draft.html'
+      - 'captain.html'
+      - 'scoring.html'
+      - 'admin.html'
+      - 'supabase.sql'
+      - '.github/workflows/elleng-release-candidate-safe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: elleng-safe-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  synthetic-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run local-only synthetic draft, scoring and reference schema security tests
+        run: node --test tests/*.test.cjs
