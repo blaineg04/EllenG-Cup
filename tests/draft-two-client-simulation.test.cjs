@@ -75,3 +75,24 @@ test('a disconnected viewer cannot apply draft changes until resubscribed',async
  assert.equal(viewer.state().picks.length,1,'reconnected client catches up');
  assert.equal(viewer.indicator.textContent,'LIVE');
 });
+
+test('reconnect restores the same server timer deadline after missed picks',async()=>{
+ const server={state:fresh()};
+ const captain=startClient(server),viewer=startClient(server);
+ await captain.status('SUBSCRIBED');
+ await viewer.status('SUBSCRIBED');
+ await viewer.status('TIMED_OUT');
+ server.state.timerPaused=false;
+ server.state.timerEndsAt='2026-11-13T18:00:30Z';
+ server.state.picks.push({team:0,golfer:0});
+ server.state.golfers[0].team=0;
+ server.state.teams[0].roster.push(0);
+ await captain.change();
+ assert.equal(viewer.state().timerPaused,true,'offline viewer retains previous timer snapshot');
+ assert.equal(viewer.state().picks.length,0,'offline viewer retains previous roster');
+ await viewer.status('SUBSCRIBED');
+ assert.equal(viewer.state().timerPaused,false);
+ assert.equal(viewer.state().timerEndsAt,captain.state().timerEndsAt);
+ assert.equal(viewer.state().picks.length,captain.state().picks.length);
+ assert.equal(viewer.indicator.textContent,'LIVE');
+});
