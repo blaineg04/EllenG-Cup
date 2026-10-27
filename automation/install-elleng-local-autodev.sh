@@ -7,6 +7,8 @@ TARGET="$HOME/elleng-local-autodev-control"
 mkdir -p "$TARGET" "$HOME/Library/LaunchAgents"
 cp "$WORKFLOW_DIR/elleng-local-development-cycle.sh" "$TARGET/cycle.sh"
 chmod 700 "$TARGET/cycle.sh"
+cp "$WORKFLOW_DIR/review-elleng-local-patch.sh" "$TARGET/review.sh"
+chmod 700 "$TARGET/review.sh"
 PLIST="$HOME/Library/LaunchAgents/com.elleng.local-autodev.plist"
 cat > "$PLIST" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
