@@ -12,6 +12,8 @@ function pendingHoleSave(kind,clear=false){
  let release;const pending=new Promise(resolve=>{release=resolve});let first=true;const writes=[];
  const finish=()=>{if(first){first=false;return pending}return Promise.resolve({error:null})};
  const db={from(table){return {upsert(row){writes.push({table,hole:row.hole,score:row.score,operation:'upsert'});return finish()},delete(){const filters={};return {eq(key,value){filters[key]=value;return this},then(resolve,reject){writes.push({table,hole:filters.hole,operation:'delete'});return finish().then(resolve,reject)}}}}}};
+ const originalRpc=db.rpc;
+ db.rpc=(name,args)=>{writes.push({table:name,hole:args.p_hole,score:args.p_score,operation:args.p_score===null?'delete':'upsert'});return finish()};
  const initial=kind==='shamble'?10:1;
  const rows=[];for(const h of [initial,initial+1])for(let i=0;i<(kind==='shamble'?4:2);i++)if(!(clear&&h===initial&&i===0))rows.push({team_index:0,hole:h,golfer_index:i,pair_index:i,score:h===initial?i+4:i+8});
  const context={hole:initial,db,TOURNAMENT_ID:'test-tournament',user:{id:'test-user'},canEditTeam:()=>true,isSplitPair:()=>true,beginScoreSave:()=>true,endScoreSave(){},$:()=>({textContent:''}),loadScores:async()=>{},teamRosterGolfers:()=>[0,1,2,3].map(index=>({index})),playerScores:rows,pairScores:rows,renderAll(){}};
@@ -22,7 +24,7 @@ for(const kind of ['shamble','split-pair'])for(const clear of [false,true])test(
  const page=pendingHoleSave(kind,clear);const operation=page.run();await Promise.resolve();page.context.hole=page.initial+1;page.release();await operation;
  assert.equal(page.writes.length,kind==='shamble'?1:2);assert.ok(page.writes.every(write=>write.hole===page.initial),JSON.stringify(page.writes));
  if(kind==='shamble'){
-  assert.equal(page.writes[0].table,'elleng_player_hole_scores','Shamble must never overwrite low-ball team scores');
+  assert.equal(page.writes[0].table,'elleng_test_authorized_shamble','Shamble must use the atomic authorized server RPC');
   assert.equal(page.writes[0].operation,clear?'delete':'upsert');
  }else{
   const team=page.writes[1];assert.equal(team.table,'elleng_team_scores');
