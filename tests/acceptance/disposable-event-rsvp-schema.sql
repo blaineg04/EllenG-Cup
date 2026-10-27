@@ -135,3 +135,35 @@ begin
  end;
 end $check$;
 select 'PASS: event RSVP schema and commissioner approval fixture' as result;
+
+-- Validate player-owned submission and draft-lock behavior in the disposable DB.
+\i docs/proposed-event-rsvp-player-submit-rpc-20261027.sql
+select set_config('test.actor','cccccccc-cccc-cccc-cccc-cccccccccccc',false);
+select public.elleng_submit_event_rsvp('nov20',2,'playing');
+do $player$
+begin
+ if not exists(select 1 from public.elleng_event_rsvps where tournament_id='nov20'
+  and user_id='cccccccc-cccc-cccc-cccc-cccccccccccc' and status='playing'
+  and approval_status='pending') then
+   raise exception 'Player-owned RSVP submission did not persist';
+ end if;
+ if has_function_privilege('authenticated','public.elleng_submit_event_rsvp(text,integer,text)','EXECUTE') then
+   raise exception 'Unvalidated player RSVP RPC has browser execute privilege';
+ end if;
+end $player$;
+select set_config('test.actor','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',false);
+update public.elleng_drafts set state='{"picks":[{"golfer":0,"team":0}]}'::jsonb where id='draft-1';
+select set_config('test.actor','cccccccc-cccc-cccc-cccc-cccccccccccc',false);
+do $player$
+begin
+ begin
+  perform public.elleng_submit_event_rsvp('nov20',2,'out');
+  raise exception 'Post-pick player RSVP change was accepted';
+ exception when sqlstate '55000' then null;
+ end;
+ if not exists(select 1 from public.elleng_event_rsvps where tournament_id='nov20'
+  and user_id='cccccccc-cccc-cccc-cccc-cccccccccccc' and status='playing') then
+   raise exception 'Rejected post-pick RSVP mutated existing attendance';
+ end if;
+end $player$;
+select 'PASS: player RSVP draft lock fixture' as result;
