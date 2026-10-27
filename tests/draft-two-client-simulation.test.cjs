@@ -245,3 +245,19 @@ test('captain reconnect catches up after two picks and a timer pause',async()=>{
  assert.deepEqual(Array.from(captain.state().teams[1].roster),[1]);
  assert.equal(captain.indicator.textContent,'LIVE');
 });
+
+test('a missed timer resume is recovered with its exact deadline after reconnect',async()=>{
+ const server={state:fresh()};
+ const commissioner=startClient(server),captain=startClient(server);
+ await Promise.all([commissioner.status('SUBSCRIBED'),captain.status('SUBSCRIBED')]);
+ await captain.status('CLOSED');
+ server.state.timerPaused=false;
+ server.state.timerEndsAt='2026-11-13T18:01:00Z';
+ await commissioner.change();
+ assert.equal(captain.state().timerPaused,true,'offline captain retains old paused snapshot');
+ assert.equal(captain.buttons[0].disabled,true,'offline captain cannot draft');
+ await captain.status('SUBSCRIBED');
+ assert.equal(captain.state().timerPaused,false);
+ assert.equal(captain.state().timerEndsAt,commissioner.state().timerEndsAt);
+ assert.equal(captain.indicator.textContent,'LIVE');
+});
