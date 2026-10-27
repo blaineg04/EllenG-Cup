@@ -6,7 +6,7 @@ create table if not exists public.elleng_event_rsvps (
  tournament_id text not null references public.elleng_tournaments(id) on delete restrict,
  user_id uuid not null references auth.users(id) on delete cascade,
  golfer_index integer not null check (golfer_index >= 0),
- status text not null check (status in ('playing','maybe','out')),
+ status text check (status in ('playing','maybe','out')),
  approval_status text not null default 'pending' check (approval_status in ('pending','approved','declined')),
  approved_by uuid references auth.users(id),
  updated_at timestamptz not null default now(),
