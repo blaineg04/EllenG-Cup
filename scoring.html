@@ -5658,10 +5658,12 @@ function renderAll(){
  safeFeatureRender("Live Alerts",checkLiveAlerts);safeFeatureRender("Big Moments",checkBigMoments);
  renderOfflineState();
 }
-let syncBusy=false;
+let syncBusy=false,syncQueued=false;
 async function syncLive(){
  if(!user)return;
- if(syncBusy)return;
+ // A Realtime reconnect can arrive while the fallback poll is still loading.
+ // Coalesce overlapping requests into one final authoritative catch-up.
+ if(syncBusy){syncQueued=true;return}
  syncBusy=true;
  try{
   const tournamentSource="elleng_tournaments";
@@ -5696,7 +5698,14 @@ async function syncLive(){
   const adminOpen=isCommissioner&&document.querySelector('.tab.active')?.dataset.view==='admin';
   if(!adminOpen)renderAll();
  }catch(e){console.error("Live data sync failed:",e);setSyncStatus("error","Sync issue")}
- finally{syncBusy=false}
+ finally{
+  syncBusy=false;
+  if(syncQueued){
+   syncQueued=false;
+   // The last event must be fetched even if it arrived during an older read.
+   void syncLive();
+  }
+ }
 }
 // Realtime handles live scoring; this slower visible-tab poll is only a safety fallback for non-score data.
 setInterval(()=>{if(!document.hidden)syncLive()},20000);
