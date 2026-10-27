@@ -1,0 +1,44 @@
+name: EllenG isolated Auth readiness
+on:
+  push:
+    branches: [release/nov20-score-integrity-20261020]
+    paths:
+      - .github/workflows/elleng-auth-readiness.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: elleng-auth-readiness
+  cancel-in-progress: true
+jobs:
+  inventory:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 5
+    steps:
+      - name: Read-only isolated Auth prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          echo "Architecture: $(uname -m)"
+          echo "macOS: $(sw_vers -productVersion)"
+          echo "Free root filesystem KiB: $(df -k / | tail -1 | awk '{print $4}')"
+          for bin in docker colima supabase node npm; do
+            if command -v "$bin" >/dev/null 2>&1; then
+              echo "$bin: installed"
+            else
+              echo "$bin: missing"
+            fi
+          done
+          if command -v colima >/dev/null 2>&1; then
+            colima list || true
+            colima status || true
+          fi
+          if command -v docker >/dev/null 2>&1; then
+            docker --context colima info --format 'Colima engine reachable; version={{.ServerVersion}}' 2>/dev/null || echo "Colima engine unreachable"
+            docker --context colima ps --format 'Existing container: {{.Names}} status={{.Status}}' || true
+          fi
+          if command -v supabase >/dev/null 2>&1; then
+            supabase --version
+          fi
+          echo "Read-only prerequisite inventory complete. No services started or modified."

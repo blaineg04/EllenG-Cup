@@ -1,0 +1,101 @@
+name: Local Supabase compatibility
+on:
+  push:
+    branches: ['release/nov20-score-integrity-20261020']
+    paths: ['.github/workflows/local-supabase-preflight.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compatibility:
+    if: github.ref == 'refs/heads/release/nov20-score-integrity-20261020'
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 8
+    steps:
+      - name: Check native runtime requirements without installing services
+        shell: bash
+        run: |
+          set -euo pipefail
+          architecture="$(uname -m)"
+          macos_version="$(sw_vers -productVersion)"
+          apple_silicon="$(sysctl -n hw.optional.arm64 2>/dev/null || echo 0)"
+          translated="$(sysctl -n sysctl.proc_translated 2>/dev/null || echo 0)"
+          printf 'Apple silicon support: %s\\nRosetta translation: %s\\n' "$apple_silicon" "$translated"
+          printf 'Architecture: %s\nmacOS: %s\n' "$architecture" "$macos_version"
+          if [ "$apple_silicon" = "1" ] && [ "${macos_version%%.*}" -ge 14 ]; then
+            echo "Native platform requirement: PASS"
+          else
+            echo "Native platform requirement: UNSUPPORTED"
+          fi
+          if command -v supabase >/dev/null 2>&1; then
+            supabase --version
+            supabase --help
+          else
+            echo "Supabase CLI: not installed on PATH"
+          fi
+          node --version
+          npm --version
+      - name: Check Docker and available local runtime tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          if [ -d /Applications/Docker.app ]; then
+            echo "Docker Desktop: installed"
+          else
+            echo "Docker Desktop: not installed"
+          fi
+          if command -v docker >/dev/null 2>&1; then
+            docker --version
+            if docker info --format '{{.ServerVersion}}' 2>/dev/null; then
+              echo "Docker engine: ready"
+            else
+              echo "Docker engine: not reachable"
+            fi
+          else
+            echo "Docker CLI: not installed on PATH"
+          fi
+          for tool in brew colima podman; do
+            if command -v "$tool" >/dev/null 2>&1; then
+              printf '%s: installed\\n' "$tool"
+            else
+              printf '%s: absent\\n' "$tool"
+            fi
+          done
+          df -h / | tail -1
+      - name: Inspect installed container engines without changing profiles
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          docker desktop status || true
+          docker context ls --format '{{.Name}}'
+          colima version
+          colima list
+          colima status || true
+          sysctl -n hw.memsize
+      - name: Verify isolated test commands can use the existing Colima engine
+        shell: bash
+        env:
+          DOCKER_CONTEXT: colima
+        run: |
+          set -euo pipefail
+          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          docker info --format 'Engine {{.ServerVersion}}; CPUs {{.NCPU}}; memory bytes {{.MemTotal}}'
+          docker system df
+          docker ps --format 'Container {{.Names}}; status {{.Status}}'
+          colima ssh -- df -h /
+          npm view supabase@2.121.0 version engines --json
+      - name: Verify existing service and storage after isolated startup attempt
+        shell: bash
+        env:
+          DOCKER_CONTEXT: colima
+        run: |
+          set -euo pipefail
+          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          docker ps --format 'Container {{.Names}}; status {{.Status}}'
+          docker inspect fairwayos-pg-1-1 --format 'FairwayOS running: {{.State.Running}}; started: {{.State.StartedAt}}'
+          docker network ls --filter name=elleng-smoke --format '{{.Name}}'
+          docker image ls --filter reference='supabase/*' --format '{{.Repository}}:{{.Tag}} {{.Size}}'
+          df -h / | tail -1
+          colima ssh -- df -h /var/lib/docker /var/lib/containerd || true

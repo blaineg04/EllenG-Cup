@@ -1,5 +1,6 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EllenG Cup Commissioner</title><link rel="stylesheet" href="style.css"></head><body>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EllenG Cup Commissioner</title><link rel="stylesheet" href="style.css"><style>.global-main-menu-bar{display:flex;justify-content:center;padding:12px}.global-main-menu-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 18px;border:2px solid #d5a72c;border-radius:999px;background:#0b2437;color:#fff;font-weight:900;text-decoration:none}</style></head><body class="commissioner-draft-page">
 <div class="top"><img src="gator.jpeg"><div><h1>EllenG Cup — Commissioner</h1><div>Live Supabase Draft Control</div></div><div style="margin-left:auto" id="connection">CONNECTING</div></div>
+<nav class="global-main-menu-bar" aria-label="Main menu"><a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a></nav>
 <div class="wrap">
 <div id="loginCard" class="card">
 <h2>Commissioner Sign In</h2>
@@ -9,49 +10,165 @@
 <input id="password" type="password" autocomplete="current-password" placeholder="Password" style="max-width:240px">
 <button id="login" class="gold">Sign In</button>
 </div><div id="authMsg" class="muted"></div></div>
-<div id="adminApp" style="display:none"><div class="card"><div class="actions"><button id="setupBtn" class="alt">Setup</button><button id="undo" class="gold">Undo Pick</button><button id="pause" class="alt">Pause/Resume</button><button id="resetClock" class="alt">Reset Clock</button></div></div>
+<div id="adminApp" style="display:none"><div id="draftActionError" role="alert" aria-live="assertive" class="muted" style="display:none;padding:12px;margin:8px 0;border:2px solid #b45309;border-radius:8px;background:#fff4df;color:#733600;font-weight:700"></div><div class="card"><div class="actions"><button id="setupBtn" class="alt">Setup</button><button id="undo" class="gold">Undo Pick</button><button id="pause" class="alt">Pause/Resume</button><button id="resetClock" class="alt">Reset Clock</button></div></div>
 <section id="setup" class="card"><h2>Golfer & Team Setup</h2><div style="overflow:auto"><table><thead><tr><th>#</th><th>Golfer</th><th>HCP</th><th>Band</th></tr></thead><tbody id="grows"></tbody></table></div><h3>Teams</h3><table><tbody id="trows"></tbody></table><div class="actions" style="margin-top:10px"><select id="dtype"><option value="snake">Snake Draft</option><option value="straight">Straight Draft</option></select><select id="tlen"><option>30</option><option>45</option><option selected>60</option><option>90</option><option>120</option></select><button id="saveSetup" class="gold">Save Setup & Go Live</button></div></section>
 <section id="live" class="grid" style="display:none"><div class="card"><h2>Available Golfers</h2><div id="pool"></div></div><div class="card"><div class="bar"><div><strong id="onclock"></strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div class="muted">Pick clock</div></div></div><div id="teams" class="teams"></div></div></section></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script>
+let draftUpdatedAt=null;
+let savingDraft=false;
+load=async function(){
+ if(savingDraft)return S;
+ const {data,error}=await db.from("elleng_drafts").select("state,updated_at").eq("id",cfg.draftId).single();
+ if(error)throw error;
+ if(savingDraft)return S;
+ // An older realtime response must never roll back a successfully saved draft.
+ if(draftUpdatedAt&&new Date(data.updated_at).getTime()<new Date(draftUpdatedAt).getTime())return S;
+ draftUpdatedAt=data.updated_at;
+ S={...fresh(),...data.state};
+ return S;
+};
 async function secureSave(){
- const {data:{user}}=await db.auth.getUser();
- if(!user) throw new Error("Commissioner sign-in required.");
- let {data:existing}=await db.from("elleng_drafts").select("owner_id").eq("id",cfg.draftId).maybeSingle();
- if(!existing){
-   let {error}=await db.from("elleng_drafts").insert({id:cfg.draftId,owner_id:user.id,state:S,updated_at:new Date().toISOString()});
-   if(error) throw error;
- } else {
-   if(existing.owner_id!==user.id) throw new Error("This draft belongs to a different commissioner account.");
-   let {error}=await db.from("elleng_drafts").update({state:S,updated_at:new Date().toISOString()}).eq("id",cfg.draftId);
-   if(error) throw error;
- }
+ if(savingDraft)throw new Error("A draft save is already in progress.");
+ savingDraft=true;
+ try{
+  const {data:{user},error:authError}=await db.auth.getUser();
+  if(authError)throw authError;
+  if(!user)throw new Error("Commissioner sign-in required.");
+  if(draftUpdatedAt===null){
+   const {data,error}=await db.from("elleng_drafts").insert({id:cfg.draftId,owner_id:user.id,state:S,updated_at:new Date().toISOString()}).select("updated_at").single();
+   if(error)throw error;
+   draftUpdatedAt=data.updated_at;
+  }else{
+   const {data,error}=await db.rpc("elleng_save_state_if_fresh",{p_draft_id:cfg.draftId,p_expected_updated_at:draftUpdatedAt,p_state:S});
+   if(error)throw error;
+   const saved=Array.isArray(data)?data[0]:data;
+   if(!saved?.updated_at)throw new Error("Draft save was not confirmed.");
+   draftUpdatedAt=saved.updated_at;
+  }
+ }catch(error){
+  alert("Draft was not saved. "+(error?.message||"Please reload before trying again.")+" Reload the page before making another change.");
+  throw error;
+ }finally{savingDraft=false}
 }
 save=secureSave;
 
 let liveMode=false,tick;
 function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map((g,i)=>`<tr><td>${i+1}</td><td><input data-n="${i}" value="${esc(g.name)}"></td><td><input data-h="${i}" type="number" step=".1" value="${esc(g.hcp)}"></td><td><select data-b="${i}">${bands.map(b=>`<option ${g.band===b?"selected":""}>${b}</option>`).join("")}</select></td></tr>`).join("");document.getElementById("trows").innerHTML=S.teams.map((t,i)=>`<tr><td>Team ${i+1}</td><td><input data-tn="${i}" value="${esc(t.name)}"></td><td><input data-tc="${i}" placeholder="Captain" value="${esc(t.captain)}"></td></tr>`).join("");document.getElementById("dtype").value=S.draftType;document.getElementById("tlen").value=S.timerLength}
-function liveRender(){let done=S.picks.length>=24,t=order(S.picks.length);document.getElementById("onclock").textContent=done?"DRAFT COMPLETE":"ON THE CLOCK: "+S.teams[t].name;document.getElementById("meta").textContent=done?"All rosters complete":`Round ${Math.floor(S.picks.length/6)+1} • Pick ${S.picks.length+1}`;document.getElementById("pool").innerHTML=S.golfers.map((g,i)=>({...g,i})).filter(g=>g.name&&g.team==null).map(g=>`<div class="player"><strong>${esc(g.name)}</strong><span class="badge">${g.band}</span><span class="muted">${esc(g.hcp||"—")}</span><button data-p="${g.i}" ${canBand(t,g.band)?"":"disabled"}>${canBand(t,g.band)?"Draft":"Limit"}</button></div>`).join("");document.getElementById("teams").innerHTML=S.teams.map((tm,i)=>`<div class="team"><div class="teamhead"><strong>${esc(tm.name)}</strong><div class="muted" style="color:#ddd">${esc(tm.captain)}</div><div style="font-size:11px">${bands.map(b=>b+" "+tbc(i,b)).join(" • ")}</div></div><div class="roster">${Array.from({length:4},(_,j)=>{let g=S.golfers[tm.roster[j]];return g?`<div class="slot"><strong>${esc(g.name)}</strong> <span class="badge">${g.band}</span><div class="muted">HCP ${esc(g.hcp||"—")}</div></div>`:`<div class="slot muted">Open roster spot</div>`}).join("")}</div></div>`).join("");document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>pick(+b.dataset.p));drawClock()}
-function drawClock(){let x=remaining();document.getElementById("clock").textContent=Math.floor(x/60)+":"+String(x%60).padStart(2,"0");document.getElementById("clock").style.color=x<=10?"#9b2f2f":""}
-async function pick(i){let t=order(S.picks.length),g=S.golfers[i];if(!g||g.team!=null||!canBand(t,g.band))return;g.team=t;S.teams[t].roster.push(i);S.picks.push({golfer:i,team:t});S.timerPaused=false;S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();await save();liveRender()}
-document.getElementById("saveSetup").onclick=async()=>{document.querySelectorAll("[data-n]").forEach(x=>S.golfers[+x.dataset.n].name=x.value.trim());document.querySelectorAll("[data-h]").forEach(x=>S.golfers[+x.dataset.h].hcp=x.value);document.querySelectorAll("[data-b]").forEach(x=>S.golfers[+x.dataset.b].band=x.value);document.querySelectorAll("[data-tn]").forEach(x=>S.teams[+x.dataset.tn].name=x.value||"Team "+(+x.dataset.tn+1));document.querySelectorAll("[data-tc]").forEach(x=>S.teams[+x.dataset.tc].captain=x.value);S.draftType=document.getElementById("dtype").value;S.timerLength=+document.getElementById("tlen").value;S.timerPaused=false;S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();await save();liveMode=true;document.getElementById("setup").style.display="none";document.getElementById("live").style.display="grid";liveRender()};
+function liveRender(){let total=S.golfers.filter(g=>g.name&&g.name.trim()).length,teamCount=S.teams.length,done=S.picks.length>=total,t=done?0:order(S.picks.length);document.getElementById("onclock").textContent=done?"DRAFT COMPLETE":"ON THE CLOCK: "+S.teams[t].name;document.getElementById("meta").textContent=done?"All rosters complete":`Round ${Math.floor(S.picks.length/Math.max(1,teamCount))+1} • Pick ${S.picks.length+1}`;document.getElementById("pool").innerHTML=S.golfers.map((g,i)=>({...g,i})).filter(g=>g.name&&g.team==null).map(g=>`<div class="player"><strong>${esc(g.name)}</strong><span class="badge">${g.band}</span><span class="muted">${esc(g.hcp||"—")}</span><button data-p="${g.i}" ${!done&&canBand(t,g.band)?"":"disabled"}>${done?"Complete":canBand(t,g.band)?"Draft":"Limit"}</button></div>`).join("");document.getElementById("teams").innerHTML=S.teams.map((tm,i)=>`<div class="team"><div class="teamhead"><strong>${esc(tm.name)}</strong><div class="muted" style="color:#ddd">${esc(tm.captain)}</div><div style="font-size:11px">${bands.map(b=>b+" "+tbc(i,b)).join(" • ")}</div></div><div class="roster">${Array.from({length:teamCapacity(i)},(_,j)=>{let g=S.golfers[tm.roster[j]];return g?`<div class="slot"><strong>${esc(g.name)}</strong> <span class="badge">${g.band}</span><div class="muted">HCP ${esc(g.hcp||"—")}</div></div>`:`<div class="slot muted">Open roster spot</div>`}).join("")}</div></div>`).join("");document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>pick(+b.dataset.p));drawClock()}
+let autoPickPending=false,autoPickLastAttempt=0;
+async function advanceExpiredDraft(){
+ if(autoPickPending||savingDraft||!liveMode||S.timerPaused||!S.timerEndsAt||remaining()>0||S.picks.length>=totalPicks())return;
+ if(Date.now()-autoPickLastAttempt<5000)return;
+ autoPickLastAttempt=Date.now();autoPickPending=true;
+ try{
+  const {data,error}=await db.rpc("elleng_auto_pick",{p_draft_id:cfg.draftId});
+  if(error)throw error;
+  // The database serializes concurrent captain and automatic picks under a row lock.
+  await load();
+  liveRender();
+  const banner=document.getElementById("draftActionError");
+  if(banner){banner.textContent="";banner.style.display="none"}
+ }catch(error){
+  console.error("Draft auto-pick failed:",error);
+  const banner=document.getElementById("draftActionError");
+  if(banner){banner.textContent="Automatic pick failed. Check your connection and draft eligibility.";banner.style.display="block"}
+ }finally{autoPickPending=false}
+}
+function drawClock(){let x=remaining();document.getElementById("clock").textContent=Math.floor(x/60)+":"+String(x%60).padStart(2,"0");document.getElementById("clock").style.color=x<=10?"#9b2f2f":"";if(x===0)void advanceExpiredDraft()}
+async function pick(i){if(savingDraft)return;const total=totalPicks();if(S.timerPaused||S.picks.length>=total)return;let t=order(S.picks.length),g=S.golfers[i];if(!g||g.team!=null||!canBand(t,g.band))return;const before=structuredClone(S);g.team=t;S.teams[t].roster.push(i);S.picks.push({golfer:i,team:t});S.timerPaused=false;S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();try{await save();liveRender()}catch(e){S=before;liveRender()}}
+document.getElementById("saveSetup").onclick=async()=>{
+ if(savingDraft)return;
+ const before=structuredClone(S);
+ const button=document.getElementById("saveSetup");
+ button.disabled=true;
+ try{
+  document.querySelectorAll("[data-n]").forEach(x=>S.golfers[+x.dataset.n].name=x.value.trim());
+  document.querySelectorAll("[data-h]").forEach(x=>S.golfers[+x.dataset.h].hcp=x.value);
+  document.querySelectorAll("[data-b]").forEach(x=>S.golfers[+x.dataset.b].band=x.value);
+  document.querySelectorAll("[data-tn]").forEach(x=>S.teams[+x.dataset.tn].name=x.value||"Team "+(+x.dataset.tn+1));
+  document.querySelectorAll("[data-tc]").forEach(x=>S.teams[+x.dataset.tc].captain=x.value);
+  S.draftType=document.getElementById("dtype").value;
+  S.timerLength=+document.getElementById("tlen").value;
+  S.timerPaused=false;
+  S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();
+  await save();
+  liveMode=true;
+  document.getElementById("setup").style.display="none";
+  document.getElementById("live").style.display="grid";
+  liveRender();
+ }catch(error){
+  S=before;
+ }finally{
+  button.disabled=false;
+ }
+};
 document.getElementById("setupBtn").onclick=()=>{liveMode=false;document.getElementById("live").style.display="none";document.getElementById("setup").style.display="block";setupRender()};
-document.getElementById("undo").onclick=async()=>{let p=S.picks.pop();if(!p)return;S.golfers[p.golfer].team=null;S.teams[p.team].roster=S.teams[p.team].roster.filter(x=>x!==p.golfer);S.timerPaused=false;S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();await save();if(liveMode)liveRender()};
-document.getElementById("pause").onclick=async()=>{if(S.timerPaused){S.timerPaused=false;S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString()}else{S.timerLength=remaining();S.timerPaused=true;S.timerEndsAt=null}await save();liveRender()};
-document.getElementById("resetClock").onclick=async()=>{S.timerLength=+document.getElementById("tlen").value||60;S.timerPaused=false;S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();await save();liveRender()};
+async function saveCommissionerAction(change){
+ if(savingDraft)return;
+ const before=structuredClone(S);
+ try{
+  if(change()===false)return;
+  const errorBanner=document.getElementById("draftActionError");
+  if(errorBanner){errorBanner.textContent="";errorBanner.style.display="none"}
+  await save();
+  if(liveMode)liveRender();
+ }catch(error){
+  S=before;
+  if(liveMode)liveRender();
+  // A failed commissioner action must not look like a successful pause, undo or reset.
+  const msg=document.getElementById("draftActionError");
+  if(msg){msg.textContent="Draft change was not saved. Reload before trying again.";msg.style.display="block"}
+ }
+}
+document.getElementById("undo").onclick=()=>saveCommissionerAction(()=>{
+ const p=S.picks.at(-1);
+ if(!p)return false;
+ S.picks.pop();
+ S.golfers[p.golfer].team=null;
+ S.teams[p.team].roster=S.teams[p.team].roster.filter(x=>x!==p.golfer);
+ S.timerPaused=false;
+ S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();
+});
+document.getElementById("pause").onclick=()=>saveCommissionerAction(()=>{
+ if(S.timerPaused){S.timerPaused=false;S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString()}
+ else{S.timerLength=remaining();S.timerPaused=true;S.timerEndsAt=null}
+});
+document.getElementById("resetClock").onclick=()=>saveCommissionerAction(()=>{
+ S.timerLength=+document.getElementById("tlen").value||60;
+ S.timerPaused=false;
+ S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();
+});
 async function openAdmin(){
- const {data:{user}}=await db.auth.getUser();
- if(!user){document.getElementById("loginCard").style.display="block";document.getElementById("adminApp").style.display="none";return}
- document.getElementById("loginCard").style.display="none";document.getElementById("adminApp").style.display="block";
- let {data}=await db.from("elleng_drafts").select("state,owner_id").eq("id",cfg.draftId).maybeSingle();
- if(data){if(data.owner_id && data.owner_id!==user.id){alert("This draft is owned by another commissioner account.");return}S={...fresh(),...data.state}}
- setupRender();subscribe(()=>{if(liveMode)liveRender();else setupRender()});
- if(!tick)tick=setInterval(()=>{if(liveMode)drawClock()},500);
+ const loginCard=document.getElementById("loginCard"),app=document.getElementById("adminApp"),msg=document.getElementById("authMsg"),status=document.getElementById("connection");
+ loginCard.style.display="block";app.style.display="none";msg.textContent="";status.textContent="VERIFYING";
+ try{
+  const {data:authData,error:authError}=await db.auth.getUser();
+  if(authError)throw authError;
+  const user=authData?.user;
+  if(!user){status.textContent="SIGN IN";return}
+  const {data,error}=await db.from("elleng_drafts").select("state,owner_id,updated_at").eq("id",cfg.draftId).maybeSingle();
+  if(error)throw error;
+  if(data?.owner_id && data.owner_id!==user.id){status.textContent="NO ACCESS";msg.textContent="This draft is owned by another commissioner account. Return to Main Menu or sign in with the commissioner account.";return}
+  if(data){S={...fresh(),...data.state};draftUpdatedAt=data.updated_at;}else draftUpdatedAt=null;
+  loginCard.style.display="none";app.style.display="block";status.textContent="READY";
+  setupRender();subscribe(()=>{if(liveMode)liveRender();else setupRender()});
+  if(!tick)tick=setInterval(()=>{if(liveMode)drawClock()},500);
+ }catch(e){
+  loginCard.style.display="block";app.style.display="none";status.textContent="UNAVAILABLE";
+  msg.textContent="Unable to verify commissioner access. Refresh and try again.";
+ }
 }
 document.getElementById("login").onclick=async()=>{
- const email=document.getElementById("email").value.trim(),password=document.getElementById("password").value;
- const msg=document.getElementById("authMsg");msg.textContent="Signing in…";
- const {error}=await db.auth.signInWithPassword({email,password});
- if(error){msg.textContent=error.message;return}
- msg.textContent="";await openAdmin();
+ const button=document.getElementById("login");if(button.disabled)return;
+ const passwordInput=document.getElementById("password");
+ const email=document.getElementById("email").value.trim(),password=passwordInput.value;
+ const msg=document.getElementById("authMsg"),status=document.getElementById("connection");
+ if(!email||!password){msg.textContent="Enter commissioner email and password.";status.textContent="SIGN IN";return}
+ const label=button.textContent;button.disabled=true;button.textContent="Signing In…";msg.textContent="Signing in…";status.textContent="CONNECTING";
+ try{
+  const {error}=await db.auth.signInWithPassword({email,password});if(error)throw error;
+  passwordInput.value="";msg.textContent="";await openAdmin();
+ }catch(e){status.textContent="ERROR";msg.textContent=e?.message||"Sign-in unavailable. Try again.";}
+ finally{button.disabled=false;button.textContent=label;}
 };
 (async()=>{try{await openAdmin()}catch(e){document.getElementById("authMsg").textContent=e.message}})();</script></body></html>
