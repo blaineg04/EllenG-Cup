@@ -2,6 +2,12 @@
 
 Updated: 2026-10-27. **Owner-requested readiness target: Friday, October 30, 2026, for draft and scoring together.** November 20 remains the tournament date. This checklist tracks **unverified live evidence**, not an assertion that the tournament is ready.
 
+## October 27 latest integrated green baseline
+
+- Development branch commit `6b7ebb99` (`fix(draft): fence captain picks during pending realtime refresh`) passed **all four** triggered workflows: responsive acceptance `40567269030`, release candidate safe checks `40567269145`, disposable PostgreSQL contract `40567269186`, and scoring reconciliation `40567269254`.
+- The draft change touched `common.js` and `tests/draft-two-client-simulation.test.cjs`, adding a concurrent client regression. This evidence remains synthetic/disposable, **not** a successful hosted authenticated rehearsal.
+- Preserve the green baseline and isolate future fixes; do not merge/deploy to production until authenticated commissioner/captain and multi-device scoring acceptance, backup, and rollback are verified.
+
 ## October 27 updated CI evidence (read-only)
 
 - Commit `4535f276`: scoring reconciliation run `40561623668` **passed**; release-candidate safe checks run `40561623705` **passed** (synthetic and seven-width visual matrix).
