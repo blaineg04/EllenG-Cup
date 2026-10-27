@@ -27,6 +27,6 @@ TEST
 git add -N "$FILE"
 git diff --binary -- "$FILE" > "$TMP/home/elleng-local-autodev-output/latest-development.patch"
 # The submitter uses HOME for the test checkout; no production or other repos.
-HOME="$TMP/home" PATH="$PATH" bash "$SCRIPT"
+ELLENG_REVIEW_ROOT="$TMP/home/elleng-local-autodev" ELLENG_REVIEW_OUT="$TMP/home/elleng-local-autodev-output" PATH="$PATH" bash "$SCRIPT"
 echo "PASS: test-only draft PR handoff completed."
 echo "Review the created PR on GitHub, then close it and delete its agent branch after checking."
