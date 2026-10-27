@@ -33,6 +33,14 @@ begin
     or coalesce((v_state->>'draftStarted')::boolean,false) then
    raise exception 'Draft roster is locked' using errcode='55000';
  end if;
+ -- The golfer index must identify an actual named golfer in this draft's
+ -- canonical directory, not merely an arbitrary nonnegative integer.
+ if jsonb_typeof(v_state->'golfers') is distinct from 'array'
+    or p_golfer_index >= jsonb_array_length(v_state->'golfers')
+    or nullif(btrim(v_state->'golfers'->p_golfer_index->>'name'),'') is null then
+   raise exception 'Golfer index is not in the tournament golfer directory'
+     using errcode='22023';
+ end if;
  if not exists(select 1 from auth.users where id=p_user_id) then
    raise exception 'Account not found' using errcode='P0002';
  end if;
