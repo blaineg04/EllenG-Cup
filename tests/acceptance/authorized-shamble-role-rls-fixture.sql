@@ -15,7 +15,7 @@ CREATE TABLE public.elleng_player_hole_scores(tournament_id text,hole integer,te
 CREATE TABLE public.elleng_team_scores(tournament_id text,team_index integer,hole integer,score integer,updated_by uuid,updated_at timestamptz,PRIMARY KEY(tournament_id,team_index,hole));
 INSERT INTO public.elleng_drafts VALUES('draft','00000000-0000-4000-8000-000000000001','{"teams":[{"roster":[0,1]}]}'::jsonb);
 INSERT INTO public.elleng_captains VALUES('draft','00000000-0000-4000-8000-000000000002',0);
-INSERT INTO public.elleng_tournaments VALUES('fixture','draft','live',1);
+INSERT INTO public.elleng_tournaments VALUES('fixture','draft','live',2);
 \i tests/acceptance/authorized-shamble-rpc-proposal.sql
 GRANT SELECT ON public.elleng_drafts,public.elleng_captains,public.elleng_tournaments TO elleng_fixture_authenticated;
 GRANT SELECT,INSERT,UPDATE,DELETE ON public.elleng_player_hole_scores,public.elleng_team_scores TO elleng_fixture_authenticated;
@@ -104,6 +104,19 @@ BEGIN
  IF NOT denied THEN RAISE EXCEPTION 'SECURITY GAP: raw cross-team score insert bypassed authorized RPC'; END IF;
  RAISE NOTICE 'PASS: direct score table bypass denied';
 END $raw_guard$;
+-- Also block cross-team writes targeting a VALID team index; an out-of-range
+-- target alone would not prove captain membership is enforced.
+DO $valid_team_guard$
+DECLARE denied boolean:=false;
+BEGIN
+ BEGIN
+  INSERT INTO public.elleng_team_scores
+   (tournament_id,team_index,hole,score,updated_by,updated_at)
+  VALUES ('fixture',1,10,2,auth.uid(),now());
+ EXCEPTION WHEN insufficient_privilege OR check_violation THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'SECURITY GAP: cross-team write bypassed team membership'; END IF;
+ RAISE NOTICE 'PASS: restricted team write denied';
+END $valid_team_guard$;
 RESET ROLE;
 SELECT set_config('elleng.test_uid','',false);
 SET LOCAL ROLE elleng_fixture_anon;
