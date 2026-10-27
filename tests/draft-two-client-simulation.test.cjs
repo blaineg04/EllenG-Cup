@@ -128,3 +128,19 @@ test('two viewers independently catch up after successive server picks',async()=
  assert.equal(viewerA.indicator.textContent,'LIVE');
  assert.equal(viewerB.indicator.textContent,'LIVE');
 });
+
+test('repeated reconnect notifications do not duplicate server picks',async()=>{
+ const server={state:fresh()};
+ const viewer=startClient(server);
+ await viewer.status('SUBSCRIBED');
+ await viewer.status('TIMED_OUT');
+ server.state.picks.push({team:0,golfer:0});
+ server.state.golfers[0].team=0;
+ server.state.teams[0].roster.push(0);
+ await viewer.status('SUBSCRIBED');
+ await viewer.status('SUBSCRIBED');
+ await viewer.change();
+ assert.equal(viewer.state().picks.length,1,'repeated reconnect must not duplicate picks');
+ assert.equal(viewer.state().teams[0].roster.length,1,'repeated reconnect must not duplicate roster entries');
+ assert.equal(viewer.indicator.textContent,'LIVE');
+});
