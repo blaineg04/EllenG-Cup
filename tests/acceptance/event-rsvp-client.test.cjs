@@ -47,3 +47,17 @@ test('surfaces Supabase RPC errors rather than claiming a saved RSVP',async()=>{
  const db={from(){},rpc(){return Promise.resolve({error:new Error('Permission denied')})}};
  await assert.rejects(rsvp.submit(db,'event-20',4,'playing'),/Permission denied/);
 });
+
+test('clear RSVP uses authenticated RPC and never deletes golfer association',async()=>{
+ const db=fakeDb();
+ await rsvp.clear(db,'event-20');
+ assert.deepEqual(db.calls,[{name:'elleng_clear_event_rsvp',args:{p_tournament_id:'event-20'}}]);
+ await assert.rejects(rsvp.clear(db,'  '),/Tournament ID is required/);
+ assert.equal(db.calls.length,1);
+});
+test('cleared RSVP is not draft eligible',()=>{
+ assert.deepEqual(rsvp.approvedGolferIndices([
+  {golfer_index:1,status:null,approval_status:'pending'},
+  {golfer_index:2,status:'playing',approval_status:'approved'}
+ ]),[2]);
+});
