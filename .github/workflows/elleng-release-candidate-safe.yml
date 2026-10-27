@@ -12,6 +12,7 @@ on:
       - 'scoring.html'
       - 'admin.html'
       - 'supabase.sql'
+      - 'tests/acceptance/**'
       - '.github/workflows/elleng-release-candidate-safe.yml'
   workflow_dispatch:
 permissions:
