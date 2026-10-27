@@ -61,3 +61,14 @@ test('cleared RSVP is not draft eligible',()=>{
   {golfer_index:2,status:'playing',approval_status:'approved'}
  ]),[2]);
 });
+
+test('attendance counts use event RPC rather than visible player rows',async()=>{
+ const db=fakeDb();
+ const result=await rsvp.counts(db,'nov20');
+ assert.deepEqual(db.calls,[{name:'elleng_event_rsvp_counts',args:{p_tournament_id:'nov20'}}]);
+ assert.deepEqual(result,{ok:true});
+});
+test('attendance counts unwrap PostgREST table-returning arrays',async()=>{
+ const db={from(){},rpc(){return Promise.resolve({data:[{playing:3,maybe:2,out_count:1,approved_playing:2}],error:null})}};
+ assert.deepEqual(await rsvp.counts(db,'nov20'),{playing:3,maybe:2,out_count:1,approved_playing:2});
+});
