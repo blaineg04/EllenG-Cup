@@ -180,3 +180,21 @@ test('reconnect disables previously enabled captain picks before catch-up comple
  h.resolve();await reconnecting;
  assert.equal(h.indicator.textContent,'LIVE');
 });
+
+test('overlapping remote picks keep captain controls frozen until newest snapshot',async()=>{
+ const server={state:fresh()},h=start(server);
+ await h.emit('SUBSCRIBED');
+ h.defer(true);
+ server.state.picks.push({golfer:0,team:0});
+ const first=h.change();
+ assert.equal(h.buttons[0].disabled,true,'first remote pick must freeze old choices');
+ server.state.picks.push({golfer:1,team:1});
+ const second=h.change();
+ assert.equal(h.pending(),2);
+ h.resolve();await first;
+ assert.equal(h.rendered(),1,'stale first response must not redraw');
+ assert.equal(h.buttons[0].disabled,true,'superseded response must not reopen stale choices');
+ h.resolve();await second;
+ assert.equal(h.state().picks.length,2,'newest authoritative state must win');
+ assert.equal(h.rendered(),2);
+});
