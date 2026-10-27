@@ -50,4 +50,36 @@ BEGIN
  THEN RAISE EXCEPTION 'Commissioner write failed'; END IF;
  RAISE NOTICE 'PASS: commissioner authorized';
 END $check$;
+-- Adversarial roster cases: invalid assignments must not quietly shrink the
+-- team or cause an incorrect low-ball score.
+SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000001',false);
+DO $negative$
+DECLARE blocked boolean;
+BEGIN
+ UPDATE public.elleng_drafts SET state=jsonb_set(state,'{teams,0,roster}',
+  '[{"golferIndex":0},{"golferIndex":0}]'::jsonb) WHERE id='draft';
+ blocked:=false;
+ BEGIN
+  PERFORM public.elleng_test_authorized_shamble('fixture',0,10,0,3);
+ EXCEPTION WHEN insufficient_privilege THEN blocked:=true; END;
+ IF NOT blocked THEN RAISE EXCEPTION 'Duplicate roster accepted'; END IF;
+ UPDATE public.elleng_drafts SET state=jsonb_set(state,'{teams,0,roster}',
+  '[{"golferIndex":0},{"bad":1}]'::jsonb) WHERE id='draft';
+ blocked:=false;
+ BEGIN
+  PERFORM public.elleng_test_authorized_shamble('fixture',0,10,0,3);
+ EXCEPTION WHEN insufficient_privilege THEN blocked:=true; END;
+ IF NOT blocked THEN RAISE EXCEPTION 'Malformed roster accepted'; END IF;
+ RAISE NOTICE 'PASS: duplicate and malformed roster denied';
+END $negative$;
+SELECT set_config('elleng.test_uid','',false);
+DO $anonymous$
+DECLARE blocked boolean:=false;
+BEGIN
+ BEGIN
+  PERFORM public.elleng_test_authorized_shamble('fixture',0,10,0,3);
+ EXCEPTION WHEN insufficient_privilege THEN blocked:=true; END;
+ IF NOT blocked THEN RAISE EXCEPTION 'Unauthenticated scoring accepted'; END IF;
+ RAISE NOTICE 'PASS: unauthenticated scoring rejected';
+END $anonymous$;
 ROLLBACK;
