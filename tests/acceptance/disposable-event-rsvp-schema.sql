@@ -2,6 +2,7 @@
 -- Never execute against the live Supabase project.
 create schema if not exists auth;
 create role authenticated nologin;
+create role anon nologin;
 create function auth.uid() returns uuid language sql stable as 'select null::uuid';
 create table auth.users(id uuid primary key);
 create table public.elleng_drafts(id text primary key,owner_id uuid not null references auth.users(id));
