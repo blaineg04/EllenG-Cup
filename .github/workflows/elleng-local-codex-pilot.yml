@@ -83,9 +83,20 @@ jobs:
             echo "Agent run failed or hit quota; no deployment or push occurred." | tee -a "$GITHUB_STEP_SUMMARY"
             exit 1
           }
-          git diff --check
-          git status --short >> "$GITHUB_STEP_SUMMARY"
-          git diff --binary > "$RUNNER_TEMP/elleng-proposed.patch"
+          # Include newly created test files in a review-only patch. Never
+          # stage or submit existing unrelated HTML edits from the runner.
+          while IFS= read -r -d '' file; do
+            git add -N -- "$file"
+          done < <(git ls-files --others --exclude-standard -z -- tests/)
+          git diff --check -- tests/
+          git diff --binary -- tests/ > "$RUNNER_TEMP/elleng-proposed.patch"
+          if ! test -s "$RUNNER_TEMP/elleng-proposed.patch"; then
+            echo "BLOCKED: no reviewable test changes produced." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "Produced review-only test patch:" >> "$GITHUB_STEP_SUMMARY"
+          git diff --stat -- tests/ >> "$GITHUB_STEP_SUMMARY"
+          echo "Existing edits outside tests/ deliberately excluded." >> "$GITHUB_STEP_SUMMARY"
       - name: Upload proposed code patch for manual review only
         if: always()
         uses: actions/upload-artifact@v4
