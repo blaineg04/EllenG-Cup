@@ -1,7 +1,7 @@
 -- REVIEW ONLY: execute exclusively against an isolated restored EllenG Cup test DB.
--- Atomic Shamble write prototype. Never apply to production without RLS remediation,
+-- INSECURE TEST-ONLY prototype: p_roster is caller-supplied and no auth check is enforced.\n-- Atomic Shamble write prototype. Never apply to production without RLS remediation,
 -- authenticated security checks, release approval, backup and rollback evidence.
--- The transaction-level advisory lock serializes writes for a tournament/team/hole.
+-- The locked tournament row serializes participating writes for that tournament.
 -- All participating Shamble writers MUST use this function, otherwise stale browser
 -- updates can still overwrite the derived score.
 BEGIN;
@@ -19,14 +19,14 @@ BEGIN
  THEN RAISE EXCEPTION 'Invalid Shamble score request' USING ERRCODE='22023'; END IF;
  SELECT count(*),count(DISTINCT golfer) INTO v_count,v_unique_count
  FROM unnest(p_roster) AS golfer;
- IF v_count=0 OR v_count<>v_unique_count OR p_golfer_index<>ALL(p_roster)
+ IF p_roster IS NULL OR array_position(p_roster,NULL) IS NOT NULL OR v_count=0 OR v_count<>v_unique_count OR p_golfer_index<>ALL(p_roster)
  THEN RAISE EXCEPTION 'Invalid roster or golfer' USING ERRCODE='22023'; END IF;
  IF NOT EXISTS (SELECT 1 FROM public.elleng_tournaments t
                 WHERE t.id=p_tournament_id AND t.status IN ('setup','live')
                   AND p_team_index<t.team_count)
  THEN RAISE EXCEPTION 'Tournament not active or team outside range' USING ERRCODE='22023'; END IF;
- -- Test fixture design: locking canonical tournament row makes all same-tournament
- -- operations serial, even when the team-score row does not exist yet.
+ -- Locking the canonical tournament row makes participating same-tournament
+ -- operations serial, even when the team-score row does not yet exist.
  PERFORM 1 FROM public.elleng_tournaments t WHERE t.id=p_tournament_id FOR UPDATE;
  IF p_score IS NULL THEN
    DELETE FROM public.elleng_player_hole_scores s
