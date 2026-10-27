@@ -4254,7 +4254,7 @@ async function loadRsvps(){
      if(!adapter)throw new Error('Event RSVP adapter unavailable');
      const [rows,counts]=await Promise.all([adapter.list(db,TOURNAMENT_ID),adapter.counts(db,TOURNAMENT_ID)]);
      rsvps=rows;eventRsvpCounts=counts;
-   }catch(error){rsvps=[];eventRsvpCounts=null;console.error('Event RSVP load failed',error);pushInAppAlert('RSVP unavailable','Attendance could not be loaded.');throw error;}
+   }catch(error){rsvps=[];eventRsvpCounts=null;renderRsvp();console.error('Event RSVP load failed',error);pushInAppAlert('RSVP unavailable','Attendance could not be loaded.');throw error;}
    return;
  }
  const {data,error}=await db.from("elleng_rsvps").select("*").eq("draft_id",DRAFT_ID);
