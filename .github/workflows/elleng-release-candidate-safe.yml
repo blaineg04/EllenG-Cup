@@ -31,3 +31,29 @@ jobs:
           node-version: '22'
       - name: Run local-only synthetic draft, scoring and reference schema security tests
         run: node --test tests/*.test.cjs
+  visual-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Playwright
+        run: npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
+      - name: Install isolated Chromium
+        run: tests/visual/node_modules/.bin/playwright install --with-deps chromium
+      - name: Validate screenshot harness safety
+        run: node --test tests/visual/safety.test.cjs
+      - name: Capture seven-width synthetic UI matrix
+        run: node tests/visual/run.cjs
+      - name: Upload synthetic captures and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: elleng-safe-visual-${{ github.sha }}
+          path: visual-results/
+          retention-days: 2
+          if-no-files-found: warn
