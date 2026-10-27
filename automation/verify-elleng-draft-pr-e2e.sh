@@ -13,7 +13,10 @@ test -d "$REAL/.git" || { echo "BLOCKED: local EllenG checkout missing"; exit 1;
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/home/elleng-local-autodev-output/review"
-git clone -q --no-local --branch "$BASE" "$REAL" "$TMP/home/elleng-local-autodev"
+git clone -q --no-local --no-checkout --branch "$BASE" "$REAL" "$TMP/home/elleng-local-autodev"
+git -C "$TMP/home/elleng-local-autodev" sparse-checkout init --cone
+git -C "$TMP/home/elleng-local-autodev" sparse-checkout set tests docs
+git -C "$TMP/home/elleng-local-autodev" checkout -q "$BASE"
 cd "$TMP/home/elleng-local-autodev"
 git remote set-url origin https://github.com/blaineg04/EllenG-Cup.git
 mkdir -p tests
