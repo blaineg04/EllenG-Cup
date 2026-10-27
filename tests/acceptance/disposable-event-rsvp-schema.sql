@@ -251,4 +251,30 @@ begin
  exception when sqlstate '55000' then null;
  end;
 end $enroll$;
-select 'PASS: player RSVP and commissioner enrollment fixture' as result;
+-- Clearing attendance must retain the trusted golfer/account link.
+update public.elleng_drafts set state='{"picks":[]}'::jsonb where id='draft-1';
+\i docs/proposed-event-rsvp-clear-rpc-20261027.sql
+select set_config('test.actor','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',false);
+select public.elleng_clear_event_rsvp('nov20');
+do $clear$
+begin
+ if not exists(select 1 from public.elleng_event_rsvps where tournament_id='nov20'
+  and user_id='eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee' and golfer_index=4
+  and status is null and approval_status='pending') then
+  raise exception 'Clear response did not preserve verified enrollment';
+ end if;
+ if has_function_privilege('authenticated','public.elleng_clear_event_rsvp(text)','EXECUTE') then
+  raise exception 'Unvalidated clear response RPC exposed to browser roles';
+ end if;
+end $clear$;
+select public.elleng_submit_event_rsvp('nov20',4,'playing');
+update public.elleng_drafts set state='{"picks":[{"golfer":0,"team":0}]}'::jsonb where id='draft-1';
+do $clear$
+begin
+ begin
+  perform public.elleng_clear_event_rsvp('nov20');
+  raise exception 'Clear after draft pick was accepted';
+ exception when sqlstate '55000' then null;
+ end;
+end $clear$;
+select 'PASS: player RSVP, commissioner enrollment and clear response fixture' as result;
