@@ -158,3 +158,23 @@ test('a reconnecting client stays read-only until the server snapshot arrives',a
  assert.equal(viewer.state().picks.length,1);
  assert.equal(viewer.indicator.textContent,'LIVE');
 });
+
+test('a second disconnect after recovery prevents stale draft updates',async()=>{
+ const server={state:fresh()};
+ const viewer=startClient(server);
+ await viewer.status('SUBSCRIBED');
+ await viewer.status('TIMED_OUT');
+ await viewer.status('SUBSCRIBED');
+ assert.equal(viewer.indicator.textContent,'LIVE');
+ await viewer.status('CHANNEL_ERROR');
+ server.state.picks.push({team:0,golfer:0});
+ server.state.golfers[0].team=0;
+ server.state.teams[0].roster.push(0);
+ await viewer.change();
+ assert.equal(viewer.indicator.textContent,'RECONNECTING');
+ assert.equal(viewer.buttons[0].disabled,true);
+ assert.equal(viewer.state().picks.length,0);
+ await viewer.status('SUBSCRIBED');
+ assert.equal(viewer.state().picks.length,1);
+ assert.equal(viewer.indicator.textContent,'LIVE');
+});
