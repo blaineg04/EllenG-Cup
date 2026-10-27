@@ -38,6 +38,8 @@ trap 'rm -rf "$TMP"' EXIT
 git clone --quiet --no-local --branch "$BASE" "$ROOT" "$TMP/pr"
 cd "$TMP/pr"
 git switch -c "$BRANCH"
+# The local clone defaults to a filesystem origin; explicitly target only this repository.
+git remote set-url origin https://github.com/blaineg04/EllenG-Cup.git
 for p in "${mapfile_cmd[@]}"; do
  mkdir -p "$(dirname "$p")"
  cp "$ROOT/$p" "$p"
