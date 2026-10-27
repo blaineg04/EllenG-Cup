@@ -9,7 +9,7 @@ CREATE TABLE public.elleng_captains(draft_id text,user_id uuid,team_index intege
 CREATE TABLE public.elleng_tournaments(id text PRIMARY KEY,draft_id text,status text,team_count integer);
 CREATE TABLE public.elleng_player_hole_scores(tournament_id text,hole integer,team_index integer,golfer_index integer,score integer,updated_by uuid,updated_at timestamptz,PRIMARY KEY(tournament_id,hole,team_index,golfer_index));
 CREATE TABLE public.elleng_team_scores(tournament_id text,team_index integer,hole integer,score integer,updated_by uuid,updated_at timestamptz,PRIMARY KEY(tournament_id,team_index,hole));
-INSERT INTO public.elleng_drafts VALUES('draft','00000000-0000-4000-8000-000000000001','{"teams":[{"roster":[0,1]},{"roster":[2,3]}]}'::jsonb);
+INSERT INTO public.elleng_drafts VALUES('draft','00000000-0000-4000-8000-000000000001','{"teams":[{"roster":[{"golferIndex":0,"name":"Test 1"},{"golferIndex":1,"name":"Test 2"}]},{"roster":[2,3]}]}'::jsonb);
 INSERT INTO public.elleng_captains VALUES('draft','00000000-0000-4000-8000-000000000002',0);
 INSERT INTO public.elleng_tournaments VALUES('fixture','draft','live',2);
 \i tests/acceptance/authorized-shamble-rpc-proposal.sql
