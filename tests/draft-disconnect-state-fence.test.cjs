@@ -155,3 +155,28 @@ test('captain session revocation fences a queued realtime read and later status 
  assert.equal(h.pending(),0,'disposed subscription must not request more draft data');
  assert.equal(h.indicator.textContent,'SIGN IN');
 });
+
+test('SUBSCRIBED keeps captain pick controls disabled until catch-up applies',async()=>{
+ const server={state:fresh()},h=start(server);
+ h.defer(true);
+ const connecting=h.emit('SUBSCRIBED');
+ assert.equal(h.pending(),1);
+ assert.equal(h.indicator.textContent,'SYNCING');
+ assert.equal(h.buttons[0].disabled,true,'a stale pick must not be possible during catch-up');
+ assert.equal(h.rendered(),0);
+ h.resolve();await connecting;
+ assert.equal(h.indicator.textContent,'LIVE');
+ assert.equal(h.rendered(),1,'authoritative refresh must trigger normal pick-control render');
+});
+test('reconnect disables previously enabled captain picks before catch-up completes',async()=>{
+ const server={state:fresh()},h=start(server);
+ await h.emit('SUBSCRIBED');
+ h.buttons[0].disabled=false; // A legal pick was enabled by the prior LIVE render.
+ await h.emit('CHANNEL_ERROR');
+ h.defer(true);
+ const reconnecting=h.emit('SUBSCRIBED');
+ assert.equal(h.indicator.textContent,'SYNCING');
+ assert.equal(h.buttons[0].disabled,true);
+ h.resolve();await reconnecting;
+ assert.equal(h.indicator.textContent,'LIVE');
+});
