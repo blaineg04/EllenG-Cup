@@ -218,3 +218,30 @@ test('two connected captains converge after consecutive remote picks without dup
   assert.equal(captain.indicator.textContent,'LIVE');
  }
 });
+
+test('captain reconnect catches up after two picks and a timer pause',async()=>{
+ const server={state:fresh()};
+ server.state.golfers.push({name:'Second synthetic golfer',team:null});
+ const commissioner=startClient(server),captain=startClient(server);
+ await Promise.all([commissioner.status('SUBSCRIBED'),captain.status('SUBSCRIBED')]);
+ await captain.status('TIMED_OUT');
+ server.state.timerPaused=false;
+ server.state.timerEndsAt='2026-11-13T18:00:30Z';
+ for(let i=0;i<2;i++){
+  server.state.picks.push({team:i,golfer:i});
+  server.state.golfers[i].team=i;
+  server.state.teams[i].roster.push(i);
+  await commissioner.change();
+ }
+ server.state.timerPaused=true;
+ server.state.timerEndsAt=null;
+ await commissioner.change();
+ assert.equal(captain.state().picks.length,0,'disconnected captain must not speculate about picks');
+ assert.equal(captain.buttons[0].disabled,true,'disconnected captain cannot select');
+ await captain.status('SUBSCRIBED');
+ assert.equal(captain.state().picks.length,2);
+ assert.equal(captain.state().timerPaused,true);
+ assert.equal(captain.state().timerEndsAt,null);
+ assert.deepEqual(Array.from(captain.state().teams[1].roster),[1]);
+ assert.equal(captain.indicator.textContent,'LIVE');
+});
