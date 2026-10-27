@@ -70,6 +70,12 @@ BEGIN
   UPDATE public.elleng_team_scores SET score=6 WHERE tournament_id='rls-live';
   GET DIAGNOSTICS changed = ROW_COUNT;
   IF changed <> 1 THEN RAISE EXCEPTION 'FAIL: captain could not update own score'; END IF;
+  UPDATE public.elleng_team_scores SET score=88 WHERE tournament_id='rls-closed';
+  GET DIAGNOSTICS changed = ROW_COUNT;
+  IF changed <> 0 THEN RAISE EXCEPTION 'FAIL: captain updated finalized score'; END IF;
+  DELETE FROM public.elleng_team_scores WHERE tournament_id='rls-closed';
+  GET DIAGNOSTICS changed = ROW_COUNT;
+  IF changed <> 0 THEN RAISE EXCEPTION 'FAIL: captain deleted finalized score'; END IF;
   DELETE FROM public.elleng_team_scores WHERE tournament_id='rls-live';
   GET DIAGNOSTICS changed = ROW_COUNT;
   IF changed <> 1 THEN RAISE EXCEPTION 'FAIL: captain could not delete own score'; END IF;
