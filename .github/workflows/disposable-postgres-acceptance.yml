@@ -25,7 +25,7 @@ jobs:
           pg_version="$(ls /etc/postgresql | sort -V | tail -1)"
           sudo pg_ctlcluster "$pg_version" main start || sudo pg_ctlcluster "$pg_version" main status
           db="elleng_ci_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
-          cleanup() { sudo -u postgres dropdb --if-exists "$db" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_negative" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_captain" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_policy" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_rsvp" >/dev/null 2>&1 || true; }
+          cleanup() { sudo -u postgres dropdb --if-exists "$db" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_negative" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_captain" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_policy" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_rsvp" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_restore" >/dev/null 2>&1 || true; }
           trap cleanup EXIT
           sudo -u postgres createdb "$db"
           # Event RSVP migration is validated only against an isolated fixture database.
@@ -59,6 +59,20 @@ jobs:
           rm -f /tmp/elleng-policy-"$GITHUB_RUN_ID".log
           echo 'PASS: scoring RLS gate rejects permissive guard and accepts restrictive guard.'
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-postgres-contract.sql
+          # Rehearse a database backup and restore using only disposable CI records.
+          # This validates tooling and data recovery without touching hosted Supabase.
+          restore_db="${db}_restore"
+          sudo -u postgres createdb "$restore_db"
+          backup_file="$(mktemp /tmp/elleng-ci-backup.XXXXXX)"
+          sudo -u postgres pg_dump -Fc -d "$db" -f "$backup_file"
+          sudo -u postgres pg_restore --exit-on-error -d "$restore_db" "$backup_file"
+          source_tables="$(sudo -u postgres psql -X -At -d "$db" -c "select count(*) from pg_tables where schemaname='acceptance';")"
+          restored_tables="$(sudo -u postgres psql -X -At -d "$restore_db" -c "select count(*) from pg_tables where schemaname='acceptance';")"
+          test "$source_tables" -gt 0
+          test "$source_tables" = "$restored_tables"
+          sudo -u postgres dropdb "$restore_db"
+          rm -f "$backup_file"
+          echo 'PASS: disposable database backup and isolated restore preserved acceptance tables.'
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-draft-concurrency.sql
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-draft-order.sql
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-realtime-publication.sql
