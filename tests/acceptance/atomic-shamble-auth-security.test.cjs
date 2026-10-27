@@ -2,7 +2,8 @@
 // Release security gate: the prototype must never be shipped as an authenticated RPC
 // while it accepts client-supplied roster membership and lacks caller verification.
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
-const sql=fs.readFileSync('tests/acceptance/atomic-shamble-function-body.sql','utf8');
+const sql=fs.readFileSync('tests/acceptance/authorized-shamble-rpc-proposal.sql','utf8');
+// The older function is a disposable-only fixture and must not be promoted to browser RPC.
 test('atomic Shamble RPC must derive roster on server rather than trust p_roster',()=>{
  assert.doesNotMatch(sql,/p_roster\s+integer\[\]/i,'Untrusted caller-supplied roster remains in RPC signature');
 });
