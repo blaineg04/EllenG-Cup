@@ -32,7 +32,7 @@ jobs:
           # policy and accepts the same status guard when restrictive.
           policy_db="${db}_policy"
           sudo -u postgres createdb "$policy_db"
-          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -c "create table public.elleng_team_scores(team_index integer); alter table public.elleng_team_scores enable row level security; create policy \"active live team insert guard\" on public.elleng_team_scores for insert to public with check (team_index >= 0);"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -c "create table public.elleng_team_scores(tournament_id text,team_index integer); alter table public.elleng_team_scores enable row level security; create policy \"active live team insert guard\" on public.elleng_team_scores for insert to public with check (team_index >= 0);"
           if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -f tests/acceptance/score-policy-readonly-audit.sql > /tmp/elleng-policy-"$GITHUB_RUN_ID".log 2>&1; then
             echo 'FAIL: broad permissive score write policy escaped release gate'
             exit 1
