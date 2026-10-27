@@ -18,11 +18,11 @@ function harness(){
  const channel={on(_event,_filter,fn){handler=fn;return this},subscribe(fn){callback=fn;return this}};
  const ctx={db:{channel:()=>channel},cfg:{draftId:'synthetic-only'},
    document:{getElementById:id=>id==='connection'?connection:id==='draftStatusStrip'?strip:null,querySelectorAll:()=>[pickButton]},
-   console:{error:()=>{}},load:async()=>{refreshes++;if(holdRefresh)await new Promise(resolve=>pending.push(resolve));if(rejectRefresh)throw Error('synthetic outage')}};
+   console:{error:()=>{}},load:async(_isCurrent,onApplied)=>{refreshes++;if(holdRefresh)await new Promise(resolve=>pending.push(resolve));if(rejectRefresh)throw Error('synthetic outage');onApplied?.();return {picks:[]}}};
  vm.createContext(ctx);
  vm.runInContext(subscribeSource+';this.connect=subscribe;',ctx);
  ctx.connect(()=>rendered++);
- return {connection,classes,emit:st=>callback(st),change:()=>handler(),stats:()=>({refreshes,rendered,buttonDisabled:pickButton.disabled}),fail:()=>{rejectRefresh=true},pause:()=>{holdRefresh=true},resume:()=>{holdRefresh=false;pending.splice(0).forEach(resolve=>resolve())}};
+ return {connection,classes,emit:st=>callback(st),change:()=>handler(),stats:()=>({refreshes,rendered,buttonDisabled:pickButton.disabled}),fail:()=>{rejectRefresh=true},recover:()=>{rejectRefresh=false},pause:()=>{holdRefresh=true},resume:()=>{holdRefresh=false;pending.splice(0).forEach(resolve=>resolve())}};
 }
 test('synthetic Realtime subscribe refreshes on connect and reconnect',async()=>{
  const h=harness();
@@ -125,4 +125,16 @@ test('captain-scoped load discards a delayed result after session revocation',as
  requests[0]({data:{state:{picks:[{golfer:0}]}},error:null});
  await pending;
  assert.equal(ctx.state().picks.length,0,'revoked session must not apply stale draft response');
+});
+
+test('successful Realtime event recovers LIVE after transient draft read failure',async()=>{
+ const h=harness();await h.emit('SUBSCRIBED');
+ h.fail();await h.change();
+ assert.equal(h.connection.textContent,'SYNC ERROR');
+ assert.equal(h.stats().rendered,1);
+ h.recover();await h.change();
+ assert.equal(h.connection.textContent,'LIVE');
+ assert.ok(h.classes.has('status-live'));
+ assert.ok(!h.classes.has('status-offline'));
+ assert.equal(h.stats().rendered,2);
 });

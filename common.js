@@ -69,7 +69,7 @@ function canBand(t,b){
 }
 
 let latestLoadRequest=0;
-async function load(isCurrent=()=>true){const request=++latestLoadRequest;let {data,error}=await db.from("elleng_drafts").select("state").eq("id",cfg.draftId).single();if(error)throw error;if(request===latestLoadRequest&&isCurrent())S={...fresh(),...data.state};return S}
+async function load(isCurrent=()=>true,onApplied=()=>{}){const request=++latestLoadRequest;let {data,error}=await db.from("elleng_drafts").select("state").eq("id",cfg.draftId).single();if(error)throw error;if(request===latestLoadRequest&&isCurrent()){S={...fresh(),...data.state};onApplied()}return S}
 async function save(){let {error}=await db.from("elleng_drafts").upsert({id:cfg.draftId,state:S,updated_at:new Date().toISOString()});if(error)throw error}
 function subscribe(cb){
  let connectionEpoch=0,connected=false;
@@ -78,7 +78,13 @@ function subscribe(cb){
    const epoch=connectionEpoch;
    if(!connected)return;
    // A response started before disconnect must not overwrite the in-memory draft.
-   try{await load(()=>epoch===connectionEpoch&&connected);if(epoch!==connectionEpoch||!connected)return;cb()}catch(e){
+   try{let applied=false;await load(()=>epoch===connectionEpoch&&connected,()=>{applied=true});if(epoch!==connectionEpoch||!connected||!applied)return;
+    // Only an applied authoritative refresh may restore LIVE after a transient error.
+    const indicator=document.getElementById("connection");
+    if(indicator){indicator.textContent="LIVE";indicator.className="online"}
+    const strip=document.getElementById("draftStatusStrip");
+    if(strip){strip.classList.remove("status-connecting","status-offline");strip.classList.add("status-live")}
+    cb()}catch(e){
     if(epoch!==connectionEpoch||!connected)return;
     console.error("Draft realtime refresh failed",e);
     const indicator=document.getElementById("connection");
@@ -105,8 +111,8 @@ function subscribe(cb){
    // Catch up after subscription/reconnection: changes during the outage
    // cannot be recovered from a fresh Postgres Changes subscription alone.
    if(st==="SUBSCRIBED"){
-    try{await load(()=>epoch===connectionEpoch&&connected);
-     if(epoch!==connectionEpoch||!connected)return;
+    try{let applied=false;await load(()=>epoch===connectionEpoch&&connected,()=>{applied=true});
+     if(epoch!==connectionEpoch||!connected||!applied)return;
      if(el){el.textContent="LIVE";el.className="online"}
      if(strip){strip.classList.remove("status-connecting","status-offline");strip.classList.add("status-live")}
      cb()

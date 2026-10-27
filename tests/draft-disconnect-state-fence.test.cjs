@@ -52,3 +52,30 @@ test('in-flight subscription catch-up cannot mutate state after disconnect',asyn
  assert.equal(h.state().picks.length,2);assert.equal(h.rendered(),1);
  assert.equal(h.indicator.textContent,'LIVE');
 });
+
+test('superseded Realtime refresh never renders an older draft response',async()=>{
+ const server={state:fresh()},h=start(server);
+ await h.emit('SUBSCRIBED');
+ h.defer(true);server.state.picks.push({golfer:0,team:0});
+ const old=h.change(),latest=h.change();
+ assert.equal(h.pending(),2);
+ h.resolve();await old;
+ assert.equal(h.rendered(),1,'superseded response must not render');
+ assert.equal(h.state().picks.length,0);
+ h.resolve();await latest;
+ assert.equal(h.rendered(),2);
+ assert.equal(h.state().picks.length,1);
+});
+
+test('superseded subscription catch-up cannot announce LIVE before a newer read',async()=>{
+ const server={state:fresh()},h=start(server);
+ h.defer(true);
+ const catchup=h.emit('SUBSCRIBED'),latest=h.change();
+ assert.equal(h.pending(),2);
+ h.resolve();await catchup;
+ assert.equal(h.indicator.textContent,'SYNCING');
+ assert.equal(h.rendered(),0);
+ h.resolve();await latest;
+ assert.equal(h.indicator.textContent,'LIVE');
+ assert.equal(h.rendered(),1);
+});
