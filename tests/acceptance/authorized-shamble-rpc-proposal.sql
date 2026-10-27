@@ -36,7 +36,16 @@ BEGIN
  IF jsonb_typeof(v_state->'teams'->p_team_index->'roster') <> 'array'
  THEN RAISE EXCEPTION 'Invalid stored roster' USING ERRCODE='22023'; END IF;
  SELECT array_agg(CASE
-   WHEN jsonb_typeof(entry)='number' AND (entry::text ~ '^[0-9]+ THEN RAISE EXCEPTION 'Golfer not assigned to team' USING ERRCODE='42501'; END IF;
+   WHEN jsonb_typeof(entry)='number' AND entry::text ~ '^[0-9]+$' THEN (entry::text)::integer
+   WHEN jsonb_typeof(entry)='object' AND (entry->>'golferIndex') ~ '^[0-9]+$' THEN (entry->>'golferIndex')::integer
+   ELSE NULL END)
+ INTO v_roster
+ FROM jsonb_array_elements(v_state->'teams'->p_team_index->'roster') entry;
+ IF v_roster IS NULL OR cardinality(v_roster)=0
+    OR array_position(v_roster,NULL) IS NOT NULL
+    OR cardinality(v_roster)<>(SELECT count(DISTINCT golfer) FROM unnest(v_roster) golfer)
+    OR p_golfer_index<>ALL(v_roster)
+ THEN RAISE EXCEPTION 'Golfer not assigned to team' USING ERRCODE='42501'; END IF;
  -- Every writer must obtain the same tournament lock before mutation.
  PERFORM 1 FROM public.elleng_tournaments t
  WHERE t.id=p_tournament_id FOR UPDATE;
