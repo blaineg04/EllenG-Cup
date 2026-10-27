@@ -4241,8 +4241,20 @@ async function loadTrashReactions(){
  trashReactions=data||[];
 }
 
+// Event RSVP rollout remains disabled until SQL migration and authenticated validation.
+const EVENT_RSVP_MODE=false;
+let eventRsvpCounts=null;
 async function loadRsvps(){
- if(!user){rsvps=[];return}
+ if(!user){rsvps=[];eventRsvpCounts=null;return}
+ if(EVENT_RSVP_MODE){
+   const adapter=window.EllenGEventRsvp;
+   if(!adapter)throw new Error('Event RSVP adapter unavailable');
+   try{
+     const [rows,counts]=await Promise.all([adapter.list(db,TOURNAMENT_ID),adapter.counts(db,TOURNAMENT_ID)]);
+     rsvps=rows;eventRsvpCounts=counts;
+   }catch(error){rsvps=[];eventRsvpCounts=null;console.error('Event RSVP load failed',error);pushInAppAlert('RSVP unavailable','Attendance could not be loaded.');}
+   return;
+ }
  const {data,error}=await db.from("elleng_rsvps").select("*").eq("draft_id",DRAFT_ID);
  if(error){console.warn("RSVP load failed",error);rsvps=[];return}rsvps=data||[];
 }
@@ -4333,7 +4345,7 @@ function renderCaptainDashboard(){
  root.innerHTML=`<div class="captain-stat"><strong>#${rank||"—"}</strong><span>POSITION</span></div><div class="captain-stat"><strong>${fmt(stat.pts)}</strong><span>CUP POINTS</span></div><div class="captain-stat"><strong>${stat.thru||0}</strong><span>HOLES COMPLETE</span></div><div class="captain-stat"><strong>${roster.length}</strong><span>PLAYERS</span></div><div class="note" style="grid-column:1/-1"><strong>Next focus: Hole ${hole}</strong><br>${posted} team score${posted===1?"":"s"} posted. ${roster.length?"Roster: "+roster.map(i=>draftState?.golfers?.[i]?.name).filter(Boolean).join(", "):"Roster not finalized."}</div>`;
 }
 async function setMyRsvp(status){
- if(!user||!Number.isInteger(currentGolferIndex))return;
+ if(!user||!Number.isInteger(currentGolferIndex))return;\n if(EVENT_RSVP_MODE){\n   try{\n     if(!window.EllenGEventRsvp)throw new Error("Event RSVP adapter unavailable");\n     if(status==="clear")await window.EllenGEventRsvp.clear(db,TOURNAMENT_ID);\n     else await window.EllenGEventRsvp.submit(db,TOURNAMENT_ID,currentGolferIndex,status);\n     await loadRsvps();renderRsvp();\n   }catch(error){pushInAppAlert("RSVP failed",error.message||"Please retry.");}\n   return;\n }
  if(status==="clear"){
    const {error}=await db.from("elleng_rsvps").delete().eq("draft_id",DRAFT_ID).eq("user_id",user.id);
    if(error){pushInAppAlert("RSVP reset failed",error.message);return}
@@ -4348,7 +4360,7 @@ function renderRsvp(){
  const mine=user?rsvps.find(r=>r.user_id===user.id):null;
  controls.innerHTML=user&&Number.isInteger(currentGolferIndex)?["playing","maybe","out","clear"].map(s=>`<button class="rsvp-btn ${mine?.status===s?"active":""}" type="button" data-rsvp="${s}">${s==="playing"?"✅ Playing":s==="maybe"?"🤔 Maybe":s==="out"?"❌ Out":"↺ Clear RSVP"}</button>`).join(""):'<div class="note">Sign in with a linked player account to RSVP.</div>';
  controls.querySelectorAll("[data-rsvp]").forEach(b=>b.addEventListener("click",()=>setMyRsvp(b.dataset.rsvp)));
- const counts={playing:0,maybe:0,out:0};rsvps.forEach(r=>{if(counts[r.status]!==undefined)counts[r.status]++});
+ const counts={playing:0,maybe:0,out:0};\n if(EVENT_RSVP_MODE){counts.playing=Number(eventRsvpCounts?.playing||0);counts.maybe=Number(eventRsvpCounts?.maybe||0);counts.out=Number(eventRsvpCounts?.out_count||0)}\n else rsvps.forEach(r=>{if(counts[r.status]!==undefined)counts[r.status]++});
  summary.innerHTML=`<div class="rsvp-stat"><strong>${counts.playing}</strong><span>PLAYING</span></div><div class="rsvp-stat"><strong>${counts.maybe}</strong><span>MAYBE</span></div><div class="rsvp-stat"><strong>${counts.out}</strong><span>OUT</span></div>`;
 }
 function formatTeeTime(v){if(!v)return "—";const [h,m]=String(v).split(":").map(Number),d=new Date();d.setHours(h,m||0,0,0);return d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}
