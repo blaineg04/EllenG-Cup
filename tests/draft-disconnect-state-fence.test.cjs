@@ -36,7 +36,7 @@ test('in-flight realtime change cannot overwrite state after disconnect',async()
  await h.emit('TIMED_OUT');h.resolve();await old;
  assert.equal(h.state().picks.length,0,'stale response must not mutate state');
  assert.equal(h.indicator.textContent,'RECONNECTING');
- assert.equal(h.rendered(),1);assert.equal(h.buttons[0].disabled,false,'the synthetic render does not model pick-button eligibility; the reconnect test verifies the disable fence');
+ assert.equal(h.rendered(),1);assert.equal(h.buttons[0].disabled,true,'disconnect must disable picks even if an older refresh resolves');
  h.defer(false);await h.emit('SUBSCRIBED');
  assert.equal(h.state().picks.length,1,'reconnect must catch up');
  assert.equal(h.indicator.textContent,'LIVE');assert.equal(h.rendered(),2);
