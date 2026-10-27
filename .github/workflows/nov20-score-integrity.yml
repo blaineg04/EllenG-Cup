@@ -36,7 +36,7 @@ jobs:
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/release/nov20-score-integrity-20261020') ||
       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/release/nov20-score-integrity-20261020') ||
-      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (github.event.pull_request.head.ref == 'release/nov20-score-integrity-20261020' || github.event.pull_request.head.ref == 'fix/nov20-commissioner-test-fixture-20261022'))
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (github.event.pull_request.head.ref == 'release/nov20-score-integrity-20261020' || github.event.pull_request.head.ref == 'fix/nov20-commissioner-test-fixture-20261022' || github.event.pull_request.head.ref == 'fix/draft-roster-contrast-20261027'))
     runs-on: [self-hosted, macOS]
     permissions:
       contents: read
