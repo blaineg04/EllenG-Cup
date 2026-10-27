@@ -72,7 +72,16 @@ async function verifyNavigation(page, width, capture, prefix = '') {
     await page.locator(more).click();
     await page.locator('#moreMenuBackdrop.open').waitFor({state:'visible'});
   };
-  await page.locator(home).click();
+  try {
+    await page.locator(home).click({timeout:5000});
+  } catch (error) {
+    const diagnostic=await page.locator(home).evaluate(el=>{
+      const r=el.getBoundingClientRect(),x=Math.max(0,Math.min(innerWidth-1,r.left+r.width/2)),y=Math.max(0,Math.min(innerHeight-1,r.top+r.height/2));
+      const hit=document.elementFromPoint(x,y),cs=getComputedStyle(el);
+      return {width:innerWidth,scrollY,homeRect:{top:r.top,bottom:r.bottom,left:r.left,right:r.right},hitTag:hit?.tagName,hitId:hit?.id,hitClass:String(hit?.className||''),homePointerEvents:cs.pointerEvents,homePosition:cs.position};
+    });
+    throw new Error('Initial Home click blocked: '+JSON.stringify(diagnostic)+'; '+error.message);
+  }
   await openMore();
   await capture(prefix+'more-menu');
   const unreadable = await page.locator('.more-sheet-head h3, #moreAdminBtn:not(.hidden) strong').evaluateAll(elements => {
