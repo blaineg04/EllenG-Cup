@@ -17,7 +17,7 @@ test('realtime subscription refreshes data and reports channel failure',()=>{
 });
 
 const vm=require('node:vm');
-const syncStart=html.indexOf('let syncBusy=false;');
+const syncStart=html.indexOf('let syncBusy=false,syncQueued=false;');
 const syncEnd=html.indexOf('// Realtime handles live scoring;',syncStart);
 assert.ok(syncStart>=0&&syncEnd>syncStart,'scoring refresh implementation exists');
 const syncCode=html.slice(syncStart,syncEnd)+'\nthis.refresh=syncLive;';
