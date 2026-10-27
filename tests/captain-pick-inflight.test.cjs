@@ -8,7 +8,8 @@ test('captain cannot submit overlapping pick requests on repeated taps',()=>{
  assert.match(pick,/if\(pickInFlight\)return/);
  assert.match(pick,/pickInFlight=true/);
  assert.match(pick,/querySelectorAll\("\[data-p\]"\).*disabled=true/);
- assert.match(pick,/finally\s*\{\s*pickInFlight=false;\s*if\(sameCaptainSession\(\)\)render\(\)/);
+ assert.match(pick,/const thisPickRequest=\+\+pickRequestEpoch/);
+ assert.match(pick,/finally\s*\{\s*\/\/[^\n]*\n\s*if\(thisPickRequest===pickRequestEpoch&&sameCaptainSession\(\)\)\{\s*pickInFlight=false;\s*render\(\)/);
 });
 test('pick failure catches refresh failure and eventually restores interaction',()=>{
  assert.match(pick,/await load\(sameCaptainSession\)/);
