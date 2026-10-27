@@ -25,7 +25,7 @@ jobs:
           node-version: '22'
       - name: Preserve existing scoring and Shamble format
         run: |
-          node --test tests/nov20-production-score-integrity.test.cjs tests/shamble-format-characterization.test.cjs
+          node --test tests/nov20-production-score-integrity.test.cjs tests/shamble-format-characterization.test.cjs tests/shamble-single-device-save-lock.test.cjs
   incoming-scoring-compatibility:
     runs-on: ubuntu-latest
     timeout-minutes: 10
