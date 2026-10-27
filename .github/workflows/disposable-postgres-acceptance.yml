@@ -63,7 +63,7 @@ jobs:
           # This validates tooling and data recovery without touching hosted Supabase.
           restore_db="${db}_restore"
           sudo -u postgres createdb "$restore_db"
-          backup_file="$(mktemp /tmp/elleng-ci-backup.XXXXXX)"
+          backup_file="$(sudo -u postgres mktemp /tmp/elleng-ci-backup.XXXXXX)"
           sudo -u postgres pg_dump -Fc -d "$db" -f "$backup_file"
           sudo -u postgres pg_restore --exit-on-error -d "$restore_db" "$backup_file"
           source_tables="$(sudo -u postgres psql -X -At -d "$db" -c "select count(*) from pg_tables where schemaname='acceptance';")"
@@ -71,7 +71,7 @@ jobs:
           test "$source_tables" -gt 0
           test "$source_tables" = "$restored_tables"
           sudo -u postgres dropdb "$restore_db"
-          rm -f "$backup_file"
+          sudo -u postgres rm -f "$backup_file"
           echo 'PASS: disposable database backup and isolated restore preserved acceptance tables.'
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-draft-concurrency.sql
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-draft-order.sql
