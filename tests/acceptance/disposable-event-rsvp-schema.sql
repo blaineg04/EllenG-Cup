@@ -141,6 +141,17 @@ select 'PASS: event RSVP schema and commissioner approval fixture' as result;
 -- Restore an open draft after the preceding negative lock tests.
 update public.elleng_drafts set state='{"picks":[]}'::jsonb where id='draft-1';
 select set_config('test.actor','cccccccc-cccc-cccc-cccc-cccccccccccc',false);
+do $identity$
+begin
+ begin
+  perform public.elleng_submit_event_rsvp('nov20',2,'playing');
+  raise exception 'Unverified golfer enrollment was accepted';
+ exception when insufficient_privilege then null;
+ end;
+end $identity$;
+-- Simulate a trusted commissioner-provisioned association, not a player claim.
+insert into public.elleng_event_rsvps(tournament_id,user_id,golfer_index,status)
+ values('nov20','cccccccc-cccc-cccc-cccc-cccccccccccc',2,'maybe');
 select public.elleng_submit_event_rsvp('nov20',2,'playing');
 do $player$
 begin
