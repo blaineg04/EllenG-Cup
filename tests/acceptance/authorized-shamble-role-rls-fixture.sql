@@ -44,21 +44,21 @@ CREATE POLICY fixture_player_write_scope ON public.elleng_player_hole_scores
  USING (
    EXISTS (SELECT 1 FROM public.elleng_tournaments t
    JOIN public.elleng_drafts d ON d.id=t.draft_id
-   WHERE t.id=tournament_id AND t.status IN ('setup','live')
-   AND team_index>=0 AND team_index<t.team_count
+   WHERE t.id=public.elleng_player_hole_scores.tournament_id AND t.status IN ('setup','live')
+   AND public.elleng_player_hole_scores.team_index>=0 AND public.elleng_player_hole_scores.team_index<t.team_count
    AND (d.owner_id=auth.uid() OR EXISTS (
      SELECT 1 FROM public.elleng_captains c
-     WHERE c.draft_id=d.id AND c.user_id=auth.uid() AND c.team_index=team_index
+     WHERE c.draft_id=d.id AND c.user_id=auth.uid() AND c.team_index=public.elleng_player_hole_scores.team_index
    )))
  )
  WITH CHECK (
    EXISTS (SELECT 1 FROM public.elleng_tournaments t
    JOIN public.elleng_drafts d ON d.id=t.draft_id
-   WHERE t.id=tournament_id AND t.status IN ('setup','live')
-   AND team_index>=0 AND team_index<t.team_count
+   WHERE t.id=public.elleng_player_hole_scores.tournament_id AND t.status IN ('setup','live')
+   AND public.elleng_player_hole_scores.team_index>=0 AND public.elleng_player_hole_scores.team_index<t.team_count
    AND (d.owner_id=auth.uid() OR EXISTS (
      SELECT 1 FROM public.elleng_captains c
-     WHERE c.draft_id=d.id AND c.user_id=auth.uid() AND c.team_index=team_index
+     WHERE c.draft_id=d.id AND c.user_id=auth.uid() AND c.team_index=public.elleng_player_hole_scores.team_index
    )))
  );
 CREATE POLICY fixture_team_write_scope ON public.elleng_team_scores
@@ -66,21 +66,21 @@ CREATE POLICY fixture_team_write_scope ON public.elleng_team_scores
  USING (
    EXISTS (SELECT 1 FROM public.elleng_tournaments t
    JOIN public.elleng_drafts d ON d.id=t.draft_id
-   WHERE t.id=tournament_id AND t.status IN ('setup','live')
-   AND team_index>=0 AND team_index<t.team_count
+   WHERE t.id=public.elleng_team_scores.tournament_id AND t.status IN ('setup','live')
+   AND public.elleng_team_scores.team_index>=0 AND public.elleng_team_scores.team_index<t.team_count
    AND (d.owner_id=auth.uid() OR EXISTS (
      SELECT 1 FROM public.elleng_captains c
-     WHERE c.draft_id=d.id AND c.user_id=auth.uid() AND c.team_index=team_index
+     WHERE c.draft_id=d.id AND c.user_id=auth.uid() AND c.team_index=public.elleng_team_scores.team_index
    )))
  )
  WITH CHECK (
    EXISTS (SELECT 1 FROM public.elleng_tournaments t
    JOIN public.elleng_drafts d ON d.id=t.draft_id
-   WHERE t.id=tournament_id AND t.status IN ('setup','live')
-   AND team_index>=0 AND team_index<t.team_count
+   WHERE t.id=public.elleng_team_scores.tournament_id AND t.status IN ('setup','live')
+   AND public.elleng_team_scores.team_index>=0 AND public.elleng_team_scores.team_index<t.team_count
    AND (d.owner_id=auth.uid() OR EXISTS (
      SELECT 1 FROM public.elleng_captains c
-     WHERE c.draft_id=d.id AND c.user_id=auth.uid() AND c.team_index=team_index
+     WHERE c.draft_id=d.id AND c.user_id=auth.uid() AND c.team_index=public.elleng_team_scores.team_index
    )))
  );
 SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000002',false);
