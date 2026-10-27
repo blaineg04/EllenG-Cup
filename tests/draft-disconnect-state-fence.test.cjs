@@ -79,3 +79,21 @@ test('superseded subscription catch-up cannot announce LIVE before a newer read'
  assert.equal(h.indicator.textContent,'LIVE');
  assert.equal(h.rendered(),1);
 });
+
+test('stale refresh from prior connection cannot overwrite recovered snapshot',async()=>{
+ const server={state:fresh()},h=start(server);
+ await h.emit('SUBSCRIBED');
+ h.defer(true);
+ server.state.picks.push({golfer:0,team:0});
+ const stale=h.change();
+ assert.equal(h.pending(),1);
+ await h.emit('CHANNEL_ERROR');
+ h.defer(false);
+ server.state.picks.push({golfer:1,team:1});
+ await h.emit('SUBSCRIBED');
+ assert.equal(h.state().picks.length,2);
+ assert.equal(h.indicator.textContent,'LIVE');
+ h.resolve();await stale;
+ assert.equal(h.state().picks.length,2,'old connection response must not replace recovered state');
+ assert.equal(h.indicator.textContent,'LIVE');
+});
