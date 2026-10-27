@@ -209,4 +209,46 @@ begin
    raise exception 'Rejected identity switch mutated original RSVP';
  end if;
 end $identity$;
-select 'PASS: player RSVP draft lock and identity fixture' as result;
+-- Commissioner enrollment is the trusted origin of a golfer-account association.
+\i docs/proposed-event-rsvp-commissioner-enrollment-rpc-20261027.sql
+insert into auth.users(id) values('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee');
+select set_config('test.actor','cccccccc-cccc-cccc-cccc-cccccccccccc',false);
+do $enroll$
+begin
+ begin
+  perform public.elleng_assign_event_golfer('nov20','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',4);
+  raise exception 'Non-commissioner enrolled a golfer';
+ exception when insufficient_privilege then null;
+ end;
+end $enroll$;
+select set_config('test.actor','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',false);
+select public.elleng_assign_event_golfer('nov20','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',4);
+do $enroll$
+begin
+ if not exists(select 1 from public.elleng_event_rsvps where tournament_id='nov20'
+  and user_id='eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+  and golfer_index=4 and status='maybe' and approval_status='pending') then
+  raise exception 'Commissioner enrollment did not persist';
+ end if;
+ if has_function_privilege('authenticated','public.elleng_assign_event_golfer(text,uuid,integer)','EXECUTE') then
+  raise exception 'Unvalidated commissioner enrollment exposed to browser roles';
+ end if;
+ begin
+  perform public.elleng_assign_event_golfer('nov20','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',5);
+  raise exception 'Duplicate account assignment was accepted';
+ exception when unique_violation then null;
+ end;
+end $enroll$;
+select set_config('test.actor','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',false);
+select public.elleng_submit_event_rsvp('nov20',4,'playing');
+update public.elleng_drafts set state='{"picks":[{"golfer":0,"team":0}]}'::jsonb where id='draft-1';
+select set_config('test.actor','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',false);
+do $enroll$
+begin
+ begin
+  perform public.elleng_assign_event_golfer('nov20','dddddddd-dddd-dddd-dddd-dddddddddddd',5);
+  raise exception 'Enrollment after first pick was accepted';
+ exception when sqlstate '55000' then null;
+ end;
+end $enroll$;
+select 'PASS: player RSVP and commissioner enrollment fixture' as result;
