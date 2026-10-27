@@ -58,6 +58,8 @@ jobs:
           sudo -u postgres dropdb "$policy_db"
           rm -f /tmp/elleng-policy-"$GITHUB_RUN_ID".log
           echo 'PASS: scoring RLS gate rejects permissive guard and accepts restrictive guard.'
+          # Exercise the staged Shamble RPC and invalid-hole case inside a rolled-back disposable fixture.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/acceptance/authorized-shamble-fixture.sql
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-postgres-contract.sql
           # Rehearse a database backup and restore using only disposable CI records.
           # This validates tooling and data recovery without touching hosted Supabase.
