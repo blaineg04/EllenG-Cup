@@ -35,7 +35,7 @@ drop trigger if exists elleng_event_rsvp_approval_guard on public.elleng_event_r
 create trigger elleng_event_rsvp_approval_guard before insert or update on public.elleng_event_rsvps
 for each row execute function public.elleng_event_rsvp_approval_guard();
 revoke all on public.elleng_event_rsvps from public,anon,authenticated;
-grant select,insert,update,delete on public.elleng_event_rsvps to authenticated;
+grant select on public.elleng_event_rsvps to authenticated;
 -- Reading event attendance is limited to the player and the draft owner.
 create policy "event rsvp owner or commissioner read" on public.elleng_event_rsvps
  for select to authenticated using (
