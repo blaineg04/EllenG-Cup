@@ -4246,18 +4246,31 @@ async function loadTrashReactions(){
 // Disabled until event migrations, reviewed RPC grants and authenticated tests pass.
 const EVENT_RSVP_MODE=false;
 let eventRsvpCounts=null;
+let rsvpLoadRequest=0;
 async function loadRsvps(){
- if(!user){rsvps=[];eventRsvpCounts=null;return}
+ // A delayed read must never restore another account's attendance or overwrite
+ // a newer refresh. This applies to both legacy and staged event-scoped modes.
+ const request=++rsvpLoadRequest,sessionUser=user;
+ const isCurrent=()=>request===rsvpLoadRequest&&user===sessionUser;
+ if(!sessionUser){rsvps=[];eventRsvpCounts=null;return}
  if(EVENT_RSVP_MODE){
    const adapter=window.EllenGEventRsvp;
    try{
      if(!adapter)throw new Error('Event RSVP adapter unavailable');
      const [rows,counts]=await Promise.all([adapter.list(db,TOURNAMENT_ID),adapter.counts(db,TOURNAMENT_ID)]);
+     if(!isCurrent())return;
      rsvps=rows;eventRsvpCounts=counts;
-   }catch(error){rsvps=[];eventRsvpCounts=null;renderRsvp();console.error('Event RSVP load failed',error);pushInAppAlert('RSVP unavailable','Attendance could not be loaded.');throw error;}
+   }catch(error){
+     if(!isCurrent())return;
+     rsvps=[];eventRsvpCounts=null;renderRsvp();
+     console.error('Event RSVP load failed',error);
+     pushInAppAlert('RSVP unavailable','Attendance could not be loaded.');
+     throw error;
+   }
    return;
  }
  const {data,error}=await db.from("elleng_rsvps").select("*").eq("draft_id",DRAFT_ID);
+ if(!isCurrent())return;
  if(error){console.warn("RSVP load failed",error);rsvps=[];return}rsvps=data||[];
 }
 async function loadGroupAssignments(){
@@ -5806,7 +5819,7 @@ async function signOutFromHub(){
  try{
    const {error}=await db.auth.signOut();if(error)throw error;
    sessionStorage.removeItem("elleng_internal_menu");
-   user=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;
+   user=null;rsvpLoadRequest++;rsvps=[];eventRsvpCounts=null;captainTeam=null;isCommissioner=false;currentGolferIndex=null;currentUsername="";mustChangePassword=false;
    document.body.classList.add("login-mode");setMobileNavVisible(false);
    if($("appHub"))$("appHub").classList.add("hidden");
    if($("app"))$("app").classList.add("hidden");
