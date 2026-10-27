@@ -44,37 +44,36 @@ function points(golferScores,{gator=false,splitPair=false}={}){
  vm.runInNewContext(html.slice(from,to),ctx);
  return Array.from(ctx.pointsForHole(4));
 }
-test('all golfer points add up across any number of teams',()=>{
+test('team placement points scale to any supported team count',()=>{
  for(const n of [2,3,4,6,9,12]){
-  const scores=Array.from({length:n},()=>[3,4,5,6]);
-  assert.deepEqual(points(scores),Array(n).fill(10));
+  const scores=Array.from({length:n},(_,i)=>i+3);
+  assert.deepEqual(points(scores),Array.from({length:n},(_,i)=>n-i));
  }
 });
-test('shamble points are per golfer, not placement ranking or lowest ball',()=>{
- assert.deepEqual(points([[2,3,4,5,6,7],[4,4]]),[15,6]);
- assert.deepEqual(points([[3,4],[4,4]],{gator:true}),[14,12]);
- assert.deepEqual(points([[3,null],[4,4]]),[null,6]);
+test('team scoring ranks completed team scores and awards the Gator Hole only to the lowest team',()=>{
+ assert.deepEqual(points([3,4]),[2,1]);
+ assert.deepEqual(points([3,4],{gator:true}),[12,0]);
+ assert.deepEqual(points([3,null]),[null,null]);
+ assert.deepEqual(points([4,4]),[1.5,1.5]);
 });
 test('split-pair retains its separate existing ranking rules',()=>{
  assert.deepEqual(points([24,25],{splitPair:true}),[2,1]);
  assert.deepEqual(points([41,24],{splitPair:true}),[null,null]);
 });
-test('individual points validate scores and empty rosters',()=>{
+test('team placement rejects invalid or incomplete scores',()=>{
  for(const invalid of ['',null,undefined,0,-1,1.5,'abc',21]){
-  assert.equal(points([[3,invalid],[4,4]])[0],null,String(invalid));
+  assert.equal(points([3,invalid])[0],null,String(invalid));
  }
- assert.deepEqual(points([[],[4,4]]),[null,6]);
+ assert.deepEqual(points([3,4]),[2,1]);
 });
-test('completed shamble hole marks thru only when its roster is fully scored',()=>{
+test('leaderboard thru and points use persisted team scores, not individual golfer rows',()=>{
  const start=html.indexOf('function normalPoints(values){');
  const end=html.indexOf('function renderLiveHoleScores(){',start);
- const ctx={teams:[{},{}],scores:[],tournament:{gator_hole:null,final_cargo_team:null},isSplitPair:()=>false,parForHole:()=>4,
-  teamRosterGolfers:i=>[{index:i}],
-  playerScores:[{team_index:0,hole:1,golfer_index:0,score:3},{team_index:1,hole:1,golfer_index:1,score:4}]};
+ const ctx={teams:[{},{}],scores:[{team_index:0,hole:1,score:3},{team_index:1,hole:1,score:4}],tournament:{gator_hole:null,final_cargo_team:null},isSplitPair:()=>false};
  vm.runInNewContext(html.slice(start,end),ctx);
- assert.deepEqual(Array.from(ctx.totals()).map(x=>[x.pts,x.thru]),[[4,1],[3,1]]);
- ctx.playerScores.push({team_index:0,hole:2,golfer_index:0,score:5});
- assert.deepEqual(Array.from(ctx.totals()).map(x=>[x.pts,x.thru]),[[6,2],[3,1]]);
+ assert.deepEqual(Array.from(ctx.totals()).map(x=>[x.pts,x.thru]),[[2,1],[1,1]]);
+ ctx.scores.push({team_index:0,hole:2,score:5});
+ assert.deepEqual(Array.from(ctx.totals()).map(x=>[x.pts,x.thru]),[[2,2],[1,1]]);
 });
 test('live hole validation rejects empty and invalid scores across formats',()=>{
  const from=html.indexOf('function validTeamScore(score){');
