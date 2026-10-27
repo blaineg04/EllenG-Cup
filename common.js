@@ -79,6 +79,9 @@ function subscribe(cb){
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_drafts",filter:"id=eq."+cfg.draftId},async()=>{
    const epoch=connectionEpoch;
    if(!connected||!isCurrent())return;
+   // A remote pick may have changed the active turn. Freeze stale local choices
+   // until the authoritative snapshot is applied and the UI re-renders.
+   document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
    // A response started before disconnect must not overwrite the in-memory draft.
    try{let applied=false;await load(()=>epoch===connectionEpoch&&connected&&isCurrent(),()=>{applied=true});if(epoch!==connectionEpoch||!connected||!isCurrent()||!applied)return;
     // Only an applied authoritative refresh may restore LIVE after a transient error.
