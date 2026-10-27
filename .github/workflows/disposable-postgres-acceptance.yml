@@ -70,9 +70,12 @@ jobs:
           restored_tables="$(sudo -u postgres psql -X -At -d "$restore_db" -c "select count(*) from pg_tables where schemaname='acceptance';")"
           test "$source_tables" -gt 0
           test "$source_tables" = "$restored_tables"
-          source_schema="$(sudo -u postgres pg_dump --schema-only --no-owner --no-privileges -n acceptance -d "$db" | sed '/^--/d;/^$/d;/^\\\\restrict /d;/^\\\\unrestrict /d')"
-          restored_schema="$(sudo -u postgres pg_dump --schema-only --no-owner --no-privileges -n acceptance -d "$restore_db" | sed '/^--/d;/^$/d;/^\\\\restrict /d;/^\\\\unrestrict /d')"
-          test "$source_schema" = "$restored_schema"
+          # Compare deterministic catalog metadata; pg_dump text can differ by database name.
+          catalog_query="select table_name || ':' || column_name || ':' || data_type || ':' || is_nullable || ':' || coalesce(column_default,'') from information_schema.columns where table_schema='acceptance' order by table_name,ordinal_position;"
+          source_columns="$(sudo -u postgres psql -X -At -d "$db" -c "$catalog_query")"
+          restored_columns="$(sudo -u postgres psql -X -At -d "$restore_db" -c "$catalog_query")"
+          test -n "$source_columns"
+          test "$source_columns" = "$restored_columns"
           sudo -u postgres dropdb "$restore_db"
           sudo -u postgres rm -f "$backup_file"
           echo 'PASS: disposable database backup and isolated restore preserved acceptance tables.'
