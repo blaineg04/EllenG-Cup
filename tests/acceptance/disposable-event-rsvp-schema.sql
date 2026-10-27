@@ -188,7 +188,7 @@ begin
  begin
   perform public.elleng_submit_event_rsvp('nov20',2,'playing');
   raise exception 'Duplicate golfer identity was accepted';
- exception when unique_violation then null;
+ exception when insufficient_privilege then null;
  end;
  if (select count(*) from public.elleng_event_rsvps where tournament_id='nov20' and golfer_index=2) <> 1 then
    raise exception 'Duplicate golfer identity was persisted';
@@ -201,7 +201,7 @@ begin
  begin
   perform public.elleng_submit_event_rsvp('nov20',3,'maybe');
   raise exception 'Existing player changed golfer identity through RSVP';
- exception when unique_violation then null;
+ exception when insufficient_privilege then null;
  end;
  if not exists(select 1 from public.elleng_event_rsvps
    where tournament_id='nov20' and user_id='cccccccc-cccc-cccc-cccc-cccccccccccc'
