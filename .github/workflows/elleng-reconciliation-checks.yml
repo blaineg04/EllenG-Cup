@@ -98,3 +98,15 @@ jobs:
           persist-credentials: false
       - name: Verify transaction serialization across independent database clients
         run: bash tests/acceptance/atomic-shamble-concurrent-sessions.sh
+  atomic-client-adapter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify single-call fail-closed Shamble RPC adapter
+        run: node --test tests/acceptance/atomic-shamble-client-adapter.test.cjs
