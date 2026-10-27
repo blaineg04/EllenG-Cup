@@ -44,3 +44,17 @@ test('event RPC failure never falls back to legacy mutation',async()=>{
 test('invalid rollout configuration fails before writes',()=>{
  assert.throws(()=>create({legacy:legacy(),eventMode:true}),/requires database/);
 });
+
+test('legacy mode never queries event attendance counts',async()=>{
+ const controller=create({legacy:legacy()});
+ assert.equal(await controller.counts(),null);
+});
+test('event mode reads secure counts without legacy fallback',async()=>{
+ const old=legacy();
+ const calls=[];
+ const db={from(){},rpc(name,args){calls.push([name,args]);return Promise.resolve({data:[{playing:4,maybe:1,out_count:2,approved_playing:3}],error:null})}};
+ const controller=create({legacy:old,eventMode:true,db,tournamentId:'nov20',verifiedGolferIndex:4});
+ assert.deepEqual(await controller.counts(),{playing:4,maybe:1,out_count:2,approved_playing:3});
+ assert.deepEqual(calls,[['elleng_event_rsvp_counts',{p_tournament_id:'nov20'}]]);
+ assert.deepEqual(old.calls,[]);
+});
