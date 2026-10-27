@@ -281,3 +281,22 @@ test('repeated reconnect after timer resume does not roll back a later pause',as
  assert.equal(captain.state().timerEndsAt,null,'old deadline must not return');
  assert.equal(captain.indicator.textContent,'LIVE');
 });
+
+test('one captain reconnecting does not interrupt a second captain live subscription',async()=>{
+ const server={state:fresh()};
+ const captainA=startClient(server),captainB=startClient(server);
+ await Promise.all([captainA.status('SUBSCRIBED'),captainB.status('SUBSCRIBED')]);
+ await captainA.status('CHANNEL_ERROR');
+ server.state.picks.push({team:0,golfer:0});
+ server.state.golfers[0].team=0;
+ server.state.teams[0].roster.push(0);
+ await captainB.change();
+ assert.equal(captainB.state().picks.length,1,'connected captain receives pick');
+ assert.equal(captainB.indicator.textContent,'LIVE');
+ assert.equal(captainA.state().picks.length,0,'disconnected captain remains stale');
+ assert.equal(captainA.buttons[0].disabled,true);
+ await captainA.status('SUBSCRIBED');
+ assert.equal(captainA.state().picks.length,1);
+ assert.equal(captainB.state().picks.length,1);
+ assert.equal(captainB.indicator.textContent,'LIVE');
+});
