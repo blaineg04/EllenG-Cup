@@ -4,24 +4,33 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 const source=fs.readFileSync('captain.html','utf8');
-const start=source.indexOf('let pickInFlight=false,pickSyncFailed=false;');
+const start=source.indexOf('let pickInFlight=false,pickSyncFailed=false,pickRequestEpoch=0;');
 const end=source.indexOf('document.getElementById("signin").onclick',start);
 assert.ok(start>=0&&end>start,'captain pick handler must be present');
 const pickSource=source.slice(start,end);
 function harness(){
  const state={timerPaused:false,picks:[],golfers:[{name:'Synthetic golfer',team:null,band:'A'}],teams:[{name:'A',roster:[]},{name:'B',roster:[]}]};
  const connection={textContent:'LIVE'},calls=[],messages=[],buttons=[{disabled:false}];
- let confirmAction=()=>true,rendered=0,holdRpc=false,resolveRpc,loadCount=0,loadError=null;
+ let confirmAction=()=>true,rendered=0,holdRpc=false,loadCount=0,loadError=null;
+ const pendingRpcReplies=[];
  const ctx={S:state,myTeam:0,captainUserId:'captain-a',captainAuthEpoch:0,cfg:{draftId:'synthetic-only'},fresh:()=>state,
+  stopCaptainSubscription:()=>{},
   order:()=>0,totalPicks:()=>1,canBand:()=>true,
-  db:{rpc:async(name,args)=>{calls.push({name,args});if(holdRpc)return new Promise(resolve=>{resolveRpc=resolve});return {data:state,error:null}}},
-  document:{getElementById:id=>id==='connection'?connection:null,querySelectorAll:()=>buttons},
+  db:{rpc:async(name,args)=>{calls.push({name,args});if(holdRpc)return new Promise(resolve=>{pendingRpcReplies.push(resolve)});return {data:state,error:null}}},
+  document:{getElementById:id=>id==='connection'?connection:id==='login'?{style:{}}:id==='app'?{style:{}}:id==='msg'?{textContent:''}:null,querySelectorAll:()=>buttons},
   confirm:()=>confirmAction(),alert:msg=>messages.push(msg),render:()=>rendered++,
   draftSoundEnabled:false,load:async()=>{loadCount++;if(loadError)throw loadError},console:{error:()=>{}}};
  vm.createContext(ctx);
  vm.runInContext(pickSource+';this.submitPick=pick;',ctx);
+ const revokeStart=source.indexOf('function revokeCaptainSession()');
+ const revokeEnd=source.indexOf('db.auth.onAuthStateChange(',revokeStart);
+ assert.ok(revokeStart>0&&revokeEnd>revokeStart);
+ vm.runInContext(source.slice(revokeStart,revokeEnd),ctx);
  return {ctx,state,connection,calls,messages,buttons,pick:i=>ctx.submitPick(i),
-  onConfirm:fn=>{confirmAction=fn},rendered:()=>rendered,holdRpc:()=>{holdRpc=true},releaseRpc:response=>resolveRpc(response),loads:()=>loadCount,failLoad:error=>{loadError=error}};
+  onConfirm:fn=>{confirmAction=fn},rendered:()=>rendered,holdRpc:()=>{holdRpc=true},
+  releaseRpc:response=>{const resolve=pendingRpcReplies.shift();assert.ok(resolve,'expected pending RPC');resolve(response)},
+  pendingRpc:()=>pendingRpcReplies.length,revoke:()=>ctx.revokeCaptainSession(),
+  loads:()=>loadCount,failLoad:error=>{loadError=error}};
 }
 test('eligible live captain submits exactly one authorized RPC',async()=>{
  const h=harness();await h.pick(0);
@@ -60,7 +69,7 @@ function authHarness(){
   connection:{textContent:'LIVE'},msg:{textContent:''}};
  const buttons=[{disabled:false}];
  let callback;
- const ctx={myTeam:0,captainUserId:'captain-a',captainAuthEpoch:0,pickSyncFailed:false,
+ const ctx={myTeam:0,captainUserId:'captain-a',captainAuthEpoch:0,pickSyncFailed:false,pickInFlight:true,pickRequestEpoch:0,
   document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons},
   db:{auth:{onAuthStateChange:cb=>{callback=cb}}}};
  const start=source.indexOf('function revokeCaptainSession()');
@@ -214,6 +223,28 @@ test('rejected old pick RPC after sign-out does not refresh or alert as the old 
  assert.equal(h.rendered(),0);
 });
 
+test('old captain RPC cleanup cannot unlock a new captain pending pick',async()=>{
+ const h=harness();h.holdRpc();
+ const oldPick=h.pick(0);
+ assert.equal(h.calls.length,1);
+ h.revoke();
+ assert.equal(vm.runInContext('pickInFlight',h.ctx),false,'sign-out releases old session UI lock');
+ h.ctx.captainUserId='captain-b';
+ h.ctx.myTeam=0;
+ h.ctx.pickSyncFailed=false;
+ h.connection.textContent='LIVE';
+ const newPick=h.pick(0);
+ assert.equal(h.calls.length,2,'new verified captain can submit while old RPC is pending');
+ h.releaseRpc({data:null,error:null});
+ await oldPick;
+ assert.equal(vm.runInContext('pickInFlight',h.ctx),true,'old RPC finally must not release newer lock');
+ await h.pick(0);
+ assert.equal(h.calls.length,2,'a third tap must not race the new captain RPC');
+ h.releaseRpc({data:null,error:null});
+ await newPick;
+ assert.equal(vm.runInContext('pickInFlight',h.ctx),false,'current captain RPC releases its own lock');
+ assert.equal(h.loads(),1,'only current captain refreshes draft state');
+});
 test('successful pick RPC cannot roll back a newer Realtime draft snapshot',async()=>{
  const h=harness();h.holdRpc();
  const pending=h.pick(0);
