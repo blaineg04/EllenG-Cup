@@ -15,7 +15,10 @@ broad AS (
  WHERE policyname LIKE 'active live % guard'
 )
 SELECT tablename,policyname,permissive,cmd,
-       CASE WHEN coalesce(qual,'') LIKE '%auth.uid(%'
-                 OR coalesce(with_check,'') LIKE '%auth.uid(%'
-            THEN 'REVIEW' ELSE 'BLOCK: lacks caller identity check' END AS security_gate
+       CASE WHEN permissive = 'RESTRICTIVE'
+            THEN 'REVIEW: restrictive guard; check companion ownership policies'
+            WHEN coalesce(qual,'') LIKE '%auth.uid(%'
+              OR coalesce(with_check,'') LIKE '%auth.uid(%'
+            THEN 'REVIEW: identity condition present; verify effective authorization'
+            ELSE 'BLOCK: permissive write guard lacks caller identity check' END AS security_gate
 FROM broad ORDER BY tablename,policyname;
