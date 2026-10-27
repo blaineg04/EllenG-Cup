@@ -266,3 +266,13 @@ test('current commissioner successful pause retains paused state',async()=>{
  assert.equal(h.ctx.S.timerPaused,true);
  assert.equal(h.renders(),1);
 });
+
+test('current commissioner rejected pick restores the prior roster and redraws live mode',async()=>{
+ const h=actionHarness();h.ctx.liveMode=true;
+ const before=JSON.stringify(h.ctx.S);
+ const work=h.ctx.doPick(0);
+ assert.equal(h.pending.length,1);
+ h.pending[0].reject(Error('synthetic conflict'));await work;
+ assert.equal(JSON.stringify(h.ctx.S),before);
+ assert.equal(h.renders(),1);
+});
