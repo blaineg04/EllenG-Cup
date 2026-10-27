@@ -1,8 +1,12 @@
 -- Disposable-only fixture for proposed event RSVP schema.
 -- Never execute against the live Supabase project.
 create schema if not exists auth;
-create role authenticated nologin;
-create role anon nologin;
+do $roles$
+begin
+ if not exists(select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin; end if;
+ if not exists(select 1 from pg_roles where rolname='anon') then create role anon nologin; end if;
+end
+$roles$;
 create function auth.uid() returns uuid language sql stable as 'select null::uuid';
 create table auth.users(id uuid primary key);
 create table public.elleng_drafts(id text primary key,owner_id uuid not null references auth.users(id));
