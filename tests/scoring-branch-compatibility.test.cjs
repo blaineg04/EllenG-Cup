@@ -90,31 +90,19 @@ test('live hole validation rejects empty and invalid scores across formats',()=>
  }
 });
 
-test('broadcast moment uses only valid rostered individual shamble scores',()=>{
+test('broadcast moment uses only valid team scores and playable holes',()=>{
  const start=html.indexOf('function latestTournamentMoment(){');
  const end=html.indexOf('function renderBroadcast(){',start);
- const ctx={
-  scores:[],
-  playerScores:[{hole:18,team_index:0,golfer_index:0,score:''},{hole:17,team_index:9,golfer_index:9,score:3},{hole:16,team_index:0,golfer_index:99,score:3},{hole:4,team_index:1,golfer_index:1,score:4}],
-  teams:[{name:'Gators'},{name:'Herons'}],isSplitPair:()=>false,
-  teamRosterGolfers:i=>[{index:i,name:i===0?'Gator Golfer':'Heron Golfer'}],
-  validTeamScore:score=>score!==null&&score!==undefined&&typeof score!=='boolean'&&String(score).trim()!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20,
-  relativeGolf:(score,par)=>({rel:String(score-par),label:'Par'}),parForHole:()=>4
- };
+ const ctx={scores:[{hole:18,team_index:0,score:''},{hole:17,team_index:9,score:3},{hole:16,team_index:0,score:21},{hole:4,team_index:1,score:4}],teams:[{name:'Gators'},{name:'Herons'}],isSplitPair:()=>false,validTeamScore:score=>score!==null&&score!==undefined&&String(score).trim()!==''&&Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20,relativeGolf:(score,par)=>({rel:String(score-par),label:'Par'}),parForHole:()=>4};
  vm.runInNewContext(html.slice(start,end),ctx);
- assert.match(ctx.latestTournamentMoment(),/Herons.*Heron Golfer.*Hole 4/);
- ctx.playerScores=[];
- assert.equal(ctx.latestTournamentMoment(),'Waiting for the first score to be posted.');
+ assert.match(ctx.latestTournamentMoment(),/Herons.*Hole 4/);
+ ctx.scores=[];assert.equal(ctx.latestTournamentMoment(),'Waiting for the first score to be posted.');
 });
-test('leaderboard thru accepts serialized individual score identifiers',()=>{
+test('leaderboard thru accepts serialized team score identifiers',()=>{
  const start=html.indexOf('function normalPoints(values){'),end=html.indexOf('function renderLiveHoleScores(){',start);
- const ctx={teams:[{},{}],scores:[],tournament:{gator_hole:null,final_cargo_team:null},isSplitPair:()=>false,parForHole:()=>4,
-  teamRosterGolfers:i=>[{index:i}],
-  playerScores:[{team_index:'0',golfer_index:'0',hole:'1',score:'3'},{team_index:'1',golfer_index:'1',hole:'1',score:'4'}]};
+ const ctx={teams:[{},{}],scores:[{team_index:'0',hole:'1',score:'3'},{team_index:'1',hole:'1',score:'4'}],tournament:{gator_hole:null,final_cargo_team:null},isSplitPair:()=>false};
  vm.runInNewContext(html.slice(start,end),ctx);
- const result=Array.from(ctx.totals());
- assert.equal(result[0].thru,1);assert.equal(result[1].thru,1);
- assert.equal(result[0].pts,4);assert.equal(result[1].pts,3);
+ const result=Array.from(ctx.totals());assert.equal(result[0].thru,1);assert.equal(result[1].thru,1);assert.equal(result[0].pts,2);assert.equal(result[1].pts,1);
 });
 test('Final Cargo leaderboard badge uses configured bonus instead of fixed six',()=>{
  const start=html.indexOf('function renderLeaderboard(){');
@@ -138,26 +126,11 @@ test('Final Cargo leaderboard badge uses configured bonus instead of fixed six',
  assert.doesNotMatch(board.innerHTML,/\+6 Cargo/);
 });
 
-test('live hole summary shows individual golfer team points with serialized IDs',()=>{
+test('live hole summary shows serialized team scores and excludes orphaned team rows',()=>{
  const start=html.indexOf('function renderLiveHoleScores(){'),end=html.indexOf('function scoreClass(rel){',start);
- const board={innerHTML:''},ctx={
-  teams:[{name:'Gators'},{name:'Herons'}],scores:[],
-  playerScores:[{team_index:'0',golfer_index:'0',hole:'1',score:'3'},{team_index:'1',golfer_index:'1',hole:'1',score:'4'}],
-  tournament:{gator_revealed:false,gator_hole:null},isSplitPair:()=>false,parForHole:()=>4,
-  teamRosterGolfers:i=>[{index:i}],pointsForHole:()=>[4,3],esc:x=>String(x),$:()=>board
- };
+ const board={innerHTML:''},ctx={teams:[{name:'Gators'},{name:'Herons'}],scores:[{team_index:'0',hole:'1',score:'3'},{team_index:'1',hole:'1',score:'4'},{team_index:99,hole:12,score:4}],tournament:{gator_revealed:false,gator_hole:null},isSplitPair:()=>false,parForHole:()=>4,validTeamScore:score=>Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20,relativeGolf:(score,par)=>({rel:String(score-par),label:'Par'}),esc:x=>String(x),$:()=>board};
  vm.runInNewContext(html.slice(start,end),ctx);ctx.renderLiveHoleScores();
- assert.match(board.innerHTML,/Hole 1/);assert.match(board.innerHTML,/Gators/);assert.match(board.innerHTML,/4 pts/);
- assert.match(board.innerHTML,/Herons/);assert.match(board.innerHTML,/3 pts/);
-});
-test('orphaned golfer scores cannot create live holes',()=>{
- const start=html.indexOf('function renderLiveHoleScores(){'),end=html.indexOf('function scoreClass(rel){',start);
- const board={innerHTML:''},ctx={teams:[{},{}],scores:[],
-  playerScores:[{team_index:99,golfer_index:99,hole:12,score:4},{team_index:0,golfer_index:0,hole:2,score:4}],
-  tournament:{gator_revealed:false,gator_hole:null},isSplitPair:()=>false,parForHole:()=>4,
-  teamRosterGolfers:i=>[{index:i}],pointsForHole:h=>h===2?[3,null]:[null,null],esc:x=>String(x),$:()=>board};
- vm.runInNewContext(html.slice(start,end),ctx);ctx.renderLiveHoleScores();
- assert.match(board.innerHTML,/Hole 2/);assert.doesNotMatch(board.innerHTML,/Hole 12/);
+ assert.match(board.innerHTML,/Hole 1/);assert.match(board.innerHTML,/Gators/);assert.match(board.innerHTML,/Herons/);assert.match(board.innerHTML,/Cup points posted/);assert.doesNotMatch(board.innerHTML,/Hole 12/);
 });
 test('official scoring returns no results when there are no teams',()=>{
  assert.deepEqual(points([]),[]);
@@ -222,15 +195,10 @@ test('unset Gator Hole preserves team placement points and configured hole award
  ctx.tournament.gator_hole=4;
  assert.deepEqual(Array.from(ctx.pointsForHole(4)),[12,0]);
 });
-test('broadcast ignores malformed individual golfer team identifiers',()=>{
+test('broadcast ignores malformed team identifiers',()=>{
  const start=html.indexOf('function latestTournamentMoment(){'),end=html.indexOf('function renderBroadcast(){',start);
- const ctx={teams:[{name:'Gators'},{name:'Herons'}],scores:[],isSplitPair:()=>false,
-  playerScores:[{team_index:null,golfer_index:1,hole:18,score:3},{team_index:false,golfer_index:1,hole:17,score:3},{team_index:'',golfer_index:1,hole:16,score:3},{team_index:1,golfer_index:1,hole:4,score:4}],
-  teamRosterGolfers:i=>[{index:i,name:'Golfer'}],
-  validTeamScore:score=>Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20,
-  relativeGolf:()=>({rel:'0',label:'Par'}),parForHole:()=>4};
- vm.runInNewContext(html.slice(start,end),ctx);
- assert.match(ctx.latestTournamentMoment(),/Herons.*Hole 4/);
+ const ctx={teams:[{name:'Gators'},{name:'Herons'}],scores:[{team_index:null,hole:18,score:3},{team_index:false,hole:17,score:3},{team_index:'',hole:16,score:3},{team_index:1,hole:4,score:4}],isSplitPair:()=>false,validTeamScore:score=>Number.isInteger(Number(score))&&Number(score)>=1&&Number(score)<=20,relativeGolf:()=>({rel:'0',label:'Par'}),parForHole:()=>4};
+ vm.runInNewContext(html.slice(start,end),ctx);assert.match(ctx.latestTournamentMoment(),/Herons.*Hole 4/);
 });
 test('golf result labels reject fractional and unsafe strokes',()=>{
  const start=html.indexOf('function relativeGolf(score,par){');
