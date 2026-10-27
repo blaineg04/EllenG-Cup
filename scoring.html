@@ -4242,6 +4242,7 @@ async function loadTrashReactions(){
 }
 
 // Event RSVP rollout remains disabled until SQL migration and authenticated validation.
+// Disabled until event migrations, reviewed RPC grants and authenticated tests pass.
 const EVENT_RSVP_MODE=false;
 let eventRsvpCounts=null;
 async function loadRsvps(){
