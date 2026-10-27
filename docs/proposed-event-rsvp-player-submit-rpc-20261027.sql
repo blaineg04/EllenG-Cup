@@ -38,6 +38,15 @@ begin
     or coalesce((v_state->>'draftStarted')::boolean,false) then
    raise exception 'Draft roster is locked; RSVP changes are closed' using errcode='55000';
  end if;
+ -- Initial golfer identity must be provisioned by a trusted commissioner
+ -- workflow. A client-supplied golfer_index alone cannot establish ownership.
+ if not exists (
+   select 1 from public.elleng_event_rsvps
+   where tournament_id=p_tournament_id and user_id=v_actor
+     and golfer_index=p_golfer_index
+ ) then
+   raise exception 'Verified event golfer association required' using errcode='42501';
+ end if;
  -- Existing event identity is immutable. Do not allow an account to switch
  -- golfer_index by changing a client-supplied number after its first RSVP.
  if exists (
@@ -57,6 +66,8 @@ begin
    raise exception 'Golfer is already associated with another account for this event' using errcode='23505';
  end if;
  -- Caller identity is derived from auth.uid(); never accept a supplied user ID.
+ -- The upsert only updates a pre-provisioned association; it cannot enroll
+ -- an arbitrary golfer because of the verification guard above.
  insert into public.elleng_event_rsvps(tournament_id,user_id,golfer_index,status)
  values(p_tournament_id,v_actor,p_golfer_index,p_status)
  on conflict(tournament_id,user_id) do update
