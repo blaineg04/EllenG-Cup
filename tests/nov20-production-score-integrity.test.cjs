@@ -466,3 +466,13 @@ test('completed personal clear preserves a newer entry after hole navigation',as
 test('personal clear removes an acknowledged current entry and keeps local-only clearing available',async()=>{
  for(const options of [{},{assigned:false},{linked:false}]){const page=personalClear(options);await page.run();assert.equal(page.node('selfScoreInput').value,'');assert.equal(page.requests(),options.assigned===false||options.linked===false?0:1);}
 });
+
+test('scoring page inline scripts remain syntactically valid before RSVP rollout',()=>{
+ const scripts=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)]
+  .filter(([,attributes,source])=>!/\bsrc\s*=/.test(attributes)&&source.trim());
+ assert.ok(scripts.length>=2,'Expected executable inline scoring scripts');
+ for(const [, ,source] of scripts){
+  assert.doesNotThrow(()=>new vm.Script(source,{filename:'scoring.html:inline-script'}));
+ }
+ assert.match(html,/const EVENT_RSVP_MODE=false;/,'Event RSVP rollout must remain disabled');
+});
