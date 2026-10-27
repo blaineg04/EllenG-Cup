@@ -63,3 +63,19 @@ For each item, record: date, scenario, isolated backend/project (non-secret ID o
 - `elleng_captains` owner-management ALL policy requires the authenticated user to own the corresponding draft, in both USING and WITH CHECK. Captain SELECT policies allow their own assignment or the draft owner.
 - `elleng_drafts` SELECT policy `authenticated can read draft` uses `true` for **all authenticated users**. Confirm this matches intended spectator/privacy rules; do not tighten it without testing legitimate read paths.
 - This is a **static policy inspection**, not an authenticated role test. Policy interactions, RPC permissions, simultaneous picks, and real-device authorization remain unverified. No policies were modified.
+
+## October 27 Supabase security advisor and draft RPC inspection
+
+Read-only security advisor returned:
+- WARN: authenticated users can execute three `SECURITY DEFINER` RPCs: `elleng_make_pick`, `elleng_auto_pick`, and `elleng_save_state_if_fresh`. These are intended draft operations, but elevated privileges demand authenticated negative-case tests. [Advisor remediation](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable).
+- INFO: `elleng_golfer_pins` and `elleng_trash_talk_settings` have RLS enabled without policies; confirm they are intentionally inaccessible via ordinary client roles. [Advisor remediation](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy).
+- WARN: leaked-password protection is disabled; evaluate enabling it after confirming plan support and impact. [Auth documentation](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+Read-only function definitions show:
+- `elleng_make_pick` checks signed-in captain assignment, active team, draft pause, turn order, golfer availability, and band constraints; locks the draft row `FOR UPDATE` before modifying picks.
+- `elleng_auto_pick` checks owner **or assigned captain**, paused status, and expired timer before auto-picking, and locks the draft row. **Acceptance decision:** confirm any captain may trigger an expired-timer auto-pick, not only the commissioner/current captain.
+- `elleng_save_state_if_fresh` requires the draft owner and matching `updated_at`, rejecting stale commissioner saves.
+
+Required authenticated negative-case tests on isolated fixtures: unrelated signed-in user calling each RPC; wrong-turn captain manual pick; captain auto-pick before deadline; captain attempting commissioner save; concurrent picks and stale save. Confirm elevated functions cannot be abused through unexpected inputs or helper functions.
+
+**No production policies, functions, authentication settings, or records were changed.** Static inspection does not satisfy the real-device acceptance gate.
