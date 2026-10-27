@@ -342,3 +342,23 @@ test('reconnect after a closed channel restores both picks and timer without dup
  assert.equal(captain.state().timerEndsAt,'2026-11-13T18:03:00Z');
  assert.equal(captain.indicator.textContent,'LIVE');
 });
+
+test('reconnecting captain converges after a pick and subsequent timer reset',async()=>{
+ const server={state:fresh()};
+ const live=startClient(server),reconnecting=startClient(server);
+ await Promise.all([live.status('SUBSCRIBED'),reconnecting.status('SUBSCRIBED')]);
+ await reconnecting.status('TIMED_OUT');
+ server.state.picks.push({team:0,golfer:0});
+ server.state.golfers[0].team=0;
+ server.state.teams[0].roster.push(0);
+ server.state.timerPaused=false;
+ server.state.timerEndsAt='2026-11-13T18:04:00Z';
+ await live.change();
+ server.state.timerEndsAt='2026-11-13T18:05:00Z';
+ await live.change();
+ await reconnecting.status('SUBSCRIBED');
+ assert.equal(reconnecting.state().picks.length,1);
+ assert.equal(reconnecting.state().timerEndsAt,'2026-11-13T18:05:00Z');
+ assert.equal(reconnecting.state().timerEndsAt,live.state().timerEndsAt);
+ assert.deepEqual(Array.from(reconnecting.state().teams[0].roster),[0]);
+});
