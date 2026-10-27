@@ -261,3 +261,23 @@ test('a missed timer resume is recovered with its exact deadline after reconnect
  assert.equal(captain.state().timerEndsAt,commissioner.state().timerEndsAt);
  assert.equal(captain.indicator.textContent,'LIVE');
 });
+
+test('repeated reconnect after timer resume does not roll back a later pause',async()=>{
+ const server={state:fresh()};
+ const captain=startClient(server);
+ await captain.status('SUBSCRIBED');
+ await captain.status('TIMED_OUT');
+ server.state.timerPaused=false;
+ server.state.timerEndsAt='2026-11-13T18:02:00Z';
+ await captain.status('SUBSCRIBED');
+ assert.equal(captain.state().timerPaused,false);
+ assert.equal(captain.state().timerEndsAt,'2026-11-13T18:02:00Z');
+ server.state.timerPaused=true;
+ server.state.timerEndsAt=null;
+ await captain.change();
+ await captain.status('SUBSCRIBED');
+ await captain.status('SUBSCRIBED');
+ assert.equal(captain.state().timerPaused,true,'repeated refresh must preserve latest pause');
+ assert.equal(captain.state().timerEndsAt,null,'old deadline must not return');
+ assert.equal(captain.indicator.textContent,'LIVE');
+});
