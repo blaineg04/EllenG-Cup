@@ -8,8 +8,6 @@ done
 ROOT="$HOME/elleng-local-autodev"
 OUT="$HOME/elleng-local-autodev-output"
 mkdir -p "$OUT"
-exec 9>"$OUT/.cycle-lock"
-if ! flock -n 9 2>/dev/null; then exit 0; fi
 # macOS does not ship flock; use mkdir as an additional portable lock.
 mkdir "$OUT/.running" 2>/dev/null || exit 0
 trap 'rmdir "$OUT/.running" 2>/dev/null || true' EXIT
