@@ -24,8 +24,9 @@
     if(!Array.isArray(records)||!Array.isArray(availableGolfers))throw new TypeError("Expected RSVP and golfer arrays");
     const seenUsers=new Set(),seenGolfers=new Set(),indices=[];
     for(const raw of records){
+      // Ignore unrelated events before validating their payloads.
+      if(!raw||raw.tournament_id!==tournamentId)continue;
       const r=normalize(raw);
-      if(r.tournament_id!==tournamentId)continue;
       if(seenUsers.has(r.user_id))throw new Error("Duplicate event RSVP user");
       seenUsers.add(r.user_id);
       if(r.status!=="playing"||r.approval_status!=="approved")continue;
@@ -45,7 +46,7 @@
   function changeStatus(record,status){
     const r=normalize(record);
     if(!validStatuses.has(status))throw new Error("Invalid RSVP status");
-    return {...r,status,approval_status:status===r.status?r.approval_status:"pending"};
+    return status===r.status?{...r}:{...r,status,approval_status:"pending",approved_by:null};
   }
   return Object.freeze({approvedRoster,approve,changeStatus,normalize});
 });
