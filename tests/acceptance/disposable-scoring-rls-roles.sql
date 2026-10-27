@@ -20,6 +20,9 @@ CREATE POLICY "test commissioner delete" ON public.elleng_team_scores FOR DELETE
   USING (current_setting('elleng.actor', true) = 'commissioner');
 INSERT INTO public.elleng_tournaments(id,team_count,status) VALUES
   ('rls-live',2,'live'),('rls-closed',2,'finalized');
+-- Seed finalized score as privileged fixture setup, before assuming a user role.
+INSERT INTO public.elleng_team_scores(tournament_id,team_index,score)
+  VALUES ('rls-closed',1,7);
 SET ROLE authenticated;
 SELECT set_config('elleng.actor','outsider',false);
 DO $test$
@@ -85,6 +88,12 @@ BEGIN
     RAISE EXCEPTION 'FAIL: commissioner inserted finalized score';
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
+  UPDATE public.elleng_team_scores SET score=99 WHERE tournament_id='rls-closed';
+  GET DIAGNOSTICS changed = ROW_COUNT;
+  IF changed <> 0 THEN RAISE EXCEPTION 'FAIL: commissioner updated finalized score'; END IF;
+  DELETE FROM public.elleng_team_scores WHERE tournament_id='rls-closed';
+  GET DIAGNOSTICS changed = ROW_COUNT;
+  IF changed <> 0 THEN RAISE EXCEPTION 'FAIL: commissioner deleted finalized score'; END IF;
   DELETE FROM public.elleng_team_scores WHERE tournament_id='rls-live' AND team_index=1;
   GET DIAGNOSTICS changed = ROW_COUNT;
   IF changed <> 1 THEN RAISE EXCEPTION 'FAIL: commissioner cannot delete team 1'; END IF;
@@ -92,7 +101,10 @@ END $test$;
 RESET ROLE;
 DO $test$
 BEGIN
-  IF EXISTS (SELECT 1 FROM public.elleng_team_scores WHERE tournament_id LIKE 'rls-%') THEN
-    RAISE EXCEPTION 'FAIL: disposable score rows remain after role tests';
+  IF EXISTS (SELECT 1 FROM public.elleng_team_scores WHERE tournament_id='rls-live') THEN
+    RAISE EXCEPTION 'FAIL: live disposable score rows remain after role tests';
+  END IF;
+  IF (SELECT score FROM public.elleng_team_scores WHERE tournament_id='rls-closed' AND team_index=1) IS DISTINCT FROM 7 THEN
+    RAISE EXCEPTION 'FAIL: finalized score changed or disappeared';
   END IF;
 END $test$;
