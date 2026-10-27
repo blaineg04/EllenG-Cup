@@ -68,12 +68,17 @@ function canBand(t,b){
   return bandPenalty(t,b)===best;
 }
 
-async function load(){let {data,error}=await db.from("elleng_drafts").select("state").eq("id",cfg.draftId).single();if(error)throw error;S={...fresh(),...data.state};return S}
+let latestLoadRequest=0;
+async function load(){const request=++latestLoadRequest;let {data,error}=await db.from("elleng_drafts").select("state").eq("id",cfg.draftId).single();if(error)throw error;if(request===latestLoadRequest)S={...fresh(),...data.state};return S}
 async function save(){let {error}=await db.from("elleng_drafts").upsert({id:cfg.draftId,state:S,updated_at:new Date().toISOString()});if(error)throw error}
 function subscribe(cb){
+ let connectionEpoch=0,connected=false;
  const channel=db.channel("elleng-"+cfg.draftId)
   .on("postgres_changes",{event:"*",schema:"public",table:"elleng_drafts",filter:"id=eq."+cfg.draftId},async()=>{
-   try{await load();cb()}catch(e){
+   const epoch=connectionEpoch;
+   if(!connected)return;
+   try{await load();if(epoch!==connectionEpoch||!connected)return;cb()}catch(e){
+    if(epoch!==connectionEpoch||!connected)return;
     console.error("Draft realtime refresh failed",e);
     const indicator=document.getElementById("connection");
     if(indicator){indicator.textContent="SYNC ERROR";indicator.className="offline"}
@@ -83,6 +88,8 @@ function subscribe(cb){
    }
   })
   .subscribe(async st=>{
+   const epoch=++connectionEpoch;
+   connected=st==="SUBSCRIBED";
    const el=document.getElementById("connection");
    if(el){
     el.textContent=st==="SUBSCRIBED"?"SYNCING":st==="CHANNEL_ERROR"||st==="TIMED_OUT"||st==="CLOSED"?"RECONNECTING":"CONNECTING";
@@ -98,10 +105,12 @@ function subscribe(cb){
    // cannot be recovered from a fresh Postgres Changes subscription alone.
    if(st==="SUBSCRIBED"){
     try{await load();
+     if(epoch!==connectionEpoch||!connected)return;
      if(el){el.textContent="LIVE";el.className="online"}
      if(strip){strip.classList.remove("status-connecting","status-offline");strip.classList.add("status-live")}
      cb()
     }catch(e){
+     if(epoch!==connectionEpoch||!connected)return;
      console.error("Draft resubscription refresh failed",e);
      if(el){el.textContent="SYNC ERROR";el.className="offline"}
      document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
