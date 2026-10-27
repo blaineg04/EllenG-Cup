@@ -12,7 +12,8 @@ test('staged RPC derives roster from persisted draft, not client input',()=>{
  assert.doesNotMatch(sql,/p_roster/);
 });
 test('staged RPC holds transaction lock and does not grant browser execution',()=>{
- assert.match(sql,/FOR UPDATE/);
+ assert.match(sql,/pg_advisory_xact_lock/);
+ assert.doesNotMatch(sql,/WHERE t\.id=p_tournament_id FOR UPDATE/);
  assert.match(sql,/REVOKE ALL ON FUNCTION/);
  assert.doesNotMatch(sql,/GRANT EXECUTE/);
 });
