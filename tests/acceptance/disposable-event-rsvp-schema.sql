@@ -236,7 +236,7 @@ begin
   raise exception 'Unvalidated commissioner enrollment exposed to browser roles';
  end if;
  begin
-  perform public.elleng_assign_event_golfer('nov20','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',5);
+  perform public.elleng_assign_event_golfer('nov20','eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',4);
   raise exception 'Duplicate account assignment was accepted';
  exception when unique_violation then null;
  end;
