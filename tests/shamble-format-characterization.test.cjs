@@ -1,33 +1,20 @@
 'use strict';
-// Characterization tests: freeze the existing release candidate's back-nine
-// low-ball Shamble behavior before considering alternate individual-points rules.
-// This file never connects to the live Supabase project.
-const test=require('node:test');
-const assert=require('node:assert/strict');
-const fs=require('node:fs');
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const html=fs.readFileSync('scoring.html','utf8');
-const start=html.indexOf('async function savePlayerShambleScore(');
-const end=html.indexOf('function renderPairScoring(',start);
-assert.ok(start>=0&&end>start,'Missing Shamble score handler');
-const source=html.slice(start,end);
-test('existing Shamble scoring writes a player entry and its derived team low-ball score',()=>{
-  assert.match(source,/db\.from\("elleng_player_hole_scores"\)\.upsert/);
-  assert.match(source,/Math\.min\(\.\.\.rows\.map/);
-  assert.match(source,/db\.from\("elleng_team_scores"\)\.upsert/);
+const a=html.indexOf('async function savePlayerShambleScore('),b=html.indexOf('function renderPairScoring(',a);
+assert.ok(a>=0&&b>a);const source=html.slice(a,b);
+test('Shamble writes exactly once through authorized atomic RPC, never direct tables',()=>{
+ assert.match(source,/db\.rpc\("elleng_test_authorized_shamble"/);
+ assert.doesNotMatch(source,/db\.from\("elleng_(player_hole|team)_scores"\)/);
 });
-test('existing Shamble scoring restricts entry to back-nine holes',()=>{
-  assert.match(source,/hole<10\|\|hole>18/);
-  assert.match(source,/const scoreHole=hole/);
+test('Shamble restricts entry to back nine and snapshots hole',()=>{
+ assert.match(source,/hole<10\|\|hole>18/);assert.match(source,/const scoreHole=hole/);
 });
-test('existing incomplete Shamble roster clears the derived team score',()=>{
-  assert.match(source,/db\.from\("elleng_team_scores"\)\.delete/);
+test('clearing a golfer submits null atomically for server-side team score recalculation',()=>{
+ assert.match(source,/String\(val\?\?""\)\.trim\(\)===""\?null:Number\(val\)/);
+ assert.match(source,/p_score:score/);
 });
-
-test('blank and whitespace-only score inputs use the clear path instead of numeric zero',()=>{
-  assert.match(source,/String\(val\?\?""\)\.trim\(\)===""\?null:Number\(val\)/);
-});
-
-test('split-pair empty input also clears rather than writing numeric zero',()=>{
+test('split-pair blank entries remain clearable',()=>{
  const a=html.indexOf('async function savePairScore('),b=html.indexOf('function renderScoring(',a);
  assert.ok(a>=0&&b>a);
  assert.match(html.slice(a,b),/String\(val\?\?""\)\.trim\(\)===""\?null:Number\(val\)/);
