@@ -69,7 +69,7 @@ function canBand(t,b){
 }
 
 let latestLoadRequest=0;
-async function load(isCurrent=()=>true,onApplied=()=>{}){const request=++latestLoadRequest;let {data,error}=await db.from("elleng_drafts").select("state").eq("id",cfg.draftId).single();if(error)throw error;if(request===latestLoadRequest&&isCurrent()){S={...fresh(),...data.state};onApplied()}return S}
+async function load(isCurrent=()=>true,onApplied=()=>{}){const request=++latestLoadRequest;let {data,error}=await db.from("elleng_drafts").select("state").eq("id",cfg.draftId).single();if(error){if(request===latestLoadRequest)throw error;return S}if(request===latestLoadRequest&&isCurrent()){S={...fresh(),...data.state};onApplied()}return S}
 async function save(){let {error}=await db.from("elleng_drafts").upsert({id:cfg.draftId,state:S,updated_at:new Date().toISOString()});if(error)throw error}
 function subscribe(cb){
  // Optional session guard: a disposed captain listener must not update state or status.
