@@ -211,18 +211,17 @@ test('Final Cargo bonus stays finite and honors an explicit zero',()=>{
  assert.equal(ctx.finalCargoBonus(),9);
 });
 
-test('unset Gator Hole never doubles individual points',()=>{
+test('unset Gator Hole preserves team placement points and configured hole awards only the lowest team',()=>{
  const start=html.indexOf('function normalPoints(values){'),end=html.indexOf('function finalCargoBonus(){',start);
- const ctx={teams:[{},{}],scores:[],isSplitPair:()=>false,parForHole:()=>4,teamRosterGolfers:i=>[{index:i}],
-  playerScores:[{team_index:0,golfer_index:0,hole:4,score:3},{team_index:1,golfer_index:1,hole:4,score:5}],
+ const ctx={teams:[{},{}],scores:[{team_index:0,hole:4,score:3},{team_index:1,hole:4,score:5}],isSplitPair:()=>false,parForHole:()=>4,
   tournament:{gator_hole:null}};
  vm.runInNewContext(html.slice(start,end),ctx);
  for(const unset of [null,undefined,'','  ',true,false]){
   ctx.tournament.gator_hole=unset;
-  assert.deepEqual(Array.from(ctx.pointsForHole(4)),[4,2],String(unset));
+  assert.deepEqual(Array.from(ctx.pointsForHole(4)),[2,1],String(unset));
  }
  ctx.tournament.gator_hole=4;
- assert.deepEqual(Array.from(ctx.pointsForHole(4)),[8,4]);
+ assert.deepEqual(Array.from(ctx.pointsForHole(4)),[12,0]);
 });
 test('broadcast ignores malformed individual golfer team identifiers',()=>{
  const start=html.indexOf('function latestTournamentMoment(){'),end=html.indexOf('function renderBroadcast(){',start);
