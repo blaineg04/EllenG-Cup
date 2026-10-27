@@ -1,0 +1,77 @@
+name: EllenG local Codex agent pilot (no API billing)
+on:
+  push:
+    branches: ['development/nov20-release-reconciliation-20261026']
+    paths: ['.github/workflows/elleng-local-codex-pilot.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: elleng-local-codex-pilot
+  cancel-in-progress: false
+jobs:
+  local-agent:
+    if: github.repository == 'blaineg04/EllenG-Cup' && github.event_name != 'pull_request'
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Confirm eligible local agent without installing or spending
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          if ! command -v codex >/dev/null; then
+            echo "BLOCKED: Codex CLI is not installed on the self-hosted runner." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if ! codex login status >/dev/null 2>&1; then
+            echo "BLOCKED: Codex CLI needs an interactive ChatGPT sign-in on the Mac (not an API key)." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "Local Codex CLI detected. Sign-in exists; model quota may still block execution." >> "$GITHUB_STEP_SUMMARY"
+      - name: Stage safe agent task
+        shell: bash
+        run: |
+          cat > "$RUNNER_TEMP/elleng-agent-task.txt" <<'TASK'
+          Work only within this EllenG-Cup checkout. Make one small substantive
+          improvement toward Nov 13 draft rehearsal, prioritizing tests for
+          draft role authorization, team assignments or UI reliability.
+          Never access Supabase, Vercel, production or FairwayOS, secrets, or
+          any external network. Do not alter CI workflows, credentials, or
+          repository hooks. Do not deploy, merge, push, or commit.
+          Preserve the 4-man scramble front nine and lowest-player-score
+          Shamble back nine. Run available local tests if possible.
+          Provide a clear account of edits, tests and blockers.
+          TASK
+      - name: Run locally if authenticated (no API key)
+        shell: bash
+        env:
+          CODEX_HOME: ${{ runner.temp }}/elleng-codex-home
+        run: |
+          set -euo pipefail
+          export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+          # CODEX_HOME is intentionally not set here: use the runner user's
+          # existing ChatGPT CLI sign-in, never put credentials in GitHub.
+          unset CODEX_HOME
+          if ! command -v codex >/dev/null || ! codex login status >/dev/null 2>&1; then
+            echo "No authenticated local Codex; skipped without charge." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          codex exec --sandbox workspace-write --skip-git-repo-check - < "$RUNNER_TEMP/elleng-agent-task.txt" || {
+            echo "Agent run failed or hit quota; no deployment or push occurred." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          }
+          git diff --check
+          git status --short >> "$GITHUB_STEP_SUMMARY"
+          git diff --binary > "$RUNNER_TEMP/elleng-proposed.patch"
+      - name: Upload proposed code patch for manual review only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: elleng-agent-patch
+          path: ${{ runner.temp }}/elleng-proposed.patch
+          if-no-files-found: ignore
+          retention-days: 7
