@@ -43,7 +43,6 @@ jobs:
           # Apply the exact proposed migration to disposable schema replicas,
           # then verify every intended guard is restrictive.
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -c "create role authenticated nologin; create table public.elleng_tournaments(id text primary key, team_count integer, status text); alter table public.elleng_team_scores add column score integer; create table public.elleng_player_hole_scores(tournament_id text,team_index integer); create table public.elleng_pair_hole_scores(tournament_id text,team_index integer); alter table public.elleng_player_hole_scores enable row level security; alter table public.elleng_pair_hole_scores enable row level security;"
-          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -c "create role authenticated nologin;"
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -f docs/proposed-scoring-rls-hardening-20261027.sql
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -f tests/acceptance/score-policy-readonly-audit.sql
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -f tests/acceptance/disposable-scoring-rls-roles.sql
