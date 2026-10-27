@@ -38,6 +38,15 @@ begin
     or coalesce((v_state->>'draftStarted')::boolean,false) then
    raise exception 'Draft roster is locked; RSVP changes are closed' using errcode='55000';
  end if;
+ -- Existing event identity is immutable. Do not allow an account to switch
+ -- golfer_index by changing a client-supplied number after its first RSVP.
+ if exists (
+   select 1 from public.elleng_event_rsvps
+   where tournament_id=p_tournament_id and user_id=v_actor
+     and golfer_index<>p_golfer_index
+ ) then
+   raise exception 'Existing event golfer identity cannot be changed by RSVP' using errcode='23505';
+ end if;
  -- Reject identity reassignment: one authenticated account must not silently
  -- take over a different golfer's existing RSVP within this event.
  if exists (
