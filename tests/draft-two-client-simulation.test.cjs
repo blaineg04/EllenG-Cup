@@ -444,3 +444,25 @@ test('obsolete refresh failure cannot override a newer successful LIVE state',as
  assert.equal(captain.state().picks.length,1);
  assert.ok(captain.strip.has('status-live'));
 });
+
+
+test('outdated failed reconnect cannot replace newer successful subscription',async()=>{
+ const server={state:fresh()};
+ const captain=startClient(server);
+ await captain.status('SUBSCRIBED');
+ const readers=[];
+ server.readState=()=>new Promise(resolve=>readers.push(resolve));
+ const stale=captain.status('SUBSCRIBED');
+ const current=captain.status('SUBSCRIBED');
+ assert.equal(readers.length,2);
+ server.state.picks.push({team:0,golfer:0});
+ server.state.golfers[0].team=0;
+ server.state.teams[0].roster.push(0);
+ readers[1]({data:{state:structuredClone(server.state)},error:null});
+ await current;
+ readers[0]({data:null,error:new Error('obsolete reconnect failure')});
+ await stale;
+ assert.equal(captain.indicator.textContent,'LIVE');
+ assert.equal(captain.state().picks.length,1);
+ assert.ok(captain.strip.has('status-live'));
+});
