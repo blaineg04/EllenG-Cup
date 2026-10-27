@@ -1,8 +1,8 @@
 #!/bin/bash
 # Conservative unattended PR handoff. Never deploys, merges, or modifies release branch.
 set -euo pipefail
-ROOT="$HOME/elleng-local-autodev"
-OUT="$HOME/elleng-local-autodev-output"
+ROOT="${ELLENG_REVIEW_ROOT:-$HOME/elleng-local-autodev}"
+OUT="${ELLENG_REVIEW_OUT:-$HOME/elleng-local-autodev-output}"
 BASE="development/nov20-release-reconciliation-20261026"
 cd "$ROOT"
 if [[ "$(git branch --show-current)" != "$BASE" ]]; then echo "BLOCKED wrong branch"; exit 2; fi
