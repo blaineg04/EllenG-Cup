@@ -291,7 +291,14 @@ do $counts$
 declare v record;
 begin
  select * into v from public.elleng_event_rsvp_counts('nov20');
- if v.playing<>2 or v.maybe<>0 or v.out_count<>1 or v.approved_playing<>0 then
+ -- Previous tests leave three playing RSVPs: one approved, two pending.
+ -- The out response belongs to 'next', not 'nov20'.
+ if (select count(*) from public.elleng_event_rsvps where tournament_id='nov20' and status='playing' and approval_status='approved') <> 1
+    or (select count(*) from public.elleng_event_rsvps where tournament_id='nov20' and status='playing' and approval_status='pending') <> 2
+    or (select count(*) from public.elleng_event_rsvps where tournament_id='next' and status='out') <> 1 then
+  raise exception 'Attendance fixture state changed unexpectedly';
+ end if;
+ if v.playing<>3 or v.maybe<>0 or v.out_count<>0 or v.approved_playing<>1 then
   raise exception 'Event attendance summary unexpected: %',row_to_json(v);
  end if;
  if has_function_privilege('authenticated','public.elleng_event_rsvp_counts(text)','EXECUTE') then
