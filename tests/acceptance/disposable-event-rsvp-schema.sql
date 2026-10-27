@@ -42,7 +42,7 @@ begin
  end;
 end $$;
 -- Validate commissioner approval function in the disposable database.
-\\i docs/proposed-event-rsvp-commissioner-approval-rpc-20261027.sql
+\i docs/proposed-event-rsvp-commissioner-approval-rpc-20261027.sql
 -- Simulate Supabase's auth.uid() using a session setting, only in this fixture.
 create or replace function auth.uid() returns uuid language sql stable
 as 'select nullif(current_setting(''test.actor'',true),'''')::uuid';
