@@ -105,7 +105,9 @@ function subscribe(cb){
     el.textContent=st==="SUBSCRIBED"?"SYNCING":st==="CHANNEL_ERROR"||st==="TIMED_OUT"||st==="CLOSED"?"RECONNECTING":"CONNECTING";
     el.className="offline";
    }
-   // Keep pick controls disabled while reconnect catch-up is pending; the\n   // authoritative refresh callback will render and re-enable eligible picks.\n   document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
+   // Keep pick controls disabled while reconnect catch-up is pending; the
+   // authoritative refresh callback will render and re-enable eligible picks.
+   document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
    const strip=document.getElementById("draftStatusStrip");
    if(strip){
     strip.classList.remove("status-live","status-connecting","status-offline");
