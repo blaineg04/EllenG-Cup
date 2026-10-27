@@ -50,6 +50,25 @@
       teamCapacities:Object.freeze(Array.from({length:teamCount},(_,i)=>base+(i<extra?1:0)))
     });
   }
+  // Draft turn schedule for unequal team sizes. Teams at capacity never receive a pick.
+  function draftPickOrder(teamCapacities,format="snake"){
+    if(!Array.isArray(teamCapacities)||teamCapacities.length<2||
+       teamCapacities.some(n=>!Number.isInteger(n)||n<1))
+      throw new RangeError("Valid positive team capacities required");
+    if(format!=="snake"&&format!=="standard")throw new Error("Invalid draft format");
+    const remaining=teamCapacities.slice(),order=[];
+    const total=remaining.reduce((a,b)=>a+b,0);
+    for(let round=0;order.length<total;round++){
+      const teams=Array.from({length:remaining.length},(_,i)=>i);
+      if(format==="snake"&&round%2===1)teams.reverse();
+      for(const team of teams){
+        if(remaining[team]===0)continue;
+        order.push(team);
+        remaining[team]--;
+      }
+    }
+    return Object.freeze(order);
+  }
   function approve(record,decision,actor){
     const r=normalize(record);
     if(!actor||actor.role!=="commissioner"||!actor.user_id)throw new Error("Commissioner authorization required");
@@ -62,5 +81,5 @@
     if(!validStatuses.has(status))throw new Error("Invalid RSVP status");
     return status===r.status?{...r}:{...r,status,approval_status:"pending",approved_by:null};
   }
-  return Object.freeze({approvedRoster,draftRosterPlan,approve,changeStatus,normalize});
+  return Object.freeze({approvedRoster,draftRosterPlan,draftPickOrder,approve,changeStatus,normalize});
 });
