@@ -280,3 +280,31 @@ begin
  end;
 end $clear$;
 select 'PASS: player RSVP, commissioner enrollment and clear response fixture' as result;
+
+-- Private aggregate RPC must scope counts to one event and deny unrelated accounts.
+\i docs/proposed-event-rsvp-counts-rpc-20261027.sql
+update public.elleng_drafts
+ set state=jsonb_set(jsonb_set(jsonb_set(state,'{picks}','[]'::jsonb,true),'{rosterLocked}','false'::jsonb,true),'{draftStarted}','false'::jsonb,true)
+ where id='draft-1';
+select set_config('test.actor','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',false);
+do $counts$
+declare v record;
+begin
+ select * into v from public.elleng_event_rsvp_counts('nov20');
+ if v.playing<>2 or v.maybe<>0 or v.out_count<>1 or v.approved_playing<>0 then
+  raise exception 'Event attendance summary unexpected: %',row_to_json(v);
+ end if;
+ if has_function_privilege('authenticated','public.elleng_event_rsvp_counts(text)','EXECUTE') then
+  raise exception 'Unvalidated attendance summary exposed to browser roles';
+ end if;
+end $counts$;
+select set_config('test.actor','dddddddd-dddd-dddd-dddd-dddddddddddd',false);
+do $counts$
+begin
+ begin
+  perform public.elleng_event_rsvp_counts('nov20');
+  raise exception 'Unenrolled account received attendance counts';
+ exception when insufficient_privilege then null;
+ end;
+end $counts$;
+select 'PASS: event attendance summary is scoped and access controlled' as result;
