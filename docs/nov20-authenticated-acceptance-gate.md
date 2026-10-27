@@ -90,3 +90,12 @@ For `elleng_auto_pick`, `elleng_make_pick`, and `elleng_save_state_if_fresh`, ex
 ### October 27 effective RPC EXECUTE privilege check (read-only)
 
 Queried `has_function_privilege` on the actual EllenG Supabase project for `elleng_make_pick`, `elleng_auto_pick`, and `elleng_save_state_if_fresh`. **All three:** `anon=false`, `authenticated=true`, `service_role=true`; all are `SECURITY DEFINER`. This verifies effective role-level grants (rather than only reading `proacl`). It does **not** establish that a signed-in unassigned user, wrong-turn captain, or non-owner is denied by the function body. Authenticated negative-case and concurrent-device tests remain **BLOCKED** pending verified disposable fixtures and accounts. No SQL writes were performed.
+
+### October 27 read-only live function-body recheck
+
+Re-fetched the actual database definitions for all three privileged draft RPCs (no writes):
+- `elleng_make_pick` authenticates a mapped captain, locks the draft row `FOR UPDATE`, rejects paused, wrong-turn, invalid or already-drafted golfer picks, and persists the next timer deadline.
+- `elleng_auto_pick` authenticates owner **or any assigned captain**, locks the draft row, and only changes state after a non-paused timer has expired. **Decision required:** is allowing a captain other than the active team to trigger a legitimately expired auto-pick intentional? No change made pending owner decision.
+- `elleng_save_state_if_fresh` requires the draft owner and exact `updated_at` match, rejecting stale writes with SQLSTATE `40001`.
+
+These are static function-body observations, not authenticated execution results. Do not mark cross-device or permission acceptance as passed.
