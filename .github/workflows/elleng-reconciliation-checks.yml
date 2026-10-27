@@ -52,6 +52,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Record concurrent-client race gap (expected to fail until atomic backend fix)
-        continue-on-error: true
+      - name: Block integration when concurrent Shamble saves corrupt derived team totals
         run: node --test tests/shamble-cross-device-race-characterization.test.cjs
