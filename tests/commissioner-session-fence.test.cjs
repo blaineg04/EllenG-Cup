@@ -176,3 +176,40 @@ test('reverification replaces the old commissioner channel without duplicate lis
  assert.equal(h.renders(),rendersBefore+1);
  assert.equal(vm.runInContext('commissionerUserId',h.ctx),'commissioner-b');
 });
+
+const actionStart=source.indexOf('// Fence all optimistic commissioner actions');
+const actionEnd=source.indexOf('// Invalidate pending commissioner lookups',actionStart);
+assert.ok(actionStart>0&&actionEnd>actionStart);
+function actionHarness(){
+ const state={picks:[],golfers:[{name:'Synthetic',team:null,band:'A'}],teams:[{name:'A',roster:[]}],timerPaused:false,timerLength:60,timerEndsAt:null};
+ const els={saveSetup:{disabled:false},setup:{style:{display:'block'}},live:{style:{display:'none'}},setupBtn:{},undo:{},pause:{},resetClock:{},dtype:{value:'snake'},tlen:{value:'60'}};
+ const pending=[];let renders=0;
+ const ctx={S:state,savingDraft:false,commissionerAuthEpoch:0,commissionerUserId:'commissioner-a',
+  liveMode:false,structuredClone,Date,order:()=>0,totalPicks:()=>1,canBand:()=>true,remaining:()=>30,
+  save:()=>new Promise((resolve,reject)=>pending.push({resolve,reject})),
+  document:{getElementById:id=>els[id],querySelectorAll:()=>[]},liveRender:()=>renders++,setupRender:()=>{}};
+ vm.createContext(ctx);
+ vm.runInContext(source.slice(actionStart,actionEnd)+';this.doPick=pick;',ctx);
+ return {ctx,els,pending,renders:()=>renders,switchUser:()=>{ctx.commissionerAuthEpoch++;ctx.commissionerUserId='commissioner-b';
+  const next={picks:[{golfer:99}],golfers:[],teams:[],timerPaused:true,timerLength:30};ctx.S=next;return next;}};
+}
+test('old commissioner rejected pick cannot roll back new commissioner draft',async()=>{
+ const h=actionHarness(),work=h.ctx.doPick(0);assert.equal(h.pending.length,1);
+ const next=h.switchUser();h.pending[0].reject(Error('synthetic conflict'));await work;
+ assert.equal(h.ctx.S,next);assert.equal(h.renders(),0);
+});
+test('old commissioner successful setup save cannot reopen live view in new login',async()=>{
+ const h=actionHarness(),work=h.els.saveSetup.onclick();assert.equal(h.pending.length,1);
+ const next=h.switchUser();h.pending[0].resolve();await work;
+ assert.equal(h.ctx.S,next);assert.equal(h.ctx.liveMode,false);assert.equal(h.els.live.style.display,'none');
+});
+test('old commissioner failed pause cannot restore stale state into new login',async()=>{
+ const h=actionHarness(),work=h.els.pause.onclick();assert.equal(h.pending.length,1);
+ const next=h.switchUser();h.pending[0].reject(Error('synthetic conflict'));await work;
+ assert.equal(h.ctx.S,next);assert.equal(h.renders(),0);
+});
+test('current commissioner failed pause still rolls back optimistic change',async()=>{
+ const h=actionHarness(),before=JSON.stringify(h.ctx.S),work=h.els.pause.onclick();
+ h.pending[0].reject(Error('synthetic conflict'));await work;
+ assert.equal(JSON.stringify(h.ctx.S),before);
+});
