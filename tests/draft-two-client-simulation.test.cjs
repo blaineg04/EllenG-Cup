@@ -502,3 +502,25 @@ test('realtime notification arriving while disconnected cannot resurrect a stale
  assert.equal(captain.buttons[0].disabled,true);
  assert.equal(captain.strip.has('status-live'),false);
 });
+
+
+test('new reconnect succeeds after an old disconnected realtime update is discarded',async()=>{
+ const server={state:fresh()};
+ const captain=startClient(server);
+ await captain.status('SUBSCRIBED');
+ let release;
+ server.readState=()=>new Promise(resolve=>{release=resolve});
+ const oldUpdate=captain.change();
+ await captain.status('TIMED_OUT');
+ server.state.picks.push({team:0,golfer:0});
+ server.state.golfers[0].team=0;
+ server.state.teams[0].roster.push(0);
+ release({data:{state:structuredClone(server.state)},error:null});
+ await oldUpdate;
+ assert.equal(captain.state().picks.length,0);
+ server.readState=null;
+ await captain.status('SUBSCRIBED');
+ assert.equal(captain.state().picks.length,1);
+ assert.equal(captain.indicator.textContent,'LIVE');
+ assert.ok(captain.strip.has('status-live'));
+});
