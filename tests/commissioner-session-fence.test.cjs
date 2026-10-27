@@ -79,3 +79,60 @@ test('signout during save authentication prevents commissioner database write',a
  assert.deepEqual(h.writes,[]);
  assert.equal(h.elements.adminApp.style.display,'none');
 });
+
+
+// Rehearsal gate: the commissioner overrides common.js load(), but must preserve
+// subscribe()'s onApplied contract or the UI remains stuck at SYNCING.
+const commonSource=fs.readFileSync('common.js','utf8');
+const subscribeStart=commonSource.indexOf('function subscribe(cb)');
+const subscribeEnd=commonSource.indexOf('function remaining()',subscribeStart);
+const commissionerLoadStart=source.indexOf('let commissionerLoadRequest=0;');
+const commissionerLoadEnd=source.indexOf('async function secureSave()',commissionerLoadStart);
+assert.ok(subscribeStart>=0&&subscribeEnd>subscribeStart&&commissionerLoadStart>=0&&commissionerLoadEnd>commissionerLoadStart);
+function commissionerRealtimeHarness(){
+ const indicator={textContent:'',className:''},classes=new Set(),pending=[];
+ const strip={classList:{add:n=>classes.add(n),remove:(...names)=>names.forEach(n=>classes.delete(n))}};
+ const button={disabled:false};let status,change,renders=0;
+ const channel={on(_type,_filter,cb){change=cb;return this},subscribe(cb){status=cb;return this}};
+ const ctx={
+  S:{picks:[]},fresh:()=>({picks:[]}),savingDraft:false,draftUpdatedAt:null,
+  commissionerAuthEpoch:0,commissionerUserId:'commissioner-a',cfg:{draftId:'synthetic-only'},
+  db:{channel:()=>channel,from:()=>({select:()=>({eq:()=>({single:()=>new Promise(resolve=>pending.push(resolve))})})})},
+  document:{getElementById:id=>id==='connection'?indicator:id==='draftStatusStrip'?strip:null,querySelectorAll:()=>[button]},
+  console:{error:()=>{}}
+ };
+ vm.createContext(ctx);
+ vm.runInContext(source.slice(commissionerLoadStart,commissionerLoadEnd)+'\n'+commonSource.slice(subscribeStart,subscribeEnd)+'\nthis.connect=subscribe;this.getState=()=>S;',ctx);
+ ctx.connect(()=>renders++);
+ return {ctx,indicator,classes,pending,button,emit:s=>status(s),change:()=>change(),
+  reply:(index,picks,updated_at='2026-10-27T10:00:00Z')=>pending[index]({data:{state:{picks},updated_at},error:null}),
+  state:()=>ctx.getState(),renders:()=>renders};
+}
+test('commissioner subscription reaches LIVE only after an applied authoritative refresh',async()=>{
+ const h=commissionerRealtimeHarness(),connecting=h.emit('SUBSCRIBED');
+ assert.equal(h.indicator.textContent,'SYNCING');
+ assert.equal(h.renders(),0);
+ h.reply(0,[{golfer:1}]);await connecting;
+ assert.equal(h.indicator.textContent,'LIVE');
+ assert.ok(h.classes.has('status-live'));
+ assert.equal(h.state().picks.length,1);
+ assert.equal(h.renders(),1);
+});
+test('commissioner delayed refresh cannot apply after session revocation',async()=>{
+ const h=commissionerRealtimeHarness(),connecting=h.emit('SUBSCRIBED');
+ h.ctx.commissionerAuthEpoch++;
+ h.ctx.commissionerUserId=null;
+ h.reply(0,[{golfer:1}]);await connecting;
+ assert.equal(h.state().picks.length,0);
+ assert.notEqual(h.indicator.textContent,'LIVE');
+ assert.equal(h.renders(),0);
+});
+test('commissioner concurrent refresh cannot overwrite a newer response',async()=>{
+ const h=commissionerRealtimeHarness(),first=h.emit('SUBSCRIBED'),second=h.change();
+ assert.equal(h.pending.length,2);
+ h.reply(1,[{golfer:2}],'2026-10-27T10:00:02Z');await second;
+ h.reply(0,[{golfer:1}],'2026-10-27T10:00:01Z');await first;
+ assert.equal(h.state().picks[0].golfer,2);
+ assert.equal(h.renders(),1);
+ assert.equal(h.indicator.textContent,'LIVE');
+});

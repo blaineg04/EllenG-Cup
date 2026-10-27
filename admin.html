@@ -17,15 +17,20 @@
 let draftUpdatedAt=null;
 let savingDraft=false;
 let commissionerAuthEpoch=0,commissionerOpenId=0,commissionerUserId=null;
-load=async function(){
- if(savingDraft)return S;
+// The shared Realtime subscriber passes an eligibility guard and an applied callback.
+// Preserve that contract while fencing superseded reads and commissioner sign-out.
+let commissionerLoadRequest=0;
+load=async function(isCurrent=()=>true,onApplied=()=>{}){
+ if(savingDraft||!commissionerUserId)return S;
+ const request=++commissionerLoadRequest,authEpoch=commissionerAuthEpoch,userId=commissionerUserId;
  const {data,error}=await db.from("elleng_drafts").select("state,updated_at").eq("id",cfg.draftId).single();
  if(error)throw error;
- if(savingDraft)return S;
+ if(savingDraft||request!==commissionerLoadRequest||authEpoch!==commissionerAuthEpoch||userId!==commissionerUserId||!isCurrent())return S;
  // An older realtime response must never roll back a successfully saved draft.
  if(draftUpdatedAt&&new Date(data.updated_at).getTime()<new Date(draftUpdatedAt).getTime())return S;
  draftUpdatedAt=data.updated_at;
  S={...fresh(),...data.state};
+ onApplied();
  return S;
 };
 async function secureSave(){
