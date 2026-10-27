@@ -68,22 +68,25 @@
    if(result.error) throw result.error;
    return result.data;
  }
- function approvedGolferIndices(rows,tournamentId){
+ // Share the same validated eligibility rules with commissioner draft setup.
+ function approvedGolferIndices(rows,tournamentId,availableGolfers){
    if(!Array.isArray(rows)) throw new TypeError('RSVP rows must be an array');
    const id=requireId(tournamentId,'Tournament ID');
-   const users=new Set(), golfers=new Set(), approved=[];
+   if(!Array.isArray(availableGolfers)) throw new TypeError('Golfer directory required');
+   const seenUsers=new Set(), seenGolfers=new Set(), approved=[];
    for(const row of rows){
      if(!row||row.tournament_id!==id) continue;
      requireId(row.user_id,'Account ID');
      const index=requireIndex(row.golfer_index);
-     if(users.has(row.user_id)) throw new Error('Duplicate RSVP account in event');
-     users.add(row.user_id);
+     if(seenUsers.has(row.user_id)) throw new Error('Duplicate RSVP account in event');
+     seenUsers.add(row.user_id);
      if(!['playing','maybe','out'].includes(row.status)) throw new Error('Invalid RSVP status');
      if(!['pending','approved','declined'].includes(row.approval_status)) throw new Error('Invalid approval status');
      if(row.status!=='playing'||row.approval_status!=='approved') continue;
-     if(golfers.has(index)) throw new Error('Duplicate approved golfer in event');
-     golfers.add(index);
-     approved.push(index);
+     if(seenGolfers.has(index)) throw new Error('Duplicate approved golfer in event');
+     if(typeof availableGolfers[index]?.name!=='string'||!availableGolfers[index].name.trim())
+       throw new Error('Approved golfer missing from directory');
+     seenGolfers.add(index);approved.push(index);
    }
    return approved.sort((a,b)=>a-b);
  }
