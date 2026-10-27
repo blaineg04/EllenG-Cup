@@ -232,3 +232,21 @@ test('old commissioner failed setup save cannot change replacement login view',a
  assert.equal(h.ctx.liveMode,false);
  assert.equal(h.els.live.style.display,'none');
 });
+
+test('old commissioner successful pause cannot update replacement login screen',async()=>{
+ const h=actionHarness(),work=h.els.pause.onclick();
+ assert.equal(h.pending.length,1);
+ const next=h.switchUser();
+ h.pending[0].resolve();await work;
+ assert.equal(h.ctx.S,next);
+ assert.equal(h.renders(),0);
+ assert.equal(h.ctx.liveMode,false);
+});
+test('old commissioner rejected pick cannot reenable stale draft controls in replacement login',async()=>{
+ const h=actionHarness(),work=h.ctx.doPick(0);
+ const next=h.switchUser();
+ h.pending[0].reject(Error('synthetic conflict'));await work;
+ assert.equal(h.ctx.S,next);
+ assert.equal(h.renders(),0);
+ assert.deepEqual(next.picks,[{golfer:99}]);
+});
