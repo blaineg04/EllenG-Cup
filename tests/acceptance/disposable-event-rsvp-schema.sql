@@ -183,4 +183,19 @@ begin
    raise exception 'Duplicate golfer identity was persisted';
  end if;
 end $identity$;
+-- The original account cannot switch to another golfer_index either.
+select set_config('test.actor','cccccccc-cccc-cccc-cccc-cccccccccccc',false);
+do $identity$
+begin
+ begin
+  perform public.elleng_submit_event_rsvp('nov20',3,'maybe');
+  raise exception 'Existing player changed golfer identity through RSVP';
+ exception when unique_violation then null;
+ end;
+ if not exists(select 1 from public.elleng_event_rsvps
+   where tournament_id='nov20' and user_id='cccccccc-cccc-cccc-cccc-cccccccccccc'
+   and golfer_index=2 and status='playing') then
+   raise exception 'Rejected identity switch mutated original RSVP';
+ end if;
+end $identity$;
 select 'PASS: player RSVP draft lock and identity fixture' as result;
