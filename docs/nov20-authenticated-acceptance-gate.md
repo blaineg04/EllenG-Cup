@@ -99,3 +99,13 @@ Re-fetched the actual database definitions for all three privileged draft RPCs (
 - `elleng_save_state_if_fresh` requires the draft owner and exact `updated_at` match, rejecting stale writes with SQLSTATE `40001`.
 
 These are static function-body observations, not authenticated execution results. Do not mark cross-device or permission acceptance as passed.
+
+## CRITICAL — October 27 scoring RLS permissive-policy bypass (release blocker)
+
+**Read-only `pg_policies` audit of the actual EllenG Supabase project identified a potentially exploitable authorization bypass. Do not deploy or permit live scoring until fixed and authenticated negative-case tested.**
+
+- `elleng_team_scores`, `elleng_player_hole_scores`, and `elleng_pair_hole_scores` each have separate `active live ... insert/update/delete guard` policies `TO authenticated` which check only the tournament status (`setup`/`live`) and team index range, **without checking `auth.uid()` or captain/commissioner ownership**.
+- Separate `captain or commissioner ...`, `shamble_team_...`, and `pair_team_...` policies do enforce ownership, but PostgreSQL **permissive** RLS policies combine with OR by default. Therefore the active-live policies may authorize otherwise-unassigned authenticated users to INSERT, UPDATE, or DELETE score rows while the tournament is in setup/live status. This is a static policy analysis, not an exploit test.
+- **Remediation proposal (NOT APPLIED):** review `pg_policies.permissive` and convert active-live guard policies to `AS RESTRICTIVE` (AND semantics), preserving team/commissioner policies as permissive, or combine status and ownership into one permission policy per operation. Verify table privileges, FK behavior, and score writer roles first. The existing player-hole policy is hard-coded to draft ID `elleng-cup`, requiring special care with disposable test drafts.
+- **Acceptance tests:** unrelated signed-in account cannot insert/update/delete any score row; captain can edit only their team; commissioner can edit allowed teams; finalized/archived tournament is immutable; valid live scoring still works. Use disposable records and accounts, never the existing live tournament.
+- **Decision:** Block production scoring release until the authorization flaw is fixed and validated. No production database changes were made during discovery.
