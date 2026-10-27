@@ -29,7 +29,7 @@ function adminAccess({user={id:'owner'},data={owner_id:'owner',state:{}},error=n
  const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{style:{display:id==='adminApp'?'none':'block'},textContent:''});return nodes.get(id)};
  let rendered=0;
  const query={select(){return this},eq(){return this},maybeSingle:async()=>{if(rejectLookup)throw new Error("Network request rejected");return {data,error}}};
- const context={db:{auth:{getUser:async()=>({data:{user},error:authError})},from:()=>query},cfg:{draftId:'test'},document:{getElementById:node},alert(){},fresh:()=>({}),S:{},setupRender(){rendered++},subscribe(){},tick:1};
+ const context={db:{auth:{getUser:async()=>({data:{user},error:authError})},from:()=>query},cfg:{draftId:'test'},document:{getElementById:node},alert(){},fresh:()=>({}),S:{},setupRender(){rendered++},subscribe(){},stopCommissionerSubscription(){},commissionerAuthEpoch:0,commissionerOpenId:0,commissionerUserId:null,commissionerChannel:null,tick:1};
  vm.runInNewContext(html.slice(start,end),context);
  return {run:()=>context.openAdmin(),node,rendered:()=>rendered};
 }
