@@ -72,3 +72,14 @@ test('attendance counts unwrap PostgREST table-returning arrays',async()=>{
  const db={from(){},rpc(){return Promise.resolve({data:[{playing:3,maybe:2,out_count:1,approved_playing:2}],error:null})}};
  assert.deepEqual(await rsvp.counts(db,'nov20'),{playing:3,maybe:2,out_count:1,approved_playing:2});
 });
+
+test('attendance totals fail closed on database errors',async()=>{
+ const failure=new Error('permission denied');
+ const db={from(){},rpc(){return Promise.resolve({data:null,error:failure})}};
+ await assert.rejects(rsvp.counts(db,'nov20'),/permission denied/);
+});
+test('attendance totals reject missing tournament ID before database call',async()=>{
+ const db=fakeDb();
+ await assert.rejects(rsvp.counts(db,'  '),/Tournament ID is required/);
+ assert.deepEqual(db.calls,[]);
+});
