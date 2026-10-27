@@ -16,6 +16,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script>
 let draftUpdatedAt=null;
 let savingDraft=false;
+let commissionerAuthEpoch=0,commissionerOpenId=0,commissionerUserId=null;
 load=async function(){
  if(savingDraft)return S;
  const {data,error}=await db.from("elleng_drafts").select("state,updated_at").eq("id",cfg.draftId).single();
@@ -30,23 +31,28 @@ load=async function(){
 async function secureSave(){
  if(savingDraft)throw new Error("A draft save is already in progress.");
  savingDraft=true;
+ const saveEpoch=commissionerAuthEpoch,saveUserId=commissionerUserId;
+ const sameCommissionerSession=()=>saveEpoch===commissionerAuthEpoch&&saveUserId===commissionerUserId&&!!saveUserId;
  try{
+  if(!sameCommissionerSession())throw new Error("Commissioner session must be verified before saving.");
   const {data:{user},error:authError}=await db.auth.getUser();
   if(authError)throw authError;
-  if(!user)throw new Error("Commissioner sign-in required.");
+  if(!sameCommissionerSession()||user?.id!==saveUserId)throw new Error("Commissioner session changed while saving.");
   if(draftUpdatedAt===null){
    const {data,error}=await db.from("elleng_drafts").insert({id:cfg.draftId,owner_id:user.id,state:S,updated_at:new Date().toISOString()}).select("updated_at").single();
    if(error)throw error;
+   if(!sameCommissionerSession())throw new Error("Commissioner session changed while saving.");
    draftUpdatedAt=data.updated_at;
   }else{
    const {data,error}=await db.rpc("elleng_save_state_if_fresh",{p_draft_id:cfg.draftId,p_expected_updated_at:draftUpdatedAt,p_state:S});
    if(error)throw error;
+   if(!sameCommissionerSession())throw new Error("Commissioner session changed while saving.");
    const saved=Array.isArray(data)?data[0]:data;
    if(!saved?.updated_at)throw new Error("Draft save was not confirmed.");
    draftUpdatedAt=saved.updated_at;
   }
  }catch(error){
-  alert("Draft was not saved. "+(error?.message||"Please reload before trying again.")+" Reload the page before making another change.");
+  if(sameCommissionerSession())alert("Draft was not saved. "+(error?.message||"Please reload before trying again.")+" Reload the page before making another change.");
   throw error;
  }finally{savingDraft=false}
 }
@@ -114,22 +120,45 @@ document.getElementById("resetClock").onclick=()=>saveCommissionerAction(()=>{
  S.timerPaused=false;
  S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();
 });
+// Invalidate pending commissioner lookups when the account changes. A late
+// getUser/draft response must not restore the old commissioner's controls.
+function revokeCommissionerSession(){
+ commissionerAuthEpoch++;commissionerOpenId++;commissionerUserId=null;
+ draftUpdatedAt=null;
+ document.getElementById("loginCard").style.display="block";
+ document.getElementById("adminApp").style.display="none";
+ document.getElementById("connection").textContent="SIGN IN";
+ document.getElementById("authMsg").textContent="Commissioner session changed. Sign in again.";
+ document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
+}
+db.auth.onAuthStateChange((event,session)=>{
+ if(event==="SIGNED_OUT"||
+    (commissionerUserId&&["SIGNED_IN","TOKEN_REFRESHED","USER_UPDATED"].includes(event)&&session?.user?.id!==commissionerUserId)){
+  revokeCommissionerSession();
+ }
+});
 async function openAdmin(){
+ const openId=++commissionerOpenId,authEpoch=commissionerAuthEpoch;
+ const stillCurrent=()=>openId===commissionerOpenId&&authEpoch===commissionerAuthEpoch;
  const loginCard=document.getElementById("loginCard"),app=document.getElementById("adminApp"),msg=document.getElementById("authMsg"),status=document.getElementById("connection");
  loginCard.style.display="block";app.style.display="none";msg.textContent="";status.textContent="VERIFYING";
  try{
   const {data:authData,error:authError}=await db.auth.getUser();
+  if(!stillCurrent())return;
   if(authError)throw authError;
   const user=authData?.user;
   if(!user){status.textContent="SIGN IN";return}
   const {data,error}=await db.from("elleng_drafts").select("state,owner_id,updated_at").eq("id",cfg.draftId).maybeSingle();
+  if(!stillCurrent())return;
   if(error)throw error;
   if(data?.owner_id && data.owner_id!==user.id){status.textContent="NO ACCESS";msg.textContent="This draft is owned by another commissioner account. Return to Main Menu or sign in with the commissioner account.";return}
   if(data){S={...fresh(),...data.state};draftUpdatedAt=data.updated_at;}else draftUpdatedAt=null;
+  commissionerUserId=user.id;
   loginCard.style.display="none";app.style.display="block";status.textContent="READY";
   setupRender();subscribe(()=>{if(liveMode)liveRender();else setupRender()});
   if(!tick)tick=setInterval(()=>{if(liveMode)drawClock()},500);
  }catch(e){
+  if(!stillCurrent())return;
   loginCard.style.display="block";app.style.display="none";status.textContent="UNAVAILABLE";
   msg.textContent="Unable to verify commissioner access. Refresh and try again.";
  }
@@ -141,8 +170,9 @@ document.getElementById("login").onclick=async()=>{
  const msg=document.getElementById("authMsg"),status=document.getElementById("connection");
  if(!email||!password){msg.textContent="Enter commissioner email and password.";status.textContent="SIGN IN";return}
  const label=button.textContent;button.disabled=true;button.textContent="Signing In…";msg.textContent="Signing in…";status.textContent="CONNECTING";
+ const loginEpoch=commissionerAuthEpoch;
  try{
-  const {error}=await db.auth.signInWithPassword({email,password});if(error)throw error;
+  const {error}=await db.auth.signInWithPassword({email,password});if(loginEpoch!==commissionerAuthEpoch)return;if(error)throw error;
   passwordInput.value="";msg.textContent="";await openAdmin();
  }catch(e){status.textContent="ERROR";msg.textContent=e?.message||"Sign-in unavailable. Try again.";}
  finally{button.disabled=false;button.textContent=label;}
