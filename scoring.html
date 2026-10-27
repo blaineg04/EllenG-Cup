@@ -4369,7 +4369,7 @@ function renderRsvp(){
  const controls=$("myRsvpControls"),summary=$("rsvpSummary");if(!controls||!summary)return;
  const adminReset=$("commissionerRsvpReset");if(adminReset)adminReset.classList.toggle("hidden",!isCommissioner);
  const mine=user?rsvps.find(r=>r.user_id===user.id):null;
- controls.innerHTML=(!EVENT_RSVP_MODE||eventRsvpCounts!==null)&&user&&Number.isInteger(currentGolferIndex)?["playing","maybe","out","clear"].map(s=>`<button class="rsvp-btn ${mine?.status===s?"active":""}" type="button" data-rsvp="${s}">${s==="playing"?"✅ Playing":s==="maybe"?"🤔 Maybe":s==="out"?"❌ Out":"↺ Clear RSVP"}</button>`).join(""):'<div class="note">Sign in with a linked player account to RSVP.</div>';
+ controls.innerHTML=(!EVENT_RSVP_MODE||eventRsvpCounts!==null)&&user&&Number.isInteger(currentGolferIndex)?["playing","maybe","out","clear"].map(s=>`<button class="rsvp-btn ${mine?.status===s?"active":""}" type="button" data-rsvp="${s}">${s==="playing"?"✅ Playing":s==="maybe"?"🤔 Maybe":s==="out"?"❌ Out":"↺ Clear RSVP"}</button>`).join(""):(EVENT_RSVP_MODE&&eventRsvpCounts===null?'<div class="note">RSVP is temporarily unavailable. Please retry after attendance loads.</div>':'<div class="note">Sign in with a linked player account to RSVP.</div>');
  controls.querySelectorAll("[data-rsvp]").forEach(b=>b.addEventListener("click",()=>setMyRsvp(b.dataset.rsvp)));
  const counts={playing:0,maybe:0,out:0};
  if(EVENT_RSVP_MODE){
