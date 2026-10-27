@@ -38,6 +38,15 @@ begin
     or coalesce((v_state->>'draftStarted')::boolean,false) then
    raise exception 'Draft roster is locked; RSVP changes are closed' using errcode='55000';
  end if;
+ -- Reject identity reassignment: one authenticated account must not silently
+ -- take over a different golfer's existing RSVP within this event.
+ if exists (
+   select 1 from public.elleng_event_rsvps
+   where tournament_id=p_tournament_id and golfer_index=p_golfer_index
+     and user_id<>v_actor
+ ) then
+   raise exception 'Golfer is already associated with another account for this event' using errcode='23505';
+ end if;
  -- Caller identity is derived from auth.uid(); never accept a supplied user ID.
  insert into public.elleng_event_rsvps(tournament_id,user_id,golfer_index,status)
  values(p_tournament_id,v_actor,p_golfer_index,p_status)
