@@ -32,7 +32,7 @@ jobs:
         with:
           node-version: '22'
       - name: Run local-only synthetic draft, scoring and reference schema security tests
-        run: node --test tests/*.test.cjs
+        run: node --test tests/*.test.cjs tests/acceptance/*.test.cjs
   visual-matrix:
     runs-on: ubuntu-latest
     timeout-minutes: 20
