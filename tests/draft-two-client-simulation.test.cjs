@@ -321,3 +321,24 @@ test('a captain catches up on picks made during two consecutive outages',async()
  assert.deepEqual(Array.from(captain.state().teams[0].roster),[0]);
  assert.deepEqual(Array.from(captain.state().teams[1].roster),[1]);
 });
+
+test('reconnect after a closed channel restores both picks and timer without duplicates',async()=>{
+ const server={state:fresh()};
+ const captain=startClient(server);
+ await captain.status('SUBSCRIBED');
+ await captain.status('CLOSED');
+ server.state.picks.push({team:0,golfer:0});
+ server.state.golfers[0].team=0;
+ server.state.teams[0].roster.push(0);
+ server.state.timerPaused=false;
+ server.state.timerEndsAt='2026-11-13T18:03:00Z';
+ await captain.change();
+ assert.equal(captain.state().picks.length,0);
+ assert.equal(captain.buttons[0].disabled,true);
+ await captain.status('SUBSCRIBED');
+ await captain.status('SUBSCRIBED');
+ assert.equal(captain.state().picks.length,1);
+ assert.deepEqual(Array.from(captain.state().teams[0].roster),[0]);
+ assert.equal(captain.state().timerEndsAt,'2026-11-13T18:03:00Z');
+ assert.equal(captain.indicator.textContent,'LIVE');
+});
