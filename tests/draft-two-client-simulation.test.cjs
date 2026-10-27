@@ -96,3 +96,35 @@ test('reconnect restores the same server timer deadline after missed picks',asyn
  assert.equal(viewer.state().picks.length,captain.state().picks.length);
  assert.equal(viewer.indicator.textContent,'LIVE');
 });
+
+test('two viewers independently catch up after successive server picks',async()=>{
+ const server={state:fresh()};
+ server.state.golfers.push({name:'Second synthetic golfer',team:null});
+ const captain=startClient(server),viewerA=startClient(server),viewerB=startClient(server);
+ await captain.status('SUBSCRIBED');
+ await viewerA.status('SUBSCRIBED');
+ await viewerB.status('SUBSCRIBED');
+ await viewerA.status('TIMED_OUT');
+ await viewerB.status('CHANNEL_ERROR');
+ server.state.picks.push({team:0,golfer:0});
+ server.state.golfers[0].team=0;
+ server.state.teams[0].roster.push(0);
+ await captain.change();
+ server.state.picks.push({team:1,golfer:1});
+ server.state.golfers[1].team=1;
+ server.state.teams[1].roster.push(1);
+ await captain.change();
+ assert.equal(captain.state().picks.length,2);
+ assert.equal(viewerA.state().picks.length,0);
+ assert.equal(viewerB.state().picks.length,0);
+ await viewerA.status('SUBSCRIBED');
+ assert.equal(viewerA.state().picks.length,2);
+ assert.equal(viewerB.state().picks.length,0);
+ assert.equal(viewerB.buttons[0].disabled,true);
+ await viewerB.status('SUBSCRIBED');
+ assert.equal(viewerB.state().picks.length,2);
+ assert.equal(viewerA.state().teams[0].roster.length,1);
+ assert.equal(viewerB.state().teams[1].roster.length,1);
+ assert.equal(viewerA.indicator.textContent,'LIVE');
+ assert.equal(viewerB.indicator.textContent,'LIVE');
+});
