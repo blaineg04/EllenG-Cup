@@ -127,3 +127,20 @@ test('delayed captain role lookup cannot restore access after signout',async()=>
  assert.equal(ctx.myTeam,null);
  assert.equal(ctx.captainUserId,null);
 });
+
+test('captain assignment lookup uses only columns in baseline SQL schema',async()=>{
+ let selected;
+ const query={eq(){return this},single:async()=>({data:{team_index:1},error:null})};
+ const ctx={myTeam:null,captainUserId:null,captainAuthEpoch:0,
+  document:{getElementById:()=>({textContent:''})},
+  db:{auth:{getUser:async()=>({data:{user:{id:'captain-a'}}})},
+   from:table=>{assert.equal(table,'elleng_captains');return {select:columns=>{selected=columns;return query}}}}};
+ const start=source.indexOf('async function whoami()');
+ const end=source.indexOf('let draftSoundEnabled',start);
+ vm.createContext(ctx);
+ vm.runInContext(source.slice(start,end)+';this.checkCaptain=whoami;',ctx);
+ assert.equal(await ctx.checkCaptain(),true);
+ assert.equal(selected,'team_index');
+ assert.equal(ctx.myTeam,1);
+ assert.equal(ctx.captainUserId,'captain-a');
+});
