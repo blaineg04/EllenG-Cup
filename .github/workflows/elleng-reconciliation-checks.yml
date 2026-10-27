@@ -79,3 +79,22 @@ jobs:
           persist-credentials: false
       - name: Exercise synthetic atomic prototype and roll back everything
         run: psql -X -v ON_ERROR_STOP=1 -f tests/acceptance/atomic-shamble-fixture.sql
+  atomic-concurrency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify transaction serialization across independent database clients
+        run: bash tests/acceptance/atomic-shamble-concurrent-sessions.sh
