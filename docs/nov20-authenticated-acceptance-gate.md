@@ -79,3 +79,7 @@ Read-only function definitions show:
 Required authenticated negative-case tests on isolated fixtures: unrelated signed-in user calling each RPC; wrong-turn captain manual pick; captain auto-pick before deadline; captain attempting commissioner save; concurrent picks and stale save. Confirm elevated functions cannot be abused through unexpected inputs or helper functions.
 
 **No production policies, functions, authentication settings, or records were changed.** Static inspection does not satisfy the real-device acceptance gate.
+
+### Confirmed RPC EXECUTE grants (read-only catalog inspection)
+
+For `elleng_auto_pick`, `elleng_make_pick`, and `elleng_save_state_if_fresh`, explicit `pg_proc.proacl` entries grant EXECUTE to `postgres`, `authenticated`, and `service_role`; no explicit `anon` or `PUBLIC` grant was present. These functions all use SECURITY DEFINER. The authenticated role can invoke them, so the in-function checks are essential. The absence of an explicit anon grant is not a substitute for a real anonymous-call test or an effective-permissions check. Verify `has_function_privilege` and negative cases in isolated acceptance before treating RPC exposure as cleared.
