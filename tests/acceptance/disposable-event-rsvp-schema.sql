@@ -138,6 +138,8 @@ select 'PASS: event RSVP schema and commissioner approval fixture' as result;
 
 -- Validate player-owned submission and draft-lock behavior in the disposable DB.
 \i docs/proposed-event-rsvp-player-submit-rpc-20261027.sql
+-- Restore an open draft after the preceding negative lock tests.
+update public.elleng_drafts set state='{"picks":[]}'::jsonb where id='draft-1';
 select set_config('test.actor','cccccccc-cccc-cccc-cccc-cccccccccccc',false);
 select public.elleng_submit_event_rsvp('nov20',2,'playing');
 do $player$
