@@ -34,14 +34,20 @@ test('commissioner enrollment and approval call separate RPCs',async()=>{
  assert.deepEqual(db.calls.map(x=>x.name),['elleng_assign_event_golfer','elleng_approve_event_rsvp']);
  await assert.rejects(rsvp.decide(db,'event-20','account-1','pending'),/Invalid approval/);
 });
-test('only approved playing golfers are eligible, without duplicates',()=>{
+test('approved roster is scoped to event, verified directory and playing approval',()=>{
+ const golfers=Array.from({length:5},(_,i)=>({name:'Golfer '+i}));
  assert.deepEqual(rsvp.approvedGolferIndices([
-  {golfer_index:2,status:'playing',approval_status:'approved'},
-  {golfer_index:2,status:'playing',approval_status:'approved'},
-  {golfer_index:3,status:'maybe',approval_status:'approved'},
-  {golfer_index:4,status:'playing',approval_status:'pending'},
-  {golfer_index:-1,status:'playing',approval_status:'approved'}
- ]),[2]);
+  {tournament_id:'nov20',user_id:'a',golfer_index:2,status:'playing',approval_status:'approved'},
+  {tournament_id:'next',user_id:'a',golfer_index:2,status:'playing',approval_status:'approved'},
+  {tournament_id:'nov20',user_id:'b',golfer_index:3,status:'maybe',approval_status:'approved'},
+  {tournament_id:'nov20',user_id:'c',golfer_index:4,status:'playing',approval_status:'pending'}
+ ],'nov20',golfers),[2]);
+});
+test('duplicate approved golfer and missing directory golfer fail closed',()=>{
+ const golfers=[{name:'Golfer 0'},{name:'Golfer 1'}];
+ const record=(user,index)=>({tournament_id:'nov20',user_id:user,golfer_index:index,status:'playing',approval_status:'approved'});
+ assert.throws(()=>rsvp.approvedGolferIndices([record('a',1),record('b',1)],'nov20',golfers),/Duplicate approved golfer/);
+ assert.throws(()=>rsvp.approvedGolferIndices([record('a',2)],'nov20',golfers),/missing from directory/);
 });
 test('surfaces Supabase RPC errors rather than claiming a saved RSVP',async()=>{
  const db={from(){},rpc(){return Promise.resolve({error:new Error('Permission denied')})}};
@@ -56,10 +62,11 @@ test('clear RSVP uses authenticated RPC and never deletes golfer association',as
  assert.equal(db.calls.length,1);
 });
 test('cleared RSVP is not draft eligible',()=>{
+ const golfers=Array.from({length:3},(_,i)=>({name:'Golfer '+i}));
  assert.deepEqual(rsvp.approvedGolferIndices([
-  {golfer_index:1,status:null,approval_status:'pending'},
-  {golfer_index:2,status:'playing',approval_status:'approved'}
- ]),[2]);
+  {tournament_id:'nov20',user_id:'cleared',golfer_index:1,status:'out',approval_status:'pending'},
+  {tournament_id:'nov20',user_id:'playing',golfer_index:2,status:'playing',approval_status:'approved'}
+ ],'nov20',golfers),[2]);
 });
 
 test('attendance counts use event RPC rather than visible player rows',async()=>{
