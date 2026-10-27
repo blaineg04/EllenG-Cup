@@ -60,7 +60,7 @@ function authHarness(){
   connection:{textContent:'LIVE'},msg:{textContent:''}};
  const buttons=[{disabled:false}];
  let callback;
- const ctx={myTeam:0,captainUserId:'captain-a',pickSyncFailed:false,
+ const ctx={myTeam:0,captainUserId:'captain-a',captainAuthEpoch:0,pickSyncFailed:false,
   document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons},
   db:{auth:{onAuthStateChange:cb=>{callback=cb}}}};
  const start=source.indexOf('function revokeCaptainSession()');
@@ -75,6 +75,7 @@ test('captain signout immediately revokes draft controls',()=>{
  const h=authHarness();h.change('SIGNED_OUT',null);
  assert.equal(h.ctx.myTeam,null);
  assert.equal(h.ctx.captainUserId,null);
+ assert.equal(h.ctx.captainAuthEpoch,1);
  assert.equal(h.ctx.pickSyncFailed,true);
  assert.equal(h.elements.app.style.display,'none');
  assert.equal(h.elements.login.style.display,'block');
@@ -103,4 +104,26 @@ test('captain pick requires a verified captain identity even if realtime says LI
  const h=harness();h.ctx.captainUserId=null;
  await h.pick(0);
  assert.equal(h.calls.length,0);
+});
+
+test('delayed captain role lookup cannot restore access after signout',async()=>{
+ let resolveAssignment;
+ const query={eq(){return this},single(){return new Promise(resolve=>{resolveAssignment=resolve})}};
+ const ctx={myTeam:null,captainUserId:null,captainAuthEpoch:0,
+  document:{getElementById:()=>({textContent:''})},
+  db:{auth:{getUser:async()=>({data:{user:{id:'captain-a'}}})},
+   from:()=>({select:()=>query})}};
+ const start=source.indexOf('async function whoami()');
+ const end=source.indexOf('let draftSoundEnabled',start);
+ assert.ok(start>0&&end>start);
+ vm.createContext(ctx);
+ vm.runInContext(source.slice(start,end)+';this.checkCaptain=whoami;',ctx);
+ const pending=ctx.checkCaptain();
+ await Promise.resolve();
+ assert.equal(typeof resolveAssignment,'function');
+ ctx.captainAuthEpoch++;
+ resolveAssignment({data:{team_index:0},error:null});
+ assert.equal(await pending,false);
+ assert.equal(ctx.myTeam,null);
+ assert.equal(ctx.captainUserId,null);
 });
