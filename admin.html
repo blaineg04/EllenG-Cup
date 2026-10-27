@@ -16,7 +16,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script>
 let draftUpdatedAt=null;
 let savingDraft=false;
-let commissionerAuthEpoch=0,commissionerOpenId=0,commissionerUserId=null;
+let commissionerAuthEpoch=0,commissionerOpenId=0,commissionerUserId=null;let commissionerChannel=null;
 // The shared Realtime subscriber passes an eligibility guard and an applied callback.
 // Preserve that contract while fencing superseded reads and commissioner sign-out.
 let commissionerLoadRequest=0;
@@ -129,12 +129,21 @@ document.getElementById("resetClock").onclick=()=>saveCommissionerAction(()=>{
 // getUser/draft response must not restore the old commissioner's controls.
 function revokeCommissionerSession(){
  commissionerAuthEpoch++;commissionerOpenId++;commissionerUserId=null;
+ stopCommissionerSubscription();
  draftUpdatedAt=null;
  document.getElementById("loginCard").style.display="block";
  document.getElementById("adminApp").style.display="none";
  document.getElementById("connection").textContent="SIGN IN";
  document.getElementById("authMsg").textContent="Commissioner session changed. Sign in again.";
  document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
+}
+// A revoked or superseded commissioner must not leave an active Realtime listener.
+// Unsubscription is best-effort; auth epochs still fence callbacks already in flight.
+function stopCommissionerSubscription(){
+ const channel=commissionerChannel;commissionerChannel=null;
+ if(!channel)return;
+ try{Promise.resolve(channel.unsubscribe()).catch(error=>console.error("Commissioner draft unsubscribe failed",error));}
+ catch(error){console.error("Commissioner draft unsubscribe failed",error)}
 }
 db.auth.onAuthStateChange((event,session)=>{
  if(event==="SIGNED_OUT"||
@@ -143,6 +152,8 @@ db.auth.onAuthStateChange((event,session)=>{
  }
 });
 async function openAdmin(){
+ // A new verification supersedes any previous subscription, draft read or save.
+ stopCommissionerSubscription();commissionerAuthEpoch++;commissionerUserId=null;
  const openId=++commissionerOpenId,authEpoch=commissionerAuthEpoch;
  const stillCurrent=()=>openId===commissionerOpenId&&authEpoch===commissionerAuthEpoch;
  const loginCard=document.getElementById("loginCard"),app=document.getElementById("adminApp"),msg=document.getElementById("authMsg"),status=document.getElementById("connection");
@@ -160,7 +171,10 @@ async function openAdmin(){
   if(data){S={...fresh(),...data.state};draftUpdatedAt=data.updated_at;}else draftUpdatedAt=null;
   commissionerUserId=user.id;
   loginCard.style.display="none";app.style.display="block";status.textContent="READY";
-  setupRender();subscribe(()=>{if(liveMode)liveRender();else setupRender()});
+  setupRender();commissionerChannel=subscribe(()=>{
+   if(!stillCurrent()||commissionerUserId!==user.id)return;
+   if(liveMode)liveRender();else setupRender();
+  });
   if(!tick)tick=setInterval(()=>{if(liveMode)drawClock()},500);
  }catch(e){
   if(!stillCurrent())return;
