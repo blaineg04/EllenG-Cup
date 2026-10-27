@@ -51,3 +51,8 @@ if ! "$HOME/elleng-local-autodev-control/review.sh"; then
   echo "REVIEW BLOCKED: saved patch retained locally; no GitHub change attempted" >&2
   exit 1
 fi
+# A distinct allowlist gate only submits offline test/docs changes to DRAFT PRs.
+# Any application HTML, scoring, permissions, or SQL changes remain local.
+if ! "$HOME/elleng-local-autodev-control/submit.sh" >> "$OUT/$DATE-submission.log" 2>&1; then
+  echo "Draft PR gate blocked or unavailable; patch retained for manual review." >&2
+fi
