@@ -400,3 +400,25 @@ test('failed realtime catch-up stays read-only until a successful later refresh'
  assert.equal(viewer.state().picks.length,1);
  assert.ok(viewer.strip.has('status-live'));
 });
+
+
+test('concurrent captain refreshes never restore an older draft snapshot',async()=>{
+ const server={state:fresh()};
+ const captain=startClient(server);
+ await captain.status('SUBSCRIBED');
+ const readers=[];
+ server.readState=()=>new Promise(resolve=>readers.push(resolve));
+ const first=captain.change();
+ const second=captain.change();
+ assert.equal(captain.buttons[0].disabled,true);
+ assert.equal(readers.length,2);
+ server.state.picks.push({team:0,golfer:0});
+ server.state.golfers[0].team=0;
+ server.state.teams[0].roster.push(0);
+ readers[1]({data:{state:structuredClone(server.state)},error:null});
+ await second;
+ readers[0]({data:{state:fresh()},error:null});
+ await first;
+ assert.equal(captain.state().picks.length,1,'older response must not roll back newer server state');
+ assert.equal(captain.indicator.textContent,'LIVE');
+});
