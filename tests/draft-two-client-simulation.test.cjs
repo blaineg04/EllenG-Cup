@@ -195,3 +195,26 @@ test('a failed subscription cannot enable controls or apply a new pick',async()=
  assert.equal(viewer.state().picks.length,1);
  assert.equal(viewer.indicator.textContent,'LIVE');
 });
+
+test('two connected captains converge after consecutive remote picks without duplicate rosters',async()=>{
+ const server={state:fresh()};
+ server.state.golfers.push({name:'Second synthetic golfer',team:null});
+ const captainA=startClient(server),captainB=startClient(server);
+ await Promise.all([captainA.status('SUBSCRIBED'),captainB.status('SUBSCRIBED')]);
+ server.state.picks.push({team:0,golfer:0});
+ server.state.golfers[0].team=0;
+ server.state.teams[0].roster.push(0);
+ await Promise.all([captainA.change(),captainB.change()]);
+ assert.equal(captainA.state().picks.length,1);
+ assert.equal(captainB.state().picks.length,1);
+ server.state.picks.push({team:1,golfer:1});
+ server.state.golfers[1].team=1;
+ server.state.teams[1].roster.push(1);
+ await Promise.all([captainA.change(),captainB.change()]);
+ for(const captain of [captainA,captainB]){
+  assert.equal(captain.state().picks.length,2);
+  assert.deepEqual(Array.from(captain.state().teams[0].roster),[0]);
+  assert.deepEqual(Array.from(captain.state().teams[1].roster),[1]);
+  assert.equal(captain.indicator.textContent,'LIVE');
+ }
+});
