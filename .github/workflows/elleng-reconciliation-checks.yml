@@ -198,3 +198,51 @@ jobs:
           persist-credentials: false
       - name: Execute atomic RPC under actual PostgreSQL roles and RLS
         run: psql -X -v ON_ERROR_STOP=1 -f tests/acceptance/authorized-shamble-role-rls-fixture.sql
+
+  release-readiness-summary:
+    name: Nonproduction readiness summary
+    if: ${{ always() }}
+    needs: [existing-release-regressions, cross-device-race-characterization, atomic-prototype-fixture, atomic-concurrency, atomic-client-adapter, authorized-proposal-static, atomic-auth-security-gate, authorized-sql-fixture, atomic-browser-contract, atomic-real-role-rls]
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      J0: ${{ needs.existing-release-regressions.result }}
+      J1: ${{ needs.cross-device-race-characterization.result }}
+      J2: ${{ needs.atomic-prototype-fixture.result }}
+      J3: ${{ needs.atomic-concurrency.result }}
+      J4: ${{ needs.atomic-client-adapter.result }}
+      J5: ${{ needs.authorized-proposal-static.result }}
+      J6: ${{ needs.atomic-auth-security-gate.result }}
+      J7: ${{ needs.authorized-sql-fixture.result }}
+      J8: ${{ needs.atomic-browser-contract.result }}
+      J9: ${{ needs.atomic-real-role-rls.result }}
+    steps:
+      - name: Publish readiness evidence and outstanding gates
+        shell: bash
+        run: |
+          {
+            echo "## EllenG Cup — isolated scoring readiness"
+            echo ""
+            echo "Commit: \`$GITHUB_SHA\`"
+            echo ""
+            echo "| Required check | Result |"
+            echo "|---|---|"
+            echo "| existing-release-regressions | $J0 |"
+            echo "| cross-device-race-characterization | $J1 |"
+            echo "| atomic-prototype-fixture | $J2 |"
+            echo "| atomic-concurrency | $J3 |"
+            echo "| atomic-client-adapter | $J4 |"
+            echo "| authorized-proposal-static | $J5 |"
+            echo "| atomic-auth-security-gate | $J6 |"
+            echo "| authorized-sql-fixture | $J7 |"
+            echo "| atomic-browser-contract | $J8 |"
+            echo "| atomic-real-role-rls | $J9 |"
+            echo ""
+            echo "### Still required before any production approval"
+            echo "- Authenticated Supabase/PostgREST testing against a separate nonproduction environment"
+            echo "- Confirm existing production-equivalent RLS and grants are appropriate"
+            echo "- Verify genuine two-device score sync and draft/score integration"
+            echo "- Backup, rollback, UI acceptance and explicit owner deployment approval"
+            echo ""
+            echo "**This job does not deploy, merge, access Supabase or change production.**"
+          } >> "$GITHUB_STEP_SUMMARY"
