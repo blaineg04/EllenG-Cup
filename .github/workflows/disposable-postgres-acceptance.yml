@@ -33,6 +33,9 @@ jobs:
           sudo -u postgres createdb "$rsvp_db"
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$rsvp_db" -f tests/acceptance/disposable-event-rsvp-schema.sql
           sudo -u postgres dropdb "$rsvp_db"
+          # Roles are cluster-wide; the isolated RSVP fixture creates Supabase roles.
+          # Remove them before the existing policy fixture creates authenticated.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d postgres -c "drop role if exists anon; drop role if exists authenticated;"
           # Verify the read-only scoring release gate rejects a broad permissive
           # policy and accepts the same status guard when restrictive.
           policy_db="${db}_policy"
