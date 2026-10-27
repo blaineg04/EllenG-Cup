@@ -11,6 +11,8 @@ language plpgsql security definer set search_path = ''
 as $approval$
 declare
  v_actor uuid := auth.uid();
+ v_state jsonb;
+ v_picks jsonb;
  v_result public.elleng_event_rsvps;
 begin
  if v_actor is null then raise exception 'Authentication required' using errcode='28000'; end if;
@@ -18,12 +20,22 @@ begin
    raise exception 'Invalid approval decision' using errcode='22023';
  end if;
  -- Resolve authority from database ownership, never from a client role claim.
- if not exists (
-   select 1 from public.elleng_tournaments t
-   join public.elleng_drafts d on d.id=t.draft_id
-   where t.id=p_tournament_id and d.owner_id=v_actor
- ) then
+ -- Lock the draft first, using the same row lock as the captain pick RPC.
+ -- This prevents an approval racing a committed pick or draft start.
+ select d.state into v_state
+ from public.elleng_tournaments t
+ join public.elleng_drafts d on d.id=t.draft_id
+ where t.id=p_tournament_id and d.owner_id=v_actor
+ for update of d;
+ if not found then
    raise exception 'Only tournament commissioner may approve' using errcode='42501';
+ end if;
+ v_picks := coalesce(v_state->'picks','[]'::jsonb);
+ if jsonb_typeof(v_picks) <> 'array'
+    or jsonb_array_length(case when jsonb_typeof(v_picks)='array' then v_picks else '[]'::jsonb end) > 0
+    or coalesce((v_state->>'rosterLocked')::boolean,false)
+    or coalesce((v_state->>'draftStarted')::boolean,false) then
+   raise exception 'Draft roster is locked; RSVP approvals are closed' using errcode='55000';
  end if;
  -- Lock the selected RSVP row to serialize decisions with RSVP updates.
  select * into v_result from public.elleng_event_rsvps
