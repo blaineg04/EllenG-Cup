@@ -144,3 +144,17 @@ test('repeated reconnect notifications do not duplicate server picks',async()=>{
  assert.equal(viewer.state().teams[0].roster.length,1,'repeated reconnect must not duplicate roster entries');
  assert.equal(viewer.indicator.textContent,'LIVE');
 });
+
+test('a reconnecting client stays read-only until the server snapshot arrives',async()=>{
+ const server={state:fresh()};
+ const viewer=startClient(server);
+ await viewer.status('SUBSCRIBED');
+ await viewer.status('TIMED_OUT');
+ assert.equal(viewer.buttons[0].disabled,true);
+ server.state.picks.push({team:0,golfer:0});
+ server.state.golfers[0].team=0;
+ server.state.teams[0].roster.push(0);
+ await viewer.status('SUBSCRIBED');
+ assert.equal(viewer.state().picks.length,1);
+ assert.equal(viewer.indicator.textContent,'LIVE');
+});
