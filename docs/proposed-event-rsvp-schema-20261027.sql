@@ -37,6 +37,7 @@ for each row execute function public.elleng_event_rsvp_approval_guard();
 revoke all on public.elleng_event_rsvps from public,anon,authenticated;
 grant select on public.elleng_event_rsvps to authenticated;
 -- Reading event attendance is limited to the player and the draft owner.
+drop policy if exists "event rsvp owner or commissioner read" on public.elleng_event_rsvps;
 create policy "event rsvp owner or commissioner read" on public.elleng_event_rsvps
  for select to authenticated using (
    user_id=(select auth.uid()) or exists (
@@ -45,6 +46,7 @@ create policy "event rsvp owner or commissioner read" on public.elleng_event_rsv
      where t.id=tournament_id and d.owner_id=(select auth.uid())
    )
  );
+-- Browser read grants only; a later authenticated RPC must enforce event ownership.
 -- No browser write policies intentionally. Changes must be performed through
 -- separately reviewed, authenticated RPCs that enforce event state and roster lock.
 -- This prevents clients from self-approving or changing golfer_index.
