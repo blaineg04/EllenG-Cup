@@ -259,7 +259,8 @@ test('current commissioner successful pick renders exactly once',async()=>{
  assert.equal(h.renders(),1);
 });
 test('current commissioner successful pause retains paused state',async()=>{
- const h=actionHarness(),work=h.els.pause.onclick();
+ const h=actionHarness();h.ctx.liveMode=true;
+ const work=h.els.pause.onclick();
  assert.equal(h.pending.length,1);
  h.pending[0].resolve();await work;
  assert.equal(h.ctx.S.timerPaused,true);
