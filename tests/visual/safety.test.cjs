@@ -52,7 +52,7 @@ function captainAccess(data){
  const start=html.indexOf('async function whoami(){'),end=html.indexOf('let draftSoundEnabled',start);
  const message={textContent:''};
  const query={select(){return this},eq(){return this},single:async()=>({data,error:null})};
- const context={db:{auth:{getUser:async()=>({data:{user:{id:'player'}}})},from:()=>query},cfg:{draftId:'test'},document:{getElementById:()=>message},myTeam:null};
+ const context={db:{auth:{getUser:async()=>({data:{user:{id:'player'}}})},from:()=>query},cfg:{draftId:'test'},document:{getElementById:()=>message},myTeam:null,captainAuthEpoch:0,captainRoleLookupId:0,captainUserId:null};
  vm.runInNewContext(html.slice(start,end),context);return {run:()=>context.whoami(),message};
 }
 test('missing or malformed captain assignments show guidance without opening draft controls',async()=>{
