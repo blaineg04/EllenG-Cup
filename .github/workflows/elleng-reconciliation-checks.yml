@@ -211,7 +211,7 @@ jobs:
           node-version: '22'
       - name: Fail closed on reconnect, verify shared draft state and captain pick safety
         run: |
-          node --test tests/draft-reconnect.test.cjs tests/draft-subscribe-behavior.test.cjs tests/draft-two-client-simulation.test.cjs tests/draft-disconnect-state-fence.test.cjs tests/draft-timer-behavior.test.cjs tests/captain-pick-inflight.test.cjs tests/captain-pick-live-eligibility.test.cjs tests/realtime-client-reconnect.test.cjs tests/commissioner-session-fence.test.cjs
+          node --test tests/draft-reconnect.test.cjs tests/draft-subscribe-behavior.test.cjs tests/draft-two-client-simulation.test.cjs tests/draft-disconnect-state-fence.test.cjs tests/draft-timer-behavior.test.cjs tests/captain-pick-inflight.test.cjs tests/captain-pick-live-eligibility.test.cjs tests/realtime-client-reconnect.test.cjs tests/commissioner-session-fence.test.cjs tests/acceptance/scoring-script-load-order.test.cjs
 
   release-readiness-summary:
     name: Nonproduction readiness summary
