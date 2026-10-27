@@ -9,8 +9,8 @@ const row=(user,index,status='playing',approval='approved',tournament_id=event)=
 });
 test('approved roster includes only approved playing golfers for the selected tournament',()=>{
  const rows=[row('alice',3),row('bob',1),row('charlie',2,'maybe'),row('dana',4,'playing','pending'),row('eve',5,'out'),row('other',0,'playing','approved','next')];
- assert.deepEqual(approvedGolferIndices(rows,event),[1,3]);
- assert.deepEqual(approvedGolferIndices(rows,'next'),[0]);
+ assert.deepEqual(approvedGolferIndices(rows,event,golfers),[1,3]);
+ assert.deepEqual(approvedGolferIndices(rows,'next',golfers),[0]);
 });
 test('duplicate approved golfer identity is rejected rather than silently deduplicated',()=>{
  assert.throws(()=>approvedGolferIndices([row('alice',1),row('bob',1)],event,golfers),/Duplicate approved golfer/);
