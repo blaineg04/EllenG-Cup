@@ -109,8 +109,8 @@ test('captain pick requires a verified captain identity even if realtime says LI
 test('delayed captain role lookup cannot restore access after signout',async()=>{
  let resolveAssignment;
  const query={eq(){return this},single(){return new Promise(resolve=>{resolveAssignment=resolve})}};
- const ctx={myTeam:null,captainUserId:null,captainAuthEpoch:0,
-  document:{getElementById:()=>({textContent:''})},
+ const ctx={myTeam:null,captainUserId:null,captainAuthEpoch:0,captainRoleLookupId:0,
+  cfg:{draftId:'synthetic-only'},document:{getElementById:()=>({textContent:''})},
   db:{auth:{getUser:async()=>({data:{user:{id:'captain-a'}}})},
    from:()=>({select:()=>query})}};
  const start=source.indexOf('async function whoami()');
@@ -130,9 +130,10 @@ test('delayed captain role lookup cannot restore access after signout',async()=>
 
 test('captain assignment lookup uses only columns in baseline SQL schema',async()=>{
  let selected;
- const query={eq(){return this},single:async()=>({data:{team_index:1},error:null})};
- const ctx={myTeam:null,captainUserId:null,captainAuthEpoch:0,
-  document:{getElementById:()=>({textContent:''})},
+ const filters=[];
+ const query={eq(column,value){filters.push([column,value]);return this},single:async()=>({data:{team_index:1},error:null})};
+ const ctx={myTeam:null,captainUserId:null,captainAuthEpoch:0,captainRoleLookupId:0,
+  cfg:{draftId:'synthetic-only'},document:{getElementById:()=>({textContent:''})},
   db:{auth:{getUser:async()=>({data:{user:{id:'captain-a'}}})},
    from:table=>{assert.equal(table,'elleng_captains');return {select:columns=>{selected=columns;return query}}}}};
  const start=source.indexOf('async function whoami()');
@@ -141,6 +142,34 @@ test('captain assignment lookup uses only columns in baseline SQL schema',async(
  vm.runInContext(source.slice(start,end)+';this.checkCaptain=whoami;',ctx);
  assert.equal(await ctx.checkCaptain(),true);
  assert.equal(selected,'team_index');
+ assert.deepEqual(filters,[['draft_id','synthetic-only'],['user_id','captain-a']]);
  assert.equal(ctx.myTeam,1);
+ assert.equal(ctx.captainUserId,'captain-a');
+});
+
+// Concurrent sign-in/bootstrap checks must not let an older authorization result
+// overwrite the newer assignment, even when the auth epoch has not changed.
+test('older overlapping captain role lookup cannot overwrite newer assignment',async()=>{
+ const resolvers=[];
+ const query={eq(){return this},single(){return new Promise(resolve=>resolvers.push(resolve))}};
+ const ctx={myTeam:null,captainUserId:null,captainAuthEpoch:0,captainRoleLookupId:0,
+  cfg:{draftId:'synthetic-only'},document:{getElementById:()=>({textContent:''})},
+  db:{auth:{getUser:async()=>({data:{user:{id:'captain-a'}}})},
+   from:()=>({select:()=>query})}};
+ const start=source.indexOf('async function whoami()');
+ const end=source.indexOf('let draftSoundEnabled',start);
+ assert.ok(start>0&&end>start);
+ vm.createContext(ctx);
+ vm.runInContext(source.slice(start,end)+';this.checkCaptain=whoami;',ctx);
+ const first=ctx.checkCaptain();
+ await Promise.resolve();
+ const second=ctx.checkCaptain();
+ await Promise.resolve();
+ assert.equal(resolvers.length,2,'both lookups must reach the assignment query');
+ resolvers[1]({data:{team_index:1},error:null});
+ assert.equal(await second,true);
+ resolvers[0]({data:{team_index:0},error:null});
+ assert.equal(await first,false,'stale lookup must fail closed');
+ assert.equal(ctx.myTeam,1,'newer assignment must remain authoritative');
  assert.equal(ctx.captainUserId,'captain-a');
 });
