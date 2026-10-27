@@ -36,6 +36,20 @@
     }
     return indices.sort((a,b)=>a-b);
   }
+  // Pure draft configuration preview; never mutates the live draft.
+  function draftRosterPlan(records,tournamentId,availableGolfers,teamCount){
+    if(!Number.isInteger(teamCount)||teamCount<2||teamCount>36)
+      throw new RangeError("Team count must be between 2 and 36");
+    const indices=approvedRoster(records,tournamentId,availableGolfers);
+    if(indices.length<teamCount)
+      throw new RangeError("Approved golfer count must be at least team count");
+    const base=Math.floor(indices.length/teamCount);
+    const extra=indices.length%teamCount;
+    return Object.freeze({
+      tournamentId,teamCount,approvedIndices:Object.freeze(indices),
+      teamCapacities:Object.freeze(Array.from({length:teamCount},(_,i)=>base+(i<extra?1:0)))
+    });
+  }
   function approve(record,decision,actor){
     const r=normalize(record);
     if(!actor||actor.role!=="commissioner"||!actor.user_id)throw new Error("Commissioner authorization required");
@@ -48,5 +62,5 @@
     if(!validStatuses.has(status))throw new Error("Invalid RSVP status");
     return status===r.status?{...r}:{...r,status,approval_status:"pending",approved_by:null};
   }
-  return Object.freeze({approvedRoster,approve,changeStatus,normalize});
+  return Object.freeze({approvedRoster,draftRosterPlan,approve,changeStatus,normalize});
 });
