@@ -27,6 +27,13 @@
    if(result.error) throw result.error;
    return result.data||[];
  }
+ async function counts(db,tournamentId){
+   requireClient(db);
+   const id=requireId(tournamentId,'Tournament ID');
+   const result=await db.rpc('elleng_event_rsvp_counts',{p_tournament_id:id});
+   if(result.error) throw result.error;
+   return Array.isArray(result.data)?result.data[0]||null:result.data;
+ }
  async function submit(db,tournamentId,verifiedGolferIndex,status){
    requireClient(db);
    const id=requireId(tournamentId,'Tournament ID');
@@ -64,5 +71,5 @@
  function approvedGolferIndices(rows){
    return [...new Set((rows||[]).filter(r=>r&&r.status==='playing'&&r.approval_status==='approved'&&Number.isInteger(r.golfer_index)&&r.golfer_index>=0).map(r=>r.golfer_index))];
  }
- return Object.freeze({list,submit,clear,enroll,decide,approvedGolferIndices});
+ return Object.freeze({list,counts,submit,clear,enroll,decide,approvedGolferIndices});
 });
