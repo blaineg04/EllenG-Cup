@@ -123,3 +123,16 @@ jobs:
           node-version: '22'
       - name: Block unsafe atomic RPC promotion without authenticated ownership and server-side roster
         run: node --test tests/acceptance/atomic-shamble-auth-security.test.cjs
+
+  authorized-proposal-static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate staged authorization proposal without database access
+        run: node --test tests/acceptance/authorized-shamble-proposal.test.cjs
