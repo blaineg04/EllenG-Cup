@@ -10,6 +10,14 @@ CREATE POLICY "test captain update" ON public.elleng_team_scores FOR UPDATE TO a
   WITH CHECK (current_setting('elleng.actor', true) = 'captain' AND team_index = 0);
 CREATE POLICY "test captain delete" ON public.elleng_team_scores FOR DELETE TO authenticated
   USING (current_setting('elleng.actor', true) = 'captain' AND team_index = 0);
+-- Commissioner can write any valid team while the tournament is live.
+CREATE POLICY "test commissioner insert" ON public.elleng_team_scores FOR INSERT TO authenticated
+  WITH CHECK (current_setting('elleng.actor', true) = 'commissioner');
+CREATE POLICY "test commissioner update" ON public.elleng_team_scores FOR UPDATE TO authenticated
+  USING (current_setting('elleng.actor', true) = 'commissioner')
+  WITH CHECK (current_setting('elleng.actor', true) = 'commissioner');
+CREATE POLICY "test commissioner delete" ON public.elleng_team_scores FOR DELETE TO authenticated
+  USING (current_setting('elleng.actor', true) = 'commissioner');
 INSERT INTO public.elleng_tournaments(id,team_count,status) VALUES
   ('rls-live',2,'live'),('rls-closed',2,'finalized');
 SET ROLE authenticated;
@@ -62,6 +70,24 @@ BEGIN
   DELETE FROM public.elleng_team_scores WHERE tournament_id='rls-live';
   GET DIAGNOSTICS changed = ROW_COUNT;
   IF changed <> 1 THEN RAISE EXCEPTION 'FAIL: captain could not delete own score'; END IF;
+END $test$;
+SELECT set_config('elleng.actor','commissioner',false);
+INSERT INTO public.elleng_team_scores(tournament_id,team_index,score)
+  VALUES ('rls-live',1,4);
+DO $test$
+DECLARE changed integer;
+BEGIN
+  UPDATE public.elleng_team_scores SET score=3 WHERE tournament_id='rls-live' AND team_index=1;
+  GET DIAGNOSTICS changed = ROW_COUNT;
+  IF changed <> 1 THEN RAISE EXCEPTION 'FAIL: commissioner cannot update team 1'; END IF;
+  BEGIN
+    INSERT INTO public.elleng_team_scores(tournament_id,team_index,score) VALUES ('rls-closed',1,4);
+    RAISE EXCEPTION 'FAIL: commissioner inserted finalized score';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  DELETE FROM public.elleng_team_scores WHERE tournament_id='rls-live' AND team_index=1;
+  GET DIAGNOSTICS changed = ROW_COUNT;
+  IF changed <> 1 THEN RAISE EXCEPTION 'FAIL: commissioner cannot delete team 1'; END IF;
 END $test$;
 RESET ROLE;
 DO $test$
