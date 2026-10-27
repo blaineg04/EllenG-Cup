@@ -18,7 +18,7 @@ test('two clients cannot overwrite the latest Shamble low-ball score with stale 
   const ctx={hole:10,scoreSaveBusy:false,user:{id:String(id)},TOURNAMENT_ID:'synthetic',playerScores:[],
    canEditTeam:()=>true,beginScoreSave:()=>true,endScoreSave:()=>{},$:()=>({textContent:''}),
    renderAll:()=>{},teamRosterGolfers:()=>[{index:0},{index:1}],
-   loadScores:async()=>{ctx.playerScores=[...player].map(([golfer_index,score])=>({team_index:0,hole:10,golfer_index,score})); if(id==='A'&&!aPaused){aPaused=true;await pauseA;}},
+   loadScores:async()=>{const snapshot=[...player].map(([golfer_index,score])=>({team_index:0,hole:10,golfer_index,score})); if(id==='A'&&!aPaused){aPaused=true;await pauseA;}ctx.playerScores=snapshot;},
    db:{from(table){return {
     upsert:async row=>{if(table==='elleng_player_hole_scores')player.set(row.golfer_index,row.score);else teamScore=row.score;return {error:null}},
     delete(){throw Error('not used')}
