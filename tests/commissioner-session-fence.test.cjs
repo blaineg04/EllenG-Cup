@@ -47,7 +47,7 @@ test('signout invalidates pending commissioner lookup without reopening controls
 });
 test('only the newest commissioner lookup can grant access',async()=>{
  const h=harness(),older=h.open(),newer=h.open();
- h.auth(1,'commissioner-b');await Promise.resolve();
+ h.auth(1,'commissioner-b');await new Promise(resolve=>setImmediate(resolve));
  assert.equal(h.draftReads.length,1);
  h.draft(0,'commissioner-b');await newer;
  h.auth(0,'commissioner-a');await older;
@@ -58,7 +58,7 @@ test('only the newest commissioner lookup can grant access',async()=>{
 });
 test('account switch revokes already verified commissioner controls',async()=>{
  const h=harness(),pending=h.open();
- h.auth(0,'commissioner-a');await Promise.resolve();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
  h.draft(0,'commissioner-a');await pending;
  assert.equal(h.elements.adminApp.style.display,'block');
  h.change('SIGNED_IN',{user:{id:'commissioner-b'}});
@@ -69,7 +69,7 @@ test('account switch revokes already verified commissioner controls',async()=>{
 });
 test('signout during save authentication prevents commissioner database write',async()=>{
  const h=harness(),opened=h.open();
- h.auth(0,'commissioner-a');await Promise.resolve();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
  h.draft(0,'commissioner-a');await opened;
  const saving=h.save();
  assert.equal(h.authReads.length,2);
