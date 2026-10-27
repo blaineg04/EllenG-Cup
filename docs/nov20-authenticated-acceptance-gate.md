@@ -86,3 +86,7 @@ Required authenticated negative-case tests on isolated fixtures: unrelated signe
 ### Confirmed RPC EXECUTE grants (read-only catalog inspection)
 
 For `elleng_auto_pick`, `elleng_make_pick`, and `elleng_save_state_if_fresh`, explicit `pg_proc.proacl` entries grant EXECUTE to `postgres`, `authenticated`, and `service_role`; no explicit `anon` or `PUBLIC` grant was present. These functions all use SECURITY DEFINER. The authenticated role can invoke them, so the in-function checks are essential. The absence of an explicit anon grant is not a substitute for a real anonymous-call test or an effective-permissions check. Verify `has_function_privilege` and negative cases in isolated acceptance before treating RPC exposure as cleared.
+
+### October 27 effective RPC EXECUTE privilege check (read-only)
+
+Queried `has_function_privilege` on the actual EllenG Supabase project for `elleng_make_pick`, `elleng_auto_pick`, and `elleng_save_state_if_fresh`. **All three:** `anon=false`, `authenticated=true`, `service_role=true`; all are `SECURITY DEFINER`. This verifies effective role-level grants (rather than only reading `proacl`). It does **not** establish that a signed-in unassigned user, wrong-turn captain, or non-owner is denied by the function body. Authenticated negative-case and concurrent-device tests remain **BLOCKED** pending verified disposable fixtures and accounts. No SQL writes were performed.
