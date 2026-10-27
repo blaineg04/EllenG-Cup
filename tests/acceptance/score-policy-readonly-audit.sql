@@ -3,10 +3,10 @@
 -- PostgreSQL permissive policies are OR-combined. A broad write policy
 -- may bypass otherwise strict captain/commissioner policies.
 WITH write_policies AS (
- SELECT tablename, policyname, cmd, qual, with_check
+ SELECT tablename, policyname, permissive, cmd, qual, with_check
  FROM pg_policies
  WHERE schemaname='public'
-   AND tablename IN ('elleng_player_hole_scores','elleng_team_scores')
+   AND tablename IN ('elleng_player_hole_scores','elleng_team_scores','elleng_pair_hole_scores')
    AND cmd IN ('INSERT','UPDATE','DELETE','ALL')
 ),
 broad AS (
@@ -14,7 +14,7 @@ broad AS (
  FROM write_policies
  WHERE policyname LIKE 'active live % guard'
 )
-SELECT tablename,policyname,cmd,
+SELECT tablename,policyname,permissive,cmd,
        CASE WHEN coalesce(qual,'') LIKE '%auth.uid(%'
                  OR coalesce(with_check,'') LIKE '%auth.uid(%'
             THEN 'REVIEW' ELSE 'BLOCK: lacks caller identity check' END AS security_gate
