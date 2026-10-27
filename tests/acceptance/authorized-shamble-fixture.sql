@@ -17,6 +17,11 @@ SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000002',false
 DO $check$
 DECLARE v integer; denied boolean;
 BEGIN
+ denied:=false;
+ BEGIN
+   PERFORM public.elleng_test_authorized_shamble('fixture',0,NULL,0,NULL);
+ EXCEPTION WHEN invalid_parameter_value THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Missing hole unexpectedly accepted'; END IF;
  v:=public.elleng_test_authorized_shamble('fixture',0,10,0,4);
  IF v IS NOT NULL THEN RAISE EXCEPTION 'Incomplete roster scored'; END IF;
  v:=public.elleng_test_authorized_shamble('fixture',0,10,1,2);
@@ -83,3 +88,4 @@ BEGIN
  RAISE NOTICE 'PASS: unauthenticated scoring rejected';
 END $anonymous$;
 ROLLBACK;
+
