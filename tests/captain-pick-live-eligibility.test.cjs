@@ -66,8 +66,11 @@ function authHarness(){
  const start=source.indexOf('function revokeCaptainSession()');
  const end=source.indexOf('(async()=>{',start);
  assert.ok(start>0&&end>start,'captain auth change guard must be installed');
+ const helpersStart=source.indexOf('let captainChannel=null,captainSubscriptionEpoch=0;');
+ const helpersEnd=source.indexOf('let draftSoundEnabled=false',helpersStart);
+ assert.ok(helpersStart>0&&helpersEnd>helpersStart,'auth harness must include real channel cleanup');
  vm.createContext(ctx);
- vm.runInContext(source.slice(start,end),ctx);
+ vm.runInContext(source.slice(helpersStart,helpersEnd)+'\n'+source.slice(start,end),ctx);
  assert.equal(typeof callback,'function');
  return {ctx,elements,buttons,change:(event,session)=>callback(event,session)};
 }
