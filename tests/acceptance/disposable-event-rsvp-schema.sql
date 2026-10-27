@@ -168,4 +168,19 @@ begin
    raise exception 'Rejected post-pick RSVP mutated existing attendance';
  end if;
 end $player$;
-select 'PASS: player RSVP draft lock fixture' as result;
+-- Even a simultaneous first-claim race must be rejected by a database index.
+update public.elleng_drafts set state='{"picks":[]}'::jsonb where id='draft-1';
+insert into auth.users(id) values('dddddddd-dddd-dddd-dddd-dddddddddddd');
+select set_config('test.actor','dddddddd-dddd-dddd-dddd-dddddddddddd',false);
+do $identity$
+begin
+ begin
+  perform public.elleng_submit_event_rsvp('nov20',2,'playing');
+  raise exception 'Duplicate golfer identity was accepted';
+ exception when unique_violation then null;
+ end;
+ if (select count(*) from public.elleng_event_rsvps where tournament_id='nov20' and golfer_index=2) <> 1 then
+   raise exception 'Duplicate golfer identity was persisted';
+ end if;
+end $identity$;
+select 'PASS: player RSVP draft lock and identity fixture' as result;
