@@ -15,6 +15,7 @@
    return Object.freeze({
      mode:eventMode?'event':'legacy',
      async load(){return eventMode?eventClient.list(db,tournamentId):legacy.load()},
+     async counts(){return eventMode?eventClient.counts(db,tournamentId):null},
      async submit(status){
        if(!['playing','maybe','out'].includes(status)) throw new TypeError('Invalid RSVP status');
        if(eventMode)return eventClient.submit(db,tournamentId,verifiedGolferIndex,status);
