@@ -45,9 +45,9 @@ test('failed catch-up does not show LIVE',async()=>{
  assert.equal(h.stats().rendered,0);
 });
 test('Realtime change refreshes synthetic draft state',async()=>{
- const h=harness();await h.change();
- assert.equal(h.stats().refreshes,1);
- assert.equal(h.stats().rendered,1);
+ const h=harness();await h.emit('SUBSCRIBED');await h.change();
+ assert.equal(h.stats().refreshes,2);
+ assert.equal(h.stats().rendered,2);
 });
 
 test('failed Realtime event refresh visibly reports out-of-sync state',async()=>{
