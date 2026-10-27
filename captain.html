@@ -774,6 +774,24 @@ input,select,textarea{
 let myTeam=null,captainUserId=null,captainAuthEpoch=0,captainRoleLookupId=0;
 // Only the newest role lookup may grant captain access. Auth revocation also invalidates it.
 async function whoami(){const authEpoch=captainAuthEpoch,lookupId=++captainRoleLookupId;myTeam=null;captainUserId=null;const {data:{user}}=await db.auth.getUser();if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId||!user)return false;const {data,error}=await db.from("elleng_captains").select("team_index").eq("draft_id",cfg.draftId).eq("user_id",user.id).single();if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId)return false;if(error||!data||data.team_index==null||typeof data.team_index==="boolean"||!Number.isInteger(Number(data.team_index))||Number(data.team_index)<0){document.getElementById("msg").textContent="This account is not assigned to a team. Ask the commissioner to assign your captain account.";return false}myTeam=Number(data.team_index);captainUserId=user.id;return true}
+let captainChannel=null,captainSubscriptionEpoch=0;
+function stopCaptainSubscription(){
+ captainSubscriptionEpoch++;
+ const channel=captainChannel;captainChannel=null;
+ if(!channel)return;
+ try{Promise.resolve(channel.unsubscribe()).catch(error=>console.error("Captain draft unsubscribe failed",error));}
+ catch(error){console.error("Captain draft unsubscribe failed",error)}
+}
+function startCaptainSubscription(){
+ // Re-login and account switching must not accumulate old Realtime listeners.
+ stopCaptainSubscription();
+ const epoch=captainSubscriptionEpoch,authEpoch=captainAuthEpoch,userId=captainUserId;
+ if(!userId)return;
+ const renderForSession=()=>{if(renderForSession.isCurrent())render()};
+ // common.js subscribe() uses this guard for queued status callbacks and reads.
+ renderForSession.isCurrent=()=>epoch===captainSubscriptionEpoch&&authEpoch===captainAuthEpoch&&captainUserId===userId;
+ captainChannel=subscribe(renderForSession);
+}
 let draftSoundEnabled=false,lastSoundPickCount=null,audioCtx=null;
 async function enableDraftSound(){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")await audioCtx.resume();draftSoundEnabled=!draftSoundEnabled;document.getElementById("soundToggle").textContent=draftSoundEnabled?"🔇 Mute Draft Sounds":"🔊 Enable Draft Sounds";document.getElementById("soundStatus").textContent=draftSoundEnabled?"Sound ON — test growl played":"Sound off";if(draftSoundEnabled){gatorGrowl(true);setTimeout(()=>{if(draftSoundEnabled)document.getElementById("soundStatus").textContent="Gator sound ON"},1400)}}catch(e){draftSoundEnabled=false;document.getElementById("soundStatus").textContent="Audio blocked — tap again"}}
 function gatorGrowl(force=false){if((!draftSoundEnabled&&!force)||!audioCtx)return;try{let now=audioCtx.currentTime,dur=1.25,osc=audioCtx.createOscillator(),gain=audioCtx.createGain(),filter=audioCtx.createBiquadFilter(),lfo=audioCtx.createOscillator(),lfoGain=audioCtx.createGain();osc.type="sawtooth";osc.frequency.setValueAtTime(92,now);osc.frequency.exponentialRampToValueAtTime(48,now+dur);filter.type="lowpass";filter.frequency.setValueAtTime(520,now);filter.Q.value=7;lfo.type="sine";lfo.frequency.value=18;lfoGain.gain.value=15;lfo.connect(lfoGain);lfoGain.connect(osc.frequency);gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.32,now+.08);gain.gain.setValueAtTime(.32,now+.55);gain.gain.exponentialRampToValueAtTime(.0001,now+dur);osc.connect(filter);filter.connect(gain);gain.connect(audioCtx.destination);osc.start(now);lfo.start(now);osc.stop(now+dur);lfo.stop(now+dur)}catch(e){}}
@@ -843,7 +861,7 @@ document.getElementById("signin").onclick=async()=>{
     document.getElementById("app").style.display="block";
     await load();if(!captainUserId)throw new Error("Captain session changed while loading. Sign in again.");pickSyncFailed=false;render();
     if(status)status.textContent="CONNECTING";
-    subscribe(render);setInterval(draw,500);
+    startCaptainSubscription();setInterval(draw,500);
   }catch(e){
     document.getElementById("login").style.display="block";document.getElementById("app").style.display="none";
     if(status)status.textContent="ERROR";
@@ -855,6 +873,7 @@ document.getElementById("soundToggle").onclick=enableDraftSound;
 // draft controls active. Server-side elleng_make_pick authorization remains mandatory.
 function revokeCaptainSession(){
  captainAuthEpoch++;
+ stopCaptainSubscription();
  myTeam=null;captainUserId=null;pickSyncFailed=true;
  document.getElementById("login").style.display="block";
  document.getElementById("app").style.display="none";
@@ -882,7 +901,7 @@ db.auth.onAuthStateChange((event,session)=>{
       if(!captainUserId)throw new Error("Captain session changed while loading. Sign in again.");
       pickSyncFailed=false;render();
       if(status)status.textContent="CONNECTING";
-      subscribe(render);
+      startCaptainSubscription();
       setInterval(draw,500);
     }else{
       document.getElementById("login").style.display="block";
