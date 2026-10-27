@@ -6,14 +6,14 @@ const fs = require('node:fs');
 const html = fs.readFileSync('scoring.html', 'utf8');
 
 function parseScriptElements(markup) {
-  const tags = [...markup.matchAll(/<\\/?script\\b[^>]*>/gi)];
+  const tags = [...markup.matchAll(/<\/?script\b[^>]*>/gi)];
   const scripts = [];
   let active = null;
   for (const match of tags) {
     const tag = match[0];
-    if (/^<script\\b/i.test(tag)) {
+    if (/^<script\b/i.test(tag)) {
       assert.equal(active, null, 'Nested <script> tag: prior script was never closed');
-      const src = /\\bsrc\\s*=\\s*["']([^"']+)["']/i.exec(tag)?.[1] || null;
+      const src = /\bsrc\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1] || null;
       active = {src, openingEnd: match.index + tag.length};
     } else {
       assert.ok(active, 'Unexpected closing </script> tag');
@@ -47,13 +47,13 @@ test('Supabase, config and RSVP adapter load in order before application initial
 });
 
 test('event-scoped RSVP stays explicitly disabled until authenticated rollout approval', () => {
-  assert.match(html, /const EVENT_RSVP_MODE\\s*=\\s*false\\s*;/);
-  assert.match(html, /if\\s*\\(EVENT_RSVP_MODE\\)/);
-  assert.match(html, /from\\(["']elleng_rsvps["']\\)/);
+  assert.match(html, /const EVENT_RSVP_MODE\s*=\s*false\s*;/);
+  assert.match(html, /if\s*\(EVENT_RSVP_MODE\)/);
+  assert.match(html, /from\(["']elleng_rsvps["']\)/);
 });
 
 test('script parser rejects the original malformed nested external-script regression', () => {
   assert.throws(() => parseScriptElements(
-    '<script src="config.js">\\n<script src="event-rsvp-client.js"></script></script>'
+    '<script src="config.js">\n<script src="event-rsvp-client.js"></script></script>'
   ), /Nested <script> tag/);
 });
