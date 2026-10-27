@@ -25,9 +25,24 @@ jobs:
           pg_version="$(ls /etc/postgresql | sort -V | tail -1)"
           sudo pg_ctlcluster "$pg_version" main start || sudo pg_ctlcluster "$pg_version" main status
           db="elleng_ci_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
-          cleanup() { sudo -u postgres dropdb --if-exists "$db" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_negative" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_captain" >/dev/null 2>&1 || true; }
+          cleanup() { sudo -u postgres dropdb --if-exists "$db" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_negative" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_captain" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_policy" >/dev/null 2>&1 || true; }
           trap cleanup EXIT
           sudo -u postgres createdb "$db"
+          # Verify the read-only scoring release gate rejects a broad permissive
+          # policy and accepts the same status guard when restrictive.
+          policy_db="${db}_policy"
+          sudo -u postgres createdb "$policy_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -c "create table public.elleng_team_scores(team_index integer); alter table public.elleng_team_scores enable row level security; create policy \"active live team insert guard\" on public.elleng_team_scores for insert to public with check (team_index >= 0);"
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -f tests/acceptance/score-policy-readonly-audit.sql > /tmp/elleng-policy-"$GITHUB_RUN_ID".log 2>&1; then
+            echo 'FAIL: broad permissive score write policy escaped release gate'
+            exit 1
+          fi
+          grep -q 'Scoring RLS release gate failed' /tmp/elleng-policy-"$GITHUB_RUN_ID".log
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -c "drop policy \"active live team insert guard\" on public.elleng_team_scores; create policy \"active live team insert guard\" on public.elleng_team_scores as restrictive for insert to public with check (team_index >= 0);"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -f tests/acceptance/score-policy-readonly-audit.sql
+          sudo -u postgres dropdb "$policy_db"
+          rm -f /tmp/elleng-policy-"$GITHUB_RUN_ID".log
+          echo 'PASS: scoring RLS gate rejects permissive guard and accepts restrictive guard.'
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-postgres-contract.sql
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-draft-concurrency.sql
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-draft-order.sql
