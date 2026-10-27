@@ -22,3 +22,7 @@ test('existing Shamble scoring restricts entry to back-nine holes',()=>{
 test('existing incomplete Shamble roster clears the derived team score',()=>{
   assert.match(source,/db\.from\("elleng_team_scores"\)\.delete/);
 });
+
+test('blank and whitespace-only score inputs use the clear path instead of numeric zero',()=>{
+  assert.match(source,/String\(val\?\?""\)\.trim\(\)===""\?null:Number\(val\)/);
+});
