@@ -117,7 +117,7 @@ function signOutPage(authenticate){
  const start=html.indexOf('async function signOutFromHub(){'),end=html.indexOf('function openHubView(',start);
  const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{disabled:false,textContent:'Sign Out',classList:{add(){}}});return nodes.get(id)};
  let requests=0,viewer=0,cleared=0;
- const context={user:{id:'signed-in'},captainTeam:0,isCommissioner:true,currentGolferIndex:0,currentUsername:'visual',mustChangePassword:false,
+ const context={user:{id:'signed-in'},rsvpLoadRequest:0,rsvps:[{user_id:'signed-in'}],eventRsvpCounts:{playing:1},captainTeam:0,isCommissioner:true,currentGolferIndex:0,currentUsername:'visual',mustChangePassword:false,
   $:node,db:{auth:{signOut:async()=>{requests++;return authenticate()}}},sessionStorage:{removeItem(){cleared++}},document:{body:{classList:{add(){}}}},setMobileNavVisible(){},enterViewer:async()=>{viewer++},console:{warn(){}}};
  vm.runInNewContext(html.slice(start,end),context);
  return {run:()=>context.signOutFromHub(),context,node,requests:()=>requests,viewer:()=>viewer,cleared:()=>cleared};
@@ -129,7 +129,7 @@ test('failed sign-out keeps the signed-in screen and offers retry guidance',asyn
  }
 });
 test('successful sign-out clears local app identity after the auth request succeeds',async()=>{
- const page=signOutPage(async()=>({error:null}));await page.run();assert.equal(page.context.user,null);assert.equal(page.context.isCommissioner,false);assert.equal(page.context.captainTeam,null);assert.equal(page.viewer(),1);assert.equal(page.cleared(),1);
+ const page=signOutPage(async()=>({error:null}));await page.run();assert.equal(page.context.user,null);assert.equal(page.context.isCommissioner,false);assert.equal(page.context.captainTeam,null);assert.equal(page.context.rsvpLoadRequest,1);assert.equal(page.context.rsvps.length,0);assert.equal(page.context.eventRsvpCounts,null);assert.equal(page.viewer(),1);assert.equal(page.cleared(),1);
 });
 test('sign-out ignores another click while the auth request is pending',async()=>{
  let resolve;const pending=new Promise(r=>{resolve=r});const page=signOutPage(()=>pending);
