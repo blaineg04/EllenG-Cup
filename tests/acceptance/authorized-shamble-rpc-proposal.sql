@@ -17,7 +17,7 @@ DECLARE
 BEGIN
  IF v_uid IS NULL THEN RAISE EXCEPTION 'Authentication required' USING ERRCODE='42501'; END IF;
  IF p_tournament_id IS NULL OR p_team_index IS NULL OR p_team_index NOT BETWEEN 0 AND 8
-  OR p_hole NOT BETWEEN 10 AND 18 OR p_golfer_index IS NULL OR p_golfer_index<0
+  OR p_hole IS NULL OR p_hole NOT BETWEEN 10 AND 18 OR p_golfer_index IS NULL OR p_golfer_index<0
   OR (p_score IS NOT NULL AND p_score NOT BETWEEN 1 AND 20)
  THEN RAISE EXCEPTION 'Invalid scoring input' USING ERRCODE='22023'; END IF;
  SELECT t.draft_id,d.state INTO v_draft,v_state
@@ -77,3 +77,4 @@ BEGIN
 END $fn$;
 REVOKE ALL ON FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer) FROM PUBLIC;
 -- No GRANT added. RLS must be corrected and authenticated fixture executed before usage.
+
