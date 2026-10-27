@@ -17,7 +17,7 @@ function harness(){
  const elements={loginCard:{style:{display:'block'}},adminApp:{style:{display:'none'}},
   authMsg:{textContent:''},connection:{textContent:''}};
  const buttons=[{disabled:false}],authReads=[],draftReads=[],writes=[];
- let authChanged,subscriptions=0;
+ let authChanged,subscriptions=0,unsubscriptions=0,activeSubscriptions=0,renders=0;const callbacks=[];
  const ctx={draftUpdatedAt:null,savingDraft:false,tick:null,liveMode:false,S:{picks:[]},
   fresh:()=>({picks:[]}),cfg:{draftId:'synthetic-only'},
   document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons},
@@ -26,14 +26,18 @@ function harness(){
    from:()=>({select:()=>({eq:()=>({maybeSingle:()=>new Promise(resolve=>draftReads.push(resolve))})}),
     insert:()=>{writes.push('insert');throw Error('unexpected insert')}}),
    rpc:()=>{writes.push('rpc');throw Error('unexpected rpc')}},
-  setupRender:()=>{},subscribe:()=>{subscriptions++},setInterval:()=>1,
+  setupRender:()=>{renders++},subscribe:cb=>{
+   subscriptions++;activeSubscriptions++;callbacks.push(cb);let closed=false;
+   return {unsubscribe:()=>{if(!closed){closed=true;unsubscriptions++;activeSubscriptions--}return Promise.resolve('ok')}};
+  },setInterval:()=>1,
   alert:()=>{},console:{error:()=>{}}};
  vm.createContext(ctx);vm.runInContext(code,ctx);
  return {ctx,elements,buttons,authReads,draftReads,writes,
   open:()=>ctx.openAdmin(),save:()=>ctx.secureSave(),change:(event,session)=>authChanged(event,session),
   auth:(index,id)=>authReads[index]({data:{user:id?{id}:null},error:null}),
   draft:(index,id)=>draftReads[index]({data:{state:{picks:[]},owner_id:id,updated_at:'2026-10-27T00:00:00Z'},error:null}),
-  subscriptions:()=>subscriptions};
+  subscriptions:()=>subscriptions,unsubscriptions:()=>unsubscriptions,activeSubscriptions:()=>activeSubscriptions,
+  renders:()=>renders,notify:index=>callbacks[index]()};
 }
 test('signout invalidates pending commissioner lookup without reopening controls',async()=>{
  const h=harness(),pending=h.open();
@@ -66,6 +70,8 @@ test('account switch revokes already verified commissioner controls',async()=>{
  assert.equal(h.elements.connection.textContent,'SIGN IN');
  assert.equal(vm.runInContext('commissionerUserId',h.ctx),null);
  assert.equal(h.buttons[0].disabled,true);
+ assert.equal(h.unsubscriptions(),1);
+ assert.equal(h.activeSubscriptions(),0);
 });
 test('signout during save authentication prevents commissioner database write',async()=>{
  const h=harness(),opened=h.open();
@@ -135,4 +141,38 @@ test('commissioner concurrent refresh cannot overwrite a newer response',async()
  assert.equal(h.state().picks[0].golfer,2);
  assert.equal(h.renders(),1);
  assert.equal(h.indicator.textContent,'LIVE');
+});
+
+test('commissioner signout disposes active draft subscription and ignores late callbacks',async()=>{
+ const h=harness(),opening=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await opening;
+ assert.equal(h.activeSubscriptions(),1);
+ const rendersBefore=h.renders();
+ h.change('SIGNED_OUT',null);
+ assert.equal(h.unsubscriptions(),1);
+ assert.equal(h.activeSubscriptions(),0);
+ h.notify(0); // A callback already queued before unsubscribe must not render.
+ assert.equal(h.renders(),rendersBefore);
+ assert.equal(h.elements.adminApp.style.display,'none');
+});
+test('reverification replaces the old commissioner channel without duplicate listeners',async()=>{
+ const h=harness(),first=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await first;
+ assert.equal(h.activeSubscriptions(),1);
+ const second=h.open();
+ assert.equal(h.unsubscriptions(),1);
+ assert.equal(h.activeSubscriptions(),0);
+ assert.equal(h.elements.adminApp.style.display,'none');
+ h.auth(1,'commissioner-b');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(1,'commissioner-b');await second;
+ assert.equal(h.subscriptions(),2);
+ assert.equal(h.activeSubscriptions(),1);
+ const rendersBefore=h.renders();
+ h.notify(0);
+ assert.equal(h.renders(),rendersBefore);
+ h.notify(1);
+ assert.equal(h.renders(),rendersBefore+1);
+ assert.equal(vm.runInContext('commissionerUserId',h.ctx),'commissioner-b');
 });
