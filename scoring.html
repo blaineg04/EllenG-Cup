@@ -4543,7 +4543,7 @@ async function savePlayerShambleScore(teamIndex,golferIndex,val){
  if(hole<10||hole>18||!canEditTeam(teamIndex))return;if(!beginScoreSave())return;
  const scoreHole=hole;
  const el=$("saveMsg"); el.textContent="Saving shamble score…";
- const score=val===""?null:Number(val);
+ const score=String(val??"").trim()===""?null:Number(val);
  try{
    if(score===null){
      const {error}=await db.from("elleng_player_hole_scores").delete().eq("tournament_id",TOURNAMENT_ID).eq("hole",scoreHole).eq("team_index",teamIndex).eq("golfer_index",golferIndex);
