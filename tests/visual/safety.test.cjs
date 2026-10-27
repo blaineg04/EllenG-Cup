@@ -82,7 +82,7 @@ function signInPage(kind,{email='visual@example.invalid',password='test-only-pas
  const start=html.indexOf(`document.getElementById("${buttonId}").onclick=`),end=html.indexOf(kind==='admin'?'(async()=>':'document.getElementById("soundToggle").onclick',start);
  const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{value:id==='email'?email:id===passwordId?password:'',textContent:id===buttonId?'Sign In':'',disabled:false,style:{}});return nodes.get(id)};
  let requests=0,opened=0;
- const context={document:{getElementById:node},db:{auth:{signInWithPassword:async args=>{requests++;return authenticate(args)}}},openAdmin:async()=>{opened++},whoami:async()=>true,load:async()=>{},render(){opened++},subscribe(){},setInterval(){},draw(){},console:{error(){}}};
+ const context={document:{getElementById:node},db:{auth:{signInWithPassword:async args=>{requests++;return authenticate(args)}}},openAdmin:async()=>{opened++},whoami:async()=>true,load:async()=>{},render(){opened++},subscribe(){},setInterval(){},draw(){},commissionerAuthEpoch:0,captainAuthEpoch:0,commissionerUserId:null,captainUserId:null,console:{error(){}}};
  vm.runInNewContext(html.slice(start,end),context);
  return {click:()=>node(buttonId).onclick(),button:()=>node(buttonId),password:()=>node(passwordId),message:()=>node(messageId),requests:()=>requests,opened:()=>opened};
 }
@@ -209,7 +209,7 @@ test('commissioner saves use version checked RPC and reject a stale write',async
    rpc:async(name,args)=>{calls++;captured.push({name,args});return {data:null,error:{message:'Concurrent draft update'}}}}
  });
  vm.runInContext(html.slice(start,end),ctx);
- vm.runInContext("draftUpdatedAt='2026-10-22T10:00:00.000Z'",ctx);
+ vm.runInContext("draftUpdatedAt='2026-10-22T10:00:00.000Z';commissionerUserId='commissioner'",ctx);
  await assert.rejects(vm.runInContext('secureSave()',ctx),error=>error?.message==='Concurrent draft update');
  assert.equal(calls,1);
  assert.equal(captured[0].name,'elleng_save_state_if_fresh');
@@ -231,7 +231,7 @@ test('commissioner refuses overlapping saves until the first finishes',async()=>
    rpc:async()=>{called++;return pending}}
  });
  vm.runInContext(html.slice(start,end),ctx);
- vm.runInContext("draftUpdatedAt='2026-10-22T10:00:00.000Z'",ctx);
+ vm.runInContext("draftUpdatedAt='2026-10-22T10:00:00.000Z';commissionerUserId='commissioner'",ctx);
  const first=vm.runInContext('secureSave()',ctx);
  await assert.rejects(vm.runInContext('secureSave()',ctx),/already in progress/);
  release({data:{updated_at:'2026-10-22T10:00:01.000Z'},error:null});
