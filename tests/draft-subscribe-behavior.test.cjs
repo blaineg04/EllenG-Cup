@@ -110,3 +110,19 @@ test('overlapping draft loads never replace newer state with a slower old respon
  await first;
  assert.equal(ctx.state().picks.length,1);
 });
+
+test('captain-scoped load discards a delayed result after session revocation',async()=>{
+ const begin=source.indexOf('let latestLoadRequest=0;');
+ const end=source.indexOf('async function save()',begin);
+ const requests=[];
+ const ctx={S:{picks:[]},fresh:()=>({picks:[]}),active:true,cfg:{draftId:'synthetic-only'},
+  db:{from:()=>({select:()=>({eq:()=>({single:()=>new Promise(resolve=>requests.push(resolve))})})})}};
+ vm.createContext(ctx);
+ vm.runInContext(source.slice(begin,end)+';this.fetchDraft=load;this.state=()=>S;',ctx);
+ const pending=ctx.fetchDraft(()=>ctx.active);
+ assert.equal(requests.length,1);
+ ctx.active=false;
+ requests[0]({data:{state:{picks:[{golfer:0}]}},error:null});
+ await pending;
+ assert.equal(ctx.state().picks.length,0,'revoked session must not apply stale draft response');
+});

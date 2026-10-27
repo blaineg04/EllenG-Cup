@@ -11,17 +11,17 @@ const pickSource=source.slice(start,end);
 function harness(){
  const state={timerPaused:false,picks:[],golfers:[{name:'Synthetic golfer',team:null,band:'A'}],teams:[{name:'A',roster:[]},{name:'B',roster:[]}]};
  const connection={textContent:'LIVE'},calls=[],messages=[],buttons=[{disabled:false}];
- let confirmAction=()=>true,rendered=0;
- const ctx={S:state,myTeam:0,captainUserId:'captain-a',cfg:{draftId:'synthetic-only'},fresh:()=>state,
+ let confirmAction=()=>true,rendered=0,holdRpc=false,resolveRpc,loadCount=0;
+ const ctx={S:state,myTeam:0,captainUserId:'captain-a',captainAuthEpoch:0,cfg:{draftId:'synthetic-only'},fresh:()=>state,
   order:()=>0,totalPicks:()=>1,canBand:()=>true,
-  db:{rpc:async(name,args)=>{calls.push({name,args});return {data:state,error:null}}},
+  db:{rpc:async(name,args)=>{calls.push({name,args});if(holdRpc)return new Promise(resolve=>{resolveRpc=resolve});return {data:state,error:null}}},
   document:{getElementById:id=>id==='connection'?connection:null,querySelectorAll:()=>buttons},
   confirm:()=>confirmAction(),alert:msg=>messages.push(msg),render:()=>rendered++,
-  draftSoundEnabled:false,load:async()=>{},console:{error:()=>{}}};
+  draftSoundEnabled:false,load:async()=>{loadCount++},console:{error:()=>{}}};
  vm.createContext(ctx);
  vm.runInContext(pickSource+';this.submitPick=pick;',ctx);
  return {ctx,state,connection,calls,messages,buttons,pick:i=>ctx.submitPick(i),
-  onConfirm:fn=>{confirmAction=fn},rendered:()=>rendered};
+  onConfirm:fn=>{confirmAction=fn},rendered:()=>rendered,holdRpc:()=>{holdRpc=true},releaseRpc:response=>resolveRpc(response),loads:()=>loadCount};
 }
 test('eligible live captain submits exactly one authorized RPC',async()=>{
  const h=harness();await h.pick(0);
@@ -173,4 +173,40 @@ test('older overlapping captain role lookup cannot overwrite newer assignment',a
  assert.equal(await first,false,'stale lookup must fail closed');
  assert.equal(ctx.myTeam,1,'newer assignment must remain authoritative');
  assert.equal(ctx.captainUserId,'captain-a');
+});
+
+test('sign-out while pick RPC is pending discards its response without reopening controls',async()=>{
+ const h=harness();h.holdRpc();
+ const pending=h.pick(0);
+ assert.equal(h.calls.length,1);
+ h.ctx.captainAuthEpoch++;
+ h.ctx.captainUserId=null;
+ h.connection.textContent='SIGN IN';
+ h.releaseRpc({data:{...h.state,picks:[{golfer:0,team:0}]},error:null});
+ await pending;
+ assert.equal(h.ctx.S,h.state,'old RPC response must not replace draft state');
+ assert.equal(h.ctx.S.picks.length,0);
+ assert.equal(h.rendered(),0,'old RPC must not render after revocation');
+ assert.equal(h.loads(),0);
+ assert.equal(h.buttons[0].disabled,true);
+});
+test('switching captain identity while pick RPC is pending cannot apply old response',async()=>{
+ const h=harness();h.holdRpc();
+ const pending=h.pick(0);
+ h.ctx.captainUserId='captain-b';
+ h.releaseRpc({data:{...h.state,picks:[{golfer:0,team:0}]},error:null});
+ await pending;
+ assert.equal(h.ctx.S.picks.length,0);
+ assert.equal(h.rendered(),0);
+});
+test('rejected old pick RPC after sign-out does not refresh or alert as the old captain',async()=>{
+ const h=harness();h.holdRpc();
+ const pending=h.pick(0);
+ h.ctx.captainAuthEpoch++;
+ h.ctx.captainUserId=null;
+ h.releaseRpc({data:null,error:new Error('synthetic stale rejection')});
+ await pending;
+ assert.equal(h.loads(),0);
+ assert.equal(h.messages.length,0);
+ assert.equal(h.rendered(),0);
 });

@@ -800,19 +800,32 @@ async function pick(i){
  // Revalidate in case the selected golfer, turn or connection changed during confirmation.
  if(!canSubmitCaptainPick(i)){alert("Draft state changed while confirming. Wait for LIVE and select again.");render();return}
  pickInFlight=true;
+ // A pending RPC may resolve after sign-out or a different captain signs in.
+ // Its response must never repopulate the new session's draft state or controls.
+ const pickAuthEpoch=captainAuthEpoch,pickCaptainId=captainUserId;
+ const sameCaptainSession=()=>pickAuthEpoch===captainAuthEpoch&&pickCaptainId===captainUserId&&!!captainUserId;
  document.querySelectorAll("[data-p]").forEach(b=>b.disabled=true);
  try{
   const {data,error}=await db.rpc("elleng_make_pick",{p_draft_id:cfg.draftId,p_golfer_index:i});
+  if(!sameCaptainSession())return;
   if(error)throw error;
   S={...fresh(),...data};
   pickSyncFailed=false;
   if(draftSoundEnabled){gatorGrowl();lastSoundPickCount=S.picks.length}
  }catch(e){
-  try{await load();pickSyncFailed=false}catch(refreshError){pickSyncFailed=true;console.error("Captain pick refresh failed",refreshError)}
+  if(!sameCaptainSession())return;
+  try{
+   await load(sameCaptainSession);
+   if(!sameCaptainSession())return;
+   pickSyncFailed=false;
+  }catch(refreshError){
+   if(!sameCaptainSession())return;
+   pickSyncFailed=true;console.error("Captain pick refresh failed",refreshError);
+  }
   alert(pickSyncFailed?"Unable to refresh the draft. Reload this page before drafting again.":(e.message||"Pick could not be saved. Refresh and try again."));
  }finally{
   pickInFlight=false;
-  render();
+  if(sameCaptainSession())render();
  }
 }
 document.getElementById("signin").onclick=async()=>{

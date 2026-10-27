@@ -69,7 +69,7 @@ function canBand(t,b){
 }
 
 let latestLoadRequest=0;
-async function load(){const request=++latestLoadRequest;let {data,error}=await db.from("elleng_drafts").select("state").eq("id",cfg.draftId).single();if(error)throw error;if(request===latestLoadRequest)S={...fresh(),...data.state};return S}
+async function load(isCurrent=()=>true){const request=++latestLoadRequest;let {data,error}=await db.from("elleng_drafts").select("state").eq("id",cfg.draftId).single();if(error)throw error;if(request===latestLoadRequest&&isCurrent())S={...fresh(),...data.state};return S}
 async function save(){let {error}=await db.from("elleng_drafts").upsert({id:cfg.draftId,state:S,updated_at:new Date().toISOString()});if(error)throw error}
 function subscribe(cb){
  let connectionEpoch=0,connected=false;
