@@ -13,7 +13,7 @@ on:
 permissions:
   contents: read
 jobs:
-  compatibility:
+  existing-release-regressions:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -23,5 +23,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Run original release and incoming scoring regression suites
-        run: node --test tests/*.test.cjs
+      - name: Preserve existing scoring and Shamble format
+        run: |
+          node --test tests/nov20-production-score-integrity.test.cjs tests/shamble-format-characterization.test.cjs
+  incoming-scoring-compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify incoming individual-scoring requirements (must pass before integration)
+        run: node --test tests/scoring-branch-compatibility.test.cjs
