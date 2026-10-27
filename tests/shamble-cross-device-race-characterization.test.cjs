@@ -1,37 +1,35 @@
 'use strict';
-// Deliberate cross-device race characterization, not a release-gate pass.
-// Two clients can independently write derived team scores from stale snapshots.
-const {test}=require('node:test');
-const assert=require('node:assert/strict');
-const fs=require('node:fs');
-const vm=require('node:vm');
+// Simulates atomic server operation using a serialized queue; database-level
+// two-session PostgreSQL test separately establishes locking behavior.
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const html=fs.readFileSync('scoring.html','utf8');
-const start=html.indexOf('async function savePlayerShambleScore(');
-const end=html.indexOf('function renderPairScoring(',start);
+const start=html.indexOf('async function savePlayerShambleScore('),end=html.indexOf('function renderPairScoring(',start);
 assert.ok(start>=0&&end>start);
-test('two clients cannot overwrite the latest Shamble low-ball score with stale derivation',async()=>{
- const player=new Map([[0,5],[1,5]]);
- let releaseA,signalA;const pauseA=new Promise(r=>releaseA=r);const atSnapshot=new Promise(r=>signalA=r);
- let aPaused=false;
- let teamScore=5;
+test('two browser clients invoke serialized atomic RPC; stale snapshots cannot overwrite team score',async()=>{
+ const scores=new Map([[0,5],[1,5]]);let teamScore=5,queue=Promise.resolve(),calls=0;
+ let releaseFirst,signalFirst;const firstPending=new Promise(r=>releaseFirst=r),firstEntered=new Promise(r=>signalFirst=r);
  function client(id){
-  const ctx={hole:10,scoreSaveBusy:false,user:{id:String(id)},TOURNAMENT_ID:'synthetic',playerScores:[],
-   canEditTeam:()=>true,beginScoreSave:()=>true,endScoreSave:()=>{},$:()=>({textContent:''}),
-   renderAll:()=>{},teamRosterGolfers:()=>[{index:0},{index:1}],
-   loadScores:async()=>{const snapshot=[...player].map(([golfer_index,score])=>({team_index:0,hole:10,golfer_index,score})); if(id==='A'&&!aPaused){aPaused=true;signalA();await pauseA;}ctx.playerScores=snapshot;},
-   db:{from(table){return {
-    upsert:async row=>{if(table==='elleng_player_hole_scores')player.set(row.golfer_index,row.score);else teamScore=row.score;return {error:null}},
-    delete(){throw Error('not used')}
-   }}}
-  };
+  const ctx={hole:10,TOURNAMENT_ID:'synthetic',canEditTeam:()=>true,beginScoreSave:()=>true,endScoreSave:()=>{},$:()=>({textContent:''}),
+   loadScores:async()=>{},renderAll:()=>{},
+   db:{from(){throw Error('Direct score table writes prohibited')},
+    rpc(name,payload){
+     assert.equal(name,'elleng_test_authorized_shamble');calls++;
+     const task=queue.then(async()=>{
+      if(id==='A'){signalFirst();await firstPending;}
+      scores.set(payload.p_golfer_index,payload.p_score);
+      teamScore=Math.min(...scores.values());
+      return {data:teamScore,error:null};
+     });
+     queue=task.then(()=>undefined);
+     return task;
+    }}};
   vm.runInNewContext(html.slice(start,end),ctx);return ctx;
  }
  const a=client('A'),b=client('B');
  const aTask=a.savePlayerShambleScore(0,0,'3');
- // Wait until A has captured its old snapshot before B commits.
- await atSnapshot;
- await b.savePlayerShambleScore(0,1,'2');
- releaseA();
- await aTask;
- assert.equal(teamScore,2,'team low ball should reflect the committed player scores, not an older client snapshot');
+ await firstEntered;
+ const bTask=b.savePlayerShambleScore(0,1,'2');
+ releaseFirst();
+ await Promise.all([aTask,bTask]);
+ assert.equal(calls,2);assert.equal(teamScore,2);
 });
