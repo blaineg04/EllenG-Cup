@@ -484,3 +484,21 @@ test('stale successful reconnect cannot override a newer disconnected session',a
  assert.ok(captain.strip.has('status-offline'));
  assert.equal(captain.strip.has('status-live'),false);
 });
+
+
+test('realtime notification arriving while disconnected cannot resurrect a stale draft',async()=>{
+ const server={state:fresh()};
+ const captain=startClient(server);
+ await captain.status('SUBSCRIBED');
+ let release;
+ server.readState=()=>new Promise(resolve=>{release=resolve});
+ const stale= captain.change();
+ await captain.status('CLOSED');
+ server.state.picks.push({team:0,golfer:0});
+ release({data:{state:structuredClone(server.state)},error:null});
+ await stale;
+ assert.equal(captain.state().picks.length,0,'disconnected captain must not accept late state');
+ assert.equal(captain.indicator.textContent,'RECONNECTING');
+ assert.equal(captain.buttons[0].disabled,true);
+ assert.equal(captain.strip.has('status-live'),false);
+});
