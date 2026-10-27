@@ -6,9 +6,10 @@ const s=fs.readFileSync('common.js','utf8');
 const block=s.slice(s.indexOf('function subscribe(cb)'),s.indexOf('function remaining()'));
 test('draft reloads persisted state when Realtime subscription reconnects',()=>{
  assert.match(block,/st==="SUBSCRIBED"/);
- assert.equal((block.match(/await load\(\(\)=>epoch===connectionEpoch&&connected,\(\)=>\{applied=true\}\)/g)||[]).length,2,
+ assert.equal((block.match(/await load\(\(\)=>epoch===connectionEpoch&&connected&&isCurrent\(\),\(\)=>\{applied=true\}\)/g)||[]).length,2,
   "both realtime event and reconnect loads must discard results after disconnect");
- assert.match(block,/if\(epoch!==connectionEpoch\|\|!connected\)return/);
+ assert.match(block,/if\(epoch!==connectionEpoch\|\|!connected\|\|!isCurrent\(\)\)return/);
+ assert.match(block,/if\(!isCurrent\(\)\)return;/);
  assert.match(block,/Draft resubscription refresh failed/);
  assert.match(block,/el\.textContent="SYNC ERROR"/);
 });
