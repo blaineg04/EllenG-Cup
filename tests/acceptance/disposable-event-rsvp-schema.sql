@@ -9,7 +9,11 @@ end
 $roles$;
 create function auth.uid() returns uuid language sql stable as 'select null::uuid';
 create table auth.users(id uuid primary key);
-create table public.elleng_drafts(id text primary key,owner_id uuid not null references auth.users(id));
+create table public.elleng_drafts(
+ id text primary key,
+ owner_id uuid not null references auth.users(id),
+ state jsonb not null default '{"picks":[]}'::jsonb
+);
 create table public.elleng_tournaments(id text primary key,draft_id text not null references public.elleng_drafts(id));
 \i docs/proposed-event-rsvp-schema-20261027.sql
 insert into auth.users(id) values
@@ -71,6 +75,63 @@ begin
   perform public.elleng_approve_event_rsvp('next','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','approved');
   raise exception 'Out RSVP was allowed to be approved';
  exception when invalid_parameter_value then null;
+ end;
+end $check$;
+-- Approvals cannot mutate the roster after a pick or explicit draft lock.
+-- The approval RPC locks the same draft row as the actual captain pick RPC.
+do $check$
+begin
+ if has_function_privilege('authenticated',
+     'public.elleng_approve_event_rsvp(text,uuid,text)','EXECUTE') then
+   raise exception 'Approval RPC accidentally executable by browser roles';
+ end if;
+end $check$;
+update public.elleng_drafts
+ set state='{"picks":[{"golfer":0,"team":0}]}'::jsonb where id='draft-1';
+do $check$
+begin
+ begin
+  perform public.elleng_approve_event_rsvp(
+    'nov20','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','declined');
+  raise exception 'Approval after first draft pick was accepted';
+ exception when sqlstate '55000' then null;
+ end;
+ if not exists(select 1 from public.elleng_event_rsvps
+   where tournament_id='nov20' and approval_status='approved') then
+  raise exception 'Rejected post-pick decision changed RSVP';
+ end if;
+end $check$;
+update public.elleng_drafts
+ set state='{"picks":[],"rosterLocked":true}'::jsonb where id='draft-1';
+do $check$
+begin
+ begin
+  perform public.elleng_approve_event_rsvp(
+    'nov20','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','declined');
+  raise exception 'Approval during explicit roster lock was accepted';
+ exception when sqlstate '55000' then null;
+ end;
+end $check$;
+update public.elleng_drafts
+ set state='{"picks":[],"draftStarted":true}'::jsonb where id='draft-1';
+do $check$
+begin
+ begin
+  perform public.elleng_approve_event_rsvp(
+    'nov20','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','declined');
+  raise exception 'Approval after draft start was accepted';
+ exception when sqlstate '55000' then null;
+ end;
+end $check$;
+update public.elleng_drafts
+ set state='{"picks":{}}'::jsonb where id='draft-1';
+do $check$
+begin
+ begin
+  perform public.elleng_approve_event_rsvp(
+    'nov20','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','declined');
+  raise exception 'Malformed pick history was allowed to bypass roster lock';
+ exception when sqlstate '55000' then null;
  end;
 end $check$;
 select 'PASS: event RSVP schema and commissioner approval fixture' as result;
