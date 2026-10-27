@@ -97,3 +97,21 @@ test('stale refresh from prior connection cannot overwrite recovered snapshot',a
  assert.equal(h.state().picks.length,2,'old connection response must not replace recovered state');
  assert.equal(h.indicator.textContent,'LIVE');
 });
+
+test('failed prior-connection catch-up cannot change a newer LIVE snapshot',async()=>{
+ const server={state:fresh()},h=start(server);
+ h.defer(true);
+ server.state.picks.push({golfer:0,team:0});
+ const stale=h.emit('SUBSCRIBED');
+ assert.equal(h.pending(),1);
+ await h.emit('TIMED_OUT');
+ h.defer(false);
+ server.state.picks.push({golfer:1,team:1});
+ await h.emit('SUBSCRIBED');
+ assert.equal(h.state().picks.length,2);
+ assert.equal(h.indicator.textContent,'LIVE');
+ h.resolve();await stale;
+ assert.equal(h.state().picks.length,2);
+ assert.equal(h.indicator.textContent,'LIVE');
+ assert.equal(h.buttons[0].disabled,false);
+});
