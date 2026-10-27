@@ -798,7 +798,7 @@ function gatorGrowl(force=false){if((!draftSoundEnabled&&!force)||!audioCtx)retu
 function checkDraftSound(){let n=S.picks.length;if(lastSoundPickCount===null){lastSoundPickCount=n;return}if(n>lastSoundPickCount)gatorGrowl();lastSoundPickCount=n}
 function render(){checkDraftSound();let total=totalPicks(),done=S.picks.length>=total,t=done?0:order(S.picks.length),mine=!done&&t===myTeam&&!S.timerPaused&&!pickInFlight&&!pickSyncFailed&&!!captainUserId&&document.getElementById("connection")?.textContent==="LIVE";document.getElementById("onclock").textContent=done?"DRAFT COMPLETE":"ON THE CLOCK: "+(S.teams[t]?.name||"Team");document.getElementById("meta").textContent=done?`All ${total} golfers drafted`:`${S.teams.length} teams • ${total} golfers • Round ${Math.floor(S.picks.length/S.teams.length)+1} • Pick ${S.picks.length+1} of ${total}`;document.getElementById("notice").textContent=done?"":S.timerPaused?"Draft is paused. Waiting for the Commissioner to start or resume.":mine?"YOUR PICK — select an eligible golfer below.":"Waiting for "+(S.teams[t]?.name||"Team")+" to pick…";document.getElementById("pool").innerHTML=S.golfers.map((g,i)=>({...g,i})).filter(g=>g.name&&g.team==null).map(g=>{let ok=mine&&canBand(t,g.band);return `<div class="player"><strong>${esc(g.name)}</strong><span class="badge">${g.band}</span><span class="muted">${bandRange(g.band)}</span><button data-p="${g.i}" ${ok?"":"disabled"}>${mine?(ok?"DRAFT":"Band Limit"):"Waiting"}</button></div>`}).join("")||'<div class="muted">No available golfers.</div>';document.getElementById("teams").innerHTML=S.teams.map((tm,i)=>`<div class="team"><div class="teamhead"><strong>${esc(tm.name)}</strong>${i===myTeam?" • YOUR TEAM":""}<div class="muted" style="color:#ddd">${esc(tm.captain||"")}</div><div style="font-size:11px">${bands.map(b=>b+" "+tbc(i,b)).join(" • ")}</div></div><div class="roster">${Array.from({length:teamCapacity(i)},(_,j)=>{let g=S.golfers[tm.roster[j]];return g?`<div class="slot"><strong>${esc(g.name)}</strong> <span class="badge">${g.band}</span><div class="muted">${bandRange(g.band)}</div></div>`:`<div class="slot muted">Open roster spot</div>`}).join("")}</div></div>`).join("");document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>pick(+b.dataset.p));draw()}
 function draw(){let x=remaining();document.getElementById("clock").textContent=Math.floor(x/60)+":"+String(x%60).padStart(2,"0");document.getElementById("clock").style.color=x<=10?"#9b2f2f":""}
-let pickInFlight=false,pickSyncFailed=false;
+let pickInFlight=false,pickSyncFailed=false,pickRequestEpoch=0;
 // UI guard complements (never replaces) the server-side authorized pick RPC.
 function canSubmitCaptainPick(i){
  const golfer=S.golfers?.[i];
@@ -818,6 +818,7 @@ async function pick(i){
  // Revalidate in case the selected golfer, turn or connection changed during confirmation.
  if(!canSubmitCaptainPick(i)){alert("Draft state changed while confirming. Wait for LIVE and select again.");render();return}
  pickInFlight=true;
+ const thisPickRequest=++pickRequestEpoch;
  // A pending RPC may resolve after sign-out or a different captain signs in.
  // Its response must never repopulate the new session's draft state or controls.
  const pickAuthEpoch=captainAuthEpoch,pickCaptainId=captainUserId;
@@ -854,8 +855,11 @@ async function pick(i){
   }
   alert(pickSyncFailed?"Unable to refresh the draft. Reload this page before drafting again.":(e.message||"Pick could not be saved. Refresh and try again."));
  }finally{
-  pickInFlight=false;
-  if(sameCaptainSession())render();
+  // An old RPC must never unlock a newer captain's pending selection.
+  if(thisPickRequest===pickRequestEpoch&&sameCaptainSession()){
+   pickInFlight=false;
+   render();
+  }
  }
 }
 document.getElementById("signin").onclick=async()=>{
@@ -885,6 +889,9 @@ document.getElementById("soundToggle").onclick=enableDraftSound;
 // draft controls active. Server-side elleng_make_pick authorization remains mandatory.
 function revokeCaptainSession(){
  captainAuthEpoch++;
+ // Release this session's UI lock, but invalidate its pending RPC cleanup.
+ pickRequestEpoch++;
+ pickInFlight=false;
  stopCaptainSubscription();
  myTeam=null;captainUserId=null;pickSyncFailed=true;
  document.getElementById("login").style.display="block";
