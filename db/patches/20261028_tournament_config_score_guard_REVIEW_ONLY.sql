@@ -16,7 +16,21 @@ BEGIN
  RETURN NEW;
 END $$;
 -- Tournament UPDATE locks its row, but direct score INSERT currently does not.
--- Install a separate tournament-row lock on ALL score writers before enabling
--- this trigger; otherwise an insert could race with the existence checks.
--- CREATE TRIGGER ... BEFORE UPDATE OF team_count ON public.elleng_tournaments ...
--- This file intentionally does NOT install a trigger.
+-- Score INSERT/UPDATE lock serializes with tournament configuration.
+-- Score DELETE only removes rows and cannot add an out-of-range team.
+-- IMPORTANT: audit RLS, trigger invoker permissions, and row-lock deadlocks.
+CREATE OR REPLACE FUNCTION public.elleng_lock_parent_for_score_write()
+RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = ''
+AS $
+DECLARE v_team_count integer;
+BEGIN
+ SELECT t.team_count INTO v_team_count
+ FROM public.elleng_tournaments t WHERE t.id=NEW.tournament_id FOR UPDATE;
+ IF v_team_count IS NULL OR NEW.team_index < 0 OR NEW.team_index >= v_team_count THEN
+  RAISE EXCEPTION 'Scoring team is outside active tournament' USING ERRCODE='23514';
+ END IF;
+ RETURN NEW;
+END $;
+-- Apply matching BEFORE INSERT OR UPDATE triggers to ALL THREE score tables,
+-- alongside BEFORE UPDATE OF team_count on elleng_tournaments, only in an
+-- approved, atomic rollout. This file does NOT install any triggers or grants.
