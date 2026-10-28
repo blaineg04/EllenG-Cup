@@ -125,3 +125,24 @@ BEGIN
  IF EXISTS (SELECT 1 FROM public.elleng_pair_hole_scores WHERE hole=18)
  THEN RAISE EXCEPTION 'Out-of-range team write persisted'; END IF;
 END $$;
+
+-- A tournament switched away from Split-Pair must reject further pair writes.
+UPDATE public.elleng_drafts
+SET state=jsonb_set(state,'{playFormat}','"standard"'::jsonb)
+WHERE id='draft-qa';
+SELECT set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false);
+DO $$
+BEGIN
+ BEGIN
+  PERFORM public.elleng_test_authorized_split_pair('tournament-qa',0,18,0,5);
+  RAISE EXCEPTION 'Wrong-format score unexpectedly accepted';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM='Wrong-format score unexpectedly accepted' THEN RAISE; END IF;
+  IF SQLERRM<>'Split-Pair format not selected' THEN RAISE; END IF;
+ END;
+ IF EXISTS (SELECT 1 FROM public.elleng_pair_hole_scores WHERE hole=18)
+ THEN RAISE EXCEPTION 'Wrong-format score write persisted'; END IF;
+END $$;
+UPDATE public.elleng_drafts
+SET state=jsonb_set(state,'{playFormat}','"split_pair"'::jsonb)
+WHERE id='draft-qa';
