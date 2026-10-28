@@ -156,3 +156,21 @@ test('preview invalidation after RSVP read begins prevents stale render',async()
  assert.deepEqual(h.renders.map(x=>x.status),['loading']);
  assert.deepEqual(h.writes,[]);
 });
+
+test('commissioner preview rejects approved but non-playing RSVP and duplicate accounts',()=>{
+ const notPlaying=[{...rows[0],status:'out'},rows[1]];
+ const result=summarize(notPlaying,'nov20',directory,2,eligibility);
+ assert.deepEqual(result.approvedIndices,[1]);
+ assert.equal(result.matchesPreview,false);
+ assert.throws(()=>summarize([rows[0],{...rows[1],user_id:rows[0].user_id}],'nov20',directory,2,eligibility),/Duplicate event RSVP user/);
+});
+test('account switch during rejected RSVP request does not show old-account error',async()=>{
+ const h=harness(),work=h.controller.refresh();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ h.switchUser();
+ h.listReads[0].reject(new Error('old account network failure'));
+ await work;
+ assert.deepEqual(h.renders.map(x=>x.status),['loading']);
+ assert.deepEqual(h.writes,[]);
+});
