@@ -110,3 +110,18 @@ END $$;
 
 -- Restore reusable fixture for the subsequent two-session concurrency tests.
 UPDATE public.elleng_tournaments SET status='live' WHERE id='tournament-qa';
+
+-- Even the owner cannot post a score for a team outside the configured count.
+SELECT set_config('elleng.test_actor','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',false);
+DO $$
+BEGIN
+ BEGIN
+  PERFORM public.elleng_test_authorized_split_pair('tournament-qa',1,18,0,4);
+  RAISE EXCEPTION 'Out-of-range team unexpectedly accepted';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM='Out-of-range team unexpectedly accepted' THEN RAISE; END IF;
+  IF SQLERRM<>'Team is outside active tournament' THEN RAISE; END IF;
+ END;
+ IF EXISTS (SELECT 1 FROM public.elleng_pair_hole_scores WHERE hole=18)
+ THEN RAISE EXCEPTION 'Out-of-range team write persisted'; END IF;
+END $$;
