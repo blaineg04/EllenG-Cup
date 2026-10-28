@@ -49,6 +49,7 @@ const rsvpPreviewController=EllenGCommissionerRsvpPreview.create({
     " • Approved golfer mismatches: "+p.mismatchedApprovedCount+
     " • Duplicate golfer names: "+p.duplicateNamedCount+
     " • Unnamed draft slots: "+p.unnamedSlotCount+
+    " • Approved seat coverage: "+Math.round(p.approvedSeatCoverage*100)+"%"+
     " • Additional approvals needed for team count: "+p.shortfall+
     ". "+(p.matchesPreview?"Roster matches the read-only preview. ":"Review roster differences before drafting. ")+
     "Server-side eligibility and authenticated acceptance are still required.";
