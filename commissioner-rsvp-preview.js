@@ -18,6 +18,16 @@
   const reconciliation=eligibility.reconcileDraftRoster(rows,eventId,golfers,golfers);
   const missingApprovedIndices=reconciliation.missingIndices;
   const mismatchedApprovedIndices=reconciliation.mismatchedIndices;
+  // Duplicate display names make a commissioner roster ambiguous even when
+  // account IDs and golfer indices are unique. Do not report it as ready.
+  const names=new Set();
+  const duplicateNamedIndices=[];
+  for(let index=0;index<golfers.length;index++){
+   const name=golfers[index]?.name?.trim().toLocaleLowerCase();
+   if(!name)continue;
+   if(names.has(name))duplicateNamedIndices.push(index);
+   names.add(name);
+  }
   const approvedSet=new Set(approved);
   const unapprovedNamedIndices=golfers.flatMap((golfer,index)=>
    golfer?.name?.trim()&&!approvedSet.has(index)?[index]:[]);
@@ -25,12 +35,14 @@
    approvedCount:approved.length,
    approvedIndices:Object.freeze(approved),
    unapprovedNamedCount:unapprovedNamedIndices.length,
+   duplicateNamedCount:duplicateNamedIndices.length,
+   duplicateNamedIndices:Object.freeze(duplicateNamedIndices),
    missingApprovedCount:missingApprovedIndices.length,
    mismatchedApprovedCount:mismatchedApprovedIndices.length,
    unapprovedNamedIndices:Object.freeze(unapprovedNamedIndices),
    shortfall:Math.max(0,teamCount-approved.length),
    // Client-side reconciliation is not authorization to save a draft.
-   matchesPreview:approved.length>=teamCount&&reconciliation.ready
+   matchesPreview:approved.length>=teamCount&&reconciliation.ready&&duplicateNamedIndices.length===0
   });
  }
  function create({db,client,eligibility,eventId,getAuth,getDraft,render}){
