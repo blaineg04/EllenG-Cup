@@ -30,6 +30,21 @@ jobs:
           cleanup() { sudo -u postgres dropdb --if-exists "$db" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_negative" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_captain" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_policy" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_rsvp" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_restore" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_splitpair" >/dev/null 2>&1 || true; }
           trap cleanup EXIT
           sudo -u postgres createdb "$db"
+          # Negative strict-mode proof against a new, empty disposable database.
+          # Expected failure must be the gate's explicit missing-RPC exception.
+          strict_log="$(mktemp)"
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -v REQUIRE_SCORING_READY=1 -d "$db" -f tests/acceptance/scoring-deployment-preflight.sql >"$strict_log" 2>&1; then
+            cat "$strict_log"
+            echo 'FAIL: strict scoring preflight accepted missing RPCs'
+            exit 1
+          fi
+          if ! grep -q 'Scoring rehearsal blocked: required RPC missing' "$strict_log"; then
+            cat "$strict_log"
+            echo 'FAIL: strict preflight failed for an unexpected reason'
+            exit 1
+          fi
+          rm -f "$strict_log"
+          echo 'PASS: strict scoring preflight rejects missing scoring RPCs.'
           # Event RSVP migration is validated only against an isolated fixture database.
           rsvp_db="${db}_rsvp"
           sudo -u postgres createdb "$rsvp_db"
