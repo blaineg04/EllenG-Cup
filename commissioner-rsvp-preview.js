@@ -43,6 +43,9 @@
    mismatchedApprovedIndices:Object.freeze([...mismatchedApprovedIndices]),
    unapprovedNamedIndices:Object.freeze(unapprovedNamedIndices),
    shortfall:Math.max(0,teamCount-approved.length),
+   // Approved players need enough existing named draft slots; do not
+   // confuse total team capacity with confirmed roster readiness.
+   unnamedSlotCount:golfers.filter(g=>!g?.name?.trim()).length,
    // Client-side reconciliation is not authorization to save a draft.
    matchesPreview:approved.length>=teamCount&&reconciliation.ready&&duplicateNamedIndices.length===0
   });
