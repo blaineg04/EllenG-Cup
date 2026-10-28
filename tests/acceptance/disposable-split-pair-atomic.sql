@@ -248,3 +248,20 @@ BEGIN
  IF EXISTS (SELECT 1 FROM public.elleng_pair_hole_scores WHERE hole=16)
  THEN RAISE EXCEPTION 'Direct table write bypassed RPC authorization'; END IF;
 END $$;
+
+-- Exercise anonymous denial under the actual SQL role, not only via privilege introspection.
+SET ROLE anon;
+DO $$
+BEGIN
+ BEGIN
+  PERFORM public.elleng_test_authorized_split_pair('tournament-qa',0,16,0,5);
+  RAISE EXCEPTION 'Anonymous SQL role unexpectedly executed scoring RPC';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+END $$;
+RESET ROLE;
+DO $$
+BEGIN
+ IF EXISTS (SELECT 1 FROM public.elleng_pair_hole_scores WHERE hole=16)
+ THEN RAISE EXCEPTION 'Anonymous SQL role wrote pair score'; END IF;
+END $$;
