@@ -4,7 +4,7 @@ test('commissioner preview reflects unsaved golfer, band, and draft-format edits
  const html=fs.readFileSync('admin.html','utf8');
  assert.match(html,/id="draftSetupPreview"/);
  const start=html.indexOf('function updateDraftSetupPreview(){');
- const end=html.indexOf('document.getElementById("grows")?.addEventListener(',start);
+ const end=html.indexOf('document.getElementById("grows")?.addEventListener?.(',start);
  assert.ok(start>=0&&end>start);
  const source=html.slice(start,end);
  for(const format of ['snake','straight']){
