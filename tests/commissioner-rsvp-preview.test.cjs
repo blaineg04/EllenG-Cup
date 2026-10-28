@@ -281,3 +281,10 @@ test('signed-out refresh clears previously successful RSVP preview without readi
  assert.equal(h.listReads.length,1);
  assert.deepEqual(h.writes,[]);
 });
+
+test('commissioner RSVP preview ignores other events but rejects malformed current-event records',()=>{
+ const valid=summarize([...rows,{tournament_id:'other-event',user_id:'foreign',golfer_index:999,status:'invalid',approval_status:'invalid'}],'nov20',directory.slice(0,2),2,eligibility);
+ assert.equal(valid.matchesPreview,true);
+ assert.deepEqual(valid.approvedIndices,[0,1]);
+ assert.throws(()=>summarize([...rows,{tournament_id:'nov20',user_id:'bad',golfer_index:2,status:'invalid',approval_status:'approved'}],'nov20',directory,2,eligibility),/Invalid RSVP status/);
+});
