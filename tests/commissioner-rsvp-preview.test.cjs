@@ -618,3 +618,32 @@ test('pre-draft RSVP readiness never certifies a draft after picks or assignment
   assert.deepEqual(h.writes,[]);
  }
 });
+
+test('remote draft start during authentication blocks RSVP fetch',async()=>{
+ for(const mutate of [
+  draft=>{draft.picks=[{golfer:0,team:0}];},
+  draft=>{draft.teams[0].roster=[0];},
+  draft=>{draft.golfers[0].team=0;}
+ ]){
+  const h=harness(),work=h.controller.refresh();
+  assert.equal(h.authReads.length,1);
+  mutate(h.draft);
+  h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+  await work;
+  assert.equal(h.listReads.length,0,'do not query RSVPs for a draft started on another device');
+  assert.deepEqual(h.renders.map(x=>x.status),['loading','stale']);
+  assert.deepEqual(h.writes,[]);
+ }
+});
+
+test('account switch during event RSVP retrieval never restores old commissioner readiness',async()=>{
+ const h=harness(),work=h.controller.refresh();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.listReads.length,1);
+ h.switchUser();
+ h.listReads[0].resolve(rows);
+ await work;
+ assert.deepEqual(h.renders.map(x=>x.status),['loading']);
+ assert.deepEqual(h.writes,[]);
+});
