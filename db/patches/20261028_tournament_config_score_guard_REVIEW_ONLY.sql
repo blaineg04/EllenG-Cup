@@ -18,9 +18,12 @@ END $$;
 -- Tournament UPDATE locks its row, but direct score INSERT currently does not.
 -- Score INSERT/UPDATE lock serializes with tournament configuration.
 -- Score DELETE only removes rows and cannot add an out-of-range team.
--- IMPORTANT: audit RLS, trigger invoker permissions, and row-lock deadlocks.
+-- IMPORTANT: use an audited NOLOGIN function owner with narrow SELECT/UPDATE
+-- privileges on the tournament table. SECURITY DEFINER bypasses caller identity
+-- for the parent lock, NOT for the score INSERT/UPDATE table policies.
+-- Verify owners, trigger execution and deadlock order under real Supabase roles.
 CREATE OR REPLACE FUNCTION public.elleng_lock_parent_for_score_write()
-RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = ''
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
 AS $
 DECLARE v_team_count integer;
 BEGIN
@@ -31,6 +34,7 @@ BEGIN
  END IF;
  RETURN NEW;
 END $;
+REVOKE ALL ON FUNCTION public.elleng_lock_parent_for_score_write() FROM PUBLIC, anon, authenticated;
 -- Apply matching BEFORE INSERT OR UPDATE triggers to ALL THREE score tables,
 -- alongside BEFORE UPDATE OF team_count on elleng_tournaments, only in an
 -- approved, atomic rollout. This file does NOT install any triggers or grants.
