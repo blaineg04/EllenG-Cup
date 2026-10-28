@@ -182,6 +182,26 @@ async function main() {
         await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
         await page.screenshot({path:path.join(output,`${width}-${name}.png`),animations:'disabled',fullPage:false});
         await page.screenshot({path:path.join(output,`${width}-${name}-full.png`),animations:'disabled',fullPage:true});
+        // Check rendered colors, since selector-presence tests miss specificity overrides.
+        if(name==='draft'||name==='course'){
+          const contrast=await page.evaluate(view=>{
+            const rgb=s=>(s.match(/[\\d.]+/g)||[]).slice(0,3).map(Number);
+            const lum=a=>a.map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4}).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+            if(view==='draft'){
+              const text=document.querySelector('.team .slot strong'),slot=text?.closest('.slot');
+              if(!text||!slot)throw new Error('Draft roster fixture missing');
+              const a=lum(rgb(getComputedStyle(text).color)),b=lum(rgb(getComputedStyle(slot).backgroundColor));
+              return (Math.max(a,b)+.05)/(Math.min(a,b)+.05)>=4.5;
+            }
+            const overlay=document.querySelector('#courseView .course-overlay');
+            if(!overlay||getComputedStyle(overlay).display==='none')return true;
+            return ['#courseNameDisplay','#courseRouteDisplay'].every(sel=>{
+              const e=document.querySelector(sel);if(!e)throw new Error('Course caption missing');
+              const color=rgb(getComputedStyle(e).color);return color.length===3&&color.every(v=>v>=230);
+            });
+          },name);
+          if(!contrast)throw new Error(name+' rendered text contrast check failed');
+        }
         const result=await page.evaluate(auditDOM);
         if(name==='broadcast'&&result.auditedRoot!=='broadcastOverlay')throw new Error('Broadcast audit did not inspect the active overlay');
         for(const selector of result.fixedNavOcclusions){
