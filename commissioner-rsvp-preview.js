@@ -106,6 +106,13 @@
     }
     const summary=summarize(rows,eventId,draft?.golfers,draft?.teams?.length,eligibility);
     if(!current())return;
+    // A remote draft or unsaved local edit can arrive during synchronous
+    // eligibility calculation (including through a test adapter callback).
+    if(hasPendingRosterEdits()){if(current())render({status:"unsaved"});return;}
+    if(draftSnapshot()!==startingDraft||draftAlreadyStarted()){
+      if(current())render({status:"stale"});
+      return;
+    }
     render({status:"success",summary});
    }catch(error){
     if(current())render({status:"error"});
