@@ -46,6 +46,15 @@ test('read-only summary reports approved players and unapproved named slots',()=
  assert.equal(summarize([], 'nov20', [],2,eligibility).matchesPreview,false);
  assert.throws(()=>summarize(rows,'nov20',directory,1,eligibility),RangeError);
 });
+test('sparse golfer slots cannot be treated as complete draft readiness',()=>{
+ const sparse=Array(3);
+ sparse[0]={name:'Alice'};
+ sparse[1]={name:'Bob'};
+ const result=summarize(rows,'nov20',sparse,2,eligibility);
+ assert.equal(result.unnamedSlotCount,1);
+ assert.equal(result.matchesPreview,false);
+ assert.equal(result.independentlyVerified,false);
+});
 test('verified commissioner can preview without altering draft or writing database',async()=>{
  const h=harness(),before=structuredClone(h.draft);
  const work=h.controller.refresh();
