@@ -771,7 +771,7 @@ input,select,textarea{
 <div id="app" style="display:none"><div class="card" style="margin-bottom:12px"><button id="soundToggle" class="gold">🔊 Enable Draft Sounds</button><span id="soundStatus" class="muted" style="margin-left:10px">Sound off</span></div><div class="card"><div class="bar"><div><strong id="onclock"></strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div id="clocktxt" class="muted">LIVE PICK CLOCK</div></div></div><div id="notice" class="muted"></div></div>
 <div class="grid"><div class="card"><h2>Available Golfers</h2><div id="pool"></div></div><div class="card"><h2>Live Rosters</h2><div id="teams" class="teams"></div></div></div></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script>
-let myTeam=null,captainUserId=null,captainAuthEpoch=0,captainRoleLookupId=0;
+let myTeam=null,captainUserId=null,captainAuthEpoch=0,captainRoleLookupId=0,captainBootstrapEpoch=0;
 // Only the newest role lookup may grant captain access. Auth revocation also invalidates it.
 async function whoami(){const authEpoch=captainAuthEpoch,lookupId=++captainRoleLookupId;myTeam=null;captainUserId=null;const {data:{user}}=await db.auth.getUser();if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId||!user)return false;const {data,error}=await db.from("elleng_captains").select("team_index").eq("draft_id",cfg.draftId).eq("user_id",user.id).single();if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId)return false;if(error||!data||data.team_index==null||typeof data.team_index==="boolean"||!Number.isInteger(Number(data.team_index))||Number(data.team_index)<0){document.getElementById("msg").textContent="This account is not assigned to a team. Ask the commissioner to assign your captain account.";return false}myTeam=Number(data.team_index);captainUserId=user.id;return true}
 let captainChannel=null,captainSubscriptionEpoch=0;
@@ -875,18 +875,27 @@ document.getElementById("signin").onclick=async()=>{
   const msg=document.getElementById("msg"),status=document.getElementById("connection"),passwordInput=document.getElementById("pw");
   const email=document.getElementById("email").value.trim(),password=passwordInput.value;
   if(!email||!password){msg.textContent="Enter captain email and password.";if(status)status.textContent="READY";return}
+  // Interactive login supersedes any pending restored-session bootstrap.
+  const loginEpoch=++captainBootstrapEpoch;captainRoleLookupId++;
   const label=button.textContent;button.disabled=true;button.textContent="Signing In…";msg.textContent="Signing in…";
   try{
     if(status)status.textContent="CONNECTING";
-    const {error}=await db.auth.signInWithPassword({email,password});if(error)throw error;
+    const {error}=await db.auth.signInWithPassword({email,password});
+    if(loginEpoch!==captainBootstrapEpoch)return;
+    if(error)throw error;
     passwordInput.value="";msg.textContent="";
-    if(!(await whoami())){if(status)status.textContent="READY";return}
+    const authorized=await whoami();
+    if(loginEpoch!==captainBootstrapEpoch)return;
+    if(!authorized){if(status)status.textContent="READY";return}
     document.getElementById("login").style.display="none";
     document.getElementById("app").style.display="block";
-    await load();if(!captainUserId)throw new Error("Captain session changed while loading. Sign in again.");pickSyncFailed=false;render();
+    await load(()=>loginEpoch===captainBootstrapEpoch&&!!captainUserId);
+    if(loginEpoch!==captainBootstrapEpoch)return;
+    if(!captainUserId)throw new Error("Captain session changed while loading. Sign in again.");pickSyncFailed=false;render();
     if(status)status.textContent="CONNECTING";
     startCaptainSubscription();startCaptainDrawTimer();
   }catch(e){
+    if(loginEpoch!==captainBootstrapEpoch)return;
     document.getElementById("login").style.display="block";document.getElementById("app").style.display="none";
     if(status)status.textContent="ERROR";
     msg.textContent=e?.message||"Captain sign-in unavailable. Try again.";
@@ -897,6 +906,7 @@ document.getElementById("soundToggle").onclick=enableDraftSound;
 // draft controls active. Server-side elleng_make_pick authorization remains mandatory.
 function revokeCaptainSession(){
  captainAuthEpoch++;
+ captainBootstrapEpoch++;
  // Release this session's UI lock, but invalidate its pending RPC cleanup.
  pickRequestEpoch++;
  pickInFlight=false;
@@ -918,26 +928,32 @@ db.auth.onAuthStateChange((event,session)=>{
  }
 });
 (async()=>{
+  const bootEpoch=captainBootstrapEpoch;
   const status=document.getElementById("connection");
   try{
     if(status)status.textContent="CONNECTING";
     const {data:{user}}=await db.auth.getUser();
+    if(bootEpoch!==captainBootstrapEpoch)return;
     if(user && await whoami()){
+      if(bootEpoch!==captainBootstrapEpoch)return;
       document.getElementById("login").style.display="none";
       document.getElementById("app").style.display="block";
-      await load();
+      await load(()=>bootEpoch===captainBootstrapEpoch&&!!captainUserId);
+      if(bootEpoch!==captainBootstrapEpoch)return;
       if(!captainUserId)throw new Error("Captain session changed while loading. Sign in again.");
       pickSyncFailed=false;render();
       if(status)status.textContent="CONNECTING";
       startCaptainSubscription();
       startCaptainDrawTimer();
     }else{
+      if(bootEpoch!==captainBootstrapEpoch)return;
       document.getElementById("login").style.display="block";
       document.getElementById("app").style.display="none";
       if(status)status.textContent="READY";
       if(user)document.getElementById("msg").textContent="This signed-in account is not assigned as a captain for this tournament.";
     }
   }catch(e){
+    if(bootEpoch!==captainBootstrapEpoch)return;
     console.error("Captain page startup error:",e);
     if(status)status.textContent="ERROR";
     document.getElementById("login").style.display="block";
