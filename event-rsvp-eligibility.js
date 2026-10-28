@@ -30,10 +30,15 @@
       const r=normalize(raw);
       if(seenUsers.has(r.user_id))throw new Error("Duplicate event RSVP user");
       seenUsers.add(r.user_id);
+      // A golfer index identifies one event enrollment, even if an RSVP is
+      // pending, declined or not playing. Conflicting accounts must never
+      // make a partially approved roster appear safe for a live draft.
+      if(seenGolfers.has(r.golfer_index))
+        throw new Error("Duplicate approved golfer or event enrollment");
+      seenGolfers.add(r.golfer_index);
       if(r.status!=="playing"||r.approval_status!=="approved")continue;
-      if(seenGolfers.has(r.golfer_index))throw new Error("Duplicate approved golfer");
       if(!availableGolfers[r.golfer_index]?.name?.trim())throw new Error("Approved golfer missing from directory");
-      seenGolfers.add(r.golfer_index);indices.push(r.golfer_index);
+      indices.push(r.golfer_index);
     }
     return indices.sort((a,b)=>a-b);
   }
