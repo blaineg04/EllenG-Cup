@@ -70,9 +70,12 @@ async function secureSave(){
 save=secureSave;
 
 let liveMode=false,tick;
+function setupIsLocked(){
+ return S.picks.length>0||S.teams.some(t=>t.roster.length>0)||S.golfers.some(g=>g.team!=null);
+}
 function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map((g,i)=>`<tr><td>${i+1}</td><td><input data-n="${i}" value="${esc(g.name)}"></td><td><input data-h="${i}" type="number" step=".1" value="${esc(g.hcp)}"></td><td><select data-b="${i}"><option value="" ${!g.band?"selected":""}>Unranked</option>${bands.map(b=>`<option ${g.band===b?"selected":""}>${b}</option>`).join("")}</select></td></tr>`).join("");document.getElementById("trows").innerHTML=S.teams.map((t,i)=>`<tr><td>Team ${i+1}</td><td><input data-tn="${i}" value="${esc(t.name)}"></td><td><input data-tc="${i}" placeholder="Captain" value="${esc(t.captain)}"></td></tr>`).join("");document.getElementById("dtype").value=S.draftType;document.getElementById("tlen").value=S.timerLength;document.getElementById("setupTeamCount").value=S.teams.length;document.getElementById("setupGolferCount").value=S.golfers.length;
  // An active draft may be inspected, but its setup must never be edited.
- const locked=S.picks.length>0||S.teams.some(t=>t.roster.length>0)||S.golfers.some(g=>g.team!=null);
+ const locked=setupIsLocked();
  document.getElementById("setup").querySelectorAll("input,select,button").forEach(el=>el.disabled=locked);
  const status=document.getElementById("setupSizeMsg");
  if(locked)status.textContent="Draft picks exist. Setup is read-only; undo all picks before editing golfers, teams or draft format.";
@@ -127,7 +130,7 @@ document.getElementById("applySetupSize").onclick=async()=>{
    S=before;setupRender();
    message.textContent=error?.message||"Unable to change draft counts.";
   }
- }finally{button.disabled=false}
+ }finally{button.disabled=setupIsLocked()}
 };
 document.getElementById("saveSetup").onclick=async()=>{
  if(savingDraft)return;
@@ -152,7 +155,7 @@ document.getElementById("saveSetup").onclick=async()=>{
  }catch(error){
   if(sameCommissionerAction(actionEpoch,actionUserId)){S=before;document.getElementById("setupSizeMsg").textContent=error?.message||"Setup was not saved.";}
  }finally{
-  button.disabled=false;
+  button.disabled=setupIsLocked();
  }
 };
 document.getElementById("setupBtn").onclick=()=>{liveMode=false;document.getElementById("live").style.display="none";document.getElementById("setup").style.display="block";setupRender()};
