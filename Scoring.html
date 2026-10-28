@@ -2506,11 +2506,16 @@ function normalPoints(values){
  }
  return out;
 }
+function validHoleScore(score){
+ return score!==null&&score!==undefined&&typeof score!=="boolean"&&String(score).trim()!==""&&Number.isSafeInteger(Number(score))&&Number(score)>=1&&Number(score)<=40;
+}
 function pointsForHole(h){
- const vals=teams.map((_,i)=>{const r=scores.find(x=>x.team_index===i&&x.hole===h);return r&&r.score!=null?Number(r.score):NaN});
  const n=teams.length;
- if(vals.filter(Number.isFinite).length<n)return Array(n).fill(null);
- if(tournament&&Number(tournament.gator_hole)===h){
+ if(h===null||h===undefined||typeof h==="boolean"||String(h).trim()===""||!Number.isInteger(Number(h))||Number(h)<1||Number(h)>18)return Array(n).fill(null);
+ h=Number(h);
+ const vals=teams.map((_,i)=>{const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validHoleScore(x.score));return r?Number(r.score):NaN});
+ if(!n||vals.filter(Number.isFinite).length<n)return Array(n).fill(null);
+ if(tournament&&tournament.gator_hole!=null&&String(tournament.gator_hole).trim()!==""&&Number(tournament.gator_hole)===h){
    const out=Array(n).fill(null), valid=vals.filter(Number.isFinite); if(!valid.length)return out;
    const low=Math.min(...valid), winners=[];vals.forEach((v,i)=>{if(v===low)winners.push(i)});
    winners.forEach(i=>out[i]=(2*n)/winners.length);
