@@ -110,11 +110,11 @@ function updateDraftSetupPreview(){
    (unranked?unranked+" golfer(s) need a valid handicap band. ":"All named golfers have handicap bands. ")+
    "RSVP approval is not yet connected to this draft.";
 }
-document.getElementById("grows").addEventListener("input",updateDraftSetupPreview);
-document.getElementById("grows").addEventListener("change",updateDraftSetupPreview);
-document.getElementById("dtype").addEventListener("change",updateDraftSetupPreview);
-document.getElementById("setupTeamCount").addEventListener("input",updateDraftSetupPreview);
-document.getElementById("setupGolferCount").addEventListener("input",updateDraftSetupPreview);
+document.getElementById("grows")?.addEventListener("input",updateDraftSetupPreview);
+document.getElementById("grows")?.addEventListener("change",updateDraftSetupPreview);
+document.getElementById("dtype")?.addEventListener("change",updateDraftSetupPreview);
+document.getElementById("setupTeamCount")?.addEventListener("input",updateDraftSetupPreview);
+document.getElementById("setupGolferCount")?.addEventListener("input",updateDraftSetupPreview);
 function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map((g,i)=>`<tr><td>${i+1}</td><td><input data-n="${i}" value="${esc(g.name)}"></td><td><input data-h="${i}" type="number" step=".1" value="${esc(g.hcp)}"></td><td><select data-b="${i}"><option value="" ${!g.band?"selected":""}>Unranked</option>${bands.map(b=>`<option ${g.band===b?"selected":""}>${b}</option>`).join("")}</select></td></tr>`).join("");document.getElementById("trows").innerHTML=S.teams.map((t,i)=>`<tr><td>Team ${i+1}</td><td><input data-tn="${i}" value="${esc(t.name)}"></td><td><input data-tc="${i}" placeholder="Captain" value="${esc(t.captain)}"></td></tr>`).join("");document.getElementById("dtype").value=S.draftType;document.getElementById("tlen").value=S.timerLength;document.getElementById("setupTeamCount").value=S.teams.length;document.getElementById("setupGolferCount").value=S.golfers.length;
  // An active draft may be inspected, but its setup must never be edited.
  updateDraftSetupPreview();
