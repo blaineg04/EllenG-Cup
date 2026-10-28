@@ -267,3 +267,17 @@ test('invalidation during a newer refresh cannot restore previous approved summa
  assert.equal(h.renders.at(-1).status,'invalidated');
  assert.deepEqual(h.writes,[]);
 });
+
+test('signed-out refresh clears previously successful RSVP preview without reading database',async()=>{
+ const h=harness(),first=h.controller.refresh();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ h.listReads[0].resolve(rows);await first;
+ assert.equal(h.renders.at(-1).status,'success');
+ h.signout();
+ await h.controller.refresh();
+ assert.equal(h.renders.at(-1).status,'invalidated');
+ assert.equal(h.authReads.length,1);
+ assert.equal(h.listReads.length,1);
+ assert.deepEqual(h.writes,[]);
+});
