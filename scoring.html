@@ -4553,6 +4553,11 @@ function teamRosterGolfers(teamIndex){
    return {index:idx,name:String(golfer.name).trim()};
  }).filter(Boolean);
 }
+function validStoredPlayerScore(row){
+ if(!row||row.score===null||row.score===undefined||typeof row.score==="boolean"||String(row.score).trim()==="")return false;
+ const n=Number(row.score);
+ return Number.isSafeInteger(n)&&n>=1&&n<=20;
+}
 function renderShambleScoring(par,pts){
  const area=$("shambleScoreArea"), front=$("frontNineScoreGrid");
  if(!area||!front)return;
@@ -4564,7 +4569,7 @@ function renderShambleScoring(par,pts){
      return `<div class="shamble-team"><div class="row between"><strong>${esc(t.name)}</strong><span class="badge">SHAMBLE</span></div><div class="note" style="margin-top:8px">No drafted golfers are on this team yet.</div></div>`;
    }
    const entered=roster.map(g=>playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===hole&&Number(x.golfer_index)===g.index));
-   const complete=roster.length>0&&entered.every(x=>x&&Number.isSafeInteger(Number(x.score))&&Number(x.score)>=1&&Number(x.score)<=20);
+   const complete=roster.length>0&&entered.every(validStoredPlayerScore);
    const low=complete?Math.min(...entered.map(x=>Number(x.score))):null;
    const lowGolf=low==null?null:relativeGolf(low,par);
    const rows=roster.map(g=>{
@@ -4625,7 +4630,7 @@ function renderPairScoring(par,pts){
    }).join("");
    const a=pairScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===hole&&Number(x.pair_index)===0);
    const b=pairScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===hole&&Number(x.pair_index)===1);
-   const validPair=x=>x&&Number.isSafeInteger(Number(x.score))&&Number(x.score)>=1&&Number(x.score)<=20;
+   const validPair=validStoredPlayerScore;
    const complete=roster.length===4&&validPair(a)&&validPair(b);
    const total=complete?Number(a.score)+Number(b.score):null;
    const pointText=pts[teamIndex]==null?"—":pts[teamIndex].toFixed(pts[teamIndex]%1?1:0);
