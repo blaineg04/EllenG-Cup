@@ -67,6 +67,13 @@ jobs:
           SQL
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -v REQUIRE_SCORING_READY=1 -d "$db" -f tests/acceptance/scoring-deployment-preflight.sql >/dev/null
           echo 'PASS: strict scoring preflight accepts valid disposable RPC grants and RLS.'
+          # Remove fixture objects so later cluster-wide role reset is not blocked.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" <<'SQL'
+          DROP FUNCTION public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer);
+          DROP FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer);
+          DROP TABLE public.elleng_pair_hole_scores;
+          DROP TABLE public.elleng_team_scores;
+          SQL
 
           # Event RSVP migration is validated only against an isolated fixture database.
           rsvp_db="${db}_rsvp"
