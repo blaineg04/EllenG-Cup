@@ -164,3 +164,20 @@ BEGIN
  IF EXISTS (SELECT 1 FROM public.elleng_pair_hole_scores WHERE hole=18)
  THEN RAISE EXCEPTION 'Invalid request wrote pair score'; END IF;
 END $$;
+
+-- Repeated identical saves are idempotent: one pair row, one exact team total.
+SELECT set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false);
+DO $$
+DECLARE r jsonb;
+BEGIN
+ SELECT public.elleng_test_authorized_split_pair('tournament-qa',0,18,0,9) INTO r;
+ SELECT public.elleng_test_authorized_split_pair('tournament-qa',0,18,0,9) INTO r;
+ IF (SELECT count(*) FROM public.elleng_pair_hole_scores
+     WHERE tournament_id='tournament-qa' AND hole=18 AND team_index=0 AND pair_index=0)<>1
+ THEN RAISE EXCEPTION 'Duplicate pair row from retry'; END IF;
+ SELECT public.elleng_test_authorized_split_pair('tournament-qa',0,18,1,8) INTO r;
+ SELECT public.elleng_test_authorized_split_pair('tournament-qa',0,18,1,8) INTO r;
+ IF r->>'team_score'<>'17' OR
+    (SELECT count(*) FROM public.elleng_team_scores WHERE tournament_id='tournament-qa' AND hole=18)<>1
+ THEN RAISE EXCEPTION 'Idempotent retry changed team total'; END IF;
+END $$;
