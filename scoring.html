@@ -4579,7 +4579,7 @@ function renderShambleScoring(par,pts){
      return `<div class="shamble-player"><div><strong>${esc(g.name)}</strong></div><div><input class="shamble-player-score" type="number" min="1" max="20" step="1" inputmode="numeric" data-team="${teamIndex}" data-golfer="${g.index}" value="${v}" ${canEditTeam(teamIndex)?"":"disabled"}></div><div style="text-align:right">${v===""?'<span class="status">—</span>':`<strong>${esc(rg.rel)}</strong><div class="status">${esc(rg.label)}</div>`}</div></div>`;
    }).join("");
    const pointText=pts[teamIndex]==null?"—":pts[teamIndex].toFixed(pts[teamIndex]%1?1:0);
-   const summary=complete?`LOW TEAM SCORE: ${low} strokes • ${esc(lowGolf.rel)} ${esc(lowGolf.label)} • ${pointText} Cup pts`:`Waiting on ${entered.filter(Boolean).length}/${roster.length} player scores. Team score posts after everyone finishes.`;
+   const summary=complete?`LOW TEAM SCORE: ${low} strokes • ${esc(lowGolf.rel)} ${esc(lowGolf.label)} • ${pointText} Cup pts`:`Waiting on ${entered.filter(validStoredPlayerScore).length}/${roster.length} valid player scores. Team score posts after everyone finishes.`;
    return `<div class="shamble-team"><div class="row between"><div><strong>${esc(t.name)}</strong><div class="status">Best tee shot, then everyone plays their own ball.</div></div><span class="badge">LOW SCORE COUNTS</span></div>${rows}<div class="shamble-low">${summary}</div></div>`;
  }).join("");
  document.querySelectorAll(".shamble-player-score:not([disabled])").forEach(inp=>inp.addEventListener("change",()=>savePlayerShambleScore(Number(inp.dataset.team),Number(inp.dataset.golfer),inp.value)));
