@@ -36,3 +36,11 @@ test('empty approved RSVP roster never reports draft ready',()=>{
  const pending=[{...rows[0],approval_status:'pending'}];
  assert.equal(reconcileDraftRoster(pending,'nov20',directory,[]).ready,false);
 });
+
+test('NULL attendance enrollment is excluded without blocking approved roster comparison',()=>{
+ const enrolled={tournament_id:'nov20',user_id:'unresponded',golfer_index:2,status:null,approval_status:'pending'};
+ const result=reconcileDraftRoster([...rows,enrolled],'nov20',directory,[{name:'Alice'},{name:'Bob'}]);
+ assert.equal(result.ready,true);
+ assert.deepEqual(result.approvedIndices,[0,1]);
+ assert.deepEqual(result.unapprovedNamedIndices,[]);
+});
