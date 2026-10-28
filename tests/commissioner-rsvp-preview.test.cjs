@@ -412,39 +412,73 @@ test('roster edits during RSVP network read cannot restore stale readiness',asyn
  assert.deepEqual(h.writes,[]);
 });
 
-test('commissioner unsaved-roster guard compares real visible golfer names and counts',()=>{
+test('commissioner readiness refuses all unsaved golfer, team and draft setup edits',()=>{
  const fs=require('node:fs'),vm=require('node:vm');
  const html=fs.readFileSync('admin.html','utf8');
  const start=html.indexOf('function hasPendingRosterEdits(){');
  const end=html.indexOf('function updateDraftSetupPreview()',start);
- assert.ok(start>0&&end>start,'real read-only roster guard must exist');
- const names=[{dataset:{n:'0'},value:'Alice'},{dataset:{n:'1'},value:'Bob'}];
- const controls={setupTeamCount:{value:'2'},setupGolferCount:{value:'2'}};
- const ctx={savingDraft:false,S:{golfers:[{name:'Alice'},{name:'Bob'}],teams:[{},{}]},
-  document:{querySelectorAll:selector=>selector==='#grows [data-n]'?names:[],
+ assert.ok(start>0&&end>start,'real read-only setup guard must exist');
+ const field=(key,index,value)=>({dataset:{[key]:String(index)},value});
+ const names=[field('n',0,'Alice'),field('n',1,'Bob')];
+ const handicaps=[field('h',0,'9'),field('h',1,'17')];
+ const bands=[field('b',0,'A'),field('b',1,'B')];
+ const teamNames=[field('tn',0,'Team 1'),field('tn',1,'Team 2')];
+ const captains=[field('tc',0,'Alice'),field('tc',1,'Bob')];
+ const fields={
+  '#grows [data-n]':names,'#grows [data-h]':handicaps,
+  '#grows [data-b]':bands,'#trows [data-tn]':teamNames,
+  '#trows [data-tc]':captains
+ };
+ const controls={
+  setupTeamCount:{value:'2'},setupGolferCount:{value:'2'},
+  dtype:{value:'snake'},tlen:{value:'60'}
+ };
+ const ctx={savingDraft:false,
+  S:{golfers:[{name:'Alice',hcp:'9',band:'A'},{name:'Bob',hcp:'17',band:'B'}],
+   teams:[{name:'Team 1',captain:'Alice'},{name:'Team 2',captain:'Bob'}],
+   draftType:'snake',timerLength:60},
+  document:{querySelectorAll:selector=>fields[selector]||[],
    getElementById:id=>controls[id]}};
  vm.createContext(ctx);
  vm.runInContext(html.slice(start,end)+'\nthis.check=hasPendingRosterEdits;',ctx);
  assert.equal(ctx.check(),false);
- names[1].value='Carol';
- assert.equal(ctx.check(),true,'unsaved golfer rename must block approval');
+ function changed(control,value){
+  const before=control.value;
+  control.value=value;
+  assert.equal(ctx.check(),true,'unsaved '+value+' must block RSVP readiness');
+  control.value=before;
+  assert.equal(ctx.check(),false,'restored setup must clear unsaved guard');
+ }
+ changed(names[1],'Carol');
+ changed(handicaps[0],'12');
+ changed(bands[0],'D');
+ changed(teamNames[0],'Visitors');
+ changed(captains[1],'Carol');
+ changed(controls.dtype,'straight');
+ changed(controls.tlen,'90');
+ changed(controls.setupTeamCount,'3');
+ changed(controls.setupGolferCount,'3');
+ changed(names[1],' Bob ');
  names[1].value=' Bob ';
- assert.equal(ctx.check(),false,'trimmed equivalent name is not a roster change');
- controls.setupTeamCount.value='3';
- assert.equal(ctx.check(),true,'unsaved team count must block approval');
- controls.setupTeamCount.value='2';
- controls.setupGolferCount.value='3';
- assert.equal(ctx.check(),true,'unsaved golfer count must block approval');
- controls.setupGolferCount.value='2';
+ assert.equal(ctx.check(),false,'equivalent trimmed golfer name is unchanged');
+ names[1].value='Bob';
+ teamNames[0].value='';
+ assert.equal(ctx.check(),false,'default empty team name saves as Team 1');
+ teamNames[0].value='Team 1';
  names[1].dataset.n='0';
- assert.equal(ctx.check(),true,'duplicate input indices must fail closed');
+ assert.equal(ctx.check(),true,'duplicate golfer input indices must fail closed');
  names[1].dataset.n='1';
+ const original=fields['#grows [data-b]'];
+ fields['#grows [data-b]']=original.slice(0,1);
+ assert.equal(ctx.check(),true,'missing handicap band input must fail closed');
+ fields['#grows [data-b]']=original;
  ctx.savingDraft=true;
  assert.equal(ctx.check(),true,'in-flight draft save cannot certify roster');
+ ctx.savingDraft=false;
+ assert.equal(ctx.check(),false);
  assert.equal(html.includes('hasPendingRosterEdits,'),true);
  assert.equal(html.includes('result.status==="unsaved"'),true);
 });
-
 
 test('conflicting event golfer enrollment fails closed even if only one account is approved',()=>{
  const adapter=require('../event-rsvp-client.js');
