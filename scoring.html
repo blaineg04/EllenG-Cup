@@ -3888,7 +3888,7 @@ function pointsForHole(h){
  if(tournament&&tournament.gator_hole!==null&&tournament.gator_hole!==undefined&&typeof tournament.gator_hole!=="boolean"&&String(tournament.gator_hole).trim()!==""&&Number.isInteger(Number(tournament.gator_hole))&&Number(tournament.gator_hole)===h){
    const out=Array(n).fill(null), valid=vals.filter(Number.isFinite); if(!valid.length)return out;
    const low=Math.min(...valid), winners=[];vals.forEach((v,i)=>{if(v===low)winners.push(i)});
-   winners.forEach(i=>out[i]=12/winners.length);
+   winners.forEach(i=>out[i]=(2*n)/winners.length);
    vals.forEach((v,i)=>{if(Number.isFinite(v)&&out[i]===null)out[i]=0});
    return out;
  }
