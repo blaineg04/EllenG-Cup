@@ -215,3 +215,66 @@ test('late interactive sign-in result cannot restore revoked captain controls',a
  assert.equal(elements.signin.disabled,false,'button cleanup still runs');
  assert.match(s,/function revokeCaptainSession\(\)\{\s*captainAuthEpoch\+\+;\s*captainBootstrapEpoch\+\+;/);
 });
+
+function captainRoleLookupHarness(){
+ const start=s.indexOf('async function whoami(){');
+ const end=s.indexOf('let captainChannel=null',start);
+ assert.ok(start>=0&&end>start,'captain role lookup source exists');
+ let currentUser='captain-a',releaseRole,roleQueries=0,authChecks=0;
+ const roleResponse=new Promise(resolve=>{releaseRole=resolve});
+ const ctx={
+  captainAuthEpoch:0,captainRoleLookupId:0,captainUserId:null,myTeam:null,
+  cfg:{draftId:'synthetic-draft'},
+  document:{getElementById:()=>({textContent:''})},
+  db:{
+   auth:{getUser:async()=>{authChecks++;return {data:{user:currentUser?{id:currentUser}:null}}}},
+   from:table=>{
+    assert.equal(table,'elleng_captains');
+    return {select:column=>{
+     assert.equal(column,'team_index');
+     return {eq:()=>({eq:()=>({single:()=>{roleQueries++;return roleResponse}})})};
+    }};
+   }
+  }
+ };
+ vm.createContext(ctx);
+ vm.runInContext(s.slice(start,end)+';this.authorizeCaptain=whoami;',ctx);
+ return {ctx,authorize:()=>ctx.authorizeCaptain(),switchUser:id=>{currentUser=id},
+  release:()=>releaseRole({data:{team_index:1},error:null}),
+  counts:()=>({roleQueries,authChecks})};
+}
+
+test('captain role lookup rejects a different authenticated account after an in-flight switch',async()=>{
+ const h=captainRoleLookupHarness();
+ const pending=h.authorize();
+ await Promise.resolve();
+ assert.equal(h.counts().roleQueries,1,'role lookup started for original account');
+ h.switchUser('captain-b');
+ h.release();
+ assert.equal(await pending,false,'old captain role must not be assigned to new account');
+ assert.equal(h.ctx.captainUserId,null);
+ assert.equal(h.ctx.myTeam,null);
+ assert.equal(h.counts().authChecks,2,'identity is checked again after role query');
+});
+
+test('captain role lookup rejects sign-out before role query resolves',async()=>{
+ const h=captainRoleLookupHarness();
+ const pending=h.authorize();
+ await Promise.resolve();
+ h.switchUser(null);
+ h.release();
+ assert.equal(await pending,false);
+ assert.equal(h.ctx.captainUserId,null);
+ assert.equal(h.ctx.myTeam,null);
+});
+
+test('captain role lookup still grants a valid unchanged authenticated account',async()=>{
+ const h=captainRoleLookupHarness();
+ const pending=h.authorize();
+ await Promise.resolve();
+ h.release();
+ assert.equal(await pending,true);
+ assert.equal(h.ctx.captainUserId,'captain-a');
+ assert.equal(h.ctx.myTeam,1);
+ assert.equal(h.counts().authChecks,2);
+});
