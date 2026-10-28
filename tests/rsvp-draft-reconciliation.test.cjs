@@ -28,3 +28,11 @@ test('approved RSVP missing from draft is not silently accepted',()=>{
  assert.deepEqual(result.missingIndices,[1]);
  assert.equal(result.ready,false);
 });
+
+test('empty approved RSVP roster never reports draft ready',()=>{
+ const result=reconcileDraftRoster([],'nov20',directory,[]);
+ assert.equal(result.ready,false);
+ assert.deepEqual(result.approvedIndices,[]);
+ const pending=[{...rows[0],approval_status:'pending'}];
+ assert.equal(reconcileDraftRoster(pending,'nov20',directory,[]).ready,false);
+});
