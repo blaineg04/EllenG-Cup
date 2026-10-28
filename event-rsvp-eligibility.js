@@ -110,7 +110,7 @@
       missingIndices:Object.freeze(missing),
       mismatchedIndices:Object.freeze(mismatched),
       unapprovedNamedIndices:Object.freeze(extra),
-      ready:missing.length===0&&mismatched.length===0&&extra.length===0
+      ready:approved.length>0&&missing.length===0&&mismatched.length===0&&extra.length===0
     });
   }
   function approve(record,decision,actor){
