@@ -14,3 +14,15 @@ test('zero, negative, decimal and nonnumber are incomplete scores',()=>{for(cons
 test('ties share normal placing points',()=>assert.deepEqual(award([4,4,5,6]),[3.5,3.5,2,1]));
 test('Gator bonus scales with teams and splits tied winners',()=>{for(const n of [2,3,4,6,7,9]){const a=Array.from({length:n},(_,i)=>i+3);assert.deepEqual(award(a,{gator:true}),[2*n,...Array(n-1).fill(0)]);}});
 test('hole identifiers must be 1 through 18',()=>{for(const h of [0,19,'',null,1.5])assert.deepEqual(award([3,4],{gator:true,hole:h}),[null,null]);});
+
+test('unset and malformed Gator settings preserve standard placing points',()=>{
+ const ctx={teams:[{},{}],scores:[{team_index:0,hole:4,score:3},{team_index:1,hole:4,score:5}],tournament:{gator_hole:null},isSplitPair:()=>false};
+ for(const bad of [null,undefined,'',' ',true,false,0,19,'not-a-hole',1.5]){
+  ctx.tournament.gator_hole=bad;
+  vm.runInNewContext(html.slice(start,end),ctx);
+  assert.deepEqual(Array.from(ctx.pointsForHole(4)),[2,1],String(bad));
+ }
+ ctx.tournament.gator_hole='4';
+ vm.runInNewContext(html.slice(start,end),ctx);
+ assert.deepEqual(Array.from(ctx.pointsForHole(4)),[4,0]);
+});
