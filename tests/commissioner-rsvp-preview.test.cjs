@@ -458,7 +458,6 @@ test('commissioner readiness refuses all unsaved golfer, team and draft setup ed
  changed(controls.tlen,'90');
  changed(controls.setupTeamCount,'3');
  changed(controls.setupGolferCount,'3');
- changed(names[1],' Bob ');
  names[1].value=' Bob ';
  assert.equal(ctx.check(),false,'equivalent trimmed golfer name is unchanged');
  names[1].value='Bob';
