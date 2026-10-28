@@ -80,7 +80,8 @@
      const index=requireIndex(row.golfer_index);
      if(seenUsers.has(row.user_id)) throw new Error('Duplicate RSVP account in event');
      seenUsers.add(row.user_id);
-     if(!['playing','maybe','out'].includes(row.status)) throw new Error('Invalid RSVP status');
+     // NULL means enrolled but not yet RSVP'd; never count as Playing.
+     if(row.status!==null&&!['playing','maybe','out'].includes(row.status)) throw new Error('Invalid RSVP status');
      if(!['pending','approved','declined'].includes(row.approval_status)) throw new Error('Invalid approval status');
      if(row.status!=='playing'||row.approval_status!=='approved') continue;
      if(seenGolfers.has(index)) throw new Error('Duplicate approved golfer in event');
