@@ -327,10 +327,16 @@ test('remote draft application and confirmed saves revoke RSVP readiness',()=>{
  const html=require('node:fs').readFileSync('admin.html','utf8');
  const loadBlock=html.slice(html.indexOf('load=async function'),html.indexOf('async function secureSave'));
  const saveBlock=html.slice(html.indexOf('async function secureSave'),html.indexOf('save=secureSave;'));
- assert.match(loadBlock,/S=\\{\\.\\.\\.fresh\\(\\),\\.\\.\\.data\\.state\\};[\\s\\S]*?rsvpPreviewController\\.invalidate\\(\\);[\\s\\S]*?onApplied\\(\\);/);
- assert.match(saveBlock,/draftUpdatedAt=saved\\.updated_at;[\\s\\S]*?rsvpPreviewController\\.invalidate\\(\\);[\\s\\S]*?\\}catch\\(error\\)/);
- assert.equal((loadBlock.match(/rsvpPreviewController\\.invalidate\\(\\)/g)||[]).length,1);
- assert.equal((saveBlock.match(/rsvpPreviewController\\.invalidate\\(\\)/g)||[]).length,1);
+ const applied=loadBlock.indexOf('S={...fresh(),...data.state};');
+ const remoteInvalidate=loadBlock.indexOf('rsvpPreviewController.invalidate();');
+ assert.ok(applied>=0 && remoteInvalidate>applied);
+ assert.ok(loadBlock.indexOf('onApplied();')>remoteInvalidate);
+ const saved=saveBlock.indexOf('draftUpdatedAt=saved.updated_at;');
+ const localInvalidate=saveBlock.indexOf('rsvpPreviewController.invalidate();');
+ assert.ok(saved>=0 && localInvalidate>saved);
+ assert.ok(saveBlock.indexOf('}catch(error)')>localInvalidate);
+ assert.equal(loadBlock.split('rsvpPreviewController.invalidate();').length-1,1);
+ assert.equal(saveBlock.split('rsvpPreviewController.invalidate();').length-1,1);
 });
 
 test('second-device roster replacement revokes old preview and fences a pending RSVP read',async()=>{
