@@ -30,6 +30,8 @@ jobs:
         run: node --version
       - name: Run isolated scoring regression tests
         run: node --test tests/nov20-production-score-integrity.test.cjs
+      - name: Verify commissioner RSVP snapshot safety
+        run: node --test tests/commissioner-rsvp-preview.test.cjs
 
   responsive-layout:
     # Only same-repository authorized release/fix branches can use the MacBook runner; never run fork code on it.
