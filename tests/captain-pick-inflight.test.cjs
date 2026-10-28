@@ -122,3 +122,96 @@ test('captain draft refresh timer replaces old intervals and stops on revocation
  ctx.stopTimer();
  assert.equal(intervals.size,0,'repeated cleanup is safe');
 });
+
+
+function deferredAuth(){
+ let resolve,reject;
+ const promise=new Promise((res,rej)=>{resolve=res;reject=rej});
+ return {promise,resolve,reject};
+}
+function captainAuthElements(){
+ return {
+  signin:{disabled:false,textContent:'Sign In'},
+  email:{value:'captain@example.test'},
+  pw:{value:'test-password'},
+  msg:{textContent:'unchanged'},
+  connection:{textContent:'unchanged'},
+  login:{style:{display:'none'}},
+  app:{style:{display:'block'}}
+ };
+}
+test('pending restored-session lookup cannot overwrite an interactive login',async()=>{
+ const pending=deferredAuth(),elements=captainAuthElements();
+ let lookups=0,subscribed=0;
+ const ctx={
+  captainBootstrapEpoch:0,captainUserId:'new-captain',
+  document:{getElementById:id=>elements[id]},
+  db:{auth:{getUser:()=>pending.promise}},
+  whoami:async()=>{lookups++;return true},
+  load:async()=>{},render:()=>{},startCaptainSubscription:()=>subscribed++,
+  startCaptainDrawTimer:()=>{},console:{error:()=>{}}
+ };
+ vm.createContext(ctx);
+ const startup=s.slice(s.lastIndexOf('(async()=>{'),s.lastIndexOf('</script>'));
+ assert.match(startup,/bootEpoch!==captainBootstrapEpoch/);
+ const running=vm.runInContext(startup,ctx);
+ ctx.captainBootstrapEpoch++; // user begins interactive login
+ pending.resolve({data:{user:null}});
+ await running;
+ assert.equal(lookups,0,'stale bootstrap never starts captain role lookup');
+ assert.equal(subscribed,0);
+ assert.equal(elements.login.style.display,'none','stale bootstrap cannot reopen login');
+ assert.equal(elements.app.style.display,'block');
+});
+test('restored-session draft load is fenced after account switch',async()=>{
+ const pending=deferredAuth(),elements=captainAuthElements();
+ let loadGuard,rendered=0,subscribed=0,timers=0;
+ const ctx={
+  captainBootstrapEpoch:0,captainUserId:'captain-a',pickSyncFailed:true,
+  document:{getElementById:id=>elements[id]},
+  db:{auth:{getUser:async()=>({data:{user:{id:'captain-a'}}})}},
+  whoami:async()=>true,
+  load:guard=>{loadGuard=guard;return pending.promise},
+  render:()=>rendered++,startCaptainSubscription:()=>subscribed++,
+  startCaptainDrawTimer:()=>timers++,console:{error:()=>{}}
+ };
+ vm.createContext(ctx);
+ const running=vm.runInContext(s.slice(s.lastIndexOf('(async()=>{'),s.lastIndexOf('</script>')),ctx);
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(typeof loadGuard,'function','draft load uses a session freshness guard');
+ ctx.captainBootstrapEpoch++;ctx.captainUserId='captain-b';
+ assert.equal(loadGuard(),false,'stale load cannot apply its draft snapshot');
+ pending.resolve();
+ await running;
+ assert.equal(rendered,0);
+ assert.equal(subscribed,0);
+ assert.equal(timers,0);
+ assert.equal(elements.app.style.display,'block','old bootstrap cannot hide new captain UI');
+});
+test('late interactive sign-in result cannot restore revoked captain controls',async()=>{
+ const pending=deferredAuth(),elements=captainAuthElements();
+ let lookups=0,subscribed=0;
+ const ctx={
+  captainBootstrapEpoch:0,captainRoleLookupId:0,captainUserId:null,
+  document:{getElementById:id=>elements[id]},
+  db:{auth:{signInWithPassword:()=>pending.promise}},
+  whoami:async()=>{lookups++;return true},
+  load:async()=>{},render:()=>{},startCaptainSubscription:()=>subscribed++,
+  startCaptainDrawTimer:()=>{}
+ };
+ vm.createContext(ctx);
+ const start=s.indexOf('document.getElementById("signin").onclick=async()=>{');
+ const end=s.indexOf('document.getElementById("soundToggle").onclick=',start);
+ assert.ok(start>=0&&end>start);
+ vm.runInContext(s.slice(start,end),ctx);
+ const running=elements.signin.onclick();
+ assert.equal(ctx.captainRoleLookupId,1,'manual sign-in invalidates older role lookup');
+ ctx.captainBootstrapEpoch++; // SIGNED_OUT or account switch
+ pending.resolve({error:null});
+ await running;
+ assert.equal(lookups,0,'revoked login never grants a captain role');
+ assert.equal(subscribed,0);
+ assert.equal(elements.app.style.display,'block','late completion does not alter newer UI');
+ assert.equal(elements.signin.disabled,false,'button cleanup still runs');
+ assert.match(s,/function revokeCaptainSession\(\)\{\s*captainAuthEpoch\+\+;\s*captainBootstrapEpoch\+\+;/);
+});
