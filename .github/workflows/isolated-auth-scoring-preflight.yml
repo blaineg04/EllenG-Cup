@@ -1,0 +1,23 @@
+name: EllenG isolated authenticated scoring preflight
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-auth-preflight:
+    if: github.repository == 'blaineg04/EllenG-Cup' && github.ref == 'refs/heads/development/nov20-release-reconciliation-20261026'
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify isolated Auth and RPC discovery without score writes
+        env:
+          ELLENG_TEST_SUPABASE_URL: ${{ secrets.ELLENG_TEST_SUPABASE_URL }}
+          ELLENG_TEST_SUPABASE_KEY: ${{ secrets.ELLENG_TEST_SUPABASE_KEY }}
+          ELLENG_TEST_CAPTAIN_EMAIL: ${{ secrets.ELLENG_TEST_CAPTAIN_EMAIL }}
+          ELLENG_TEST_CAPTAIN_PASSWORD: ${{ secrets.ELLENG_TEST_CAPTAIN_PASSWORD }}
+          ELLENG_TEST_SECOND_EMAIL: ${{ secrets.ELLENG_TEST_SECOND_EMAIL }}
+          ELLENG_TEST_SECOND_PASSWORD: ${{ secrets.ELLENG_TEST_SECOND_PASSWORD }}
+        run: node tests/integration/isolated-auth-scoring-preflight.cjs
