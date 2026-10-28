@@ -56,3 +56,24 @@ BEGIN
 END $$;
 SELECT count(*)=0 AS no_unauthorized_pair_write
 FROM public.elleng_pair_hole_scores WHERE pair_index=0;
+
+-- An authenticated captain for a different team is not permitted to score team 0.
+INSERT INTO public.elleng_captains VALUES
+ ('draft-qa','dddddddd-dddd-dddd-dddd-dddddddddddd',1);
+SELECT set_config('elleng.test_actor','dddddddd-dddd-dddd-dddd-dddddddddddd',false);
+DO $$
+BEGIN
+ BEGIN
+  PERFORM public.elleng_test_authorized_split_pair('tournament-qa',0,15,0,5);
+  RAISE EXCEPTION 'Cross-team score unexpectedly accepted';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM='Cross-team score unexpectedly accepted' THEN RAISE; END IF;
+  IF SQLERRM<>'Not authorized to score this team' THEN RAISE; END IF;
+ END;
+END $$;
+DO $$
+BEGIN
+ IF EXISTS (SELECT 1 FROM public.elleng_pair_hole_scores WHERE hole=15)
+ OR EXISTS (SELECT 1 FROM public.elleng_team_scores WHERE hole=15)
+ THEN RAISE EXCEPTION 'Unauthorized cross-team write persisted'; END IF;
+END $$;
