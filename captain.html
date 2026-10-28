@@ -773,7 +773,12 @@ input,select,textarea{
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script>
 let myTeam=null,captainUserId=null,captainAuthEpoch=0,captainRoleLookupId=0,captainBootstrapEpoch=0;
 // Only the newest role lookup may grant captain access. Auth revocation also invalidates it.
-async function whoami(){const authEpoch=captainAuthEpoch,lookupId=++captainRoleLookupId;myTeam=null;captainUserId=null;const {data:{user}}=await db.auth.getUser();if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId||!user)return false;const {data,error}=await db.from("elleng_captains").select("team_index").eq("draft_id",cfg.draftId).eq("user_id",user.id).single();if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId)return false;if(error||!data||data.team_index==null||typeof data.team_index==="boolean"||!Number.isInteger(Number(data.team_index))||Number(data.team_index)<0){document.getElementById("msg").textContent="This account is not assigned to a team. Ask the commissioner to assign your captain account.";return false}myTeam=Number(data.team_index);captainUserId=user.id;return true}
+async function whoami(){const authEpoch=captainAuthEpoch,lookupId=++captainRoleLookupId;myTeam=null;captainUserId=null;const {data:{user}}=await db.auth.getUser();if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId||!user)return false;const {data,error}=await db.from("elleng_captains").select("team_index").eq("draft_id",cfg.draftId).eq("user_id",user.id).single();if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId)return false;if(error||!data||data.team_index==null||typeof data.team_index==="boolean"||!Number.isInteger(Number(data.team_index))||Number(data.team_index)<0){document.getElementById("msg").textContent="This account is not assigned to a team. Ask the commissioner to assign your captain account.";return false}
+ // A different user may sign in while the role query is pending, before captainUserId is set.
+ // Recheck the authoritative auth identity before granting this role to the page.
+ const {data:confirmed,error:confirmationError}=await db.auth.getUser();
+ if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId||confirmationError||confirmed?.user?.id!==user.id)return false;
+ myTeam=Number(data.team_index);captainUserId=user.id;return true}
 let captainChannel=null,captainSubscriptionEpoch=0;
 let captainDrawTimer=null;
 function stopCaptainDrawTimer(){
