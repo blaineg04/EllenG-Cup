@@ -78,6 +78,10 @@
      if(!row||row.tournament_id!==id) continue;
      requireId(row.user_id,'Account ID');
      const index=requireIndex(row.golfer_index);
+     // A non-approved RSVP can still indicate an orphaned enrollment.
+     // Do not silently certify a roster when any event index is outside
+     // the draft directory used by this read-only eligibility check.
+     if(index>=availableGolfers.length) throw new Error('Event enrollment golfer index outside directory');
      if(seenUsers.has(row.user_id)) throw new Error('Duplicate RSVP account in event');
      seenUsers.add(row.user_id);
      // NULL means enrolled but not yet RSVP'd; never count as Playing.
