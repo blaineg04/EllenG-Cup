@@ -82,6 +82,26 @@ BEGIN
  UPDATE public.elleng_tournaments SET status='live' WHERE id='fixture';
  RAISE NOTICE 'PASS: update, clear, resume and completed-event scoring guard';
 END $score_lifecycle$;
+-- Separate draft/tournament: prove authorization is scoped to the selected event, not a hard-coded draft.
+INSERT INTO public.elleng_drafts VALUES('draft-two','00000000-0000-4000-8000-000000000004','{"teams":[{"roster":[0,1]}]}'::jsonb);
+INSERT INTO public.elleng_tournaments VALUES('fixture-two','draft-two','live',1);
+INSERT INTO public.elleng_captains VALUES('draft-two','00000000-0000-4000-8000-000000000005',0);
+SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000005',false);
+DO $multi_event$
+DECLARE denied boolean:=false; result integer;
+BEGIN
+ result:=public.elleng_test_authorized_shamble('fixture-two',0,10,0,4);
+ IF result IS NOT NULL THEN RAISE EXCEPTION 'Incomplete second draft unexpectedly scored'; END IF;
+ result:=public.elleng_test_authorized_shamble('fixture-two',0,10,1,5);
+ IF result<>4 THEN RAISE EXCEPTION 'Second draft failed to derive score: %',result; END IF;
+ BEGIN
+  PERFORM public.elleng_test_authorized_shamble('fixture',0,10,0,4);
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Second draft captain modified first draft'; END IF;
+ IF (SELECT score FROM public.elleng_team_scores WHERE tournament_id='fixture-two' AND team_index=0 AND hole=10)<>4
+ THEN RAISE EXCEPTION 'Second draft official score mismatch'; END IF;
+ RAISE NOTICE 'PASS: distinct draft IDs and cross-event captain isolation';
+END $multi_event$;
 -- Adversarial roster cases: invalid assignments must not quietly shrink the
 -- team or cause an incorrect low-ball score.
 SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000001',false);
