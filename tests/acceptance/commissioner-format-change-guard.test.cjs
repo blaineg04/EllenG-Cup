@@ -7,7 +7,7 @@ const body=html.slice(start,end);
 test('commissioner checks all three persisted score tables before changing format',()=>{
  assert.ok(start>=0&&end>start,'commissioner save handler found');
  for(const table of ['elleng_team_scores','elleng_pair_hole_scores','elleng_player_hole_scores'])assert.ok(body.includes(table),table);
- assert.match(body,/selectedPlayFormat!==playFormat\(\)/);
+ assert.match(body,/selectedPlayFormat!==playFormat\(\)\|\|newCount!==oldCount/);
  assert.match(body,/count:"exact",head:true/);
  assert.match(body,/result\.error\|\|!Number\.isInteger\(result\.count\)/);
  assert.match(body,/result\.count>0/);
