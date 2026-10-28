@@ -38,14 +38,14 @@
    shortfall:Math.max(0,teamCount-approved.length),
    // Approved players need enough existing named draft slots; do not
    // confuse total team capacity with confirmed roster readiness.
-   unnamedSlotCount:golfers.filter(g=>!g?.name?.trim()).length,
+   unnamedSlotCount:Array.from({length:golfers.length},(_,i)=>golfers[i]).filter(g=>!g?.name?.trim()).length,
    // Draft seats cannot be filled by unapproved RSVPs even when the
    // number of named slots exceeds the team minimum.
    approvedSeatCoverage:golfers.length?approved.length/golfers.length:0,
    // Client-side reconciliation is not authorization to save a draft.
    // This preview is only a same-source consistency check, not independent roster verification.
    independentlyVerified:false,
-   matchesPreview:approved.length>=teamCount&&unapprovedNamedIndices.length===0&&duplicateNamedIndices.length===0&&golfers.every(g=>!!g?.name?.trim())
+   matchesPreview:approved.length>=teamCount&&unapprovedNamedIndices.length===0&&duplicateNamedIndices.length===0&&Array.from({length:golfers.length},(_,i)=>golfers[i]).every(g=>!!g?.name?.trim())
   });
  }
  function create({db,client,eligibility,eventId,getAuth,getDraft,render}){
