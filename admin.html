@@ -61,6 +61,9 @@ let commissionerLoadRequest=0;
 load=async function(isCurrent=()=>true,onApplied=()=>{}){
  if(savingDraft||!commissionerUserId)return S;
  const request=++commissionerLoadRequest,authEpoch=commissionerAuthEpoch,userId=commissionerUserId;
+ // A Realtime notification means the prior RSVP preview may already be stale.
+ // Clear it before the asynchronous authoritative draft read, even if that read fails.
+ rsvpPreviewController.invalidate();
  const {data,error}=await db.from("elleng_drafts").select("state,updated_at").eq("id",cfg.draftId).single();
  if(error)throw error;
  if(savingDraft||request!==commissionerLoadRequest||authEpoch!==commissionerAuthEpoch||userId!==commissionerUserId||!isCurrent())return S;
@@ -68,9 +71,6 @@ load=async function(isCurrent=()=>true,onApplied=()=>{}){
  if(draftUpdatedAt&&new Date(data.updated_at).getTime()<new Date(draftUpdatedAt).getTime())return S;
  draftUpdatedAt=data.updated_at;
  S={...fresh(),...data.state};
- // A second device may replace the roster while an RSVP read is in flight.
- // Discard both displayed readiness and any pending result before repainting.
- rsvpPreviewController.invalidate();
  onApplied();
  return S;
 };
