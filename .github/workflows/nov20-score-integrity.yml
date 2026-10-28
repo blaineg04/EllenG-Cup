@@ -20,7 +20,7 @@ on:
 # Avoid duplicate captures competing for the same MacBook.
 concurrency:
   group: nov20-validation-${{ github.head_ref || github.ref_name }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   scoring-regression:
     runs-on: [self-hosted, macOS]
