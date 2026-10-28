@@ -188,8 +188,11 @@ function actionHarness(){
   liveMode:false,structuredClone,Date,bands:['A','B','C','D'],EllenGDraftSetup:require('../draft-setup-config.js'),order:()=>0,totalPicks:()=>1,canBand:()=>true,remaining:()=>30,
   save:()=>new Promise((resolve,reject)=>pending.push({resolve,reject})),
   document:{getElementById:id=>els[id],querySelectorAll:()=>[]},liveRender:()=>renders++,setupRender:()=>{}};
+ const lockStart=source.indexOf('function setupIsLocked(){');
+ const lockEnd=source.indexOf('function setupRender(){',lockStart);
+ assert.ok(lockStart>0&&lockEnd>lockStart);
  vm.createContext(ctx);
- vm.runInContext(source.slice(actionStart,actionEnd)+';this.doPick=pick;',ctx);
+ vm.runInContext(source.slice(lockStart,lockEnd)+source.slice(actionStart,actionEnd)+';this.doPick=pick;',ctx);
  return {ctx,els,pending,renders:()=>renders,switchUser:()=>{ctx.commissionerAuthEpoch++;ctx.commissionerUserId='commissioner-b';
   const next={picks:[{golfer:99}],golfers:[],teams:[],timerPaused:true,timerLength:30};ctx.S=next;return next;}};
 }
@@ -292,4 +295,25 @@ test('current commissioner resize failure restores original setup',async()=>{
  assert.deepEqual(h.ctx.S,original);
  assert.equal(h.els.applySetupSize.disabled,false);
  assert.match(h.els.setupSizeMsg.textContent,/synthetic save failure/);
+});
+
+test('commissioner cannot rewrite draft setup after a pick, even by invoking handler directly',async()=>{
+ const h=actionHarness();
+ h.ctx.S.picks.push({golfer:0,team:0});
+ const original=JSON.stringify(h.ctx.S);
+ await h.els.saveSetup.onclick();
+ assert.equal(JSON.stringify(h.ctx.S),original,'live draft state must remain untouched');
+ assert.equal(h.pending.length,0,'no database save is attempted');
+ assert.equal(h.els.saveSetup.disabled,true,'Save Setup remains locked');
+ assert.match(h.els.setupSizeMsg.textContent,/Cannot resize after draft picks/);
+});
+test('commissioner cannot resize setup after an assigned roster, even with no pick record',async()=>{
+ const h=actionHarness();
+ h.ctx.S.teams[0].roster.push(0);
+ const original=JSON.stringify(h.ctx.S);
+ await h.els.applySetupSize.onclick();
+ assert.equal(JSON.stringify(h.ctx.S),original);
+ assert.equal(h.pending.length,0);
+ assert.equal(h.els.applySetupSize.disabled,true);
+ assert.match(h.els.setupSizeMsg.textContent,/Cannot resize after draft picks/);
 });
