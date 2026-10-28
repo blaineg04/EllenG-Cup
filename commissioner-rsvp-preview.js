@@ -46,6 +46,9 @@
    // Approved players need enough existing named draft slots; do not
    // confuse total team capacity with confirmed roster readiness.
    unnamedSlotCount:golfers.filter(g=>!g?.name?.trim()).length,
+   // Draft seats cannot be filled by unapproved RSVPs even when the
+   // number of named slots exceeds the team minimum.
+   approvedSeatCoverage:golfers.length?approved.length/golfers.length:0,
    // Client-side reconciliation is not authorization to save a draft.
    matchesPreview:approved.length>=teamCount&&reconciliation.ready&&duplicateNamedIndices.length===0
   });
