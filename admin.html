@@ -145,7 +145,8 @@ function updateDraftSetupPreview(){
 }
 document.getElementById("grows")?.addEventListener?.("input",()=>{updateDraftSetupPreview();rsvpPreviewController.invalidate()});
 document.getElementById("grows")?.addEventListener?.("change",updateDraftSetupPreview);
-document.getElementById("dtype")?.addEventListener?.("change",updateDraftSetupPreview);
+document.getElementById("trows")?.addEventListener?.("input",()=>rsvpPreviewController.invalidate());
+document.getElementById("dtype")?.addEventListener?.("change",()=>{updateDraftSetupPreview();rsvpPreviewController.invalidate()});
 document.getElementById("setupTeamCount")?.addEventListener?.("input",()=>{updateDraftSetupPreview();rsvpPreviewController.invalidate()});
 document.getElementById("setupGolferCount")?.addEventListener?.("input",()=>{updateDraftSetupPreview();rsvpPreviewController.invalidate()});
 function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map((g,i)=>`<tr><td>${i+1}</td><td><input data-n="${i}" value="${esc(g.name)}"></td><td><input data-h="${i}" type="number" step=".1" value="${esc(g.hcp)}"></td><td><select data-b="${i}"><option value="" ${!g.band?"selected":""}>Unranked</option>${bands.map(b=>`<option ${g.band===b?"selected":""}>${b}</option>`).join("")}</select></td></tr>`).join("");document.getElementById("trows").innerHTML=S.teams.map((t,i)=>`<tr><td>Team ${i+1}</td><td><input data-tn="${i}" value="${esc(t.name)}"></td><td><input data-tc="${i}" placeholder="Captain" value="${esc(t.captain)}"></td></tr>`).join("");document.getElementById("dtype").value=S.draftType;document.getElementById("tlen").value=S.timerLength;document.getElementById("setupTeamCount").value=S.teams.length;document.getElementById("setupGolferCount").value=S.golfers.length;
