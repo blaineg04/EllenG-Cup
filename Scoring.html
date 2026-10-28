@@ -1916,7 +1916,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div style="margin-top:12px"><label><small>Choose team</small><select id="digitalScorecardTeam" style="max-width:360px"></select></label></div>
   <div id="digitalScorecard" class="scorecard-wrap"></div><div class="row" style="margin-top:12px"><button id="shareTeamScorecard" class="secondary" type="button">📤 Share Team Scorecard</button><span id="shareScorecardMsg" class="status"></span></div>
 </div>
-<div class="card note"><strong>Special scoring:</strong> The Gator Hole awards 12 points to the lowest team, split equally only if the low score is tied. Final Cargo adds 6 points to the winning team.</div>
+<div class="card note"><strong>Special scoring:</strong> The Gator Hole awards double the normal first-place points to the lowest team (2 × the number of teams), split equally if the low score is tied. Final Cargo adds 6 points to the winning team.</div>
 </section>
 
 <section id="teamsView" class="view hidden">
@@ -2513,7 +2513,7 @@ function pointsForHole(h){
  if(tournament&&Number(tournament.gator_hole)===h){
    const out=Array(n).fill(null), valid=vals.filter(Number.isFinite); if(!valid.length)return out;
    const low=Math.min(...valid), winners=[];vals.forEach((v,i)=>{if(v===low)winners.push(i)});
-   winners.forEach(i=>out[i]=12/winners.length);
+   winners.forEach(i=>out[i]=(2*n)/winners.length);
    vals.forEach((v,i)=>{if(Number.isFinite(v)&&out[i]===null)out[i]=0});
    return out;
  }
