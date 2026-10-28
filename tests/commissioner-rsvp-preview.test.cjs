@@ -671,3 +671,52 @@ test('eligibility callback changing draft cannot publish obsolete readiness',asy
  assert.deepEqual(renders.map(x=>x.status),['loading','stale']);
  assert.equal(renders.some(x=>x.status==='success'),false);
 });
+
+test('commissioner session rotation during eligibility computation cannot publish readiness',async()=>{
+ const authReads=[],listReads=[],renders=[];
+ let auth={epoch:7,userId:'commissioner-a'};
+ const draft={golfers:structuredClone(directory.slice(0,2)),teams:[{},{}],picks:[]};
+ const db={auth:{getUser:()=>{const d=deferred();authReads.push(d);return d.promise}}};
+ const client={list:()=>{const d=deferred();listReads.push(d);return d.promise}};
+ const rotatingEligibility={
+  approvedRoster:(...args)=>{
+   const approved=eligibility.approvedRoster(...args);
+   auth={epoch:8,userId:'commissioner-b'};
+   return approved;
+  }
+ };
+ const controller=create({db,client,eligibility:rotatingEligibility,eventId:'nov20',
+  getAuth:()=>auth,getDraft:()=>draft,render:value=>renders.push(value)});
+ const work=controller.refresh();
+ authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ listReads[0].resolve(rows);
+ await work;
+ assert.deepEqual(renders.map(x=>x.status),['loading']);
+ assert.equal(renders.some(x=>x.status==='success'),false);
+});
+
+test('unsaved roster edits arising during eligibility computation cannot certify readiness',async()=>{
+ const authReads=[],listReads=[],renders=[];
+ let dirty=false;
+ const draft={golfers:structuredClone(directory.slice(0,2)),teams:[{},{}],picks:[]};
+ const db={auth:{getUser:()=>{const d=deferred();authReads.push(d);return d.promise}}};
+ const client={list:()=>{const d=deferred();listReads.push(d);return d.promise}};
+ const eligibilityWithEdit={
+  approvedRoster:(...args)=>{
+   const approved=eligibility.approvedRoster(...args);
+   dirty=true;
+   return approved;
+  }
+ };
+ const controller=create({db,client,eligibility:eligibilityWithEdit,eventId:'nov20',
+  getAuth:()=>({epoch:7,userId:'commissioner-a'}),getDraft:()=>draft,
+  hasPendingRosterEdits:()=>dirty,render:value=>renders.push(value)});
+ const work=controller.refresh();
+ authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ listReads[0].resolve(rows);
+ await work;
+ assert.deepEqual(renders.map(x=>x.status),['loading','unsaved']);
+ assert.equal(renders.some(x=>x.status==='success'),false);
+});
