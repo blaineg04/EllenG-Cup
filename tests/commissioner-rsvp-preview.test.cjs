@@ -612,8 +612,7 @@ test('pre-draft RSVP readiness never certifies a draft after picks or assignment
   const work=h.controller.refresh();
   h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
   await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(h.listReads.length,1);
-  h.listReads[0].resolve(rows);
+  assert.equal(h.listReads.length,0,'active draft must not query event RSVPs');
   await work;
   assert.deepEqual(h.renders.map(x=>x.status),['loading','stale']);
   assert.equal(h.renders.some(x=>x.status==='success'),false);
