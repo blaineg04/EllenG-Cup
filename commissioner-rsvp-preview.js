@@ -54,7 +54,7 @@
   });
  }
  function create({db,client,eligibility,eventId,getAuth,getDraft,render}){
-  if(!db?.auth?.getUser||!client?.list||!eligibility?.approvedRoster||
+  if(!db?.auth?.getUser||!client?.list||!eligibility?.approvedRoster||!eligibility?.reconcileDraftRoster||
      typeof getAuth!=="function"||typeof getDraft!=="function"||typeof render!=="function")
    throw new TypeError("Commissioner RSVP preview dependencies required");
   let request=0;
