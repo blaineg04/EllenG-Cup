@@ -62,7 +62,7 @@
   function invalidate(){request++;render({status:"invalidated"});}
   async function refresh(){
    const token=++request,auth=getAuth();
-   if(!auth?.userId||!Number.isInteger(auth.epoch))return;
+   if(!auth?.userId||!Number.isInteger(auth.epoch)){render({status:"invalidated"});return;}
    const current=()=>{
     const now=getAuth();
     return token===request&&now?.epoch===auth.epoch&&now?.userId===auth.userId;
