@@ -36,7 +36,17 @@ function harness(){
  return {ctx,elements,buttons,authReads,draftReads,writes,
   open:()=>ctx.openAdmin(),save:()=>ctx.secureSave(),change:(event,session)=>authChanged(event,session),
   auth:(index,id)=>authReads[index]({data:{user:id?{id}:null},error:null}),
-  draft:(index,id)=>draftReads[index]({data:{state:{picks:[]},owner_id:id,updated_at:'2026-10-27T00:00:00Z'},error:null}),
+  // A successful owner read is followed by a second getUser() identity check.
+  // Resolve that verification on the next microtask so the synthetic login
+  // behaves like a real Supabase response rather than leaving the suite pending.
+  draft:(index,id,confirmedId=id)=>{
+   const confirmationIndex=authReads.length;
+   draftReads[index]({data:{state:{picks:[]},owner_id:id,updated_at:'2026-10-27T00:00:00Z'},error:null});
+   queueMicrotask(()=>{
+    assert.equal(authReads.length,confirmationIndex+1,'commissioner must recheck identity after draft owner read');
+    authReads[confirmationIndex]({data:{user:confirmedId?{id:confirmedId}:null},error:null});
+   });
+  },
   subscriptions:()=>subscriptions,unsubscriptions:()=>unsubscriptions,activeSubscriptions:()=>activeSubscriptions,
   invalidations:()=>invalidations,
   renders:()=>renders,notify:index=>callbacks[index]()};
@@ -62,6 +72,16 @@ test('only the newest commissioner lookup can grant access',async()=>{
  assert.equal(h.subscriptions(),1);
  assert.equal(vm.runInContext('commissionerUserId',h.ctx),'commissioner-b');
 });
+test('commissioner owner verification rejects a session that switched accounts during confirmation',async()=>{
+ const h=harness(),opening=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a','commissioner-b');await opening;
+ assert.equal(h.elements.adminApp.style.display,'none');
+ assert.equal(h.elements.connection.textContent,'SIGN IN');
+ assert.equal(h.subscriptions(),0);
+ assert.equal(vm.runInContext('commissionerUserId',h.ctx),null);
+});
+
 test('account switch revokes already verified commissioner controls',async()=>{
  const h=harness(),pending=h.open();
  h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
@@ -80,11 +100,11 @@ test('signout during save authentication prevents commissioner database write',a
  h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
  h.draft(0,'commissioner-a');await opened;
  const saving=h.save();
- assert.equal(h.authReads.length,2);
+ assert.equal(h.authReads.length,3,'initial login, owner recheck, and save authorization each require getUser');
  assert.equal(h.invalidations(),2,'opening commissioner verification and starting a save revoke old RSVP readiness');
  h.change('SIGNED_OUT',null);
  assert.equal(h.invalidations(),3,'signout must revoke any pending RSVP snapshot');
- h.auth(1,'commissioner-a');
+ h.auth(2,'commissioner-a');
  await assert.rejects(saving,/session changed while saving/);
  assert.deepEqual(h.writes,[]);
  assert.equal(h.elements.adminApp.style.display,'none');
@@ -101,7 +121,7 @@ const commissionerLoadEnd=source.indexOf('async function secureSave()',commissio
 assert.ok(subscribeStart>=0&&subscribeEnd>subscribeStart&&commissionerLoadStart>=0&&commissionerLoadEnd>commissionerLoadStart);
 function commissionerRealtimeHarness(){
  const indicator={textContent:'',className:''},classes=new Set(),pending=[];
- let invalidations=0;
+ let invalidations=0,revocations=0;
  const strip={classList:{add:n=>classes.add(n),remove:(...names)=>names.forEach(n=>classes.delete(n))}};
  const button={disabled:false};let status,change,renders=0;
  const channel={on(_type,_filter,cb){change=cb;return this},subscribe(cb){status=cb;return this}};
@@ -109,6 +129,9 @@ function commissionerRealtimeHarness(){
   S:{picks:[]},fresh:()=>({picks:[]}),savingDraft:false,draftUpdatedAt:null,
   commissionerAuthEpoch:0,commissionerUserId:'commissioner-a',cfg:{draftId:'synthetic-only'},
   rsvpPreviewController:{invalidate:()=>{invalidations++}},
+  // Owner revocation is a separate authorization boundary; model its
+  // observable effect without allowing the synthetic harness to save.
+  revokeCommissionerSession:()=>{revocations++;ctx.commissionerAuthEpoch++;ctx.commissionerUserId=null;button.disabled=true;indicator.textContent='SIGN IN'},
   db:{channel:()=>channel,from:()=>({select:()=>({eq:()=>({single:()=>new Promise(resolve=>pending.push(resolve))})})})},
   document:{getElementById:id=>id==='connection'?indicator:id==='draftStatusStrip'?strip:null,querySelectorAll:()=>[button]},
   console:{error:()=>{}}
@@ -117,8 +140,8 @@ function commissionerRealtimeHarness(){
  vm.runInContext(source.slice(commissionerLoadStart,commissionerLoadEnd)+'\n'+commonSource.slice(subscribeStart,subscribeEnd)+'\nthis.connect=subscribe;this.getState=()=>S;',ctx);
  ctx.connect(()=>renders++);
  return {ctx,indicator,classes,pending,button,emit:s=>status(s),change:()=>change(),
-  reply:(index,picks,updated_at='2026-10-27T10:00:00Z')=>pending[index]({data:{state:{picks},updated_at},error:null}),
-  state:()=>ctx.getState(),renders:()=>renders,invalidations:()=>invalidations};
+  reply:(index,picks,updated_at='2026-10-27T10:00:00Z',owner_id='commissioner-a')=>pending[index]({data:{state:{picks},owner_id,updated_at},error:null}),
+  state:()=>ctx.getState(),renders:()=>renders,invalidations:()=>invalidations,revocations:()=>revocations};
 }
 test('commissioner subscription reaches LIVE only after an applied authoritative refresh',async()=>{
  const h=commissionerRealtimeHarness(),connecting=h.emit('SUBSCRIBED');
@@ -130,6 +153,18 @@ test('commissioner subscription reaches LIVE only after an applied authoritative
  assert.ok(h.classes.has('status-live'));
  assert.equal(h.state().picks.length,1);
  assert.equal(h.renders(),1);
+});
+
+test('commissioner Realtime refresh revokes controls if draft ownership changes',async()=>{
+ const h=commissionerRealtimeHarness(),connecting=h.emit('SUBSCRIBED');
+ h.reply(0,[{golfer:1}],'2026-10-27T10:00:00Z','another-commissioner');
+ await connecting;
+ assert.equal(h.revocations(),1);
+ assert.equal(h.ctx.commissionerUserId,null);
+ assert.equal(h.button.disabled,true);
+ assert.equal(h.indicator.textContent,'SIGN IN');
+ assert.equal(h.renders(),0);
+ assert.equal(h.state().picks.length,0);
 });
 
 test('failed commissioner Realtime read cannot leave previously verified RSVP readiness visible',async()=>{
@@ -186,7 +221,7 @@ test('reverification replaces the old commissioner channel without duplicate lis
  assert.equal(h.unsubscriptions(),1);
  assert.equal(h.activeSubscriptions(),0);
  assert.equal(h.elements.adminApp.style.display,'none');
- h.auth(1,'commissioner-b');await new Promise(resolve=>setImmediate(resolve));
+ h.auth(2,'commissioner-b');await new Promise(resolve=>setImmediate(resolve));
  h.draft(1,'commissioner-b');await second;
  assert.equal(h.subscriptions(),2);
  assert.equal(h.activeSubscriptions(),1);
