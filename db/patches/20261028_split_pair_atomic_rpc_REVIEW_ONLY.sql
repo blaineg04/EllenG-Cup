@@ -45,6 +45,10 @@ BEGIN
    WHERE c.draft_id=v_draft_id AND c.user_id=v_uid
      AND c.team_index=p_team_index
  ) THEN RAISE EXCEPTION 'Not authorized to score this team'; END IF;
+ -- The owner or captain must be assigned to an active tournament team.
+ IF p_team_index NOT BETWEEN 0 AND (
+   SELECT t.team_count-1 FROM public.elleng_tournaments t WHERE t.id=p_tournament_id
+ ) THEN RAISE EXCEPTION 'Team is outside active tournament'; END IF;
  IF v_state->>'playFormat' IS DISTINCT FROM 'split_pair'
  THEN RAISE EXCEPTION 'Split-Pair format not selected'; END IF;
  IF jsonb_typeof(v_state->'teams') IS DISTINCT FROM 'array'
