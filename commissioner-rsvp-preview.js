@@ -18,8 +18,6 @@
   // Directory and draft currently share one source. This can check RSVP
   // eligibility, but cannot independently detect a renamed or missing slot.
   const reconciliation=eligibility.reconcileDraftRoster(rows,eventId,golfers,golfers);
-  const missingApprovedIndices=reconciliation.missingIndices;
-  const mismatchedApprovedIndices=reconciliation.mismatchedIndices;
   // Duplicate display names make a commissioner roster ambiguous even when
   // account IDs and golfer indices are unique. Do not report it as ready.
   const names=new Set();
@@ -39,10 +37,6 @@
    unapprovedNamedCount:unapprovedNamedIndices.length,
    duplicateNamedCount:duplicateNamedIndices.length,
    duplicateNamedIndices:Object.freeze(duplicateNamedIndices),
-   missingApprovedCount:missingApprovedIndices.length,
-   missingApprovedIndices:Object.freeze([...missingApprovedIndices]),
-   mismatchedApprovedCount:mismatchedApprovedIndices.length,
-   mismatchedApprovedIndices:Object.freeze([...mismatchedApprovedIndices]),
    unapprovedNamedIndices:Object.freeze(unapprovedNamedIndices),
    shortfall:Math.max(0,teamCount-approved.length),
    // Approved players need enough existing named draft slots; do not
