@@ -4655,7 +4655,7 @@ async function savePairScore(teamIndex,pairIndex,val){
    const a=pairScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===scoreHole&&Number(x.pair_index)===0);
    const b=pairScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===scoreHole&&Number(x.pair_index)===1);
    const roster=teamRosterGolfers(teamIndex);
-   if(a&&b&&roster.length>=4){
+   if(roster.length===4&&validStoredPlayerScore(a)&&validStoredPlayerScore(b)){
      const total=Number(a.score)+Number(b.score);
      const {error}=await db.from("elleng_team_scores").upsert({tournament_id:TOURNAMENT_ID,team_index:teamIndex,hole:scoreHole,score:total,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:"tournament_id,team_index,hole"});if(error)throw error;
    }else{
