@@ -15,6 +15,8 @@
   const approved=eligibility.approvedRoster(rows,eventId,golfers);
   // An approved RSVP is not matched until its draft slot contains the
   // corresponding directory name. Empty or renamed slots are not ready.
+  // Directory and draft currently share one source. This can check RSVP
+  // eligibility, but cannot independently detect a renamed or missing slot.
   const reconciliation=eligibility.reconcileDraftRoster(rows,eventId,golfers,golfers);
   const missingApprovedIndices=reconciliation.missingIndices;
   const mismatchedApprovedIndices=reconciliation.mismatchedIndices;
