@@ -77,3 +77,33 @@ BEGIN
  OR EXISTS (SELECT 1 FROM public.elleng_team_scores WHERE hole=15)
  THEN RAISE EXCEPTION 'Unauthorized cross-team write persisted'; END IF;
 END $$;
+
+-- A missing authenticated identity cannot write.
+SELECT set_config('elleng.test_actor','',false);
+DO $$
+BEGIN
+ BEGIN
+  PERFORM public.elleng_test_authorized_split_pair('tournament-qa',0,16,0,5);
+  RAISE EXCEPTION 'Anonymous score unexpectedly accepted';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM='Anonymous score unexpectedly accepted' THEN RAISE; END IF;
+  IF SQLERRM<>'Sign in required' THEN RAISE; END IF;
+ END;
+ IF EXISTS (SELECT 1 FROM public.elleng_pair_hole_scores WHERE hole=16)
+ THEN RAISE EXCEPTION 'Anonymous score write persisted'; END IF;
+END $$;
+-- Completed tournaments must reject writes even from the assigned captain.
+UPDATE public.elleng_tournaments SET status='complete' WHERE id='tournament-qa';
+SELECT set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false);
+DO $$
+BEGIN
+ BEGIN
+  PERFORM public.elleng_test_authorized_split_pair('tournament-qa',0,17,0,5);
+  RAISE EXCEPTION 'Completed tournament score unexpectedly accepted';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM='Completed tournament score unexpectedly accepted' THEN RAISE; END IF;
+  IF SQLERRM<>'Tournament not available' THEN RAISE; END IF;
+ END;
+ IF EXISTS (SELECT 1 FROM public.elleng_pair_hole_scores WHERE hole=17)
+ THEN RAISE EXCEPTION 'Completed tournament write persisted'; END IF;
+END $$;
