@@ -720,3 +720,28 @@ test('unsaved roster edits arising during eligibility computation cannot certify
  assert.deepEqual(renders.map(x=>x.status),['loading','unsaved']);
  assert.equal(renders.some(x=>x.status==='success'),false);
 });
+
+test('explicit invalidation during eligibility calculation prevents a late success',async()=>{
+ const authReads=[],listReads=[],renders=[];
+ const draft={golfers:structuredClone(directory.slice(0,2)),teams:[{},{}],picks:[]};
+ const db={auth:{getUser:()=>{const d=deferred();authReads.push(d);return d.promise}}};
+ const client={list:()=>{const d=deferred();listReads.push(d);return d.promise}};
+ let controller;
+ const invalidatingEligibility={
+  approvedRoster:(...args)=>{
+   const approved=eligibility.approvedRoster(...args);
+   controller.invalidate();
+   return approved;
+  }
+ };
+ controller=create({db,client,eligibility:invalidatingEligibility,eventId:'nov20',
+  getAuth:()=>({epoch:1,userId:'commissioner-a'}),getDraft:()=>draft,
+  render:value=>renders.push(value)});
+ const work=controller.refresh();
+ authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ listReads[0].resolve(rows);
+ await work;
+ assert.deepEqual(renders.map(x=>x.status),['loading','invalidated']);
+ assert.equal(renders.some(x=>x.status==='success'),false);
+});
