@@ -235,3 +235,35 @@ test('invalidation clears a previously successful commissioner readiness preview
  assert.equal(h.renders.at(-1).status,'invalidated');
  assert.deepEqual(h.writes,[]);
 });
+
+test('refresh clears previous readiness before authentication and RSVP fetch finish',async()=>{
+ const h=harness();
+ const first=h.controller.refresh();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ h.listReads[0].resolve(rows);await first;
+ assert.equal(h.renders.at(-1).status,'success');
+ const second=h.controller.refresh();
+ assert.equal(h.renders.at(-1).status,'loading');
+ h.authReads[1].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ h.listReads[1].reject(new Error('network unavailable'));
+ await second;
+ assert.equal(h.renders.at(-1).status,'error');
+ assert.deepEqual(h.writes,[]);
+});
+test('invalidation during a newer refresh cannot restore previous approved summary',async()=>{
+ const h=harness();
+ const first=h.controller.refresh();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ h.listReads[0].resolve(rows);await first;
+ const pending=h.controller.refresh();
+ h.authReads[1].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ h.controller.invalidate();
+ h.listReads[1].resolve(rows);
+ await pending;
+ assert.equal(h.renders.at(-1).status,'invalidated');
+ assert.deepEqual(h.writes,[]);
+});
