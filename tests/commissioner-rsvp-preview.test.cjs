@@ -804,11 +804,11 @@ test('explicit invalidation during eligibility calculation prevents a late succe
   h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
   await new Promise(resolve=>setImmediate(resolve));
   assert.equal(h.draftReads.length,1);
-  return work;
+  return {work};
  }
  test('commissioner page denies missing and unowned drafts rather than claiming ownership',async()=>{
   for(const draft of [null,{owner_id:null,state:{},updated_at:'2026-10-28T00:00:00Z'}]){
-   const h=adminAccessHarness(),work=await startOwnerCheck(h);
+   const h=adminAccessHarness(),{work}=await startOwnerCheck(h);
    h.draftReads[0].resolve({data:draft,error:null});
    await work;
    assert.equal(h.ctx.commissionerUserId,null);
@@ -819,7 +819,7 @@ test('explicit invalidation during eligibility calculation prevents a late succe
   }
  });
  test('commissioner page rejects a draft owned by another account',async()=>{
-  const h=adminAccessHarness(),work=await startOwnerCheck(h);
+  const h=adminAccessHarness(),{work}=await startOwnerCheck(h);
   h.draftReads[0].resolve({data:{owner_id:'commissioner-b',state:{},updated_at:'2026-10-28T00:00:00Z'},error:null});
   await work;
   assert.equal(h.ctx.commissionerUserId,null);
@@ -827,7 +827,7 @@ test('explicit invalidation during eligibility calculation prevents a late succe
   assert.equal(h.renders(),0);assert.equal(h.subscriptions(),0);
  });
  test('commissioner page refuses an account switch while the owner lookup is pending',async()=>{
-  const h=adminAccessHarness(),work=await startOwnerCheck(h);
+  const h=adminAccessHarness(),{work}=await startOwnerCheck(h);
   h.draftReads[0].resolve({data:{owner_id:'commissioner-a',state:{},updated_at:'2026-10-28T00:00:00Z'},error:null});
   await new Promise(resolve=>setImmediate(resolve));
   assert.equal(h.authReads.length,2,'identity must be revalidated after draft read');
@@ -839,7 +839,7 @@ test('explicit invalidation during eligibility calculation prevents a late succe
   assert.equal(h.renders(),0);assert.equal(h.subscriptions(),0);
  });
  test('unchanged authenticated draft owner may enter commissioner interface',async()=>{
-  const h=adminAccessHarness(),work=await startOwnerCheck(h);
+  const h=adminAccessHarness(),{work}=await startOwnerCheck(h);
   h.draftReads[0].resolve({data:{owner_id:'commissioner-a',state:{teams:[{name:'Test'}]},updated_at:'2026-10-28T00:00:00Z'},error:null});
   await new Promise(resolve=>setImmediate(resolve));
   assert.equal(h.authReads.length,2);
