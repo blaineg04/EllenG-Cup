@@ -14,7 +14,7 @@ function deferred(){
  const promise=new Promise((yes,no)=>{resolve=yes;reject=no});
  return {promise,resolve,reject};
 }
-function harness(eventId='nov20'){
+function harness(eventId='nov20',hasPendingRosterEdits=()=>false){
  const authReads=[],listReads=[],renders=[],writes=[];
  let auth={epoch:3,userId:'commissioner-a'};
  const db={
@@ -28,7 +28,7 @@ function harness(eventId='nov20'){
  }};
  const draft={golfers:structuredClone(directory),teams:structuredClone(teams)};
  const controller=create({db,client,eligibility,eventId,getAuth:()=>auth,
-  getDraft:()=>draft,render:value=>renders.push(value)});
+  getDraft:()=>draft,hasPendingRosterEdits,render:value=>renders.push(value)});
  return {controller,authReads,listReads,renders,writes,draft,
   signout:()=>{auth={epoch:auth.epoch+1,userId:null}},
   switchUser:()=>{auth={epoch:auth.epoch+1,userId:'commissioner-b'}}};
@@ -366,4 +366,77 @@ test('second-device roster replacement revokes old preview and fences a pending 
  assert.equal(h.renders.at(-1).summary.duplicateNamedCount,1);
  assert.equal(h.renders.at(-1).summary.matchesPreview,false);
  assert.deepEqual(h.writes,[]);
+});
+
+test('unsaved roster inputs block RSVP reads before authentication and recover after save',async()=>{
+ let unsaved=true;
+ const h=harness('nov20',()=>unsaved);
+ await h.controller.refresh();
+ assert.deepEqual(h.renders.map(x=>x.status),['loading','unsaved']);
+ assert.equal(h.authReads.length,0);
+ assert.equal(h.listReads.length,0);
+ unsaved=false;
+ const next=h.controller.refresh();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ h.listReads[0].resolve(rows);await next;
+ assert.equal(h.renders.at(-1).status,'success');
+ assert.deepEqual(h.writes,[]);
+});
+
+test('roster edits while commissioner authentication is pending prevent RSVP read',async()=>{
+ let unsaved=false;
+ const h=harness('nov20',()=>unsaved),pending=h.controller.refresh();
+ unsaved=true;
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await pending;
+ assert.equal(h.renders.at(-1).status,'unsaved');
+ assert.equal(h.listReads.length,0);
+ assert.deepEqual(h.writes,[]);
+});
+
+test('roster edits during RSVP network read cannot restore stale readiness',async()=>{
+ let unsaved=false;
+ const h=harness('nov20',()=>unsaved),pending=h.controller.refresh();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.listReads.length,1);
+ unsaved=true;
+ h.listReads[0].resolve(rows);await pending;
+ assert.equal(h.renders.at(-1).status,'unsaved');
+ assert.equal(h.renders.some(x=>x.status==='success'),false);
+ assert.deepEqual(h.writes,[]);
+});
+
+test('commissioner unsaved-roster guard compares real visible golfer names and counts',()=>{
+ const fs=require('node:fs'),vm=require('node:vm');
+ const html=fs.readFileSync('admin.html','utf8');
+ const start=html.indexOf('function hasPendingRosterEdits(){');
+ const end=html.indexOf('function updateDraftSetupPreview()',start);
+ assert.ok(start>0&&end>start,'real read-only roster guard must exist');
+ const names=[{dataset:{n:'0'},value:'Alice'},{dataset:{n:'1'},value:'Bob'}];
+ const controls={setupTeamCount:{value:'2'},setupGolferCount:{value:'2'}};
+ const ctx={savingDraft:false,S:{golfers:[{name:'Alice'},{name:'Bob'}],teams:[{},{}]},
+  document:{querySelectorAll:selector=>selector==='#grows [data-n]'?names:[],
+   getElementById:id=>controls[id]}};
+ vm.createContext(ctx);
+ vm.runInContext(html.slice(start,end)+'\nthis.check=hasPendingRosterEdits;',ctx);
+ assert.equal(ctx.check(),false);
+ names[1].value='Carol';
+ assert.equal(ctx.check(),true,'unsaved golfer rename must block approval');
+ names[1].value=' Bob ';
+ assert.equal(ctx.check(),false,'trimmed equivalent name is not a roster change');
+ controls.setupTeamCount.value='3';
+ assert.equal(ctx.check(),true,'unsaved team count must block approval');
+ controls.setupTeamCount.value='2';
+ controls.setupGolferCount.value='3';
+ assert.equal(ctx.check(),true,'unsaved golfer count must block approval');
+ controls.setupGolferCount.value='2';
+ names[1].dataset.n='0';
+ assert.equal(ctx.check(),true,'duplicate input indices must fail closed');
+ names[1].dataset.n='1';
+ ctx.savingDraft=true;
+ assert.equal(ctx.check(),true,'in-flight draft save cannot certify roster');
+ assert.equal(html.includes('hasPendingRosterEdits,'),true);
+ assert.equal(html.includes('result.status==="unsaved"'),true);
 });
