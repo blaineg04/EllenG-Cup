@@ -302,7 +302,7 @@ test('interactive captain replacement survives Supabase SIGNED_IN without revoki
  const revokeStart=s.indexOf('function revokeCaptainSession(){');
  const revokeEnd=s.indexOf('(async()=>{',revokeStart);
  assert.ok(loginStart>=0&&loginEnd>loginStart&&revokeStart>0&&revokeEnd>revokeStart);
- vm.runInContext(s.slice(loginStart,loginEnd)+s.slice(revokeStart,revokeEnd),ctx);
+ vm.runInContext(captainTeamGuardSource()+s.slice(loginStart,loginEnd)+s.slice(revokeStart,revokeEnd),ctx);
  await elements.signin.onclick();
  assert.equal(stopped,1,'previous captain subscription is disposed before replacement');
  assert.equal(timersStopped,1,'previous captain refresh timer is disposed');
@@ -335,7 +335,7 @@ test('failed captain replacement remains signed out rather than restoring old te
  const loginEnd=s.indexOf('document.getElementById("soundToggle").onclick=',loginStart);
  const revokeStart=s.indexOf('function revokeCaptainSession(){');
  const revokeEnd=s.indexOf('db.auth.onAuthStateChange(',revokeStart);
- vm.runInContext(s.slice(loginStart,loginEnd)+s.slice(revokeStart,revokeEnd),ctx);
+ vm.runInContext(captainTeamGuardSource()+s.slice(loginStart,loginEnd)+s.slice(revokeStart,revokeEnd),ctx);
  await elements.signin.onclick();
  assert.equal(ctx.captainUserId,null);
  assert.equal(ctx.myTeam,null);
