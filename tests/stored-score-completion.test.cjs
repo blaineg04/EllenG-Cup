@@ -24,3 +24,9 @@ test('hole completion requires every roster member or pair to have valid persist
   assert.equal([good[0],bad].every(valid),false);
  }
 });
+
+test('Shamble progress counts only valid stored score rows',()=>{
+ const rows=[{score:3},{score:''},{score:true},{score:'5'}];
+ assert.equal(rows.filter(valid).length,2);
+ assert.match(html,/entered\.filter\(validStoredPlayerScore\)\.length/);
+});
