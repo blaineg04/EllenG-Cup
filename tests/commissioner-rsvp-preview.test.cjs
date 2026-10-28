@@ -288,3 +288,15 @@ test('commissioner RSVP preview ignores other events but rejects malformed curre
  assert.deepEqual(valid.approvedIndices,[0,1]);
  assert.throws(()=>summarize([...rows,{tournament_id:'nov20',user_id:'bad',golfer_index:2,status:'invalid',approval_status:'approved'}],'nov20',directory,2,eligibility),/Invalid RSVP status/);
 });
+
+test('commissioner preview refuses non-callable dependencies before any request',()=>{
+ const db={auth:{getUser:()=>{throw Error('should not read')}}};
+ const client={list:()=>{throw Error('should not list')}}};
+ const args={db,client,eligibility,eventId:'nov20',getAuth:()=>({epoch:1,userId:'commissioner-a'}),getDraft:()=>({golfers:directory,teams}),render:()=>{}};
+ for(const override of [
+  {db:{auth:{getUser:true}}},
+  {client:{list:true}},
+  {eligibility:{...eligibility,approvedRoster:true}},
+  {eligibility:{...eligibility,reconcileDraftRoster:true}}
+ ])assert.throws(()=>create({...args,...override}),/dependencies required/);
+});
