@@ -75,6 +75,7 @@ test('approved-roster draft plan stays identical to live common.js turn order',(
    assert.equal(plan.format,format);
    assert.deepEqual(Array.from({length:count},(_,i)=>draftTurnAtPick(i,teams,format)),expected);
    assert.equal(plan.teamCapacities.reduce((sum,n)=>sum+n,0),count);
+   assert.equal(plan.unassignedGolferCount,count);
   }
  }
 });
