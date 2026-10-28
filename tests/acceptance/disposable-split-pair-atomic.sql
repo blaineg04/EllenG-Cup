@@ -181,3 +181,26 @@ BEGIN
     (SELECT count(*) FROM public.elleng_team_scores WHERE tournament_id='tournament-qa' AND hole=18)<>1
  THEN RAISE EXCEPTION 'Idempotent retry changed team total'; END IF;
 END $$;
+
+-- A malformed draft roster must fail without changing either score table.
+UPDATE public.elleng_drafts SET state=jsonb_set(state,'{teams,0,roster}','[0,0,2,3]'::jsonb) WHERE id='draft-qa';
+SELECT set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false);
+DO $$
+DECLARE before_pair integer;
+DECLARE before_team integer;
+BEGIN
+ SELECT count(*) INTO before_pair FROM public.elleng_pair_hole_scores WHERE tournament_id='tournament-qa' AND hole=18;
+ SELECT count(*) INTO before_team FROM public.elleng_team_scores WHERE tournament_id='tournament-qa' AND hole=18;
+ BEGIN
+  PERFORM public.elleng_test_authorized_split_pair('tournament-qa',0,18,0,11);
+  RAISE EXCEPTION 'Duplicate roster unexpectedly accepted';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM='Duplicate roster unexpectedly accepted' THEN RAISE; END IF;
+  IF SQLERRM<>'Invalid or duplicate roster golfer' THEN RAISE; END IF;
+ END;
+ IF before_pair<>(SELECT count(*) FROM public.elleng_pair_hole_scores WHERE tournament_id='tournament-qa' AND hole=18)
+ OR before_team<>(SELECT count(*) FROM public.elleng_team_scores WHERE tournament_id='tournament-qa' AND hole=18)
+ OR (SELECT score FROM public.elleng_pair_hole_scores WHERE tournament_id='tournament-qa' AND hole=18 AND pair_index=0)<>9
+ THEN RAISE EXCEPTION 'Invalid roster altered existing score'; END IF;
+END $$;
+UPDATE public.elleng_drafts SET state=jsonb_set(state,'{teams,0,roster}','[0,1,2,3]'::jsonb) WHERE id='draft-qa';
