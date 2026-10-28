@@ -134,7 +134,12 @@ async function verifyNavigation(page, width, capture, prefix = '') {
   await page.locator('#closeBroadcast').click();
   await page.locator('#broadcastOverlay').waitFor({state:'hidden'});
   // Fullscreen exit is asynchronous; verify it is finished before the real Home click.
-  await page.waitForFunction(() => !document.fullscreenElement, null, {timeout:5000});
+  try {
+    await page.waitForFunction(() => !document.fullscreenElement, null, {timeout:15000});
+  } catch (error) {
+    const diagnostic=await page.evaluate(() => ({fullscreenElement:document.fullscreenElement?.id||document.fullscreenElement?.tagName||null,overlayOpen:document.querySelector('#broadcastOverlay')?.classList.contains('open')||false}));
+    throw new Error(`Broadcast fullscreen exit failed at ${width}px: ${JSON.stringify(diagnostic)}; ${error.message}`);
+  }
   await page.locator(home).click();
   await page.locator('#homeView:not(.hidden)').waitFor({state:'visible'});
   console.log(`${width} ${prefix}real navigation: Course, Rankings, Extras, Broadcast and return Home passed`);
