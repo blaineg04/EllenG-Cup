@@ -384,10 +384,16 @@ async function openAdmin(){
   S={...fresh(),...data.state};draftUpdatedAt=data.updated_at;
   commissionerUserId=user.id;
   loginCard.style.display="none";app.style.display="block";status.textContent="READY";
-  setupRender();commissionerChannel=subscribe(()=>{
+  setupRender();
+  // The shared subscriber checks isCurrent before applying asynchronous
+  // Realtime reads, not just before invoking this render callback. Without
+  // this guard a disposed commissioner's channel can still replace S.
+  const renderForCommissioner=()=>{
    if(!stillCurrent()||commissionerUserId!==user.id)return;
    if(liveMode)liveRender();else setupRender();
-  });
+  };
+  renderForCommissioner.isCurrent=()=>stillCurrent()&&commissionerUserId===user.id;
+  commissionerChannel=subscribe(renderForCommissioner);
   if(!tick)tick=setInterval(()=>{if(liveMode)drawClock()},500);
  }catch(e){
   if(!stillCurrent())return;

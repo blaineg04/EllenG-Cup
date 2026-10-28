@@ -45,8 +45,36 @@ function harness(){
   },
   subscriptions:()=>subscriptions,unsubscriptions:()=>unsubscriptions,activeSubscriptions:()=>activeSubscriptions,
   invalidations:()=>invalidations,
-  renders:()=>renders,notify:index=>callbacks[index]()};
+  renders:()=>renders,notify:index=>callbacks[index](),listener:index=>callbacks[index]};
 }
+test('commissioner Realtime read guard is revoked on sign-out',async()=>{
+ const h=harness(),opening=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await opening;
+ const listener=h.listener(0),rendered=h.renders();
+ assert.equal(typeof listener.isCurrent,'function','shared subscriber needs a pre-read session guard');
+ assert.equal(listener.isCurrent(),true);
+ h.change('SIGNED_OUT',null);
+ assert.equal(listener.isCurrent(),false,'revoked listener must not apply queued draft reads');
+ h.notify(0);
+ assert.equal(h.renders(),rendered,'stale listener cannot redraw after sign-out');
+ assert.equal(h.elements.connection.textContent,'SIGN IN');
+});
+test('superseded commissioner listener stays invalid after same-account reauthorization',async()=>{
+ const h=harness(),first=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await first;
+ const oldListener=h.listener(0);
+ assert.equal(oldListener.isCurrent(),true);
+ const second=h.open();
+ assert.equal(oldListener.isCurrent(),false,'new verification must retire prior listener before its reads apply');
+ h.auth(1,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(1,'commissioner-a');await second;
+ assert.equal(h.listener(1).isCurrent(),true);
+ assert.equal(oldListener.isCurrent(),false,'same user ID must not revive previous subscription');
+ const rendered=h.renders();h.notify(0);
+ assert.equal(h.renders(),rendered,'old subscription cannot render after a new login');
+});
 test('signout invalidates pending commissioner lookup without reopening controls',async()=>{
  const h=harness(),pending=h.open();
  h.change('SIGNED_OUT',null);
