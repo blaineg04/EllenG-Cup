@@ -34,7 +34,7 @@ BEGIN
  IF NOT denied THEN RAISE EXCEPTION 'Captain received tournament administration privilege'; END IF;
 END $;
 
-DO $$
+DO $
 DECLARE denied boolean:=false;
 BEGIN
  BEGIN INSERT INTO public.elleng_lock_scores VALUES ('event',3,4);
