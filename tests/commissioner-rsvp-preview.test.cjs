@@ -112,3 +112,20 @@ test('explicit invalidation fences an in-flight preview',async()=>{
  await work;
  assert.equal(h.listReads.length,0);
 });
+
+test('commissioner UI keeps event RSVP preview opt-in and read-only',()=>{
+ const fs=require('node:fs'),vm=require('node:vm');
+ const html=fs.readFileSync('admin.html','utf8');
+ const config=fs.readFileSync('config.js','utf8');
+ const context={window:{}};
+ vm.runInNewContext(config,context);
+ assert.equal(context.window.ELLENG_CONFIG.eventRsvpPreviewEnabled,false);
+ assert.equal(context.window.ELLENG_CONFIG.eventRsvpTournamentId,'elleng-cup-live');
+ assert.match(html,/id="refreshRsvpPreview"[^>]*disabled/);
+ assert.match(html,/id="rsvpReadinessStatus"[^>]*role="status"/);
+ assert.ok(html.indexOf('src="event-rsvp-client.js"')<html.indexOf('src="commissioner-rsvp-preview.js"'));
+ assert.ok(html.indexOf('src="event-rsvp-eligibility.js"')<html.indexOf('src="commissioner-rsvp-preview.js"'));
+ assert.match(html,/cfg\.eventRsvpPreviewEnabled===true/);
+ assert.match(html,/rsvpPreviewController\.invalidate\(\)/);
+ assert.match(html,/document\.getElementById\("refreshRsvpPreview"\)\.onclick=\(\)=>rsvpPreviewController\.refresh\(\)/);
+});
