@@ -7,6 +7,7 @@ CREATE TABLE elleng_range_team_scores(tournament_id text NOT NULL REFERENCES ell
 INSERT INTO elleng_range_drafts VALUES ('standard','{"playFormat":"elleng"}'),('split','{"playFormat":"split_pair"}');
 INSERT INTO elleng_range_tournaments VALUES ('event-standard','standard'),('event-split','split');
 CREATE TABLE elleng_range_pair_details(tournament_id text NOT NULL REFERENCES elleng_range_tournaments(id),score integer NOT NULL);
+CREATE TABLE elleng_range_player_details(tournament_id text NOT NULL REFERENCES elleng_range_tournaments(id),score integer NOT NULL);
 -- Guard draft format changes when existing official totals would be invalid.
 CREATE FUNCTION pg_temp.validate_elleng_draft_format_change() RETURNS trigger
 LANGUAGE plpgsql AS $$
@@ -20,6 +21,14 @@ BEGIN
   WHERE t.draft_id=NEW.id
  ) THEN
   RAISE EXCEPTION 'Format change requires reconciling pair scores' USING ERRCODE='23514';
+ END IF;
+ IF v_new_format IS DISTINCT FROM OLD.state->>'playFormat'
+ AND EXISTS (
+  SELECT 1 FROM elleng_range_tournaments t
+  JOIN elleng_range_player_details p ON p.tournament_id=t.id
+  WHERE t.draft_id=NEW.id
+ ) THEN
+  RAISE EXCEPTION 'Format change requires reconciling player scores' USING ERRCODE='23514';
  END IF;
  IF v_new_format IS DISTINCT FROM OLD.state->>'playFormat'
  AND EXISTS(
@@ -107,6 +116,16 @@ BEGIN
  UPDATE elleng_range_drafts SET state='{"playFormat":"elleng"}'::jsonb WHERE id='split';
  IF (SELECT state->>'playFormat' FROM elleng_range_drafts WHERE id='split')<>'elleng'
  THEN RAISE EXCEPTION 'Reconciled format switch unexpectedly rejected'; END IF;
+ -- The same rule must reject individual Shamble scoring detail after a
+ -- score-compatible format transition is requested.
+ INSERT INTO elleng_range_player_details VALUES ('event-standard',4);
+ denied:=false;
+ BEGIN
+  UPDATE elleng_range_drafts SET state='{"playFormat":"elleng"}'::jsonb WHERE id='standard';
+ EXCEPTION WHEN check_violation THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Player-detail switch bypassed reconciliation rule'; END IF;
+ DELETE FROM elleng_range_player_details WHERE tournament_id='event-standard';
+ UPDATE elleng_range_drafts SET state='{"playFormat":"elleng"}'::jsonb WHERE id='standard';
  RAISE NOTICE 'PASS: tournament-linked guard enforces 20 standard / 40 Split-Pair for INSERT and UPDATE';
 END $$;
 ROLLBACK;
