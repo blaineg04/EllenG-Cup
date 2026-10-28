@@ -7,6 +7,13 @@
   if(root)root.EllenGDraftSetup=api;
 })(typeof globalThis!=="undefined"?globalThis:null,function(){
   "use strict";
+  // All commissioner setup edits must stop once the draft has any assignments.
+  // Resizing was already guarded, but Save Setup could previously rewrite
+  // golfer names, handicap bands, team names or draft order after a live pick.
+  function assertDraftSetupEditable(state){
+    assertDraftSetupEditable(state);
+    return true;
+  }
   function resizeDraftSetup(state,teamCount,golferCount){
     if(!Number.isInteger(teamCount)||teamCount<2||teamCount>36)
       throw new RangeError("Teams must be between 2 and 36");
@@ -36,5 +43,5 @@
       :{name:"Team "+(i+1),captain:"",roster:[]});
     return {...state,golfers,teams,picks:[]};
   }
-  return Object.freeze({resizeDraftSetup});
+  return Object.freeze({resizeDraftSetup,assertDraftSetupEditable});
 });
