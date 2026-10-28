@@ -97,12 +97,14 @@ const commissionerLoadEnd=source.indexOf('async function secureSave()',commissio
 assert.ok(subscribeStart>=0&&subscribeEnd>subscribeStart&&commissionerLoadStart>=0&&commissionerLoadEnd>commissionerLoadStart);
 function commissionerRealtimeHarness(){
  const indicator={textContent:'',className:''},classes=new Set(),pending=[];
+ let invalidations=0;
  const strip={classList:{add:n=>classes.add(n),remove:(...names)=>names.forEach(n=>classes.delete(n))}};
  const button={disabled:false};let status,change,renders=0;
  const channel={on(_type,_filter,cb){change=cb;return this},subscribe(cb){status=cb;return this}};
  const ctx={
   S:{picks:[]},fresh:()=>({picks:[]}),savingDraft:false,draftUpdatedAt:null,
   commissionerAuthEpoch:0,commissionerUserId:'commissioner-a',cfg:{draftId:'synthetic-only'},
+  rsvpPreviewController:{invalidate:()=>{invalidations++}},
   db:{channel:()=>channel,from:()=>({select:()=>({eq:()=>({single:()=>new Promise(resolve=>pending.push(resolve))})})})},
   document:{getElementById:id=>id==='connection'?indicator:id==='draftStatusStrip'?strip:null,querySelectorAll:()=>[button]},
   console:{error:()=>{}}
@@ -112,18 +114,32 @@ function commissionerRealtimeHarness(){
  ctx.connect(()=>renders++);
  return {ctx,indicator,classes,pending,button,emit:s=>status(s),change:()=>change(),
   reply:(index,picks,updated_at='2026-10-27T10:00:00Z')=>pending[index]({data:{state:{picks},updated_at},error:null}),
-  state:()=>ctx.getState(),renders:()=>renders};
+  state:()=>ctx.getState(),renders:()=>renders,invalidations:()=>invalidations};
 }
 test('commissioner subscription reaches LIVE only after an applied authoritative refresh',async()=>{
  const h=commissionerRealtimeHarness(),connecting=h.emit('SUBSCRIBED');
  assert.equal(h.indicator.textContent,'SYNCING');
  assert.equal(h.renders(),0);
+ assert.equal(h.invalidations(),1,'pending Realtime read must revoke old RSVP readiness immediately');
  h.reply(0,[{golfer:1}]);await connecting;
  assert.equal(h.indicator.textContent,'LIVE');
  assert.ok(h.classes.has('status-live'));
  assert.equal(h.state().picks.length,1);
  assert.equal(h.renders(),1);
 });
+
+test('failed commissioner Realtime read cannot leave previously verified RSVP readiness visible',async()=>{
+ const h=commissionerRealtimeHarness(),connecting=h.emit('SUBSCRIBED');
+ assert.equal(h.invalidations(),1);
+ assert.equal(h.indicator.textContent,'SYNCING');
+ h.pending[0]({data:null,error:new Error('synthetic network outage')});
+ await connecting;
+ assert.equal(h.indicator.textContent,'SYNC ERROR');
+ assert.equal(h.invalidations(),1);
+ assert.equal(h.renders(),0);
+ assert.equal(h.state().picks.length,0);
+});
+
 test('commissioner delayed refresh cannot apply after session revocation',async()=>{
  const h=commissionerRealtimeHarness(),connecting=h.emit('SUBSCRIBED');
  h.ctx.commissionerAuthEpoch++;
@@ -136,6 +152,7 @@ test('commissioner delayed refresh cannot apply after session revocation',async(
 test('commissioner concurrent refresh cannot overwrite a newer response',async()=>{
  const h=commissionerRealtimeHarness(),first=h.emit('SUBSCRIBED'),second=h.change();
  assert.equal(h.pending.length,2);
+ assert.equal(h.invalidations(),2);
  h.reply(1,[{golfer:2}],'2026-10-27T10:00:02Z');await second;
  h.reply(0,[{golfer:1}],'2026-10-27T10:00:01Z');await first;
  assert.equal(h.state().picks[0].golfer,2);
