@@ -2507,7 +2507,7 @@ function normalPoints(values){
  return out;
 }
 function validHoleScore(score){
- return score!==null&&score!==undefined&&typeof score!=="boolean"&&String(score).trim()!==""&&Number.isSafeInteger(Number(score))&&Number(score)>=1&&Number(score)<=40;
+ return score!==null&&score!==undefined&&typeof score!=="boolean"&&String(score).trim()!==""&&Number.isSafeInteger(Number(score))&&Number(score)>=1&&Number(score)<=(isSplitPair()?40:20);
 }
 function pointsForHole(h){
  const n=teams.length;
