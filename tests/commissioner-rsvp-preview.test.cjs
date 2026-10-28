@@ -217,3 +217,9 @@ test('fully approved named subset does not mark a partially configured draft rea
  assert.equal(result.shortfall,0);
  assert.equal(result.matchesPreview,false);
 });
+
+test('controller rejects missing reconciliation dependency before any authenticated read',()=>{
+ const db={auth:{getUser:()=>{throw Error('must not read auth')}}};
+ const client={list:()=>{throw Error('must not list RSVPs')}};
+ assert.throws(()=>create({db,client,eligibility:{approvedRoster:eligibility.approvedRoster},eventId:'nov20',getAuth:()=>({epoch:1,userId:'a'}),getDraft:()=>({golfers:directory,teams}),render:()=>{}}),/dependencies required/);
+});
