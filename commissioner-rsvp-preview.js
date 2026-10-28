@@ -13,11 +13,8 @@
   if(!Number.isInteger(teamCount)||teamCount<2||teamCount>36)
    throw new RangeError("Valid team count required");
   const approved=eligibility.approvedRoster(rows,eventId,golfers);
-  // An approved RSVP is not matched until its draft slot contains the
-  // corresponding directory name. Empty or renamed slots are not ready.
-  // Directory and draft currently share one source. This can check RSVP
-  // eligibility, but cannot independently detect a renamed or missing slot.
-  const reconciliation=eligibility.reconcileDraftRoster(rows,eventId,golfers,golfers);
+  // The draft is the only available golfer directory here; do not perform
+  // a tautological self-reconciliation or imply independent verification.
   // Duplicate display names make a commissioner roster ambiguous even when
   // account IDs and golfer indices are unique. Do not report it as ready.
   const names=new Set();
@@ -48,12 +45,12 @@
    // Client-side reconciliation is not authorization to save a draft.
    // This preview is only a same-source consistency check, not independent roster verification.
    independentlyVerified:false,
-   matchesPreview:approved.length>=teamCount&&reconciliation.ready&&duplicateNamedIndices.length===0&&golfers.every(g=>!!g?.name?.trim())
+   matchesPreview:approved.length>=teamCount&&unapprovedNamedIndices.length===0&&duplicateNamedIndices.length===0&&golfers.every(g=>!!g?.name?.trim())
   });
  }
  function create({db,client,eligibility,eventId,getAuth,getDraft,render}){
   if(typeof db?.auth?.getUser!=="function"||typeof client?.list!=="function"||
-     typeof eligibility?.approvedRoster!=="function"||typeof eligibility?.reconcileDraftRoster!=="function"||
+     typeof eligibility?.approvedRoster!=="function"||
      typeof getAuth!=="function"||typeof getDraft!=="function"||typeof render!=="function")
    throw new TypeError("Commissioner RSVP preview dependencies required");
   let request=0;
