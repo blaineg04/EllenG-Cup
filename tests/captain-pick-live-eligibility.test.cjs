@@ -13,8 +13,8 @@ function harness(){
  const connection={textContent:'LIVE'},calls=[],messages=[],buttons=[{disabled:false}];
  let confirmAction=()=>true,rendered=0,holdRpc=false,loadCount=0,loadError=null;
  const pendingRpcReplies=[];
- const ctx={S:state,myTeam:0,captainUserId:'captain-a',captainAuthEpoch:0,cfg:{draftId:'synthetic-only'},fresh:()=>state,
-  stopCaptainSubscription:()=>{},
+ const ctx={S:state,myTeam:0,captainUserId:'captain-a',captainAuthEpoch:0,captainBootstrapEpoch:0,cfg:{draftId:'synthetic-only'},fresh:()=>state,
+  stopCaptainSubscription:()=>{},stopCaptainDrawTimer:()=>{},
   order:()=>0,totalPicks:()=>1,canBand:()=>true,
   db:{rpc:async(name,args)=>{calls.push({name,args});if(holdRpc)return new Promise(resolve=>{pendingRpcReplies.push(resolve)});return {data:state,error:null}}},
   document:{getElementById:id=>id==='connection'?connection:id==='login'?{style:{}}:id==='app'?{style:{}}:id==='msg'?{textContent:''}:null,querySelectorAll:()=>buttons},
@@ -69,7 +69,7 @@ function authHarness(){
   connection:{textContent:'LIVE'},msg:{textContent:''}};
  const buttons=[{disabled:false}];
  let callback;
- const ctx={myTeam:0,captainUserId:'captain-a',captainAuthEpoch:0,pickSyncFailed:false,pickInFlight:true,pickRequestEpoch:0,
+ const ctx={myTeam:0,captainUserId:'captain-a',captainAuthEpoch:0,captainBootstrapEpoch:0,pickSyncFailed:false,pickInFlight:true,pickRequestEpoch:0,
   document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons},
   db:{auth:{onAuthStateChange:cb=>{callback=cb}}}};
  const start=source.indexOf('function revokeCaptainSession()');
