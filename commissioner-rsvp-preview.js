@@ -54,6 +54,14 @@
      typeof getAuth!=="function"||typeof getDraft!=="function"||typeof render!=="function"||
      typeof hasPendingRosterEdits!=="function")
    throw new TypeError("Commissioner RSVP preview dependencies required");
+  // Capture the local draft revision before asynchronous authentication/RSVP reads.
+  // Realtime or another commissioner action may replace or mutate S while those
+  // requests are pending, even when a subscription callback is delayed.
+  const draftSnapshot=()=>{
+   const draft=getDraft();
+   return JSON.stringify({golfers:draft?.golfers,teams:draft?.teams,
+    picks:draft?.picks,draftType:draft?.draftType,timerLength:draft?.timerLength});
+  };
   let request=0;
   const enabled=typeof eventId==="string"&&!!eventId.trim();
   function invalidate(){request++;render({status:"invalidated"});}
@@ -70,15 +78,18 @@
     // Visible unsaved roster edits must not be certified against old saved slots.
     // Check before network access and again after async reads to fence edits in flight.
     if(hasPendingRosterEdits()){if(current())render({status:"unsaved"});return;}
+    const startingDraft=draftSnapshot();
     // Recheck the authenticated account immediately before reading event data.
     const {data,error}=await db.auth.getUser();
     if(!current())return;
     if(error||data?.user?.id!==auth.userId)
      throw new Error("Commissioner authentication changed");
     if(hasPendingRosterEdits()){if(current())render({status:"unsaved"});return;}
+    if(draftSnapshot()!==startingDraft){if(current())render({status:"stale"});return;}
     const rows=await client.list(db,eventId);
     if(!current())return;
     if(hasPendingRosterEdits()){if(current())render({status:"unsaved"});return;}
+    if(draftSnapshot()!==startingDraft){if(current())render({status:"stale"});return;}
     const draft=getDraft();
     const summary=summarize(rows,eventId,draft?.golfers,draft?.teams?.length,eligibility);
     if(!current())return;
