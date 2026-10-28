@@ -45,3 +45,14 @@ test('both pages agree on valid split-pair scores above normal team ceiling',()=
   assert.deepEqual(calculate('Scoring.html',scores,gator,true),calculate('scoring.html',scores,gator,true));
  }
 });
+
+test('all tied Gator winners share the entire bonus on both pages',()=>{
+ for(const n of [2,3,4,6,7,9]){
+  const vals=Array(n).fill(4);
+  for(const name of ['scoring.html','Scoring.html']){
+   const got=calculate(name,vals,true);
+   assert.deepEqual(got,Array(n).fill(2));
+   assert.equal(got.reduce((a,b)=>a+b,0),2*n);
+  }
+ }
+});
