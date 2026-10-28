@@ -303,6 +303,8 @@ test('commissioner preview refuses non-callable dependencies before any request'
 
 test('commissioner UI invalidates RSVP readiness when golfer details or roster size are edited',()=>{
  const html=require('node:fs').readFileSync('admin.html','utf8');
+ assert.ok(html.includes('document.getElementById("trows")?.addEventListener?.("input",()=>rsvpPreviewController.invalidate());'));
+ assert.ok(html.includes('document.getElementById("dtype")?.addEventListener?.("change",()=>{updateDraftSetupPreview();rsvpPreviewController.invalidate()});'));
  for(const id of ['grows','setupTeamCount','setupGolferCount']){
   assert.ok(html.includes('document.getElementById("'+id+'")?.addEventListener?.("input",()=>{updateDraftSetupPreview();rsvpPreviewController.invalidate()});'));
  }
