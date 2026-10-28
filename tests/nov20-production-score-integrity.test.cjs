@@ -26,14 +26,15 @@ function pendingHoleSave(kind,clear=false){
 }
 for(const kind of ['shamble','split-pair'])for(const clear of [false,true])test(`${kind} ${clear?'clear':'save'} keeps the original hole after navigation during a pending request`,async()=>{
  const page=pendingHoleSave(kind,clear),operation=page.run();await Promise.resolve();page.context.hole=page.initial+1;page.release();await operation;
- const expectedCount=kind==='shamble'?1:2;
+ const expectedCount=1;
  assert.equal(page.writes.length,expectedCount);assert.ok(page.writes.every(write=>write.hole===page.initial),JSON.stringify(page.writes));
  if(kind==='shamble'){
   assert.equal(page.writes[0].operation,'elleng_test_authorized_shamble');
   assert.equal(page.writes[0].score,clear?null:4);
  }else{
-  const team=page.writes[1];assert.equal(team.table,'elleng_team_scores');
-  assert.equal(team.operation,clear?'delete':'upsert');if(!clear)assert.equal(team.score,9);
+  assert.equal(page.writes[0].table,'rpc');
+  assert.equal(page.writes[0].operation,'elleng_test_authorized_split_pair');
+  assert.equal(page.writes[0].score,clear?null:4);
  }
 });
 const from=html.indexOf('function normalPoints(values){');
