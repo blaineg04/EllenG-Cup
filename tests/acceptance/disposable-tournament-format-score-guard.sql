@@ -83,6 +83,16 @@ BEGIN
  UPDATE elleng_range_drafts SET state='{"playFormat":"split_pair"}'::jsonb WHERE id='standard';
  IF (SELECT state->>'playFormat' FROM elleng_range_drafts WHERE id='standard')<>'split_pair'
  THEN RAISE EXCEPTION 'Valid format switch unexpectedly rejected'; END IF;
+ -- A real tournament can have pair/player detail that cannot be reinterpreted
+ -- merely by switching the draft format. Probe that stricter rollout rule.
+ CREATE TEMP TABLE elleng_range_pair_details(tournament_id text,score integer) ON COMMIT DROP;
+ INSERT INTO elleng_range_pair_details VALUES ('event-split',12);
+ denied:=false;
+ BEGIN
+  IF EXISTS (SELECT 1 FROM elleng_range_pair_details WHERE tournament_id='event-split')
+  THEN RAISE EXCEPTION 'Format change requires clearing or reconciling pair details' USING ERRCODE='23514'; END IF;
+ EXCEPTION WHEN check_violation THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Pair detail reconciliation blocker not detected'; END IF;
  RAISE NOTICE 'PASS: tournament-linked guard enforces 20 standard / 40 Split-Pair for INSERT and UPDATE';
 END $$;
 ROLLBACK;
