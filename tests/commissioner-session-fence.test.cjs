@@ -17,9 +17,10 @@ function harness(){
  const elements={loginCard:{style:{display:'block'}},adminApp:{style:{display:'none'}},
   authMsg:{textContent:''},connection:{textContent:''}};
  const buttons=[{disabled:false}],authReads=[],draftReads=[],writes=[];
- let authChanged,subscriptions=0,unsubscriptions=0,activeSubscriptions=0,renders=0;const callbacks=[];
+ let authChanged,subscriptions=0,unsubscriptions=0,activeSubscriptions=0,renders=0,invalidations=0;const callbacks=[];
  const ctx={draftUpdatedAt:null,savingDraft:false,tick:null,liveMode:false,S:{picks:[]},
   fresh:()=>({picks:[]}),cfg:{draftId:'synthetic-only'},
+  rsvpPreviewController:{invalidate:()=>{invalidations++}},
   document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons},
   db:{auth:{getUser:()=>new Promise(resolve=>authReads.push(resolve)),
    onAuthStateChange:cb=>{authChanged=cb}},
@@ -37,6 +38,7 @@ function harness(){
   auth:(index,id)=>authReads[index]({data:{user:id?{id}:null},error:null}),
   draft:(index,id)=>draftReads[index]({data:{state:{picks:[]},owner_id:id,updated_at:'2026-10-27T00:00:00Z'},error:null}),
   subscriptions:()=>subscriptions,unsubscriptions:()=>unsubscriptions,activeSubscriptions:()=>activeSubscriptions,
+  invalidations:()=>invalidations,
   renders:()=>renders,notify:index=>callbacks[index]()};
 }
 test('signout invalidates pending commissioner lookup without reopening controls',async()=>{
@@ -79,7 +81,9 @@ test('signout during save authentication prevents commissioner database write',a
  h.draft(0,'commissioner-a');await opened;
  const saving=h.save();
  assert.equal(h.authReads.length,2);
+ assert.equal(h.invalidations(),2,'opening commissioner verification and starting a save revoke old RSVP readiness');
  h.change('SIGNED_OUT',null);
+ assert.equal(h.invalidations(),3,'signout must revoke any pending RSVP snapshot');
  h.auth(1,'commissioner-a');
  await assert.rejects(saving,/session changed while saving/);
  assert.deepEqual(h.writes,[]);
