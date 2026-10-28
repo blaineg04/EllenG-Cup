@@ -146,3 +146,21 @@ END $$;
 UPDATE public.elleng_drafts
 SET state=jsonb_set(state,'{playFormat}','"split_pair"'::jsonb)
 WHERE id='draft-qa';
+
+-- An invalid hole, pair index, or score must fail before any score mutation.
+SELECT set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false);
+DO $$
+DECLARE bad integer[];
+BEGIN
+ FOREACH bad SLICE 1 IN ARRAY ARRAY[[0,0,5],[19,0,5],[18,2,5],[18,0,0],[18,0,21]] LOOP
+  BEGIN
+   PERFORM public.elleng_test_authorized_split_pair('tournament-qa',0,bad[1],bad[2],bad[3]);
+   RAISE EXCEPTION 'Invalid score request unexpectedly accepted';
+  EXCEPTION WHEN raise_exception THEN
+   IF SQLERRM='Invalid score request unexpectedly accepted' THEN RAISE; END IF;
+   IF SQLERRM<>'Invalid Split-Pair score request' THEN RAISE; END IF;
+  END;
+ END LOOP;
+ IF EXISTS (SELECT 1 FROM public.elleng_pair_hole_scores WHERE hole=18)
+ THEN RAISE EXCEPTION 'Invalid request wrote pair score'; END IF;
+END $$;
