@@ -53,6 +53,7 @@ jobs:
       - name: Install Chromium without Docker
         run: tests/visual/node_modules/.bin/playwright install chromium
       - name: Run local-only isolated seven-width browser rehearsal
+        timeout-minutes: 10
         env:
           CI: 'true'
         run: node tests/visual/run.cjs
