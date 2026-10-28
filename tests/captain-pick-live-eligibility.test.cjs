@@ -13,7 +13,7 @@ function harness(){
  const connection={textContent:'LIVE'},calls=[],messages=[],buttons=[{disabled:false}];
  let confirmAction=()=>true,rendered=0,holdRpc=false,loadCount=0,loadError=null;
  const pendingRpcReplies=[];
- const ctx={S:state,myTeam:0,captainUserId:'captain-a',captainAuthEpoch:0,captainBootstrapEpoch:0,cfg:{draftId:'synthetic-only'},fresh:()=>state,
+ const ctx={S:state,myTeam:0,captainUserId:'captain-a',captainAuthEpoch:0,captainRoleRefreshPending:false,captainBootstrapEpoch:0,cfg:{draftId:'synthetic-only'},fresh:()=>state,
   stopCaptainSubscription:()=>{},stopCaptainDrawTimer:()=>{},
   order:()=>0,totalPicks:()=>1,canBand:()=>true,
   db:{rpc:async(name,args)=>{calls.push({name,args});if(holdRpc)return new Promise(resolve=>{pendingRpcReplies.push(resolve)});return {data:state,error:null}}},

@@ -67,6 +67,7 @@ function channelHarness(){
   '\nthis.startChannel=startCaptainSubscription;this.stopChannel=stopCaptainSubscription;',ctx);
  return {ctx,callbacks,elements,buttons,start:()=>ctx.startChannel(),stop:()=>ctx.stopChannel(),
   subscriptions:()=>subscriptions,unsubscriptions:()=>unsubscriptions,renders:()=>renders,
+  rolePending:()=>vm.runInContext('captainRoleRefreshPending',ctx),
   setRoleIndex:v=>{roleIndex=v},deferRoles:v=>{deferRole=v},
   pendingRoles:()=>pendingRoles.length,resolveRole:response=>{const resolve=pendingRoles.shift();assert.ok(resolve);resolve(response)},
   setAuthUser:v=>{authUserId=v}};
@@ -134,18 +135,18 @@ test('captain role refresh freezes picks until permission check completes',async
  const h=channelHarness();h.start();h.deferRoles(true);
  const refresh=h.callbacks[0]();
  assert.equal(h.pendingRoles(),1);assert.equal(h.elements.connection.textContent,'VERIFYING');
- assert.equal(h.ctx.captainRoleRefreshPending,true);assert.equal(h.buttons[0].disabled,true);
+ assert.equal(h.rolePending(),true);assert.equal(h.buttons[0].disabled,true);
  assert.equal(h.renders(),0);
  h.resolveRole({data:{team_index:0},error:null});await refresh;
  assert.equal(h.elements.connection.textContent,'LIVE');
- assert.equal(h.ctx.captainRoleRefreshPending,false);assert.equal(h.renders(),1);
+ assert.equal(h.rolePending(),false);assert.equal(h.renders(),1);
 });
 test('late role response cannot reauthorize a revoked session',async()=>{
  const h=channelHarness();h.start();h.deferRoles(true);
  const refresh=h.callbacks[0]();
  h.ctx.captainAuthEpoch++;h.stop();
  h.resolveRole({data:{team_index:0},error:null});await refresh;
- assert.equal(h.renders(),0);assert.equal(h.ctx.captainRoleRefreshPending,false);
+ assert.equal(h.renders(),0);assert.equal(h.rolePending(),false);
 });
 test('role lookup error fails closed and disables captain drafting',async()=>{
  const h=channelHarness();h.start();h.deferRoles(true);

@@ -841,8 +841,15 @@ function startCaptainSubscription(){
    if(status){status.textContent="LIVE";status.className="online"}
    render();
   }catch(error){
+   // assertCaptainTeamPresent clears the captain ID before throwing. It still
+   // needs full revocation/cleanup when this is the active session.
+   if(!captainUserId&&roleEpoch===captainRoleRefreshEpoch&&authEpoch===captainAuthEpoch){
+    revokeCaptainSession();
+    document.getElementById("msg").textContent=error.message;
+    return;
+   }
    if(!renderForSession.isCurrent()||roleEpoch!==captainRoleRefreshEpoch)return;
-   if(!captainUserId||error?.message?.includes("team assignment does not match")){
+   if(error?.message?.includes("team assignment does not match")){
     revokeCaptainSession();
     document.getElementById("msg").textContent=error.message;
     return;
