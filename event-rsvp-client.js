@@ -83,11 +83,14 @@
      // NULL means enrolled but not yet RSVP'd; never count as Playing.
      if(row.status!==null&&!['playing','maybe','out'].includes(row.status)) throw new Error('Invalid RSVP status');
      if(!['pending','approved','declined'].includes(row.approval_status)) throw new Error('Invalid approval status');
+     // One golfer slot cannot be assigned to two accounts, regardless of
+     // which account has an approved Playing RSVP.
+     if(seenGolfers.has(index)) throw new Error('Duplicate approved golfer or event enrollment');
+     seenGolfers.add(index);
      if(row.status!=='playing'||row.approval_status!=='approved') continue;
-     if(seenGolfers.has(index)) throw new Error('Duplicate approved golfer in event');
      if(typeof availableGolfers[index]?.name!=='string'||!availableGolfers[index].name.trim())
        throw new Error('Approved golfer missing from directory');
-     seenGolfers.add(index);approved.push(index);
+     approved.push(index);
    }
    return approved.sort((a,b)=>a-b);
  }
