@@ -179,10 +179,9 @@ test('commissioner preview requires reconciliation helper and fails closed on mi
  const broken={...eligibility,reconcileDraftRoster:()=>({ready:false,missingIndices:[0],mismatchedIndices:[]})};
  const result=summarize(rows,'nov20',directory.slice(0,2),2,broken);
  assert.equal(result.matchesPreview,false);
- assert.equal(result.missingApprovedCount,1);
- assert.deepEqual(result.missingApprovedIndices,[0]);
- assert.ok(Object.isFrozen(result.missingApprovedIndices));
- assert.equal(result.mismatchedApprovedCount,0);
+ assert.equal(result.independentlyVerified,false);
+ assert.equal('missingApprovedCount' in result,false);
+ assert.equal('mismatchedApprovedCount' in result,false);
 });
 
 test('commissioner roster preview refuses ambiguous duplicate golfer names',()=>{
