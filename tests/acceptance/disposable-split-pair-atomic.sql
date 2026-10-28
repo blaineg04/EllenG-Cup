@@ -224,3 +224,27 @@ BEGIN
      WHERE tournament_id='tournament-qa' AND hole=17 AND pair_index=0)<>7
  THEN RAISE EXCEPTION 'Authenticated RPC role failed to persist score'; END IF;
 END $$;
+
+-- Authenticated clients must use the authorized RPC, not write score tables directly.
+DO $$
+BEGIN
+ IF has_table_privilege('authenticated','public.elleng_pair_hole_scores','INSERT,UPDATE,DELETE')
+ OR has_table_privilege('authenticated','public.elleng_team_scores','INSERT,UPDATE,DELETE')
+ THEN RAISE EXCEPTION 'Authenticated role has direct score-table write grants'; END IF;
+END $$;
+SET ROLE authenticated;
+DO $$
+BEGIN
+ BEGIN
+  INSERT INTO public.elleng_pair_hole_scores(tournament_id,hole,team_index,pair_index,score)
+  VALUES ('tournament-qa',16,0,0,3);
+  RAISE EXCEPTION 'Direct score-table write unexpectedly accepted';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+END $$;
+RESET ROLE;
+DO $$
+BEGIN
+ IF EXISTS (SELECT 1 FROM public.elleng_pair_hole_scores WHERE hole=16)
+ THEN RAISE EXCEPTION 'Direct table write bypassed RPC authorization'; END IF;
+END $$;
