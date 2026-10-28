@@ -291,7 +291,7 @@ test('commissioner RSVP preview ignores other events but rejects malformed curre
 
 test('commissioner preview refuses non-callable dependencies before any request',()=>{
  const db={auth:{getUser:()=>{throw Error('should not read')}}};
- const client={list:()=>{throw Error('should not list')}}};
+ const client={list:()=>{throw Error('should not list')}};
  const args={db,client,eligibility,eventId:'nov20',getAuth:()=>({epoch:1,userId:'commissioner-a'}),getDraft:()=>({golfers:directory,teams}),render:()=>{}};
  for(const override of [
   {db:{auth:{getUser:true}}},
