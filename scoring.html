@@ -6083,6 +6083,18 @@ $("saveAdmin").addEventListener("click",async()=>{
   const selectedTeamSize=Number($("teamSizeSelect")?.value||draftTeamSize());
   const playFormatSelection=$("playFormatSelect")?.value||"";
   const selectedPlayFormat=playFormatSelection||playFormat();
+  // A format change must not reinterpret already-saved scores.
+  // Fail closed if any table cannot be checked; existing records require reconciliation.
+  if(selectedPlayFormat!==playFormat()){
+   const scoreTables=["elleng_team_scores","elleng_pair_hole_scores","elleng_player_hole_scores"];
+   const checks=await Promise.all(scoreTables.map(table=>db.from(table).select("tournament_id",{count:"exact",head:true}).eq("tournament_id",TOURNAMENT_ID)));
+   if(checks.some(result=>result.error||!Number.isInteger(result.count))){
+    $("adminMsg").textContent="Format change blocked: could not verify existing scores. Reload and try again.";return
+   }
+   if(checks.some(result=>result.count>0)){
+    $("adminMsg").textContent="Format change blocked: scoring records exist. Reconcile or reset them before changing formats.";return
+   }
+  }
   const teamCountSelection=$("teamCountSelect")?.value||"";
   const newCount=teamCountSelection===""?activeTeamCount():Math.max(2,Math.min(9,Number(teamCountSelection)));
   if(teamCountSelection!=="")draftState.teamCountConfirmed=true;
