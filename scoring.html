@@ -4724,6 +4724,9 @@ function renderScoring(){
  }));
 }
 async function saveScore(teamIndex,val){
+ // Direct team scores are reserved for standard front-nine scramble.
+ // Split-Pair and back-nine Shamble must use their atomic scoring RPC paths.
+ if(isSplitPair()||hole<1||hole>9){$("saveMsg").textContent="Use the scoring controls for this format.";return}
  if(!canEditTeam(teamIndex)||teamIndex<0||teamIndex>=activeTeamCount())return;
  if(!beginScoreSave())return;
  const el=$("saveMsg");el.textContent="Saving…";const score=val===""?null:Number(val);
