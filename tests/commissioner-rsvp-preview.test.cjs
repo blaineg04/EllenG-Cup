@@ -321,3 +321,41 @@ test('RSVP preview never claims independent roster verification',()=>{
  const result=summarize(rows,'nov20',directory,2,eligibility);
  assert.equal(result.independentlyVerified,false);
 });
+
+
+test('remote draft application and confirmed saves revoke RSVP readiness',()=>{
+ const html=require('node:fs').readFileSync('admin.html','utf8');
+ const loadBlock=html.slice(html.indexOf('load=async function'),html.indexOf('async function secureSave'));
+ const saveBlock=html.slice(html.indexOf('async function secureSave'),html.indexOf('save=secureSave;'));
+ assert.match(loadBlock,/S=\\{\\.\\.\\.fresh\\(\\),\\.\\.\\.data\\.state\\};[\\s\\S]*?rsvpPreviewController\\.invalidate\\(\\);[\\s\\S]*?onApplied\\(\\);/);
+ assert.match(saveBlock,/draftUpdatedAt=saved\\.updated_at;[\\s\\S]*?rsvpPreviewController\\.invalidate\\(\\);[\\s\\S]*?\\}catch\\(error\\)/);
+ assert.equal((loadBlock.match(/rsvpPreviewController\\.invalidate\\(\\)/g)||[]).length,1);
+ assert.equal((saveBlock.match(/rsvpPreviewController\\.invalidate\\(\\)/g)||[]).length,1);
+});
+
+test('second-device roster replacement revokes old preview and fences a pending RSVP read',async()=>{
+ const h=harness();
+ const first=h.controller.refresh();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ h.listReads[0].resolve(rows);await first;
+ assert.equal(h.renders.at(-1).status,'success');
+ const pending=h.controller.refresh();
+ h.authReads[1].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ // Model a Realtime-applied draft containing an ambiguous duplicate name.
+ h.draft.golfers[1].name='Alice';
+ h.controller.invalidate();
+ h.listReads[1].resolve(rows);
+ await pending;
+ assert.equal(h.renders.at(-1).status,'invalidated');
+ const refreshed=h.controller.refresh();
+ h.authReads[2].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ h.listReads[2].resolve(rows);
+ await refreshed;
+ assert.equal(h.renders.at(-1).status,'success');
+ assert.equal(h.renders.at(-1).summary.duplicateNamedCount,1);
+ assert.equal(h.renders.at(-1).summary.matchesPreview,false);
+ assert.deepEqual(h.writes,[]);
+});
