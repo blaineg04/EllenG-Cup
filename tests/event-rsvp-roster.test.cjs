@@ -33,3 +33,10 @@ test('approved golfer must exist in the tournament directory',()=>{
  assert.throws(()=>approvedGolferIndices([row('alice',99)],event,golfers),/missing from directory/);
  assert.throws(()=>approvedGolferIndices([row('alice',1)],event,[]),/missing from directory/);
 });
+
+test('enrolled golfer with NULL RSVP is not eligible, but does not block approved players',()=>{
+ const enrolled=row('unresponded',6,null,'pending');
+ assert.deepEqual(approvedGolferIndices([row('alice',1),enrolled],event,golfers),[1]);
+ assert.deepEqual(approvedGolferIndices([enrolled],event,golfers),[]);
+ assert.throws(()=>approvedGolferIndices([{...enrolled,status:undefined}],event,golfers),/Invalid RSVP status/);
+});
