@@ -5,7 +5,7 @@ const start=html.indexOf('function normalPoints(values){');
 const end=html.indexOf('function totals(){',start);
 assert.ok(start>=0&&end>start,'alternate scoring functions not located');
 function award(values,{gator=false,hole=4}={}){
- const ctx={teams:values.map((_,i)=>({name:'team '+i})),scores:values.map((score,i)=>({hole:4,team_index:i,score})),tournament:{gator_hole:gator?4:null}};
+ const ctx={teams:values.map((_,i)=>({name:'team '+i})),scores:values.map((score,i)=>({hole:4,team_index:i,score})),tournament:{gator_hole:gator?4:null},isSplitPair:()=>false};
  vm.runInNewContext(html.slice(start,end),ctx);
  return Array.from(ctx.pointsForHole(hole));
 }
