@@ -338,3 +338,99 @@ test('commissioner cannot resize setup after an assigned roster, even with no pi
  assert.equal(h.els.applySetupSize.disabled,true);
  assert.match(h.els.setupSizeMsg.textContent,/Cannot resize after draft picks/);
 });
+
+
+// Interactive commissioner login must fence a restored session before
+// Supabase emits SIGNED_IN, while stale login failures cannot repaint the UI.
+const loginHandlerStart=source.indexOf('document.getElementById("login").onclick=async()=>{');
+const loginHandlerEnd=source.indexOf('document.getElementById("refreshRsvpPreview").onclick',loginHandlerStart);
+const revokeSectionEnd=source.indexOf('async function openAdmin(){',authStart);
+assert.ok(loginHandlerStart>0&&loginHandlerEnd>loginHandlerStart&&revokeSectionEnd>authStart);
+function commissionerLoginHarness(initialUserId=null){
+ const events=[],pending=[];
+ const els={
+  login:{disabled:false,textContent:'Sign In'},
+  email:{value:'replacement@example.invalid'},
+  password:{value:'synthetic-password'},
+  authMsg:{textContent:''},
+  connection:{textContent:'READY'},
+  loginCard:{style:{display:'none'}},
+  adminApp:{style:{display:'block'}},
+  refreshRsvpPreview:{disabled:false},
+  rsvpReadinessStatus:{textContent:''}
+ };
+ const controls=[{disabled:false}];
+ let onAuthEvent;
+ const ctx={
+  commissionerAuthEpoch:3,commissionerOpenId:7,commissionerUserId:initialUserId,
+  commissionerChannel:null,draftUpdatedAt:'2026-10-27T00:00:00Z',
+  rsvpPreviewController:{invalidate:()=>events.push('invalidate')},
+  document:{getElementById:id=>els[id],querySelectorAll:()=>controls},
+  db:{auth:{
+   onAuthStateChange:fn=>{onAuthEvent=fn},
+   signInWithPassword:()=>{events.push('signIn');return new Promise(resolve=>pending.push(resolve))}
+  }},
+  openAdmin:async()=>events.push('openAdmin'),
+  console:{error:()=>{}}
+ };
+ vm.createContext(ctx);
+ vm.runInContext(source.slice(authStart,revokeSectionEnd)+source.slice(loginHandlerStart,loginHandlerEnd),ctx);
+ return {ctx,els,controls,events,pending,
+  click:()=>els.login.onclick(),
+  change:(event,session)=>onAuthEvent(event,session),
+  resolve:(index,error=null)=>pending[index]({error}),
+  user:()=>vm.runInContext('commissionerUserId',ctx),
+  epoch:()=>vm.runInContext('commissionerAuthEpoch',ctx),
+  openId:()=>vm.runInContext('commissionerOpenId',ctx)};
+}
+test('replacement commissioner sign-in retires old controls before SIGNED_IN event',async()=>{
+ const h=commissionerLoginHarness('commissioner-old');
+ const signingIn=h.click();
+ assert.equal(h.user(),null);
+ assert.equal(h.els.adminApp.style.display,'none');
+ assert.equal(h.controls[0].disabled,true);
+ assert.equal(h.epoch(),4);
+ assert.equal(h.pending.length,1);
+ h.change('SIGNED_IN',{user:{id:'commissioner-new'}});
+ assert.equal(h.epoch(),4,'replacement auth event must not revoke the new login');
+ h.resolve(0);
+ await signingIn;
+ assert.deepEqual(h.events.filter(e=>e==='openAdmin'),['openAdmin']);
+ assert.equal(h.els.password.value,'');
+ assert.equal(h.els.login.disabled,false);
+});
+test('explicit commissioner login invalidates a pending restored-session verification',async()=>{
+ const h=commissionerLoginHarness();
+ const originalEpoch=h.epoch(),originalOpenId=h.openId();
+ const signingIn=h.click();
+ assert.equal(h.epoch(),originalEpoch+1);
+ assert.equal(h.openId(),originalOpenId+1);
+ assert.equal(h.pending.length,1);
+ h.resolve(0);
+ await signingIn;
+ assert.equal(h.events.filter(e=>e==='openAdmin').length,1);
+});
+test('failed commissioner replacement login leaves previous controls revoked',async()=>{
+ const h=commissionerLoginHarness('commissioner-old');
+ const signingIn=h.click();
+ h.resolve(0,new Error('synthetic invalid credentials'));
+ await signingIn;
+ assert.equal(h.user(),null);
+ assert.equal(h.els.adminApp.style.display,'none');
+ assert.equal(h.els.connection.textContent,'ERROR');
+ assert.match(h.els.authMsg.textContent,/synthetic invalid credentials/);
+ assert.equal(h.events.includes('openAdmin'),false);
+});
+test('stale commissioner login error cannot overwrite a later sign-out state',async()=>{
+ const h=commissionerLoginHarness('commissioner-old');
+ const signingIn=h.click();
+ h.change('SIGNED_OUT',null);
+ const revokedEpoch=h.epoch();
+ h.resolve(0,new Error('synthetic stale failure'));
+ await signingIn;
+ assert.equal(h.epoch(),revokedEpoch);
+ assert.equal(h.els.connection.textContent,'SIGN IN');
+ assert.match(h.els.authMsg.textContent,/session changed/i);
+ assert.equal(h.events.includes('openAdmin'),false);
+ assert.equal(h.els.login.disabled,false);
+});
