@@ -180,6 +180,8 @@ test('commissioner preview requires reconciliation helper and fails closed on mi
  const result=summarize(rows,'nov20',directory.slice(0,2),2,broken);
  assert.equal(result.matchesPreview,false);
  assert.equal(result.missingApprovedCount,1);
+ assert.deepEqual(result.missingApprovedIndices,[0]);
+ assert.ok(Object.isFrozen(result.missingApprovedIndices));
  assert.equal(result.mismatchedApprovedCount,0);
 });
 
