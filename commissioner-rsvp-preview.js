@@ -91,6 +91,13 @@
     if(hasPendingRosterEdits()){if(current())render({status:"unsaved"});return;}
     if(draftSnapshot()!==startingDraft){if(current())render({status:"stale"});return;}
     const draft=getDraft();
+    // This is a pre-draft readiness check, never a certification of an active draft.
+    // A pick, team roster assignment, or golfer team assignment makes it stale.
+    if(draft?.picks?.length||draft?.teams?.some(team=>team?.roster?.length)||
+       draft?.golfers?.some(golfer=>golfer?.team!=null)){
+      if(current())render({status:"stale"});
+      return;
+    }
     const summary=summarize(rows,eventId,draft?.golfers,draft?.teams?.length,eligibility);
     if(!current())return;
     render({status:"success",summary});
