@@ -71,10 +71,14 @@ test('standard tied teams share their rank points',()=>{
  assert.deepEqual(points([4,5,5,6]),[4,2.5,2.5,1]);
  assert.deepEqual(points([4,4,4]),[2,2,2]);
 });
-test('Gator Hole distributes twelve points across all tied winners',()=>{
- assert.deepEqual(points([3,3,3,4],{gator:true}),[4,4,4,0]);
- assert.deepEqual(points([5,5],{gator:true}),[6,6]);
+test('Gator Hole doubles first-place points for actual team count and splits ties',()=>{
+ assert.deepEqual(points([3,3,3,4],{gator:true}),[8/3,8/3,8/3,0]);
+ assert.deepEqual(points([5,5],{gator:true}),[2,2]);
  assert.deepEqual(points([3,4,5,6,7,8],{gator:true}),[12,0,0,0,0,0]);
+ for(const n of [2,3,4,6,7,9,12]){
+  const scores=Array.from({length:n},(_,i)=>i+3);
+  assert.deepEqual(points(scores,{gator:true}),[2*n,...Array(n-1).fill(0)]);
+ }
 });
 test('no leaderboard points until every team submits a valid score',()=>{
  for(const invalid of ['',null,undefined,0,-1,1.5,'abc',21]){
