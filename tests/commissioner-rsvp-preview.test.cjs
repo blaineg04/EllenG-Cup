@@ -201,3 +201,10 @@ test('commissioner preview counts unnamed draft slots without treating them as a
  assert.equal(result.approvedCount,1);
  assert.equal(result.matchesPreview,false);
 });
+
+test('approved seat coverage uses full draft size and does not imply readiness',()=>{
+ const result=summarize(rows,'nov20',[...directory,{name:''}],2,eligibility);
+ assert.equal(result.approvedSeatCoverage,0.5);
+ assert.equal(result.matchesPreview,false);
+ assert.equal(summarize([],'nov20',[],2,eligibility).approvedSeatCoverage,0);
+});
