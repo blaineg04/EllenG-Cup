@@ -17,6 +17,7 @@
 <label for="setupGolferCount">Golfer slots <input id="setupGolferCount" type="number" min="2" max="500" step="1" style="width:100px"></label>
 <button id="applySetupSize" type="button" class="alt">Apply &amp; Save Counts</button></div>
 <p id="setupSizeMsg" class="muted" role="status" aria-live="polite">Change counts before drafting. Existing names and captain assignments are protected. RSVP enrollment is not yet connected to live draft setup.</p>
+<p id="draftSetupPreview" class="muted" role="status" aria-live="polite"></p>
 <div style="overflow:auto"><table><thead><tr><th>#</th><th>Golfer</th><th>HCP</th><th>Band</th></tr></thead><tbody id="grows"></tbody></table></div><h3>Teams</h3><table><tbody id="trows"></tbody></table><div class="actions" style="margin-top:10px"><select id="dtype"><option value="snake">Snake Draft</option><option value="straight">Straight Draft</option></select><select id="tlen"><option>30</option><option>45</option><option selected>60</option><option>90</option><option>120</option></select><button id="saveSetup" class="gold">Save Setup & Go Live</button></div></section>
 <section id="live" class="grid" style="display:none"><div class="card"><h2>Available Golfers</h2><div id="pool"></div></div><div class="card"><div class="bar"><div><strong id="onclock"></strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div class="muted">Pick clock</div></div></div><div id="teams" class="teams"></div></div></section></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script src="draft-setup-config.js"></script><script>
@@ -73,8 +74,23 @@ let liveMode=false,tick;
 function setupIsLocked(){
  return S.picks.length>0||S.teams.some(t=>t.roster.length>0)||S.golfers.some(g=>g.team!=null);
 }
+function updateDraftSetupPreview(){
+ const el=document.getElementById("draftSetupPreview");
+ if(!el)return;
+ const named=S.golfers.filter(g=>g.name&&g.name.trim()).length;
+ const teams=S.teams.length;
+ const capacities=Array(teams).fill(0);
+ // The shared order() function is the same turn sequence used by the live draft.
+ for(let pick=0;pick<named;pick++)capacities[order(pick)]++;
+ const empty=Math.max(0,teams-named);
+ el.textContent=named+" named golfers • "+teams+" teams • "+
+   (empty?empty+" more golfer(s) required before draft. ":
+   "Expected team sizes: "+capacities.join(" / ")+". ")+
+   "RSVP approval is not yet connected to this draft.";
+}
 function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map((g,i)=>`<tr><td>${i+1}</td><td><input data-n="${i}" value="${esc(g.name)}"></td><td><input data-h="${i}" type="number" step=".1" value="${esc(g.hcp)}"></td><td><select data-b="${i}"><option value="" ${!g.band?"selected":""}>Unranked</option>${bands.map(b=>`<option ${g.band===b?"selected":""}>${b}</option>`).join("")}</select></td></tr>`).join("");document.getElementById("trows").innerHTML=S.teams.map((t,i)=>`<tr><td>Team ${i+1}</td><td><input data-tn="${i}" value="${esc(t.name)}"></td><td><input data-tc="${i}" placeholder="Captain" value="${esc(t.captain)}"></td></tr>`).join("");document.getElementById("dtype").value=S.draftType;document.getElementById("tlen").value=S.timerLength;document.getElementById("setupTeamCount").value=S.teams.length;document.getElementById("setupGolferCount").value=S.golfers.length;
  // An active draft may be inspected, but its setup must never be edited.
+ updateDraftSetupPreview();
  const locked=setupIsLocked();
  document.getElementById("setup").querySelectorAll("input,select,button").forEach(el=>el.disabled=locked);
  const status=document.getElementById("setupSizeMsg");
