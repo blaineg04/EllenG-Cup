@@ -17,3 +17,13 @@ test('dedicated scoring modes use their RPC endpoints',()=>{
  assert.match(html,/db\.rpc\("elleng_test_authorized_split_pair"/);
  assert.match(html,/db\.rpc\("elleng_test_authorized_shamble"/);
 });
+
+test('Shamble refuses unassigned golfer before any scoring RPC',()=>{
+ const start=html.indexOf('async function savePlayerShambleScore(');
+ const end=html.indexOf('function renderPairScoring(',start);
+ assert.ok(start>=0&&end>start);
+ const body=html.slice(start,end);
+ assert.match(body,/teamRosterGolfers\(teamIndex\)\.some\(g=>g\.index===golferIndex\)/);
+ assert.ok(body.indexOf('teamRosterGolfers(teamIndex).some')<body.indexOf('beginScoreSave()'));
+ assert.match(body,/db\.rpc\("elleng_test_authorized_shamble"/);
+});
