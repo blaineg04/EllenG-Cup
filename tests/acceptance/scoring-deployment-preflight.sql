@@ -43,7 +43,7 @@ ORDER BY tablename,policyname;
 -- Optional strict gate for an isolated rehearsal environment:
 --   psql -X -v ON_ERROR_STOP=1 -v REQUIRE_SCORING_READY=1 -f tests/acceptance/scoring-deployment-preflight.sql
 -- Defaults to report-only mode, safe for the current live project.
-\\if :{?REQUIRE_SCORING_READY}
+\if :{?REQUIRE_SCORING_READY}
 DO $preflight$
 BEGIN
  IF to_regprocedure('public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)') IS NULL
@@ -59,4 +59,4 @@ BEGIN
        AND c.relkind IN ('r','p') AND c.relrowsecurity)<>2
  THEN RAISE EXCEPTION 'Scoring rehearsal blocked: score table missing or RLS disabled'; END IF;
 END $preflight$;
-\\endif
+\endif
