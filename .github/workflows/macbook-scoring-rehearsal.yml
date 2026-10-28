@@ -7,6 +7,10 @@ on:
       - 'tests/visual/**'
       - 'tests/nov20-production-score-integrity.test.cjs'
       - 'tests/alternate-scoring-validation.test.cjs'
+      - 'tests/split-pair-atomic-contract.test.cjs'
+      - 'tests/gator-hole-variable-teams.test.cjs'
+      - 'tests/cross-page-points-parity.test.cjs'
+      - 'tests/stored-score-completion.test.cjs'
       - 'scoring.html'
   workflow_dispatch:
 permissions:
