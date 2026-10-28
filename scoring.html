@@ -4564,7 +4564,7 @@ function renderShambleScoring(par,pts){
      return `<div class="shamble-team"><div class="row between"><strong>${esc(t.name)}</strong><span class="badge">SHAMBLE</span></div><div class="note" style="margin-top:8px">No drafted golfers are on this team yet.</div></div>`;
    }
    const entered=roster.map(g=>playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===hole&&Number(x.golfer_index)===g.index));
-   const complete=entered.every(Boolean);
+   const complete=roster.length>0&&entered.every(x=>x&&Number.isSafeInteger(Number(x.score))&&Number(x.score)>=1&&Number(x.score)<=20);
    const low=complete?Math.min(...entered.map(x=>Number(x.score))):null;
    const lowGolf=low==null?null:relativeGolf(low,par);
    const rows=roster.map(g=>{
@@ -4625,7 +4625,8 @@ function renderPairScoring(par,pts){
    }).join("");
    const a=pairScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===hole&&Number(x.pair_index)===0);
    const b=pairScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===hole&&Number(x.pair_index)===1);
-   const complete=!!a&&!!b&&roster.length>=4;
+   const validPair=x=>x&&Number.isSafeInteger(Number(x.score))&&Number(x.score)>=1&&Number(x.score)<=20;
+   const complete=roster.length===4&&validPair(a)&&validPair(b);
    const total=complete?Number(a.score)+Number(b.score):null;
    const pointText=pts[teamIndex]==null?"—":pts[teamIndex].toFixed(pts[teamIndex]%1?1:0);
    const summary=complete?`TEAM TOTAL: ${total} strokes • ${pointText} Cup pts`:`Enter both 2-man pair scores. The two scores are added together for the official 4-man team score.`;
