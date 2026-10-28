@@ -198,11 +198,12 @@ test('commissioner saves use version checked RPC and reject a stale write',async
  const start=html.indexOf('let draftUpdatedAt=null;');
  const end=html.indexOf('let liveMode=false',start);
  assert.ok(start>=0&&end>start,'Commissioner versioned save functions missing');
- let calls=0;
+ let calls=0,previewInvalidations=0;
  const captured=[];
  const ctx=vm.createContext({
   cfg:{draftId:'elleng-cup'},
-  EllenGCommissionerRsvpPreview:{create:()=>({invalidate(){},refresh(){},enabled:false})},
+  EllenGCommissionerRsvpPreview:{create:()=>({invalidate(){previewInvalidations++},refresh(){},enabled:false})},
+  hasPendingRosterEdits:()=>false,
   EllenGEventRsvp:{},EllenGRsvpEligibility:{},
   S:{picks:[{golfer:1,team:0}]},
   fresh:()=>({}),
@@ -217,6 +218,7 @@ test('commissioner saves use version checked RPC and reject a stale write',async
  assert.equal(captured[0].name,'elleng_save_state_if_fresh');
  assert.equal(captured[0].args.p_expected_updated_at,'2026-10-22T10:00:00.000Z');
  assert.equal(ctx.S.picks.length,1);
+ assert.equal(previewInvalidations,1,'failed versioned save must revoke stale RSVP readiness');
  assert.equal(vm.runInContext('savingDraft',ctx),false);
 });
 
@@ -224,11 +226,12 @@ test('commissioner refuses overlapping saves until the first finishes',async()=>
  const html=fs.readFileSync(path.join(__dirname,'../../admin.html'),'utf8');
  const start=html.indexOf('let draftUpdatedAt=null;');
  const end=html.indexOf('let liveMode=false',start);
- let release,called=0;
+ let release,called=0,previewInvalidations=0;
  const pending=new Promise(resolve=>{release=resolve});
  const ctx=vm.createContext({
   cfg:{draftId:'elleng-cup'},
-  EllenGCommissionerRsvpPreview:{create:()=>({invalidate(){},refresh(){},enabled:false})},
+  EllenGCommissionerRsvpPreview:{create:()=>({invalidate(){previewInvalidations++},refresh(){},enabled:false})},
+  hasPendingRosterEdits:()=>false,
   EllenGEventRsvp:{},EllenGRsvpEligibility:{},
   S:{picks:[]},fresh:()=>({}),alert:()=>{},
   db:{auth:{getUser:async()=>({data:{user:{id:'commissioner'}},error:null})},
@@ -238,9 +241,11 @@ test('commissioner refuses overlapping saves until the first finishes',async()=>
  vm.runInContext("draftUpdatedAt='2026-10-22T10:00:00.000Z';commissionerUserId='commissioner'",ctx);
  const first=vm.runInContext('secureSave()',ctx);
  await assert.rejects(vm.runInContext('secureSave()',ctx),/already in progress/);
+ assert.equal(previewInvalidations,1,'in-flight save must clear readiness; duplicate save must not re-invalidate');
  release({data:{updated_at:'2026-10-22T10:00:01.000Z'},error:null});
  await first;
  assert.equal(called,1);
+ assert.equal(previewInvalidations,2,'confirmed save retains readiness invalidation');
  assert.equal(vm.runInContext('savingDraft',ctx),false);
  assert.equal(vm.runInContext('draftUpdatedAt',ctx),'2026-10-22T10:00:01.000Z');
 });
