@@ -50,8 +50,13 @@
     for(let pick=0;pick<indices.length;pick++)
       capacities[draftTurnAtPick(pick,teamCount,format)]++;
     return Object.freeze({
-      tournamentId,teamCount,approvedIndices:Object.freeze(indices),
-      teamCapacities:Object.freeze(capacities)
+      tournamentId,teamCount,format:format==="standard"?"straight":format,
+      approvedIndices:Object.freeze(indices),
+      teamCapacities:Object.freeze(capacities),
+      // Exact sequence of turns from the shared live-draft engine, including
+      // a partial final round. Consumers must not re-derive it from capacities.
+      pickOrder:Object.freeze(Array.from({length:indices.length},(_,pick)=>
+        draftTurnAtPick(pick,teamCount,format)))
     });
   }
   function draftTurnAtPick(pick,teamCount,format="snake"){
