@@ -79,6 +79,10 @@ load=async function(isCurrent=()=>true,onApplied=()=>{}){
 async function secureSave(){
  if(savingDraft)throw new Error("A draft save is already in progress.");
  savingDraft=true;
+ // A save attempt can change the local roster before the server accepts it.
+ // Clear any previously green RSVP preview immediately; failed and pending
+ // writes must never leave an old approval result visible.
+ rsvpPreviewController.invalidate();
  const saveEpoch=commissionerAuthEpoch,saveUserId=commissionerUserId;
  const sameCommissionerSession=()=>saveEpoch===commissionerAuthEpoch&&saveUserId===commissionerUserId&&!!saveUserId;
  try{
