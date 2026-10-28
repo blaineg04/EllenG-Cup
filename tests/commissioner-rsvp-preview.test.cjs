@@ -444,3 +444,29 @@ test('commissioner unsaved-roster guard compares real visible golfer names and c
  assert.equal(html.includes('hasPendingRosterEdits,'),true);
  assert.equal(html.includes('result.status==="unsaved"'),true);
 });
+
+
+test('conflicting event golfer enrollment fails closed even if only one account is approved',()=>{
+ const adapter=require('../event-rsvp-client.js');
+ const pending={tournament_id:'nov20',user_id:'second-account',golfer_index:0,
+  status:null,approval_status:'pending'};
+ const approved=rows.slice(0,2);
+ for(const conflict of [[...approved,pending],[pending,...approved]]){
+  assert.throws(()=>eligibility.approvedRoster(conflict,'nov20',directory),/Duplicate approved golfer or event enrollment/);
+  assert.throws(()=>adapter.approvedGolferIndices(conflict,'nov20',directory),/Duplicate approved golfer or event enrollment/);
+  assert.throws(()=>summarize(conflict,'nov20',directory.slice(0,2),2,eligibility),/Duplicate approved golfer or event enrollment/);
+ }
+ // Enrollment indices are event-scoped; a different tournament is not a conflict.
+ const foreign={...pending,tournament_id:'other-event'};
+ assert.deepEqual(eligibility.approvedRoster([...approved,foreign],'nov20',directory),[0,1]);
+ assert.deepEqual(adapter.approvedGolferIndices([...approved,foreign],'nov20',directory),[0,1]);
+});
+test('pending and declined accounts cannot share one event golfer index',()=>{
+ const adapter=require('../event-rsvp-client.js');
+ const enrolled=[
+  {tournament_id:'nov20',user_id:'account-pending',golfer_index:0,status:null,approval_status:'pending'},
+  {tournament_id:'nov20',user_id:'account-declined',golfer_index:0,status:'out',approval_status:'declined'}
+ ];
+ assert.throws(()=>eligibility.approvedRoster(enrolled,'nov20',directory),/Duplicate approved golfer or event enrollment/);
+ assert.throws(()=>adapter.approvedGolferIndices(enrolled,'nov20',directory),/Duplicate approved golfer or event enrollment/);
+});
