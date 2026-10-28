@@ -207,6 +207,21 @@ jobs:
           test "$(sudo -u postgres psql -X -At -d "$splitpair_db" -c "select count(*) from public.elleng_pair_hole_scores where tournament_id='tournament-qa' and hole=13;")" = 2
           rm -f "$first_pair" "$second_pair"
           echo 'PASS: concurrent independent pair submissions produce one consistent team total.'
+          # Competing update and clear: the final team total must reflect the
+          # surviving pair records, never an intermediate stale sum.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$splitpair_db" -c "select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false); select public.elleng_test_authorized_split_pair('tournament-qa',0,14,0,9); select public.elleng_test_authorized_split_pair('tournament-qa',0,14,1,8);" >/dev/null
+          update_pair="$(mktemp)"
+          clear_pair="$(mktemp)"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$splitpair_db" -c "begin; select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false); select public.elleng_test_authorized_split_pair('tournament-qa',0,14,0,12); select pg_sleep(2); commit;" > "$update_pair" 2>&1 &
+          update_pair_pid=$!
+          sleep 0.4
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$splitpair_db" -c "select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false); select public.elleng_test_authorized_split_pair('tournament-qa',0,14,1,NULL);" > "$clear_pair" 2>&1
+          wait "$update_pair_pid"
+          test "$(sudo -u postgres psql -X -At -d "$splitpair_db" -c "select score from public.elleng_pair_hole_scores where tournament_id='tournament-qa' and hole=14 and pair_index=0;")" = 12
+          test "$(sudo -u postgres psql -X -At -d "$splitpair_db" -c "select count(*) from public.elleng_pair_hole_scores where tournament_id='tournament-qa' and hole=14 and pair_index=1;")" = 0
+          test "$(sudo -u postgres psql -X -At -d "$splitpair_db" -c "select count(*) from public.elleng_team_scores where tournament_id='tournament-qa' and hole=14;")" = 0
+          rm -f "$update_pair" "$clear_pair"
+          echo 'PASS: concurrent update and clear leave no stale team total.'
           sudo -u postgres dropdb "$splitpair_db"
           echo 'PASS: staged Split-Pair RPC completed, cleared, and denied an unauthorized actor.'
           echo 'Full Supabase Auth/RLS and two-device checks remain pending.'
