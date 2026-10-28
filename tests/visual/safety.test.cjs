@@ -202,6 +202,8 @@ test('commissioner saves use version checked RPC and reject a stale write',async
  const captured=[];
  const ctx=vm.createContext({
   cfg:{draftId:'elleng-cup'},
+  EllenGCommissionerRsvpPreview:{create:()=>({invalidate(){},refresh(){},enabled:false})},
+  EllenGEventRsvp:{},EllenGRsvpEligibility:{},
   S:{picks:[{golfer:1,team:0}]},
   fresh:()=>({}),
   alert:()=>{},
@@ -226,6 +228,8 @@ test('commissioner refuses overlapping saves until the first finishes',async()=>
  const pending=new Promise(resolve=>{release=resolve});
  const ctx=vm.createContext({
   cfg:{draftId:'elleng-cup'},
+  EllenGCommissionerRsvpPreview:{create:()=>({invalidate(){},refresh(){},enabled:false})},
+  EllenGEventRsvp:{},EllenGRsvpEligibility:{},
   S:{picks:[]},fresh:()=>({}),alert:()=>{},
   db:{auth:{getUser:async()=>({data:{user:{id:'commissioner'}},error:null})},
    rpc:async()=>{called++;return pending}}
