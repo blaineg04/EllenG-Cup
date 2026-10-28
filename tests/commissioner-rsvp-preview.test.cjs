@@ -598,3 +598,25 @@ test('draft pick and format changes during RSVP fetch cannot restore readiness',
   assert.deepEqual(h.writes,[]);
  }
 });
+
+test('pre-draft RSVP readiness never certifies a draft after picks or assignments begin',async()=>{
+ const mutations=[
+  draft=>{draft.picks.push({golfer:0,team:0});},
+  draft=>{draft.teams[0].roster=[0];},
+  draft=>{draft.golfers[0].team=0;}
+ ];
+ for(const mutate of mutations){
+  const h=harness();
+  h.draft.golfers.pop(); // exactly two approved, named seats
+  mutate(h.draft);
+  const work=h.controller.refresh();
+  h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(h.listReads.length,1);
+  h.listReads[0].resolve(rows);
+  await work;
+  assert.deepEqual(h.renders.map(x=>x.status),['loading','stale']);
+  assert.equal(h.renders.some(x=>x.status==='success'),false);
+  assert.deepEqual(h.writes,[]);
+ }
+});
