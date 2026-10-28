@@ -11,7 +11,7 @@ test('commissioner preview reflects unsaved golfer, band, and draft-format edits
   const el={textContent:''};
   const names=Array.from({length:27},(_,i)=>({dataset:{n:String(i)},value:'Golfer '+i}));
   const bands=Array.from({length:27},(_,i)=>({dataset:{b:String(i)},value:i===0?'':'C'}));
-  const S={teams:Array.from({length:7},()=>({})),golfers:[]};
+  const S={teams:Array.from({length:7},()=>({})),golfers:Array.from({length:27},()=>({name:''}))};
   const inputs={setupTeamCount:{value:'7'},setupGolferCount:{value:'27'},dtype:{value:format}};
   const ctx={S,bands:['A','B','C','D'],document:{
    getElementById:id=>id==='draftSetupPreview'?el:inputs[id]||null,
@@ -29,7 +29,8 @@ test('commissioner preview reflects unsaved golfer, band, and draft-format edits
   vm.runInNewContext('updateDraftSetupPreview();',ctx);
   assert.ok(el.textContent.includes('26 named golfers'));
   assert.ok(el.textContent.includes('All named golfers have handicap bands'));
-  assert.equal(S.golfers.length,0,'Preview must not mutate draft state');
+  assert.equal(S.golfers.length,27,'Preview must not mutate draft state');
+  assert.ok(S.golfers.every(g=>g.name===''),'Unsaved names must not enter draft state');
   inputs.setupTeamCount.value='9';
   vm.runInNewContext('updateDraftSetupPreview();',ctx);
   assert.match(el.textContent,/unsaved changes/);
