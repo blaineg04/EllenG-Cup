@@ -12,6 +12,13 @@ on:
       - 'tests/cross-page-points-parity.test.cjs'
       - 'tests/stored-score-completion.test.cjs'
       - 'scoring.html'
+  pull_request:
+    paths:
+      - '.github/workflows/macbook-scoring-rehearsal.yml'
+      - 'tests/visual/**'
+      - 'tests/nov20-production-score-integrity.test.cjs'
+      - 'tests/alternate-scoring-validation.test.cjs'
+      - 'scoring.html'
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,7 +27,10 @@ concurrency:
   cancel-in-progress: true
 jobs:
   isolated-macbook-scoring:
-    if: github.repository == 'blaineg04/EllenG-Cup' && github.ref == 'refs/heads/development/nov20-release-reconciliation-20261026'
+    if: >-
+      github.repository == 'blaineg04/EllenG-Cup' &&
+      ((github.event_name != 'pull_request' && github.ref == 'refs/heads/development/nov20-release-reconciliation-20261026') ||
+       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'development/nov20-release-reconciliation-20261026'))
     runs-on: [self-hosted, macOS]
     timeout-minutes: 25
     steps:
