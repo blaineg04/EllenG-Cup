@@ -25,3 +25,23 @@ test('both pages split tied Gator winners',()=>{
  for(const name of ['scoring.html','Scoring.html'])
   assert.deepEqual(calculate(name,[4,4,5,6],true),[4,4,0,0]);
 });
+
+test('both pages reject invalid or incomplete scoring in each format',()=>{
+ for(const splitPair of [false,true]){
+  for(const bad of ['',null,undefined,0,-1,1.5,'no score',splitPair?41:21]){
+   const scores=[3,bad,5];
+   for(const gator of [false,true]){
+    const main=calculate('scoring.html',scores,gator,splitPair);
+    const alt=calculate('Scoring.html',scores,gator,splitPair);
+    assert.deepEqual(main,[null,null,null],String(bad));
+    assert.deepEqual(alt,main,`format=${splitPair}, gator=${gator}, bad=${String(bad)}`);
+   }
+  }
+ }
+});
+test('both pages agree on valid split-pair scores above normal team ceiling',()=>{
+ for(const gator of [false,true]){
+  const scores=[24,25,26];
+  assert.deepEqual(calculate('Scoring.html',scores,gator,true),calculate('scoring.html',scores,gator,true));
+ }
+});
