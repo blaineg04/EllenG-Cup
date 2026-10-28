@@ -153,7 +153,7 @@ test('preview invalidation after RSVP read begins prevents stale render',async()
  h.controller.invalidate();
  h.listReads[0].resolve(rows);
  await work;
- assert.deepEqual(h.renders.map(x=>x.status),['loading']);
+ assert.deepEqual(h.renders.map(x=>x.status),['loading','invalidated']);
  assert.deepEqual(h.writes,[]);
 });
 
@@ -222,4 +222,16 @@ test('controller rejects missing reconciliation dependency before any authentica
  const db={auth:{getUser:()=>{throw Error('must not read auth')}}};
  const client={list:()=>{throw Error('must not list RSVPs')}};
  assert.throws(()=>create({db,client,eligibility:{approvedRoster:eligibility.approvedRoster},eventId:'nov20',getAuth:()=>({epoch:1,userId:'a'}),getDraft:()=>({golfers:directory,teams}),render:()=>{}}),/dependencies required/);
+});
+
+test('invalidation clears a previously successful commissioner readiness preview',async()=>{
+ const h=harness(),work=h.controller.refresh();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ h.listReads[0].resolve(rows);
+ await work;
+ assert.equal(h.renders.at(-1).status,'success');
+ h.controller.invalidate();
+ assert.equal(h.renders.at(-1).status,'invalidated');
+ assert.deepEqual(h.writes,[]);
 });
