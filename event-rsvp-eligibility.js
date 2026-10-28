@@ -56,7 +56,10 @@
       // Exact sequence of turns from the shared live-draft engine, including
       // a partial final round. Consumers must not re-derive it from capacities.
       pickOrder:Object.freeze(Array.from({length:indices.length},(_,pick)=>
-        draftTurnAtPick(pick,teamCount,format)))
+        draftTurnAtPick(pick,teamCount,format))),
+      // Each scheduled turn is tied to a validated approved golfer pool.
+      // The commissioner can preview capacity without assigning golfers.
+      unassignedGolferCount:indices.length
     });
   }
   function draftTurnAtPick(pick,teamCount,format="snake"){
