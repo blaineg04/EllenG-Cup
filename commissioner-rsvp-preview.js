@@ -43,11 +43,8 @@
    mismatchedApprovedIndices:Object.freeze([...mismatchedApprovedIndices]),
    unapprovedNamedIndices:Object.freeze(unapprovedNamedIndices),
    shortfall:Math.max(0,teamCount-approved.length),
-   // A readiness preview must not conceal a draft that has more approved
-   // golfers than the current setup has room for.
-   excessApprovedCount:Math.max(0,approved.length-golfers.length),
    // Client-side reconciliation is not authorization to save a draft.
-   matchesPreview:approved.length>=teamCount&&approved.length<=golfers.length&&reconciliation.ready&&duplicateNamedIndices.length===0
+   matchesPreview:approved.length>=teamCount&&reconciliation.ready&&duplicateNamedIndices.length===0
   });
  }
  function create({db,client,eligibility,eventId,getAuth,getDraft,render}){
