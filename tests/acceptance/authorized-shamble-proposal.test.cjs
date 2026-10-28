@@ -21,3 +21,18 @@ test('staged RPC holds transaction lock and does not grant browser execution',()
 test('staged RPC rejects a missing hole explicitly',()=>{
  assert.match(sql,/p_hole\s+IS\s+NULL/i);
 });
+
+test('staged shamble scoring rejects out-of-range holes and scores',()=>{
+ assert.match(sql,/p_hole NOT BETWEEN 10 AND 18/);
+ assert.match(sql,/p_score NOT BETWEEN 1 AND 20/);
+ assert.match(sql,/p_team_index<t.team_count/);
+});
+test('staged shamble scoring refuses roster duplication and unassigned golfer',()=>{
+ assert.match(sql,/count\(DISTINCT golfer\)/);
+ assert.match(sql,/p_golfer_index<>ALL\(v_roster\)/);
+});
+test('staged shamble scoring clears incomplete team totals and does not grant privileges',()=>{
+ assert.match(sql,/IF v_count<>cardinality\(v_roster\) THEN[\s\S]*?DELETE FROM public\.elleng_team_scores/);
+ assert.match(sql,/SECURITY INVOKER/);
+ assert.doesNotMatch(sql,/GRANT EXECUTE/);
+});
