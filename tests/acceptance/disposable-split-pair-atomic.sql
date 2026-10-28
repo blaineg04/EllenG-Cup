@@ -265,3 +265,20 @@ BEGIN
  IF EXISTS (SELECT 1 FROM public.elleng_pair_hole_scores WHERE hole=16)
  THEN RAISE EXCEPTION 'Anonymous SQL role wrote pair score'; END IF;
 END $$;
+
+-- Revoked captain membership must take effect on the next score attempt.
+DELETE FROM public.elleng_captains
+WHERE draft_id='draft-qa' AND user_id='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' AND team_index=0;
+SELECT set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false);
+DO $$
+BEGIN
+ BEGIN
+  PERFORM public.elleng_test_authorized_split_pair('tournament-qa',0,18,0,6);
+  RAISE EXCEPTION 'Revoked captain unexpectedly scored';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM='Revoked captain unexpectedly scored' THEN RAISE; END IF;
+  IF SQLERRM<>'Not authorized to score this team' THEN RAISE; END IF;
+ END;
+ IF (SELECT score FROM public.elleng_pair_hole_scores WHERE tournament_id='tournament-qa' AND hole=18 AND pair_index=0)<>9
+ THEN RAISE EXCEPTION 'Revoked captain altered existing pair score'; END IF;
+END $$;
