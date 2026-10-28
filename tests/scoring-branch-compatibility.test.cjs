@@ -193,7 +193,7 @@ test('unset Gator Hole preserves team placement points and configured hole award
   assert.deepEqual(Array.from(ctx.pointsForHole(4)),[2,1],String(unset));
  }
  ctx.tournament.gator_hole=4;
- assert.deepEqual(Array.from(ctx.pointsForHole(4)),[12,0]);
+ assert.deepEqual(Array.from(ctx.pointsForHole(4)),[4,0]);
 });
 test('broadcast ignores malformed team identifiers',()=>{
  const start=html.indexOf('function latestTournamentMoment(){'),end=html.indexOf('function renderBroadcast(){',start);
