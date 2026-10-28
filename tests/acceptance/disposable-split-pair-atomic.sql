@@ -282,3 +282,7 @@ BEGIN
  IF (SELECT score FROM public.elleng_pair_hole_scores WHERE tournament_id='tournament-qa' AND hole=18 AND pair_index=0)<>9
  THEN RAISE EXCEPTION 'Revoked captain altered existing pair score'; END IF;
 END $$;
+
+-- Restore captain membership for subsequent disposable concurrency cases.
+INSERT INTO public.elleng_captains(draft_id,user_id,team_index)
+VALUES ('draft-qa','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',0);
