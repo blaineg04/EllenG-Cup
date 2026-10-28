@@ -37,25 +37,39 @@
     return indices.sort((a,b)=>a-b);
   }
   // Pure draft configuration preview; never mutates the live draft.
-  function draftRosterPlan(records,tournamentId,availableGolfers,teamCount){
+  function draftRosterPlan(records,tournamentId,availableGolfers,teamCount,format="snake"){
     if(!Number.isInteger(teamCount)||teamCount<2||teamCount>36)
       throw new RangeError("Team count must be between 2 and 36");
     const indices=approvedRoster(records,tournamentId,availableGolfers);
     if(indices.length<teamCount)
       throw new RangeError("Approved golfer count must be at least team count");
-    const base=Math.floor(indices.length/teamCount);
-    const extra=indices.length%teamCount;
+    // Match the actual shared draft order in common.js, including the
+    // reversed partial final round of a snake draft. Assigning remainder
+    // seats to the first teams unconditionally misstates live capacities.
+    const capacities=Array(teamCount).fill(0);
+    for(let pick=0;pick<indices.length;pick++)
+      capacities[draftTurnAtPick(pick,teamCount,format)]++;
     return Object.freeze({
       tournamentId,teamCount,approvedIndices:Object.freeze(indices),
-      teamCapacities:Object.freeze(Array.from({length:teamCount},(_,i)=>base+(i<extra?1:0)))
+      teamCapacities:Object.freeze(capacities)
     });
+  }
+  function draftTurnAtPick(pick,teamCount,format="snake"){
+    if(!Number.isInteger(teamCount)||teamCount<2||teamCount>36)
+      throw new RangeError("Team count must be between 2 and 36");
+    if(!Number.isInteger(pick)||pick<0)
+      throw new RangeError("Pick index must be nonnegative");
+    if(!["snake","straight","standard"].includes(format))
+      throw new Error("Invalid draft format");
+    const round=Math.floor(pick/teamCount),position=pick%teamCount;
+    return format==="snake"&&round%2===1?teamCount-1-position:position;
   }
   // Draft turn schedule for unequal team sizes. Teams at capacity never receive a pick.
   function draftPickOrder(teamCapacities,format="snake"){
     if(!Array.isArray(teamCapacities)||teamCapacities.length<2||
        teamCapacities.some(n=>!Number.isInteger(n)||n<1))
       throw new RangeError("Valid positive team capacities required");
-    if(format!=="snake"&&format!=="standard")throw new Error("Invalid draft format");
+    if(!["snake","straight","standard"].includes(format))throw new Error("Invalid draft format");
     const remaining=teamCapacities.slice(),order=[];
     const total=remaining.reduce((a,b)=>a+b,0);
     for(let round=0;order.length<total;round++){
@@ -81,5 +95,5 @@
     if(!validStatuses.has(status))throw new Error("Invalid RSVP status");
     return status===r.status?{...r}:{...r,status,approval_status:"pending",approved_by:null};
   }
-  return Object.freeze({approvedRoster,draftRosterPlan,draftPickOrder,approve,changeStatus,normalize});
+  return Object.freeze({approvedRoster,draftRosterPlan,draftTurnAtPick,draftPickOrder,approve,changeStatus,normalize});
 });
