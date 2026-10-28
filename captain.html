@@ -774,7 +774,14 @@ input,select,textarea{
 let myTeam=null,captainUserId=null,captainAuthEpoch=0,captainRoleLookupId=0;
 // Only the newest role lookup may grant captain access. Auth revocation also invalidates it.
 async function whoami(){const authEpoch=captainAuthEpoch,lookupId=++captainRoleLookupId;myTeam=null;captainUserId=null;const {data:{user}}=await db.auth.getUser();if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId||!user)return false;const {data,error}=await db.from("elleng_captains").select("team_index").eq("draft_id",cfg.draftId).eq("user_id",user.id).single();if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId)return false;if(error||!data||data.team_index==null||typeof data.team_index==="boolean"||!Number.isInteger(Number(data.team_index))||Number(data.team_index)<0){document.getElementById("msg").textContent="This account is not assigned to a team. Ask the commissioner to assign your captain account.";return false}myTeam=Number(data.team_index);captainUserId=user.id;return true}
-let captainChannel=null,captainSubscriptionEpoch=0;
+let captainChannel=null,captainSubscriptionEpoch=0,captainDrawTimer=null;
+function stopCaptainDrawTimer(){
+ if(captainDrawTimer!==null){clearInterval(captainDrawTimer);captainDrawTimer=null;}
+}
+function startCaptainDrawTimer(){
+ stopCaptainDrawTimer();
+ captainDrawTimer=setInterval(()=>{if(captainUserId)draw();},500);
+}
 function stopCaptainSubscription(){
  captainSubscriptionEpoch++;
  const channel=captainChannel;captainChannel=null;
@@ -877,7 +884,7 @@ document.getElementById("signin").onclick=async()=>{
     document.getElementById("app").style.display="block";
     await load();if(!captainUserId)throw new Error("Captain session changed while loading. Sign in again.");pickSyncFailed=false;render();
     if(status)status.textContent="CONNECTING";
-    startCaptainSubscription();setInterval(draw,500);
+    startCaptainSubscription();startCaptainDrawTimer();
   }catch(e){
     document.getElementById("login").style.display="block";document.getElementById("app").style.display="none";
     if(status)status.textContent="ERROR";
@@ -892,6 +899,7 @@ function revokeCaptainSession(){
  // Release this session's UI lock, but invalidate its pending RPC cleanup.
  pickRequestEpoch++;
  pickInFlight=false;
+ stopCaptainDrawTimer();
  stopCaptainSubscription();
  myTeam=null;captainUserId=null;pickSyncFailed=true;
  document.getElementById("login").style.display="block";
