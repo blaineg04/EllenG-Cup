@@ -91,6 +91,28 @@
     }
     return Object.freeze(order);
   }
+  // Read-only reconciliation of an approved event roster against draft slots.
+  // Never imports names or changes draft state without explicit commissioner action.
+  function reconcileDraftRoster(records,tournamentId,availableGolfers,draftGolfers){
+    if(!Array.isArray(draftGolfers))throw new TypeError("Draft golfer slots required");
+    const approved=approvedRoster(records,tournamentId,availableGolfers);
+    const missing=[],mismatched=[];
+    for(const index of approved){
+      const directoryName=availableGolfers[index].name.trim();
+      const draftName=draftGolfers[index]?.name?.trim()||"";
+      if(!draftName)missing.push(index);
+      else if(draftName!==directoryName)mismatched.push(index);
+    }
+    const approvedSet=new Set(approved);
+    const extra=draftGolfers.flatMap((g,i)=>g?.name?.trim()&&!approvedSet.has(i)?[i]:[]);
+    return Object.freeze({
+      approvedIndices:Object.freeze(approved),
+      missingIndices:Object.freeze(missing),
+      mismatchedIndices:Object.freeze(mismatched),
+      unapprovedNamedIndices:Object.freeze(extra),
+      ready:missing.length===0&&mismatched.length===0&&extra.length===0
+    });
+  }
   function approve(record,decision,actor){
     const r=normalize(record);
     if(!actor||actor.role!=="commissioner"||!actor.user_id)throw new Error("Commissioner authorization required");
@@ -103,5 +125,5 @@
     if(!validStatuses.has(status))throw new Error("Invalid RSVP status");
     return status===r.status?{...r}:{...r,status,approval_status:"pending",approved_by:null};
   }
-  return Object.freeze({approvedRoster,draftRosterPlan,draftTurnAtPick,draftPickOrder,approve,changeStatus,normalize});
+  return Object.freeze({approvedRoster,draftRosterPlan,draftTurnAtPick,draftPickOrder,reconcileDraftRoster,approve,changeStatus,normalize});
 });
