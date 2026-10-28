@@ -518,6 +518,9 @@ test('draft mutation during authentication prevents RSVP read and readiness clai
 
 test('draft mutation during RSVP fetch cannot restore previous green readiness',async()=>{
  const h=harness();
+ // Establish a genuinely green baseline: both named slots have approved
+ // Playing RSVPs. The default harness includes an unapproved third golfer.
+ h.draft.golfers.pop();
  const first=h.controller.refresh();
  h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
  await new Promise(resolve=>setImmediate(resolve));
@@ -541,4 +544,57 @@ test('commissioner UI explains changed-draft RSVP results without implying appro
  const html=require('node:fs').readFileSync('admin.html','utf8');
  assert.match(html,/result\.status==="stale"/);
  assert.match(html,/Draft roster changed while checking RSVPs/);
+});
+
+test('pending and declined event enrollments outside the draft directory fail closed',()=>{
+ const adapter=require('../event-rsvp-client.js');
+ const complete=directory.slice(0,2);
+ for(const status of [null,'maybe','out']){
+  const enrollment={
+   tournament_id:'nov20',user_id:'unassigned-'+String(status),
+   golfer_index:complete.length,status,
+   approval_status:status==='out'?'declined':'pending'
+  };
+  for(const records of [[...rows,enrollment],[enrollment,...rows]]){
+   assert.throws(
+    ()=>eligibility.approvedRoster(records,'nov20',complete),
+    /Event enrollment golfer index outside directory/
+   );
+   assert.throws(
+    ()=>adapter.approvedGolferIndices(records,'nov20',complete),
+    /Event enrollment golfer index outside directory/
+   );
+   assert.throws(
+    ()=>summarize(records,'nov20',complete,2,eligibility),
+    /Event enrollment golfer index outside directory/
+   );
+  }
+  // Enrollment indices belong to an event; unrelated events must not
+  // affect the November 20 read-only preview.
+  const otherEvent={...enrollment,tournament_id:'other-event'};
+  assert.deepEqual(eligibility.approvedRoster([...rows,otherEvent],'nov20',complete),[0,1]);
+  assert.deepEqual(adapter.approvedGolferIndices([...rows,otherEvent],'nov20',complete),[0,1]);
+ }
+});
+
+test('draft pick and format changes during RSVP fetch cannot restore readiness',async()=>{
+ const changes=[
+  draft=>{draft.picks=[{golfer:0,team:0}];},
+  draft=>{draft.teams[0].roster=[0];},
+  draft=>{draft.draftType='straight';},
+  draft=>{draft.timerLength=90;}
+ ];
+ for(const change of changes){
+  const h=harness();
+  h.draft.golfers.pop();
+  const work=h.controller.refresh();
+  h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(h.listReads.length,1);
+  change(h.draft);
+  h.listReads[0].resolve(rows);
+  await work;
+  assert.deepEqual(h.renders.map(x=>x.status),['loading','stale']);
+  assert.deepEqual(h.writes,[]);
+ }
 });
