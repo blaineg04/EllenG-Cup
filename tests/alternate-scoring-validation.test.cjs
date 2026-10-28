@@ -32,3 +32,18 @@ test('standard team scores reject over 20 while split pair accepts up to 40',()=
  assert.deepEqual(award([24,25],{splitPair:true}),[2,1]);
  assert.deepEqual(award([41,24],{splitPair:true}),[null,null]);
 });
+
+test('all tied Gator winners share total double-first-place pool',()=>{
+ for(const n of [2,3,4,6,7,9]){
+  const a=Array(n).fill(4);
+  const result=award(a,{gator:true});
+  assert.ok(result.every(x=>x===2),`Expected 2 pts each for ${n} tied teams`);
+  assert.equal(result.reduce((a,b)=>a+b,0),2*n);
+ }
+});
+test('unposted scores block both standard and Gator points',()=>{
+ for(const value of ['',null,undefined,0,1.5,false,'oops']){
+  assert.deepEqual(award([3,value,5]),[null,null,null],String(value));
+  assert.deepEqual(award([3,value,5],{gator:true}),[null,null,null],String(value));
+ }
+});
