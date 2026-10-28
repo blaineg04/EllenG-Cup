@@ -247,7 +247,7 @@ function captainRoleLookupHarness(){
 test('captain role lookup rejects a different authenticated account after an in-flight switch',async()=>{
  const h=captainRoleLookupHarness();
  const pending=h.authorize();
- await Promise.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
  assert.equal(h.counts().roleQueries,1,'role lookup started for original account');
  h.switchUser('captain-b');
  h.release();
@@ -260,7 +260,7 @@ test('captain role lookup rejects a different authenticated account after an in-
 test('captain role lookup rejects sign-out before role query resolves',async()=>{
  const h=captainRoleLookupHarness();
  const pending=h.authorize();
- await Promise.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
  h.switchUser(null);
  h.release();
  assert.equal(await pending,false);
@@ -271,7 +271,7 @@ test('captain role lookup rejects sign-out before role query resolves',async()=>
 test('captain role lookup still grants a valid unchanged authenticated account',async()=>{
  const h=captainRoleLookupHarness();
  const pending=h.authorize();
- await Promise.resolve();
+ await new Promise(resolve=>setImmediate(resolve));
  h.release();
  assert.equal(await pending,true);
  assert.equal(h.ctx.captainUserId,'captain-a');
