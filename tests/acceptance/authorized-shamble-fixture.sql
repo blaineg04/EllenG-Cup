@@ -75,6 +75,10 @@ BEGIN
    PERFORM public.elleng_test_authorized_shamble('fixture',0,11,0,4);
  EXCEPTION WHEN insufficient_privilege THEN blocked:=true; END;
  IF NOT blocked THEN RAISE EXCEPTION 'Completed tournament accepted Shamble scoring'; END IF;
+ IF EXISTS (SELECT 1 FROM public.elleng_player_hole_scores WHERE tournament_id='fixture' AND team_index=0 AND hole=11)
+ THEN RAISE EXCEPTION 'Denied completed-event attempt wrote player score'; END IF;
+ IF (SELECT score FROM public.elleng_team_scores WHERE tournament_id='fixture' AND team_index=0 AND hole=10)<>5
+ THEN RAISE EXCEPTION 'Completed-event rejection changed existing team score'; END IF;
  UPDATE public.elleng_tournaments SET status='live' WHERE id='fixture';
  RAISE NOTICE 'PASS: update, clear, resume and completed-event scoring guard';
 END $score_lifecycle$;
