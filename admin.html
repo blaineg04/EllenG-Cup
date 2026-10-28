@@ -368,8 +368,16 @@ async function openAdmin(){
   const {data,error}=await db.from("elleng_drafts").select("state,owner_id,updated_at").eq("id",cfg.draftId).maybeSingle();
   if(!stillCurrent())return;
   if(error)throw error;
-  if(data?.owner_id && data.owner_id!==user.id){status.textContent="NO ACCESS";msg.textContent="This draft is owned by another commissioner account. Return to Main Menu or sign in with the commissioner account.";return}
-  if(data){S={...fresh(),...data.state};draftUpdatedAt=data.updated_at;}else draftUpdatedAt=null;
+  // Never treat a missing draft or an unowned draft as commissioner authorization.
+  // Bootstrap/ownership repair requires an explicitly reviewed administrative path.
+  if(!data?.owner_id){status.textContent="NO ACCESS";msg.textContent="Commissioner ownership is not configured for this draft. Ask the event administrator to verify the draft owner.";return}
+  if(data.owner_id!==user.id){status.textContent="NO ACCESS";msg.textContent="This draft is owned by another commissioner account. Return to Main Menu or sign in with the commissioner account.";return}
+  // A different account can replace the Supabase session while the draft query
+  // is pending, before commissionerUserId is assigned and auth events can fence it.
+  const {data:confirmedAuth,error:confirmationError}=await db.auth.getUser();
+  if(!stillCurrent())return;
+  if(confirmationError||confirmedAuth?.user?.id!==user.id){status.textContent="SIGN IN";msg.textContent="Commissioner session changed during verification. Sign in again.";return}
+  S={...fresh(),...data.state};draftUpdatedAt=data.updated_at;
   commissionerUserId=user.id;
   loginCard.style.display="none";app.style.display="block";status.textContent="READY";
   setupRender();commissionerChannel=subscribe(()=>{
