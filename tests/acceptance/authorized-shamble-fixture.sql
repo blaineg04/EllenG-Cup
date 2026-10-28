@@ -55,6 +55,29 @@ BEGIN
  THEN RAISE EXCEPTION 'Commissioner write failed'; END IF;
  RAISE NOTICE 'PASS: commissioner authorized';
 END $check$;
+-- Execute scoring updates and score clearing against disposable PostgreSQL rows.
+SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000002',false);
+DO $score_lifecycle$
+DECLARE v integer; blocked boolean;
+BEGIN
+ v:=public.elleng_test_authorized_shamble('fixture',0,10,1,5);
+ IF v<>3 THEN RAISE EXCEPTION 'Team minimum did not recalculate after update: %',v; END IF;
+ v:=public.elleng_test_authorized_shamble('fixture',0,10,0,NULL);
+ IF v IS NOT NULL THEN RAISE EXCEPTION 'Cleared player score left an official team score'; END IF;
+ IF EXISTS (SELECT 1 FROM public.elleng_team_scores
+            WHERE tournament_id='fixture' AND team_index=0 AND hole=10)
+ THEN RAISE EXCEPTION 'Stale team score row survived incomplete Shamble roster'; END IF;
+ v:=public.elleng_test_authorized_shamble('fixture',0,10,0,6);
+ IF v<>5 THEN RAISE EXCEPTION 'Restored roster did not recalculate team score: %',v; END IF;
+ UPDATE public.elleng_tournaments SET status='completed' WHERE id='fixture';
+ blocked:=false;
+ BEGIN
+   PERFORM public.elleng_test_authorized_shamble('fixture',0,11,0,4);
+ EXCEPTION WHEN insufficient_privilege THEN blocked:=true; END;
+ IF NOT blocked THEN RAISE EXCEPTION 'Completed tournament accepted Shamble scoring'; END IF;
+ UPDATE public.elleng_tournaments SET status='live' WHERE id='fixture';
+ RAISE NOTICE 'PASS: update, clear, resume and completed-event scoring guard';
+END $score_lifecycle$;
 -- Adversarial roster cases: invalid assignments must not quietly shrink the
 -- team or cause an incorrect low-ball score.
 SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000001',false);
