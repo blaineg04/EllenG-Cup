@@ -59,7 +59,7 @@
    throw new TypeError("Commissioner RSVP preview dependencies required");
   let request=0;
   const enabled=typeof eventId==="string"&&!!eventId.trim();
-  function invalidate(){request++;}
+  function invalidate(){request++;render({status:"invalidated"});}
   async function refresh(){
    const token=++request,auth=getAuth();
    if(!auth?.userId||!Number.isInteger(auth.epoch))return;
