@@ -389,13 +389,24 @@ document.getElementById("login").onclick=async()=>{
  const email=document.getElementById("email").value.trim(),password=passwordInput.value;
  const msg=document.getElementById("authMsg"),status=document.getElementById("connection");
  if(!email||!password){msg.textContent="Enter commissioner email and password.";status.textContent="SIGN IN";return}
- const label=button.textContent;button.disabled=true;button.textContent="Signing In…";msg.textContent="Signing in…";status.textContent="CONNECTING";
+ // An explicit login supersedes an existing commissioner and any pending
+ // restored-session verification. Retire the old session BEFORE Supabase
+ // emits SIGNED_IN for the replacement, or the auth listener can revoke
+ // the new login instead of the old one.
+ if(commissionerUserId)revokeCommissionerSession();
+ else {commissionerAuthEpoch++;commissionerOpenId++;}
  const loginEpoch=commissionerAuthEpoch;
+ const label=button.textContent;button.disabled=true;button.textContent="Signing In…";msg.textContent="Signing in…";status.textContent="CONNECTING";
  try{
-  const {error}=await db.auth.signInWithPassword({email,password});if(loginEpoch!==commissionerAuthEpoch)return;if(error)throw error;
+  const {error}=await db.auth.signInWithPassword({email,password});
+  if(loginEpoch!==commissionerAuthEpoch)return;
+  if(error)throw error;
   passwordInput.value="";msg.textContent="";await openAdmin();
- }catch(e){status.textContent="ERROR";msg.textContent=e?.message||"Sign-in unavailable. Try again.";}
- finally{button.disabled=false;button.textContent=label;}
+ }catch(e){
+  // An older login failure must not overwrite a replacement session's UI.
+  if(loginEpoch!==commissionerAuthEpoch)return;
+  status.textContent="ERROR";msg.textContent=e?.message||"Sign-in unavailable. Try again.";
+ }finally{button.disabled=false;button.textContent=label;}
 };
 document.getElementById("refreshRsvpPreview").onclick=()=>rsvpPreviewController.refresh();
 (async()=>{try{await openAdmin()}catch(e){document.getElementById("authMsg").textContent=e.message}})();</script></body></html>
