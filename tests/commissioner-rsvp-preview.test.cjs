@@ -194,3 +194,10 @@ test('commissioner roster preview refuses ambiguous duplicate golfer names',()=>
  assert.equal(result.matchesPreview,false);
  assert.ok(Object.isFrozen(result.duplicateNamedIndices));
 });
+
+test('commissioner preview counts unnamed draft slots without treating them as approved',()=>{
+ const result=summarize(rows.slice(0,1),'nov20',[{name:'Alice'},{name:''}],2,eligibility);
+ assert.equal(result.unnamedSlotCount,1);
+ assert.equal(result.approvedCount,1);
+ assert.equal(result.matchesPreview,false);
+});
