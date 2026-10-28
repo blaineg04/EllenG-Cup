@@ -174,3 +174,11 @@ test('account switch during rejected RSVP request does not show old-account erro
  assert.deepEqual(h.renders.map(x=>x.status),['loading']);
  assert.deepEqual(h.writes,[]);
 });
+
+test('commissioner preview requires reconciliation helper and fails closed on mismatch',()=>{
+ const broken={...eligibility,reconcileDraftRoster:()=>({ready:false,missingIndices:[0],mismatchedIndices:[]})};
+ const result=summarize(rows,'nov20',directory.slice(0,2),2,broken);
+ assert.equal(result.matchesPreview,false);
+ assert.equal(result.missingApprovedCount,1);
+ assert.equal(result.mismatchedApprovedCount,0);
+});
