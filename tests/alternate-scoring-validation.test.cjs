@@ -4,8 +4,8 @@ const html=fs.readFileSync(path.join(__dirname,'..','Scoring.html'),'utf8');
 const start=html.indexOf('function normalPoints(values){');
 const end=html.indexOf('function totals(){',start);
 assert.ok(start>=0&&end>start,'alternate scoring functions not located');
-function award(values,{gator=false,hole=4}={}){
- const ctx={teams:values.map((_,i)=>({name:'team '+i})),scores:values.map((score,i)=>({hole:4,team_index:i,score})),tournament:{gator_hole:gator?4:null},isSplitPair:()=>false};
+function award(values,{gator=false,hole=4,splitPair=false}={}){
+ const ctx={teams:values.map((_,i)=>({name:'team '+i})),scores:values.map((score,i)=>({hole:4,team_index:i,score})),tournament:{gator_hole:gator?4:null},isSplitPair:()=>splitPair};
  vm.runInNewContext(html.slice(start,end),ctx);
  return Array.from(ctx.pointsForHole(hole));
 }
@@ -25,4 +25,10 @@ test('unset and malformed Gator settings preserve standard placing points',()=>{
  ctx.tournament.gator_hole='4';
  vm.runInNewContext(html.slice(start,end),ctx);
  assert.deepEqual(Array.from(ctx.pointsForHole(4)),[4,0]);
+});
+
+test('standard team scores reject over 20 while split pair accepts up to 40',()=>{
+ assert.deepEqual(award([24,25]),[null,null]);
+ assert.deepEqual(award([24,25],{splitPair:true}),[2,1]);
+ assert.deepEqual(award([41,24],{splitPair:true}),[null,null]);
 });
