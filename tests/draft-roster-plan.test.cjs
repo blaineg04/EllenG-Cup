@@ -71,6 +71,8 @@ test('approved-roster draft plan stays identical to live common.js turn order',(
    const plan=draftRosterPlan(rows(count),'nov20',golfers,teams,format);
    const planned=draftPickOrder(plan.teamCapacities,format);
    assert.deepEqual(planned,expected,`${count} golfers / ${teams} teams / ${format}`);
+   assert.deepEqual(plan.pickOrder,expected,`Exposed plan order: ${count} / ${teams} / ${format}`);
+   assert.equal(plan.format,format);
    assert.deepEqual(Array.from({length:count},(_,i)=>draftTurnAtPick(i,teams,format)),expected);
    assert.equal(plan.teamCapacities.reduce((sum,n)=>sum+n,0),count);
   }
@@ -80,4 +82,14 @@ test('unknown draft format cannot silently create a different turn schedule',()=
  assert.throws(()=>draftRosterPlan(rows(8),'nov20',golfers,3,'random'),/Invalid draft format/);
  assert.throws(()=>draftTurnAtPick(0,3,'random'),/Invalid draft format/);
  assert.throws(()=>draftTurnAtPick(-1,3),RangeError);
+});
+
+test('commissioner preview uses exact snake partial-round order and immutable picks',()=>{
+ const plan=draftRosterPlan(rows(27),'nov20',golfers,7,'snake');
+ assert.deepEqual(plan.pickOrder.slice(-6),[6,5,4,3,2,1]);
+ assert.ok(Object.isFrozen(plan.pickOrder));
+ assert.throws(()=>plan.pickOrder.push(0),TypeError);
+ const straight=draftRosterPlan(rows(8),'nov20',golfers,3,'standard');
+ assert.equal(straight.format,'straight');
+ assert.deepEqual(straight.pickOrder,[0,1,2,0,1,2,0,1]);
 });
