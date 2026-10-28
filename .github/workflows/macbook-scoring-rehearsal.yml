@@ -31,7 +31,7 @@ permissions:
   contents: read
 concurrency:
   group: elleng-mac-scoring-rehearsal
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   isolated-macbook-scoring:
     if: >-
