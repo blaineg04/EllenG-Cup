@@ -36,3 +36,15 @@ test('staged shamble scoring clears incomplete team totals and does not grant pr
  assert.match(sql,/SECURITY INVOKER/);
  assert.doesNotMatch(sql,/GRANT EXECUTE/);
 });
+
+test('shamble score writes are serialized and derived from recorded golfer scores',()=>{
+ assert.match(sql,/pg_advisory_xact_lock/);
+ assert.match(sql,/count\(\*\),min\(score\)/);
+ assert.match(sql,/ON CONFLICT\(tournament_id,team_index,hole\)/);
+});
+test('shamble scoring enforces captain or owner authority and active tournament state',()=>{
+ assert.match(sql,/t\.status IN \('setup','live'\)/);
+ assert.match(sql,/d\.owner_id=v_uid/);
+ assert.match(sql,/c\.user_id=v_uid/);
+ assert.match(sql,/p_team_index<t\.team_count/);
+});
