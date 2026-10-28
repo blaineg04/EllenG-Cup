@@ -83,3 +83,42 @@ test('both captain login paths use managed realtime subscriptions',()=>{
  assert.doesNotMatch(s,/subscribe\(render\)/);
  assert.match(s,/function revokeCaptainSession\(\)\{\s*captainAuthEpoch\+\+;[\s\S]*?pickRequestEpoch\+\+;\s*pickInFlight=false;\s*stopCaptainSubscription\(\)/);
 });
+
+
+test('both captain entry paths use one managed timer and revoke it on signout',()=>{
+ assert.equal(s.split('startCaptainDrawTimer();').length-1,2,
+  'interactive login and restored-session login both start managed refresh');
+ assert.doesNotMatch(s,/setInterval\(draw,500\)/,
+  'no unmanaged refresh interval remains in captain entry paths');
+ assert.match(s,/function revokeCaptainSession\(\)[\s\S]*?stopCaptainSubscription\(\);\s*stopCaptainDrawTimer\(\);/);
+});
+
+test('captain draft refresh timer replaces old intervals and stops on revocation',()=>{
+ const start=s.indexOf('let captainChannel=null,captainSubscriptionEpoch=0;');
+ const end=s.indexOf('function stopCaptainSubscription()',start);
+ assert.ok(start>=0&&end>start,'managed refresh lifecycle exists');
+ const intervals=new Map();let nextId=0,draws=0;
+ const ctx={
+  captainUserId:'captain-a',
+  draw:()=>draws++,
+  setInterval:(fn,delay)=>{assert.equal(delay,500);const id=++nextId;intervals.set(id,fn);return id;},
+  clearInterval:id=>intervals.delete(id)
+ };
+ vm.createContext(ctx);
+ vm.runInContext(s.slice(start,end)+
+  '\nthis.startTimer=startCaptainDrawTimer;this.stopTimer=stopCaptainDrawTimer;',ctx);
+ ctx.startTimer();
+ assert.equal(intervals.size,1);
+ ctx.startTimer();
+ assert.equal(intervals.size,1,'second login replaces the prior interval');
+ assert.equal(nextId,2);
+ [...intervals.values()][0]();
+ assert.equal(draws,1);
+ ctx.captainUserId=null;
+ [...intervals.values()][0]();
+ assert.equal(draws,1,'no draft drawing for a signed-out captain');
+ ctx.stopTimer();
+ assert.equal(intervals.size,0);
+ ctx.stopTimer();
+ assert.equal(intervals.size,0,'repeated cleanup is safe');
+});
