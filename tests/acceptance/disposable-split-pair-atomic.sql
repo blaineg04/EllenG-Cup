@@ -9,7 +9,7 @@ CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
 $$;
 CREATE TABLE public.elleng_drafts(id text primary key,owner_id uuid,state jsonb);
 CREATE TABLE public.elleng_captains(draft_id text,user_id uuid,team_index integer);
-CREATE TABLE public.elleng_tournaments(id text primary key,draft_id text,status text);
+CREATE TABLE public.elleng_tournaments(id text primary key,draft_id text,status text,team_count integer);
 CREATE TABLE public.elleng_pair_hole_scores(
  tournament_id text,hole integer,team_index integer,pair_index integer,score integer,
  updated_by uuid,updated_at timestamptz default now(),
@@ -27,7 +27,7 @@ CREATE TABLE public.elleng_team_scores(
 INSERT INTO public.elleng_drafts VALUES
 ('draft-qa','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
  '{"playFormat":"split_pair","teams":[{"roster":[0,1,2,3]}],"golfers":[{"name":"A"},{"name":"B"},{"name":"C"},{"name":"D"}]}');
-INSERT INTO public.elleng_tournaments VALUES ('tournament-qa','draft-qa','live');
+INSERT INTO public.elleng_tournaments VALUES ('tournament-qa','draft-qa','live',1);
 INSERT INTO public.elleng_captains VALUES
  ('draft-qa','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',0);
 SELECT set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false);
