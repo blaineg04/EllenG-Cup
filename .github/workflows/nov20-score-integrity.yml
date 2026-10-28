@@ -2,10 +2,11 @@ name: November 20 score integrity
 on:
   push:
     branches: ['release/nov20-score-integrity-20261020']
-    paths: ['scoring.html', 'draft.html', 'captain.html', 'admin.html', 'style.css', 'common.js', 'config.js', 'tests/**', '.github/workflows/nov20-score-integrity.yml']
+    paths: ['scoring.html', 'Scoring.html', 'draft.html', 'captain.html', 'admin.html', 'style.css', 'common.js', 'config.js', 'tests/**', '.github/workflows/nov20-score-integrity.yml']
   pull_request:
     paths:
       - 'scoring.html'
+      - 'Scoring.html'
       - 'tests/nov20-production-score-integrity.test.cjs'
       - 'tests/visual/**'
       - 'draft.html'
@@ -29,7 +30,7 @@ jobs:
       - name: Verify Node is installed
         run: node --version
       - name: Run isolated scoring regression tests
-        run: node --test tests/nov20-production-score-integrity.test.cjs
+        run: node --test tests/nov20-production-score-integrity.test.cjs tests/gator-hole-variable-teams.test.cjs tests/auto-pick-balance.test.cjs tests/draft-turn-order.test.cjs
       - name: Verify commissioner RSVP snapshot safety
         run: node --test tests/commissioner-rsvp-preview.test.cjs
 
