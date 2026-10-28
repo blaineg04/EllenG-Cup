@@ -217,10 +217,10 @@ test('fully approved named subset does not mark a partially configured draft rea
  assert.equal(result.matchesPreview,false);
 });
 
-test('controller rejects missing reconciliation dependency before any authenticated read',()=>{
+test('controller rejects missing approved roster dependency before any authenticated read',()=>{
  const db={auth:{getUser:()=>{throw Error('must not read auth')}}};
  const client={list:()=>{throw Error('must not list RSVPs')}};
- assert.throws(()=>create({db,client,eligibility:{approvedRoster:eligibility.approvedRoster},eventId:'nov20',getAuth:()=>({epoch:1,userId:'a'}),getDraft:()=>({golfers:directory,teams}),render:()=>{}}),/dependencies required/);
+ assert.throws(()=>create({db,client,eligibility:{reconcileDraftRoster:eligibility.reconcileDraftRoster},eventId:'nov20',getAuth:()=>({epoch:1,userId:'a'}),getDraft:()=>({golfers:directory,teams}),render:()=>{}}),/dependencies required/);
 });
 
 test('invalidation clears a previously successful commissioner readiness preview',async()=>{
