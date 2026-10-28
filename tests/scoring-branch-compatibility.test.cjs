@@ -53,6 +53,10 @@ test('team placement points scale to any supported team count',()=>{
 test('team scoring ranks completed team scores and awards the Gator Hole only to the lowest team',()=>{
  assert.deepEqual(points([3,4]),[2,1]);
  assert.deepEqual(points([3,4],{gator:true}),[4,0]);
+ for(const n of [2,3,4,6,7,9]){
+  const values=Array.from({length:n},(_,i)=>i+3);
+  assert.deepEqual(points(values,{gator:true}),[2*n,...Array(n-1).fill(0)],`Gator bonus with ${n} teams`);
+ }
  assert.deepEqual(points([3,null]),[null,null]);
  assert.deepEqual(points([4,4]),[1.5,1.5]);
 });
