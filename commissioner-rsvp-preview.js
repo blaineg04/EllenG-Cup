@@ -48,10 +48,11 @@
    matchesPreview:approved.length>=teamCount&&unapprovedNamedIndices.length===0&&duplicateNamedIndices.length===0&&Array.from({length:golfers.length},(_,i)=>golfers[i]).every(g=>!!g?.name?.trim())
   });
  }
- function create({db,client,eligibility,eventId,getAuth,getDraft,render}){
+ function create({db,client,eligibility,eventId,getAuth,getDraft,render,hasPendingRosterEdits=()=>false}){
   if(typeof db?.auth?.getUser!=="function"||typeof client?.list!=="function"||
      typeof eligibility?.approvedRoster!=="function"||
-     typeof getAuth!=="function"||typeof getDraft!=="function"||typeof render!=="function")
+     typeof getAuth!=="function"||typeof getDraft!=="function"||typeof render!=="function"||
+     typeof hasPendingRosterEdits!=="function")
    throw new TypeError("Commissioner RSVP preview dependencies required");
   let request=0;
   const enabled=typeof eventId==="string"&&!!eventId.trim();
@@ -66,13 +67,18 @@
    if(!enabled){render({status:"disabled"});return;}
    render({status:"loading"});
    try{
+    // Visible unsaved roster edits must not be certified against old saved slots.
+    // Check before network access and again after async reads to fence edits in flight.
+    if(hasPendingRosterEdits()){if(current())render({status:"unsaved"});return;}
     // Recheck the authenticated account immediately before reading event data.
     const {data,error}=await db.auth.getUser();
     if(!current())return;
     if(error||data?.user?.id!==auth.userId)
      throw new Error("Commissioner authentication changed");
+    if(hasPendingRosterEdits()){if(current())render({status:"unsaved"});return;}
     const rows=await client.list(db,eventId);
     if(!current())return;
+    if(hasPendingRosterEdits()){if(current())render({status:"unsaved"});return;}
     const draft=getDraft();
     const summary=summarize(rows,eventId,draft?.golfers,draft?.teams?.length,eligibility);
     if(!current())return;
