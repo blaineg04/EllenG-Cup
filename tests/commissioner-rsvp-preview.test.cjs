@@ -182,3 +182,13 @@ test('commissioner preview requires reconciliation helper and fails closed on mi
  assert.equal(result.missingApprovedCount,1);
  assert.equal(result.mismatchedApprovedCount,0);
 });
+
+test('commissioner roster preview refuses ambiguous duplicate golfer names',()=>{
+ const duplicate=[{name:'Alice'},{name:' alice '}];
+ const result=summarize(rows,'nov20',duplicate,2,eligibility);
+ assert.equal(result.approvedCount,2);
+ assert.equal(result.duplicateNamedCount,1);
+ assert.deepEqual(result.duplicateNamedIndices,[1]);
+ assert.equal(result.matchesPreview,false);
+ assert.ok(Object.isFrozen(result.duplicateNamedIndices));
+});
