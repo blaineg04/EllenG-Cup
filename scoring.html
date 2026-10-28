@@ -4640,29 +4640,27 @@ function renderPairScoring(par,pts){
  document.querySelectorAll(".pair-score-input:not([disabled])").forEach(inp=>inp.addEventListener("change",()=>savePairScore(Number(inp.dataset.team),Number(inp.dataset.pair),inp.value)));
 }
 async function savePairScore(teamIndex,pairIndex,val){
- if(!isSplitPair()||!canEditTeam(teamIndex))return;if(!beginScoreSave())return;
- const scoreHole=hole;
- const el=$("saveMsg");el.textContent="Saving pair score…";
+ if(!isSplitPair()||!canEditTeam(teamIndex)||![0,1].includes(pairIndex)||!Number.isInteger(teamIndex)||teamIndex<0||teamIndex>=teams.length)return;
+ const roster=teamRosterGolfers(teamIndex);
+ if(roster.length!==4)return;
+ if(!beginScoreSave())return;
+ const scoreHole=hole,el=$("saveMsg");
+ el.textContent="Saving pair score…";
  const score=String(val??"").trim()===""?null:Number(val);
  try{
-   if(score===null){
-     const {error}=await db.from("elleng_pair_hole_scores").delete().eq("tournament_id",TOURNAMENT_ID).eq("hole",scoreHole).eq("team_index",teamIndex).eq("pair_index",pairIndex);if(error)throw error;
-   }else{
-     if(!Number.isInteger(score)||score<1||score>20)throw new Error("Enter a score from 1 to 20.");
-     const {error}=await db.from("elleng_pair_hole_scores").upsert({tournament_id:TOURNAMENT_ID,hole:scoreHole,team_index:teamIndex,pair_index:pairIndex,score,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:"tournament_id,hole,team_index,pair_index"});if(error)throw error;
-   }
+   if(!Number.isInteger(scoreHole)||scoreHole<1||scoreHole>18)throw new Error("Invalid hole.");
+   if(score!==null&&(!Number.isSafeInteger(score)||score<1||score>20))throw new Error("Enter a score from 1 to 20.");
+   // No client-side multi-table fallback: the server must authorize and serialize pair + team writes.
+   const {error}=await db.rpc("elleng_test_authorized_split_pair",{
+     p_tournament_id:TOURNAMENT_ID,p_team_index:teamIndex,p_hole:scoreHole,
+     p_pair_index:pairIndex,p_score:score
+   });
+   if(error)throw error;
    await loadScores();
-   const a=pairScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===scoreHole&&Number(x.pair_index)===0);
-   const b=pairScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===scoreHole&&Number(x.pair_index)===1);
-   const roster=teamRosterGolfers(teamIndex);
-   if(roster.length===4&&validStoredPlayerScore(a)&&validStoredPlayerScore(b)){
-     const total=Number(a.score)+Number(b.score);
-     const {error}=await db.from("elleng_team_scores").upsert({tournament_id:TOURNAMENT_ID,team_index:teamIndex,hole:scoreHole,score:total,updated_by:user.id,updated_at:new Date().toISOString()},{onConflict:"tournament_id,team_index,hole"});if(error)throw error;
-   }else{
-     const {error}=await db.from("elleng_team_scores").delete().eq("tournament_id",TOURNAMENT_ID).eq("team_index",teamIndex).eq("hole",scoreHole);if(error)throw error;
-   }
-   await loadScores();el.textContent="Saved. Both 2-man pair scores combine into the team total.";renderAll();
- }catch(e){el.textContent=e?.message||"Unable to save pair score.";endScoreSave(false);return}endScoreSave(true)
+   el.textContent="Pair score saved; official team total synchronized.";
+   renderAll();
+ }catch(e){el.textContent=e?.message||"Unable to save pair score.";endScoreSave(false);return}
+ endScoreSave(true);
 }
 function renderScoring(){
  renderHolebar();
