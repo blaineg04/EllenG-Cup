@@ -23,7 +23,7 @@ DECLARE
  v_total integer;
 BEGIN
  IF v_uid IS NULL THEN RAISE EXCEPTION 'Sign in required'; END IF;
- IF p_tournament_id IS NULL OR p_team_index IS NULL OR p_hole IS NULL OR p_pair_index IS NULL
+ IF p_tournament_id IS NULL OR btrim(p_tournament_id) = '' OR p_team_index IS NULL OR p_hole IS NULL OR p_pair_index IS NULL
     OR p_hole NOT BETWEEN 1 AND 18 OR p_pair_index NOT BETWEEN 0 AND 1
     OR (p_score IS NOT NULL AND p_score NOT BETWEEN 1 AND 20)
  THEN RAISE EXCEPTION 'Invalid Split-Pair score request'; END IF;
@@ -39,6 +39,7 @@ BEGIN
  FROM public.elleng_drafts d WHERE d.id=v_draft_id;
  IF v_state IS NULL THEN RAISE EXCEPTION 'Draft unavailable'; END IF;
 
+ IF v_owner IS NULL THEN RAISE EXCEPTION 'Draft owner missing'; END IF;
  IF v_uid IS DISTINCT FROM v_owner AND NOT EXISTS (
    SELECT 1 FROM public.elleng_captains c
    WHERE c.draft_id=v_draft_id AND c.user_id=v_uid
