@@ -39,3 +39,24 @@ FROM pg_policies
 WHERE schemaname='public'
   AND tablename IN ('elleng_pair_hole_scores','elleng_team_scores')
 ORDER BY tablename,policyname;
+
+-- Optional strict gate for an isolated rehearsal environment:
+--   psql -X -v ON_ERROR_STOP=1 -v REQUIRE_SCORING_READY=1 -f tests/acceptance/scoring-deployment-preflight.sql
+-- Defaults to report-only mode, safe for the current live project.
+\\if :{?REQUIRE_SCORING_READY}
+DO $preflight$
+BEGIN
+ IF to_regprocedure('public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)') IS NULL
+    OR to_regprocedure('public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)') IS NULL
+ THEN RAISE EXCEPTION 'Scoring rehearsal blocked: required RPC missing'; END IF;
+ IF NOT has_function_privilege('authenticated','public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)','EXECUTE')
+    OR has_function_privilege('anon','public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)','EXECUTE')
+    OR NOT has_function_privilege('authenticated','public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)','EXECUTE')
+    OR has_function_privilege('anon','public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)','EXECUTE')
+ THEN RAISE EXCEPTION 'Scoring rehearsal blocked: RPC role grants invalid'; END IF;
+ IF (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+     WHERE n.nspname='public' AND c.relname IN ('elleng_pair_hole_scores','elleng_team_scores')
+       AND c.relkind IN ('r','p') AND c.relrowsecurity)<>2
+ THEN RAISE EXCEPTION 'Scoring rehearsal blocked: score table missing or RLS disabled'; END IF;
+END $preflight$;
+\\endif
