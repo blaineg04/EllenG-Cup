@@ -45,6 +45,29 @@ jobs:
           fi
           rm -f "$strict_log"
           echo 'PASS: strict scoring preflight rejects missing scoring RPCs.'
+          # Positive path: disposable schema with both RPC signatures, strict grants,
+          # and RLS-enabled score tables. This validates the gate only, not app scoring.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" <<'SQL'
+          DO $roles$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon NOLOGIN; END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated NOLOGIN; END IF;
+          END $roles$;
+          CREATE TABLE public.elleng_pair_hole_scores (id integer);
+          CREATE TABLE public.elleng_team_scores (id integer);
+          ALTER TABLE public.elleng_pair_hole_scores ENABLE ROW LEVEL SECURITY;
+          ALTER TABLE public.elleng_team_scores ENABLE ROW LEVEL SECURITY;
+          CREATE FUNCTION public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)
+            RETURNS integer LANGUAGE sql AS 'SELECT 1';
+          CREATE FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)
+            RETURNS integer LANGUAGE sql AS 'SELECT 1';
+          REVOKE ALL ON FUNCTION public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer) FROM PUBLIC,anon;
+          REVOKE ALL ON FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer) FROM PUBLIC,anon;
+          GRANT EXECUTE ON FUNCTION public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer) TO authenticated;
+          GRANT EXECUTE ON FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer) TO authenticated;
+          SQL
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -v REQUIRE_SCORING_READY=1 -d "$db" -f tests/acceptance/scoring-deployment-preflight.sql >/dev/null
+          echo 'PASS: strict scoring preflight accepts valid disposable RPC grants and RLS.'
+
           # Event RSVP migration is validated only against an isolated fixture database.
           rsvp_db="${db}_rsvp"
           sudo -u postgres createdb "$rsvp_db"
