@@ -4541,14 +4541,17 @@ function teamRosterGolfers(teamIndex){
  const rawTeam=draftState?.teams?.[teamIndex];
  const roster=Array.isArray(rawTeam?.roster)?rawTeam.roster:[];
  const golfers=Array.isArray(draftState?.golfers)?draftState.golfers:[];
+ const seen=new Set();
  return roster.map(r=>{
-   if(typeof r==="number")return {index:r,name:golfers[r]?.name||`Golfer ${r+1}`};
-   if(r&&typeof r==="object"){
-     const idx=Number(r.golferIndex);
-     if(Number.isInteger(idx))return {index:idx,name:r.name||golfers[idx]?.name||`Golfer ${idx+1}`};
-   }
-   return null;
- }).filter(x=>x&&x.name);
+   const raw=(r&&typeof r==="object")?r.golferIndex:r;
+   if(raw===null||raw===undefined||typeof raw==="boolean"||String(raw).trim()==="")return null;
+   const idx=Number(raw);
+   if(!Number.isSafeInteger(idx)||idx<0||idx>=golfers.length||seen.has(idx))return null;
+   const golfer=golfers[idx];
+   if(!golfer||!String(golfer.name||"").trim())return null;
+   seen.add(idx);
+   return {index:idx,name:String(golfer.name).trim()};
+ }).filter(Boolean);
 }
 function renderShambleScoring(par,pts){
  const area=$("shambleScoreArea"), front=$("frontNineScoreGrid");
