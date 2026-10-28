@@ -107,3 +107,6 @@ BEGIN
  IF EXISTS (SELECT 1 FROM public.elleng_pair_hole_scores WHERE hole=17)
  THEN RAISE EXCEPTION 'Completed tournament write persisted'; END IF;
 END $$;
+
+-- Restore reusable fixture for the subsequent two-session concurrency tests.
+UPDATE public.elleng_tournaments SET status='live' WHERE id='tournament-qa';
