@@ -46,7 +46,8 @@ BEGIN
   IF v_team_count < 1 THEN RAISE EXCEPTION 'Draft has no teams'; END IF;
   v_total_picks := coalesce(nullif(v_state->>'golferCount', '')::integer,
     jsonb_array_length(coalesce(v_state->'golfers', '[]'::jsonb)));
-  v_total_picks := greatest(1, least(v_total_picks,
+  -- An empty draft is a no-op, not a failed random selection.
+  v_total_picks := greatest(0, least(v_total_picks,
     jsonb_array_length(coalesce(v_state->'golfers', '[]'::jsonb))));
   v_pick_count := jsonb_array_length(coalesce(v_state->'picks', '[]'::jsonb));
   IF v_pick_count >= v_total_picks THEN RETURN v_state; END IF;
