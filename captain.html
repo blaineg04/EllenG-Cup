@@ -779,6 +779,15 @@ async function whoami(){const authEpoch=captainAuthEpoch,lookupId=++captainRoleL
  const {data:confirmed,error:confirmationError}=await db.auth.getUser();
  if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId||confirmationError||confirmed?.user?.id!==user.id)return false;
  myTeam=Number(data.team_index);captainUserId=user.id;return true}
+// A valid captain mapping must also reference a team in the loaded draft.
+// This matters when the commissioner changes the number of teams between events.
+function assertCaptainTeamPresent(){
+ if(!Array.isArray(S?.teams)||!Number.isInteger(myTeam)||myTeam<0||myTeam>=S.teams.length){
+  pickSyncFailed=true;
+  captainUserId=null;myTeam=null;
+  throw new Error("Captain team assignment does not match this draft. Ask the commissioner to update it.");
+ }
+}
 let captainChannel=null,captainSubscriptionEpoch=0;
 let captainDrawTimer=null;
 function stopCaptainDrawTimer(){
@@ -901,7 +910,7 @@ document.getElementById("signin").onclick=async()=>{
     document.getElementById("app").style.display="block";
     await load(()=>loginEpoch===captainBootstrapEpoch&&!!captainUserId);
     if(loginEpoch!==captainBootstrapEpoch)return;
-    if(!captainUserId)throw new Error("Captain session changed while loading. Sign in again.");pickSyncFailed=false;render();
+    if(!captainUserId)throw new Error("Captain session changed while loading. Sign in again.");assertCaptainTeamPresent();pickSyncFailed=false;render();
     if(status)status.textContent="CONNECTING";
     startCaptainSubscription();startCaptainDrawTimer();
   }catch(e){
@@ -951,7 +960,7 @@ db.auth.onAuthStateChange((event,session)=>{
       await load(()=>bootEpoch===captainBootstrapEpoch&&!!captainUserId);
       if(bootEpoch!==captainBootstrapEpoch)return;
       if(!captainUserId)throw new Error("Captain session changed while loading. Sign in again.");
-      pickSyncFailed=false;render();
+      assertCaptainTeamPresent();pickSyncFailed=false;render();
       if(status)status.textContent="CONNECTING";
       startCaptainSubscription();
       startCaptainDrawTimer();
