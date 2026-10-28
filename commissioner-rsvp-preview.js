@@ -62,6 +62,11 @@
    return JSON.stringify({golfers:draft?.golfers,teams:draft?.teams,
     picks:draft?.picks,draftType:draft?.draftType,timerLength:draft?.timerLength});
   };
+  const draftAlreadyStarted=()=>{
+   const draft=getDraft();
+   return !!(draft?.picks?.length||draft?.teams?.some(team=>team?.roster?.length)||
+    draft?.golfers?.some(golfer=>golfer?.team!=null));
+  };
   let request=0;
   const enabled=typeof eventId==="string"&&!!eventId.trim();
   function invalidate(){request++;render({status:"invalidated"});}
@@ -78,6 +83,7 @@
     // Visible unsaved roster edits must not be certified against old saved slots.
     // Check before network access and again after async reads to fence edits in flight.
     if(hasPendingRosterEdits()){if(current())render({status:"unsaved"});return;}
+    if(draftAlreadyStarted()){if(current())render({status:"stale"});return;}
     const startingDraft=draftSnapshot();
     // Recheck the authenticated account immediately before reading event data.
     const {data,error}=await db.auth.getUser();
@@ -86,6 +92,7 @@
      throw new Error("Commissioner authentication changed");
     if(hasPendingRosterEdits()){if(current())render({status:"unsaved"});return;}
     if(draftSnapshot()!==startingDraft){if(current())render({status:"stale"});return;}
+    if(draftAlreadyStarted()){if(current())render({status:"stale"});return;}
     const rows=await client.list(db,eventId);
     if(!current())return;
     if(hasPendingRosterEdits()){if(current())render({status:"unsaved"});return;}
@@ -93,8 +100,7 @@
     const draft=getDraft();
     // This is a pre-draft readiness check, never a certification of an active draft.
     // A pick, team roster assignment, or golfer team assignment makes it stale.
-    if(draft?.picks?.length||draft?.teams?.some(team=>team?.roster?.length)||
-       draft?.golfers?.some(golfer=>golfer?.team!=null)){
+    if(draftAlreadyStarted()){
       if(current())render({status:"stale"});
       return;
     }
