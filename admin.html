@@ -83,9 +83,11 @@ function updateDraftSetupPreview(){
  // The shared order() function is the same turn sequence used by the live draft.
  for(let pick=0;pick<named;pick++)capacities[order(pick)]++;
  const empty=Math.max(0,teams-named);
+ const unranked=S.golfers.filter(g=>g.name&&g.name.trim()&&!bands.includes(g.band)).length;
  el.textContent=named+" named golfers • "+teams+" teams • "+
    (empty?empty+" more golfer(s) required before draft. ":
    "Expected team sizes: "+capacities.join(" / ")+". ")+
+   (unranked?unranked+" golfer(s) need a valid handicap band. ":"All named golfers have handicap bands. ")+
    "RSVP approval is not yet connected to this draft.";
 }
 function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map((g,i)=>`<tr><td>${i+1}</td><td><input data-n="${i}" value="${esc(g.name)}"></td><td><input data-h="${i}" type="number" step=".1" value="${esc(g.hcp)}"></td><td><select data-b="${i}"><option value="" ${!g.band?"selected":""}>Unranked</option>${bands.map(b=>`<option ${g.band===b?"selected":""}>${b}</option>`).join("")}</select></td></tr>`).join("");document.getElementById("trows").innerHTML=S.teams.map((t,i)=>`<tr><td>Team ${i+1}</td><td><input data-tn="${i}" value="${esc(t.name)}"></td><td><input data-tc="${i}" placeholder="Captain" value="${esc(t.captain)}"></td></tr>`).join("");document.getElementById("dtype").value=S.draftType;document.getElementById("tlen").value=S.timerLength;document.getElementById("setupTeamCount").value=S.teams.length;document.getElementById("setupGolferCount").value=S.golfers.length;
