@@ -14,7 +14,8 @@
     if(typeof r.tournament_id!=="string"||!r.tournament_id.trim())throw new Error("Missing tournament ID");
     if(typeof r.user_id!=="string"||!r.user_id.trim())throw new Error("Missing user ID");
     if(!Number.isInteger(r.golfer_index)||r.golfer_index<0)throw new Error("Invalid golfer index");
-    if(!validStatuses.has(r.status))throw new Error("Invalid RSVP status");
+    // An enrolled golfer may not have responded yet (SQL status IS NULL).
+    if(r.status!==null&&!validStatuses.has(r.status))throw new Error("Invalid RSVP status");
     const approval=r.approval_status||"pending";
     if(!validApprovals.has(approval))throw new Error("Invalid approval status");
     return {...r,approval_status:approval};
