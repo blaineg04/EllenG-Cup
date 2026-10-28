@@ -35,7 +35,7 @@ test('preflight is read-only and checks both authentication and RLS gates', () =
 });
 
 test('strict preflight is opt-in and fails closed for missing RPC, grants, or RLS', () => {
-  assert.match(preflight, /\\\\if :\\{\\?REQUIRE_SCORING_READY\\}/);
+  assert.ok(preflight.includes('\\if :{?REQUIRE_SCORING_READY}'));
   assert.match(preflight, /Scoring rehearsal blocked: required RPC missing/);
   assert.match(preflight, /Scoring rehearsal blocked: RPC role grants invalid/);
   assert.match(preflight, /Scoring rehearsal blocked: score table missing or RLS disabled/);
