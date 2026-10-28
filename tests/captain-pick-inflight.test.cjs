@@ -285,6 +285,7 @@ test('interactive captain replacement survives Supabase SIGNED_IN without revoki
  const ctx={
   captainBootstrapEpoch:0,captainRoleLookupId:0,captainAuthEpoch:0,
   captainUserId:'captain-a',myTeam:0,pickRequestEpoch:0,pickInFlight:false,pickSyncFailed:false,
+  S:{teams:[{},{}]},
   document:{getElementById:id=>elements[id],querySelectorAll:()=>[{disabled:false}]},
   db:{auth:{
    onAuthStateChange:fn=>{onAuthEvent=fn},
@@ -321,6 +322,7 @@ test('failed captain replacement remains signed out rather than restoring old te
  const ctx={
   captainBootstrapEpoch:0,captainRoleLookupId:0,captainAuthEpoch:0,
   captainUserId:'captain-a',myTeam:0,pickRequestEpoch:0,pickInFlight:false,pickSyncFailed:false,
+  S:{teams:[{},{}]},
   document:{getElementById:id=>elements[id],querySelectorAll:()=>[{disabled:false}]},
   db:{auth:{signInWithPassword:async()=>({error:new Error('synthetic rejected credentials')})}},
   whoami:async()=>{throw new Error('role lookup must not run on failed sign-in')},
@@ -340,4 +342,64 @@ test('failed captain replacement remains signed out rather than restoring old te
  assert.equal(elements.app.style.display,'none');
  assert.equal(elements.login.style.display,'block');
  assert.match(elements.msg.textContent,/synthetic rejected credentials/);
+});
+
+function captainTeamGuardSource(){
+ const start=s.indexOf('function assertCaptainTeamPresent(){');
+ const end=s.indexOf('let captainChannel=null',start);
+ assert.ok(start>=0&&end>start,'loaded-draft captain team validation exists');
+ return s.slice(start,end);
+}
+test('invalid captain team mapping cannot activate an interactive session',async()=>{
+ const elements=captainAuthElements();let subscriptions=0,timers=0;
+ const ctx={
+  captainBootstrapEpoch:0,captainRoleLookupId:0,captainUserId:null,myTeam:null,pickSyncFailed:false,
+  S:{teams:[{},{}]},
+  document:{getElementById:id=>elements[id]},
+  db:{auth:{signInWithPassword:async()=>({error:null})}},
+  whoami:async()=>{ctx.captainUserId='captain-a';ctx.myTeam=2;return true},
+  load:async()=>{},render:()=>{throw Error('invalid team must not render')},
+  startCaptainSubscription:()=>subscriptions++,startCaptainDrawTimer:()=>timers++
+ };
+ vm.createContext(ctx);
+ const loginStart=s.indexOf('document.getElementById("signin").onclick=async()=>{');
+ const loginEnd=s.indexOf('document.getElementById("soundToggle").onclick=',loginStart);
+ vm.runInContext(captainTeamGuardSource()+s.slice(loginStart,loginEnd),ctx);
+ await elements.signin.onclick();
+ assert.equal(ctx.captainUserId,null,'invalid mapping cannot retain captain authorization');
+ assert.equal(ctx.myTeam,null);
+ assert.equal(ctx.pickSyncFailed,true);
+ assert.equal(elements.app.style.display,'none');
+ assert.equal(elements.login.style.display,'block');
+ assert.match(elements.msg.textContent,/team assignment does not match this draft/);
+ assert.equal(subscriptions,0);assert.equal(timers,0);
+});
+test('restored captain session rejects a stale team assignment after team count changes',async()=>{
+ const elements=captainAuthElements();let subscriptions=0,timers=0;
+ const ctx={
+  captainBootstrapEpoch:0,captainUserId:null,myTeam:null,pickSyncFailed:false,
+  S:{teams:[{},{}]},
+  document:{getElementById:id=>elements[id]},
+  db:{auth:{getUser:async()=>({data:{user:{id:'captain-a'}}})}},
+  whoami:async()=>{ctx.captainUserId='captain-a';ctx.myTeam=5;return true},
+  load:async()=>{},render:()=>{throw Error('invalid team must not render')},
+  startCaptainSubscription:()=>subscriptions++,startCaptainDrawTimer:()=>timers++,
+  console:{error:()=>{}}
+ };
+ vm.createContext(ctx);
+ vm.runInContext(captainTeamGuardSource(),ctx);
+ await vm.runInContext(s.slice(s.lastIndexOf('(async()=>{'),s.lastIndexOf('</script>')),ctx);
+ assert.equal(ctx.captainUserId,null);assert.equal(ctx.myTeam,null);
+ assert.equal(ctx.pickSyncFailed,true);
+ assert.equal(elements.app.style.display,'none');
+ assert.match(elements.msg.textContent,/team assignment does not match this draft/);
+ assert.equal(subscriptions,0);assert.equal(timers,0);
+});
+test('valid captain mapping remains authorized for current draft',()=>{
+ const ctx={S:{teams:[{},{}]},captainUserId:'captain-b',myTeam:1,pickSyncFailed:true};
+ vm.createContext(ctx);
+ vm.runInContext(captainTeamGuardSource()+'this.checkTeam=assertCaptainTeamPresent;',ctx);
+ assert.doesNotThrow(()=>ctx.checkTeam());
+ assert.equal(ctx.captainUserId,'captain-b');
+ assert.equal(ctx.myTeam,1);
 });
