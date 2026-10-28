@@ -43,6 +43,7 @@ const rsvpPreviewController=EllenGCommissionerRsvpPreview.create({
   else if(result.status==="error")status.textContent="Could not verify approved RSVPs. Draft remains unchanged; do not treat this preview as approval.";
   else if(result.status==="disabled")status.textContent="Event RSVP preview is disabled pending migration and authenticated rehearsal.";
   else if(result.status==="unsaved")status.textContent="Unsaved golfer names or roster counts. Save or discard setup changes before checking approved RSVPs.";
+  else if(result.status==="stale")status.textContent="Draft roster changed while checking RSVPs. Refresh after the latest roster is loaded; no readiness was confirmed.";
   else if(result.status==="invalidated")status.textContent="RSVP preview is no longer current. Refresh after confirming commissioner session and roster.";
   else if(result.status==="success"){
    const p=result.summary;
