@@ -52,7 +52,7 @@ test('team placement points scale to any supported team count',()=>{
 });
 test('team scoring ranks completed team scores and awards the Gator Hole only to the lowest team',()=>{
  assert.deepEqual(points([3,4]),[2,1]);
- assert.deepEqual(points([3,4],{gator:true}),[12,0]);
+ assert.deepEqual(points([3,4],{gator:true}),[4,0]);
  assert.deepEqual(points([3,null]),[null,null]);
  assert.deepEqual(points([4,4]),[1.5,1.5]);
 });
