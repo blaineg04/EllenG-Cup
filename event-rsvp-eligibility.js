@@ -28,6 +28,11 @@
       // Ignore unrelated events before validating their payloads.
       if(!raw||raw.tournament_id!==tournamentId)continue;
       const r=normalize(raw);
+      // Even pending/declined enrollments must reference a slot in the
+      // current draft directory. Otherwise a seemingly complete approval
+      // preview could conceal an orphaned event enrollment.
+      if(r.golfer_index>=availableGolfers.length)
+        throw new Error("Event enrollment golfer index outside directory");
       if(seenUsers.has(r.user_id))throw new Error("Duplicate event RSVP user");
       seenUsers.add(r.user_id);
       // A golfer index identifies one event enrollment, even if an RSVP is
