@@ -789,6 +789,7 @@ function assertCaptainTeamPresent(){
  }
 }
 let captainChannel=null,captainSubscriptionEpoch=0;
+let captainRoleRefreshEpoch=0,captainRoleRefreshPending=false;
 let captainDrawTimer=null;
 function stopCaptainDrawTimer(){
  if(captainDrawTimer!==null){clearInterval(captainDrawTimer);captainDrawTimer=null;}
@@ -798,7 +799,7 @@ function startCaptainDrawTimer(){
  captainDrawTimer=setInterval(()=>{if(captainUserId)draw();},500);
 }
 function stopCaptainSubscription(){
- captainSubscriptionEpoch++;
+ captainSubscriptionEpoch++;captainRoleRefreshEpoch++;captainRoleRefreshPending=false;
  const channel=captainChannel;captainChannel=null;
  if(!channel)return;
  try{Promise.resolve(channel.unsubscribe()).catch(error=>console.error("Captain draft unsubscribe failed",error));}
@@ -809,17 +810,47 @@ function startCaptainSubscription(){
  stopCaptainSubscription();
  const epoch=captainSubscriptionEpoch,authEpoch=captainAuthEpoch,userId=captainUserId;
  if(!userId)return;
- const renderForSession=()=>{
+ const renderForSession=async()=>{
   if(!renderForSession.isCurrent())return;
-  // Realtime can deliver a new draft after the commissioner removes a team.
-  // The original login-time assignment is no longer sufficient in that case.
-  try{assertCaptainTeamPresent();}
-  catch(error){
-   revokeCaptainSession();
-   document.getElementById("msg").textContent=error.message;
-   return;
+  const roleEpoch=++captainRoleRefreshEpoch;
+  captainRoleRefreshPending=true;
+  document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
+  const status=document.getElementById("connection");
+  if(status){status.textContent="VERIFYING";status.className="offline"}
+  try{
+   assertCaptainTeamPresent();
+   // The commissioner can reassign a captain without removing the old team.
+   // The old session must not regain controls on reconnect.
+   const {data,error}=await db.from("elleng_captains").select("team_index").eq("draft_id",cfg.draftId).eq("user_id",userId).maybeSingle();
+   if(!renderForSession.isCurrent()||roleEpoch!==captainRoleRefreshEpoch)return;
+   if(error)throw error;
+   if(!data||typeof data.team_index==="boolean"||!Number.isInteger(Number(data.team_index))||Number(data.team_index)!==myTeam){
+    revokeCaptainSession();
+    document.getElementById("msg").textContent="Captain team assignment changed. Ask the commissioner to confirm your team before signing in again.";
+    return;
+   }
+   const {data:confirmed,error:authError}=await db.auth.getUser();
+   if(!renderForSession.isCurrent()||roleEpoch!==captainRoleRefreshEpoch)return;
+   if(authError||confirmed?.user?.id!==userId){
+    revokeCaptainSession();
+    document.getElementById("msg").textContent="Captain account changed during refresh. Sign in again.";
+    return;
+   }
+   assertCaptainTeamPresent();
+   captainRoleRefreshPending=false;
+   if(status){status.textContent="LIVE";status.className="online"}
+   render();
+  }catch(error){
+   if(!renderForSession.isCurrent()||roleEpoch!==captainRoleRefreshEpoch)return;
+   if(!captainUserId||error?.message?.includes("team assignment does not match")){
+    revokeCaptainSession();
+    document.getElementById("msg").textContent=error.message;
+    return;
+   }
+   captainRoleRefreshPending=false;pickSyncFailed=true;
+   if(status){status.textContent="SYNC ERROR";status.className="offline"}
+   console.error("Captain role refresh failed",error);
   }
-  render();
  };
  // common.js subscribe() uses this guard for queued status callbacks and reads.
  renderForSession.isCurrent=()=>epoch===captainSubscriptionEpoch&&authEpoch===captainAuthEpoch&&captainUserId===userId;
@@ -829,13 +860,13 @@ let draftSoundEnabled=false,lastSoundPickCount=null,audioCtx=null;
 async function enableDraftSound(){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")await audioCtx.resume();draftSoundEnabled=!draftSoundEnabled;document.getElementById("soundToggle").textContent=draftSoundEnabled?"🔇 Mute Draft Sounds":"🔊 Enable Draft Sounds";document.getElementById("soundStatus").textContent=draftSoundEnabled?"Sound ON — test growl played":"Sound off";if(draftSoundEnabled){gatorGrowl(true);setTimeout(()=>{if(draftSoundEnabled)document.getElementById("soundStatus").textContent="Gator sound ON"},1400)}}catch(e){draftSoundEnabled=false;document.getElementById("soundStatus").textContent="Audio blocked — tap again"}}
 function gatorGrowl(force=false){if((!draftSoundEnabled&&!force)||!audioCtx)return;try{let now=audioCtx.currentTime,dur=1.25,osc=audioCtx.createOscillator(),gain=audioCtx.createGain(),filter=audioCtx.createBiquadFilter(),lfo=audioCtx.createOscillator(),lfoGain=audioCtx.createGain();osc.type="sawtooth";osc.frequency.setValueAtTime(92,now);osc.frequency.exponentialRampToValueAtTime(48,now+dur);filter.type="lowpass";filter.frequency.setValueAtTime(520,now);filter.Q.value=7;lfo.type="sine";lfo.frequency.value=18;lfoGain.gain.value=15;lfo.connect(lfoGain);lfoGain.connect(osc.frequency);gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.32,now+.08);gain.gain.setValueAtTime(.32,now+.55);gain.gain.exponentialRampToValueAtTime(.0001,now+dur);osc.connect(filter);filter.connect(gain);gain.connect(audioCtx.destination);osc.start(now);lfo.start(now);osc.stop(now+dur);lfo.stop(now+dur)}catch(e){}}
 function checkDraftSound(){let n=S.picks.length;if(lastSoundPickCount===null){lastSoundPickCount=n;return}if(n>lastSoundPickCount)gatorGrowl();lastSoundPickCount=n}
-function render(){checkDraftSound();let total=totalPicks(),done=S.picks.length>=total,t=done?0:order(S.picks.length),mine=!done&&t===myTeam&&!S.timerPaused&&!pickInFlight&&!pickSyncFailed&&!!captainUserId&&document.getElementById("connection")?.textContent==="LIVE";document.getElementById("onclock").textContent=done?"DRAFT COMPLETE":"ON THE CLOCK: "+(S.teams[t]?.name||"Team");document.getElementById("meta").textContent=done?`All ${total} golfers drafted`:`${S.teams.length} teams • ${total} golfers • Round ${Math.floor(S.picks.length/S.teams.length)+1} • Pick ${S.picks.length+1} of ${total}`;document.getElementById("notice").textContent=done?"":S.timerPaused?"Draft is paused. Waiting for the Commissioner to start or resume.":mine?"YOUR PICK — select an eligible golfer below.":"Waiting for "+(S.teams[t]?.name||"Team")+" to pick…";document.getElementById("pool").innerHTML=S.golfers.map((g,i)=>({...g,i})).filter(g=>g.name&&g.team==null).map(g=>{let ok=mine&&canBand(t,g.band);return `<div class="player"><strong>${esc(g.name)}</strong><span class="badge">${g.band}</span><span class="muted">${bandRange(g.band)}</span><button data-p="${g.i}" ${ok?"":"disabled"}>${mine?(ok?"DRAFT":"Band Limit"):"Waiting"}</button></div>`}).join("")||'<div class="muted">No available golfers.</div>';document.getElementById("teams").innerHTML=S.teams.map((tm,i)=>`<div class="team"><div class="teamhead"><strong>${esc(tm.name)}</strong>${i===myTeam?" • YOUR TEAM":""}<div class="muted" style="color:#ddd">${esc(tm.captain||"")}</div><div style="font-size:11px">${bands.map(b=>b+" "+tbc(i,b)).join(" • ")}</div></div><div class="roster">${Array.from({length:teamCapacity(i)},(_,j)=>{let g=S.golfers[tm.roster[j]];return g?`<div class="slot"><strong>${esc(g.name)}</strong> <span class="badge">${g.band}</span><div class="muted">${bandRange(g.band)}</div></div>`:`<div class="slot muted">Open roster spot</div>`}).join("")}</div></div>`).join("");document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>pick(+b.dataset.p));draw()}
+function render(){checkDraftSound();let total=totalPicks(),done=S.picks.length>=total,t=done?0:order(S.picks.length),mine=!done&&t===myTeam&&!S.timerPaused&&!pickInFlight&&!pickSyncFailed&&!captainRoleRefreshPending&&!!captainUserId&&document.getElementById("connection")?.textContent==="LIVE";document.getElementById("onclock").textContent=done?"DRAFT COMPLETE":"ON THE CLOCK: "+(S.teams[t]?.name||"Team");document.getElementById("meta").textContent=done?`All ${total} golfers drafted`:`${S.teams.length} teams • ${total} golfers • Round ${Math.floor(S.picks.length/S.teams.length)+1} • Pick ${S.picks.length+1} of ${total}`;document.getElementById("notice").textContent=done?"":S.timerPaused?"Draft is paused. Waiting for the Commissioner to start or resume.":mine?"YOUR PICK — select an eligible golfer below.":"Waiting for "+(S.teams[t]?.name||"Team")+" to pick…";document.getElementById("pool").innerHTML=S.golfers.map((g,i)=>({...g,i})).filter(g=>g.name&&g.team==null).map(g=>{let ok=mine&&canBand(t,g.band);return `<div class="player"><strong>${esc(g.name)}</strong><span class="badge">${g.band}</span><span class="muted">${bandRange(g.band)}</span><button data-p="${g.i}" ${ok?"":"disabled"}>${mine?(ok?"DRAFT":"Band Limit"):"Waiting"}</button></div>`}).join("")||'<div class="muted">No available golfers.</div>';document.getElementById("teams").innerHTML=S.teams.map((tm,i)=>`<div class="team"><div class="teamhead"><strong>${esc(tm.name)}</strong>${i===myTeam?" • YOUR TEAM":""}<div class="muted" style="color:#ddd">${esc(tm.captain||"")}</div><div style="font-size:11px">${bands.map(b=>b+" "+tbc(i,b)).join(" • ")}</div></div><div class="roster">${Array.from({length:teamCapacity(i)},(_,j)=>{let g=S.golfers[tm.roster[j]];return g?`<div class="slot"><strong>${esc(g.name)}</strong> <span class="badge">${g.band}</span><div class="muted">${bandRange(g.band)}</div></div>`:`<div class="slot muted">Open roster spot</div>`}).join("")}</div></div>`).join("");document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>pick(+b.dataset.p));draw()}
 function draw(){let x=remaining();document.getElementById("clock").textContent=Math.floor(x/60)+":"+String(x%60).padStart(2,"0");document.getElementById("clock").style.color=x<=10?"#9b2f2f":""}
 let pickInFlight=false,pickSyncFailed=false,pickRequestEpoch=0;
 // UI guard complements (never replaces) the server-side authorized pick RPC.
 function canSubmitCaptainPick(i){
  const golfer=S.golfers?.[i];
- return !pickSyncFailed&&!!captainUserId
+ return !pickSyncFailed&&!captainRoleRefreshPending&&!!captainUserId
   && document.getElementById("connection")?.textContent==="LIVE"
   && Number.isInteger(i)&&i>=0
   && !S.timerPaused&&S.picks.length<totalPicks()

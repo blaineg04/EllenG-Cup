@@ -39,13 +39,19 @@ const channelEnd=s.indexOf('let draftSoundEnabled=false',channelStart);
 assert.ok(channelStart>=0&&channelEnd>channelStart,'captain session channel lifecycle exists');
 function channelHarness(){
  let subscriptions=0,unsubscriptions=0,renders=0;
+ let roleIndex=null,deferRole=false,authUserId=null;const pendingRoles=[];
  const callbacks=[];
  const elements={login:{style:{}},app:{style:{}},connection:{textContent:'LIVE'},msg:{textContent:''}};
  const buttons=[{disabled:false}];
  const ctx={captainUserId:'captain-a',myTeam:0,S:{teams:[{},{}]},
   captainAuthEpoch:0,captainBootstrapEpoch:0,pickRequestEpoch:0,pickInFlight:false,pickSyncFailed:false,
   document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons},clearInterval:()=>{},
-  render:()=>renders++,console:{error:()=>{}},
+  render:()=>renders++,console:{error:()=>{}},cfg:{draftId:'isolated-test'},
+  db:{auth:{getUser:async()=>({data:{user:{id:authUserId||ctx.captainUserId}},error:null})},
+   from:table=>{assert.equal(table,'elleng_captains');return {select:()=>({eq:()=>({eq:()=>({maybeSingle:()=>{
+    const response={data:{team_index:roleIndex===null?ctx.myTeam:roleIndex},error:null};
+    return deferRole?new Promise(resolve=>pendingRoles.push(resolve)):Promise.resolve(response);
+   }})})})};}},
   subscribe:callback=>{
    subscriptions++;callbacks.push(callback);
    let closed=false;
@@ -60,9 +66,12 @@ function channelHarness(){
   '\n'+s.slice(revokeStart,revokeEnd)+
   '\nthis.startChannel=startCaptainSubscription;this.stopChannel=stopCaptainSubscription;',ctx);
  return {ctx,callbacks,elements,buttons,start:()=>ctx.startChannel(),stop:()=>ctx.stopChannel(),
-  subscriptions:()=>subscriptions,unsubscriptions:()=>unsubscriptions,renders:()=>renders};
+  subscriptions:()=>subscriptions,unsubscriptions:()=>unsubscriptions,renders:()=>renders,
+  setRoleIndex:v=>{roleIndex=v},deferRoles:v=>{deferRole=v},
+  pendingRoles:()=>pendingRoles.length,resolveRole:response=>{const resolve=pendingRoles.shift();assert.ok(resolve);resolve(response)},
+  setAuthUser:v=>{authUserId=v}};
 }
-test('captain signout disposes channel and fences a queued old-session callback',()=>{
+test('captain signout disposes channel and fences a queued old-session callback',async()=>{
  const h=channelHarness();h.start();
  assert.equal(h.subscriptions(),1);
  assert.equal(h.callbacks[0].isCurrent(),true);
@@ -70,10 +79,10 @@ test('captain signout disposes channel and fences a queued old-session callback'
  h.stop();
  assert.equal(h.unsubscriptions(),1);
  assert.equal(h.callbacks[0].isCurrent(),false);
- h.callbacks[0]();
+ await h.callbacks[0]();
  assert.equal(h.renders(),0);
 });
-test('captain re-login replaces channel without duplicate listeners or cross-account render',()=>{
+test('captain re-login replaces channel without duplicate listeners or cross-account render',async()=>{
  const h=channelHarness();h.start();
  const old=h.callbacks[0];
  h.ctx.captainAuthEpoch++;
@@ -83,14 +92,14 @@ test('captain re-login replaces channel without duplicate listeners or cross-acc
  assert.equal(h.unsubscriptions(),1);
  assert.equal(old.isCurrent(),false);
  assert.equal(h.callbacks[1].isCurrent(),true);
- old();h.callbacks[1]();
+ await old();await h.callbacks[1]();
  assert.equal(h.renders(),1);
  h.stop();assert.equal(h.unsubscriptions(),2);
 });
-test('authoritative reconnect revokes captain access when commissioner removes assigned team',()=>{
+test('authoritative reconnect revokes captain access when commissioner removes assigned team',async()=>{
  const h=channelHarness();h.ctx.myTeam=1;h.start();
  h.ctx.S={teams:[{}]}; // Team 1 was removed in the refreshed draft.
- h.callbacks[0]();
+ await h.callbacks[0]();
  assert.equal(h.renders(),0,'invalid team must never re-enable pick controls');
  assert.equal(h.unsubscriptions(),1,'revoked captain listener must be disposed');
  assert.equal(h.ctx.captainUserId,null);
@@ -102,18 +111,55 @@ test('authoritative reconnect revokes captain access when commissioner removes a
  assert.match(h.elements.msg.textContent,/team assignment does not match this draft/);
  assert.equal(h.buttons[0].disabled,true);
  assert.equal(h.callbacks[0].isCurrent(),false,'queued callbacks must remain fenced');
- h.callbacks[0]();
+ await h.callbacks[0]();
  assert.equal(h.renders(),0);
 });
-test('authoritative reconnect retains a valid captain assignment',()=>{
+test('authoritative reconnect retains a valid captain assignment',async()=>{
  const h=channelHarness();h.ctx.myTeam=1;h.start();
- h.callbacks[0]();
+ await h.callbacks[0]();
  assert.equal(h.renders(),1);
  assert.equal(h.unsubscriptions(),0);
  assert.equal(h.ctx.captainUserId,'captain-a');
  assert.equal(h.callbacks[0].isCurrent(),true);
 });
 
+test('captain reassignment on reconnect revokes old team controls',async()=>{
+ const h=channelHarness();h.ctx.myTeam=1;h.setRoleIndex(0);h.start();
+ await h.callbacks[0]();
+ assert.equal(h.renders(),0);assert.equal(h.ctx.captainUserId,null);
+ assert.equal(h.unsubscriptions(),1);assert.match(h.elements.msg.textContent,/team assignment changed/);
+ assert.equal(h.buttons[0].disabled,true);
+});
+test('captain role refresh freezes picks until permission check completes',async()=>{
+ const h=channelHarness();h.start();h.deferRoles(true);
+ const refresh=h.callbacks[0]();
+ assert.equal(h.pendingRoles(),1);assert.equal(h.elements.connection.textContent,'VERIFYING');
+ assert.equal(h.ctx.captainRoleRefreshPending,true);assert.equal(h.buttons[0].disabled,true);
+ assert.equal(h.renders(),0);
+ h.resolveRole({data:{team_index:0},error:null});await refresh;
+ assert.equal(h.elements.connection.textContent,'LIVE');
+ assert.equal(h.ctx.captainRoleRefreshPending,false);assert.equal(h.renders(),1);
+});
+test('late role response cannot reauthorize a revoked session',async()=>{
+ const h=channelHarness();h.start();h.deferRoles(true);
+ const refresh=h.callbacks[0]();
+ h.ctx.captainAuthEpoch++;h.stop();
+ h.resolveRole({data:{team_index:0},error:null});await refresh;
+ assert.equal(h.renders(),0);assert.equal(h.ctx.captainRoleRefreshPending,false);
+});
+test('role lookup error fails closed and disables captain drafting',async()=>{
+ const h=channelHarness();h.start();h.deferRoles(true);
+ const refresh=h.callbacks[0]();
+ h.resolveRole({data:null,error:new Error('network failure')});await refresh;
+ assert.equal(h.renders(),0);assert.equal(h.ctx.pickSyncFailed,true);
+ assert.equal(h.elements.connection.textContent,'SYNC ERROR');assert.equal(h.buttons[0].disabled,true);
+});
+test('account switch during role refresh revokes captain controls',async()=>{
+ const h=channelHarness();h.start();h.setAuthUser('captain-b');
+ await h.callbacks[0]();
+ assert.equal(h.renders(),0);assert.equal(h.ctx.captainUserId,null);
+ assert.match(h.elements.msg.textContent,/account changed during refresh/);
+});
 test('both captain login paths use managed realtime subscriptions',()=>{
  assert.equal(s.split('startCaptainSubscription();').length-1,2);
  assert.doesNotMatch(s,/subscribe\(render\)/);
