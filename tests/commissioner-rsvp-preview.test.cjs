@@ -129,3 +129,30 @@ test('commissioner UI keeps event RSVP preview opt-in and read-only',()=>{
  assert.match(html,/rsvpPreviewController\.invalidate\(\)/);
  assert.match(html,/document\.getElementById\("refreshRsvpPreview"\)\.onclick=\(\)=>rsvpPreviewController\.refresh\(\)/);
 });
+
+test('commissioner preview fails closed when a previously valid roster is replaced by duplicate identities',async()=>{
+ const h=harness();
+ const first=h.controller.refresh();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ h.listReads[0].resolve(rows);await first;
+ assert.equal(h.renders.at(-1).status,'success');
+ const second=h.controller.refresh();
+ h.authReads[1].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ h.listReads[1].resolve([rows[0],{...rows[1],golfer_index:0}]);
+ await second;
+ assert.equal(h.renders.at(-1).status,'error');
+ assert.deepEqual(h.writes,[]);
+});
+test('preview invalidation after RSVP read begins prevents stale render',async()=>{
+ const h=harness(),work=h.controller.refresh();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.listReads.length,1);
+ h.controller.invalidate();
+ h.listReads[0].resolve(rows);
+ await work;
+ assert.deepEqual(h.renders.map(x=>x.status),['loading']);
+ assert.deepEqual(h.writes,[]);
+});
