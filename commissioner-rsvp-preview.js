@@ -13,6 +13,11 @@
   if(!Number.isInteger(teamCount)||teamCount<2||teamCount>36)
    throw new RangeError("Valid team count required");
   const approved=eligibility.approvedRoster(rows,eventId,golfers);
+  // An approved RSVP is not matched until its draft slot contains the
+  // corresponding directory name. Empty or renamed slots are not ready.
+  const reconciliation=eligibility.reconcileDraftRoster(rows,eventId,golfers,golfers);
+  const missingApprovedIndices=reconciliation.missingIndices;
+  const mismatchedApprovedIndices=reconciliation.mismatchedIndices;
   const approvedSet=new Set(approved);
   const unapprovedNamedIndices=golfers.flatMap((golfer,index)=>
    golfer?.name?.trim()&&!approvedSet.has(index)?[index]:[]);
@@ -20,10 +25,12 @@
    approvedCount:approved.length,
    approvedIndices:Object.freeze(approved),
    unapprovedNamedCount:unapprovedNamedIndices.length,
+   missingApprovedCount:missingApprovedIndices.length,
+   mismatchedApprovedCount:mismatchedApprovedIndices.length,
    unapprovedNamedIndices:Object.freeze(unapprovedNamedIndices),
    shortfall:Math.max(0,teamCount-approved.length),
    // Client-side reconciliation is not authorization to save a draft.
-   matchesPreview:approved.length>=teamCount&&unapprovedNamedIndices.length===0
+   matchesPreview:approved.length>=teamCount&&reconciliation.ready
   });
  }
  function create({db,client,eligibility,eventId,getAuth,getDraft,render}){
