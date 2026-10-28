@@ -329,8 +329,10 @@ test('remote draft application and confirmed saves revoke RSVP readiness',()=>{
  const saveBlock=html.slice(html.indexOf('async function secureSave'),html.indexOf('save=secureSave;'));
  const applied=loadBlock.indexOf('S={...fresh(),...data.state};');
  const remoteInvalidate=loadBlock.indexOf('rsvpPreviewController.invalidate();');
- assert.ok(applied>=0 && remoteInvalidate>applied);
- assert.ok(loadBlock.indexOf('onApplied();')>remoteInvalidate);
+ const remoteRead=loadBlock.indexOf('db.from("elleng_drafts")');
+ assert.ok(remoteInvalidate>=0 && remoteRead>remoteInvalidate,'RSVP readiness must clear before remote draft read');
+ assert.ok(applied>remoteRead);
+ assert.ok(loadBlock.indexOf('onApplied();')>applied);
  const saved=saveBlock.indexOf('draftUpdatedAt=saved.updated_at;');
  const localInvalidate=saveBlock.indexOf('rsvpPreviewController.invalidate();');
  assert.ok(saved>=0 && localInvalidate>saved);
