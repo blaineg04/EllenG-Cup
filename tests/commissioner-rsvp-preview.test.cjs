@@ -503,3 +503,42 @@ test('pending and declined accounts cannot share one event golfer index',()=>{
  assert.throws(()=>eligibility.approvedRoster(enrolled,'nov20',directory),/Duplicate approved golfer or event enrollment/);
  assert.throws(()=>adapter.approvedGolferIndices(enrolled,'nov20',directory),/Duplicate approved golfer or event enrollment/);
 });
+
+test('draft mutation during authentication prevents RSVP read and readiness claim',async()=>{
+ const h=harness(),pending=h.controller.refresh();
+ assert.equal(h.renders.at(-1).status,'loading');
+ // Simulate a remote draft update applied before the authentication promise resolves.
+ h.draft.golfers[0].name='Alice (updated on second device)';
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await pending;
+ assert.equal(h.listReads.length,0,'do not query RSVPs against a superseded draft');
+ assert.deepEqual(h.renders.map(x=>x.status),['loading','stale']);
+ assert.deepEqual(h.writes,[]);
+});
+
+test('draft mutation during RSVP fetch cannot restore previous green readiness',async()=>{
+ const h=harness();
+ const first=h.controller.refresh();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ h.listReads[0].resolve(rows);await first;
+ assert.equal(h.renders.at(-1).summary.matchesPreview,true);
+ const second=h.controller.refresh();
+ h.authReads[1].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.listReads.length,2);
+ // Changing team configuration in place must be detected even if a Realtime
+ // callback has not yet invalidated the previous preview request.
+ h.draft.teams[0].name='Updated on second device';
+ h.listReads[1].resolve(rows);
+ await second;
+ assert.deepEqual(h.renders.slice(-2).map(x=>x.status),['loading','stale']);
+ assert.equal(h.renders.filter(x=>x.status==='success').length,1);
+ assert.deepEqual(h.writes,[]);
+});
+
+test('commissioner UI explains changed-draft RSVP results without implying approval',()=>{
+ const html=require('node:fs').readFileSync('admin.html','utf8');
+ assert.match(html,/result\.status==="stale"/);
+ assert.match(html,/Draft roster changed while checking RSVPs/);
+});
