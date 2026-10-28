@@ -68,6 +68,9 @@ load=async function(isCurrent=()=>true,onApplied=()=>{}){
  if(draftUpdatedAt&&new Date(data.updated_at).getTime()<new Date(draftUpdatedAt).getTime())return S;
  draftUpdatedAt=data.updated_at;
  S={...fresh(),...data.state};
+ // A second device may replace the roster while an RSVP read is in flight.
+ // Discard both displayed readiness and any pending result before repainting.
+ rsvpPreviewController.invalidate();
  onApplied();
  return S;
 };
@@ -94,6 +97,9 @@ async function secureSave(){
    if(!saved?.updated_at)throw new Error("Draft save was not confirmed.");
    draftUpdatedAt=saved.updated_at;
   }
+  // A successful local draft write supersedes any earlier RSVP snapshot.
+  // Failed writes must not be presented as a newly verified roster.
+  rsvpPreviewController.invalidate();
  }catch(error){
   if(sameCommissionerSession())alert("Draft was not saved. "+(error?.message||"Please reload before trying again.")+" Reload the page before making another change.");
   throw error;
