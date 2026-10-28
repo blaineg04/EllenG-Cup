@@ -204,3 +204,23 @@ BEGIN
  THEN RAISE EXCEPTION 'Invalid roster altered existing score'; END IF;
 END $$;
 UPDATE public.elleng_drafts SET state=jsonb_set(state,'{teams,0,roster}','[0,1,2,3]'::jsonb) WHERE id='draft-qa';
+
+-- Verify actual PostgreSQL RPC grants, not only the simulated auth.uid().
+DO $$
+BEGIN
+ IF has_function_privilege('anon','public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)','EXECUTE')
+ THEN RAISE EXCEPTION 'Anonymous role can execute scoring RPC'; END IF;
+ IF NOT has_function_privilege('authenticated','public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)','EXECUTE')
+ THEN RAISE EXCEPTION 'Authenticated role cannot execute scoring RPC'; END IF;
+END $$;
+-- Run through the authenticated SQL role, with no direct pair/team table privileges.
+SELECT set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false);
+SET ROLE authenticated;
+SELECT public.elleng_test_authorized_split_pair('tournament-qa',0,17,0,7);
+RESET ROLE;
+DO $$
+BEGIN
+ IF (SELECT score FROM public.elleng_pair_hole_scores
+     WHERE tournament_id='tournament-qa' AND hole=17 AND pair_index=0)<>7
+ THEN RAISE EXCEPTION 'Authenticated RPC role failed to persist score'; END IF;
+END $$;
