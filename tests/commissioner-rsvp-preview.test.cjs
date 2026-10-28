@@ -1,0 +1,114 @@
+'use strict';
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const {create,summarize}=require('../commissioner-rsvp-preview.js');
+const eligibility=require('../event-rsvp-eligibility.js');
+const directory=[{name:'Alice'},{name:'Bob'},{name:'Carol'}];
+const teams=[{},{}];
+const rows=[0,1].map(i=>({
+ tournament_id:'nov20',user_id:'account-'+i,golfer_index:i,
+ status:'playing',approval_status:'approved'
+}));
+function deferred(){
+ let resolve,reject;
+ const promise=new Promise((yes,no)=>{resolve=yes;reject=no});
+ return {promise,resolve,reject};
+}
+function harness(eventId='nov20'){
+ const authReads=[],listReads=[],renders=[],writes=[];
+ let auth={epoch:3,userId:'commissioner-a'};
+ const db={
+  auth:{getUser:()=>{const d=deferred();authReads.push(d);return d.promise}},
+  from:()=>{writes.push('from');throw Error('unexpected direct table access')},
+  rpc:()=>{writes.push('rpc');throw Error('unexpected database write')}
+ };
+ const client={list:(database,id)=>{
+  assert.equal(database,db);assert.equal(id,'nov20');
+  const d=deferred();listReads.push(d);return d.promise;
+ }};
+ const draft={golfers:structuredClone(directory),teams:structuredClone(teams)};
+ const controller=create({db,client,eligibility,eventId,getAuth:()=>auth,
+  getDraft:()=>draft,render:value=>renders.push(value)});
+ return {controller,authReads,listReads,renders,writes,draft,
+  signout:()=>{auth={epoch:auth.epoch+1,userId:null}},
+  switchUser:()=>{auth={epoch:auth.epoch+1,userId:'commissioner-b'}}};
+}
+test('read-only summary reports approved players and unapproved named slots',()=>{
+ const result=summarize(rows,'nov20',directory,2,eligibility);
+ assert.equal(result.approvedCount,2);
+ assert.deepEqual(result.approvedIndices,[0,1]);
+ assert.deepEqual(result.unapprovedNamedIndices,[2]);
+ assert.equal(result.matchesPreview,false);
+ assert.ok(Object.isFrozen(result));
+ assert.ok(Object.isFrozen(result.approvedIndices));
+ const clean=summarize(rows,'nov20',directory.slice(0,2),2,eligibility);
+ assert.equal(clean.matchesPreview,true);
+ assert.equal(summarize([], 'nov20', [],2,eligibility).matchesPreview,false);
+ assert.throws(()=>summarize(rows,'nov20',directory,1,eligibility),RangeError);
+});
+test('verified commissioner can preview without altering draft or writing database',async()=>{
+ const h=harness(),before=structuredClone(h.draft);
+ const work=h.controller.refresh();
+ assert.equal(h.renders[0].status,'loading');
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.listReads.length,1);
+ h.listReads[0].resolve(rows);await work;
+ assert.equal(h.renders.at(-1).status,'success');
+ assert.equal(h.renders.at(-1).summary.approvedCount,2);
+ assert.deepEqual(h.draft,before);
+ assert.deepEqual(h.writes,[]);
+});
+test('signout during authentication prevents even an RSVP read',async()=>{
+ const h=harness(),work=h.controller.refresh();
+ h.signout();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await work;
+ assert.equal(h.listReads.length,0);
+ assert.deepEqual(h.renders.map(x=>x.status),['loading']);
+});
+test('old commissioner RSVP result cannot render after account switch',async()=>{
+ const h=harness(),work=h.controller.refresh();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ h.switchUser();
+ h.listReads[0].resolve(rows);await work;
+ assert.deepEqual(h.renders.map(x=>x.status),['loading']);
+});
+test('newer RSVP refresh wins over stale response from same commissioner',async()=>{
+ const h=harness(),first=h.controller.refresh(),second=h.controller.refresh();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ h.authReads[1].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.listReads.length,1);
+ h.listReads[0].resolve(rows.slice(0,1));await second;await first;
+ assert.equal(h.renders.at(-1).summary.approvedCount,1);
+ assert.deepEqual(h.renders.map(x=>x.status),['loading','loading','success']);
+});
+test('authentication mismatch and invalid RSVP data fail closed',async()=>{
+ const h=harness(),first=h.controller.refresh();
+ h.authReads[0].resolve({data:{user:{id:'other'}},error:null});await first;
+ assert.deepEqual(h.renders.map(x=>x.status),['loading','error']);
+ assert.equal(h.listReads.length,0);
+ const second=h.controller.refresh();
+ h.authReads[1].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await new Promise(resolve=>setImmediate(resolve));
+ h.listReads[0].resolve([{...rows[0],golfer_index:99}]);await second;
+ assert.equal(h.renders.at(-1).status,'error');
+ assert.ok(!h.renders.some(x=>x.status==='success'));
+});
+test('explicitly disabled preview never accesses event RSVP data',async()=>{
+ const h=harness('');
+ await h.controller.refresh();
+ assert.equal(h.controller.enabled,false);
+ assert.equal(h.authReads.length,0);
+ assert.equal(h.listReads.length,0);
+ assert.equal(h.renders.at(-1).status,'disabled');
+});
+test('explicit invalidation fences an in-flight preview',async()=>{
+ const h=harness(),work=h.controller.refresh();
+ h.controller.invalidate();
+ h.authReads[0].resolve({data:{user:{id:'commissioner-a'}},error:null});
+ await work;
+ assert.equal(h.listReads.length,0);
+});
