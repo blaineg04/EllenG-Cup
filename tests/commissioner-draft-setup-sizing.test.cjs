@@ -2,7 +2,8 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
-const {resizeDraftSetup}=require('../draft-setup-config.js');
+const vm=require('node:vm');
+const {resizeDraftSetup,assertDraftSetupEditable}=require('../draft-setup-config.js');
 function initial(){
  return {
   golfers:[{name:'Alice',hcp:'8',band:'A',team:null},{name:'Bob',hcp:'16',band:'B',team:null},
@@ -68,4 +69,41 @@ test('commissioner screen wires sizing through verified session and secure save'
  assert.match(html,/EllenGDraftSetup\.resizeDraftSetup\(S,teamCount,golferCount\)/);
  assert.match(html,/if\(!sameCommissionerAction\(actionEpoch,actionUserId\)\)return;/);
  assert.match(html,/await save\(\);/);
+});
+
+test('setup edit guard blocks every assignment signal, not just resizing',()=>{
+ const picked=initial();picked.picks.push({golfer:0,team:0});
+ const roster=initial();roster.teams[0].roster.push(0);
+ const assigned=initial();assigned.golfers[0].team=0;
+ for(const state of [picked,roster,assigned])
+  assert.throws(()=>assertDraftSetupEditable(state),/Cannot resize after draft picks/);
+ assert.equal(assertDraftSetupEditable(initial()),true);
+ assert.throws(()=>assertDraftSetupEditable({picks:[]}),TypeError);
+});
+test('real commissioner field reader cannot mutate an active draft even if called directly',()=>{
+ const html=fs.readFileSync('admin.html','utf8');
+ const start=html.indexOf('function readSetupFields(){');
+ const end=html.indexOf('document.getElementById("applySetupSize").onclick',start);
+ assert.ok(start>0&&end>start);
+ const state=initial();
+ const ctx={S:state,EllenGDraftSetup:require('../draft-setup-config.js'),document:{
+  querySelectorAll:selector=>selector==='[data-n]'?[{dataset:{n:'0'},value:'Changed during draft'}]:[],
+  getElementById:id=>({dtype:{value:'straight'},tlen:{value:'45'}}[id])
+ }};
+ vm.createContext(ctx);
+ vm.runInContext(html.slice(start,end)+'\nthis.readFields=readSetupFields;',ctx);
+ state.picks.push({golfer:0,team:0});
+ assert.throws(()=>ctx.readFields(),/Cannot resize after draft picks/);
+ assert.equal(state.golfers[0].name,'Alice','field reader must not mutate before checking');
+ assert.equal(state.draftType,'snake','draft order must remain unchanged');
+ state.picks.length=0;
+ ctx.readFields();
+ assert.equal(state.golfers[0].name,'Changed during draft','pre-draft edits remain allowed');
+ assert.equal(state.draftType,'straight');
+});
+test('commissioner setup shows read-only fields while picks exist',()=>{
+ const html=fs.readFileSync('admin.html','utf8');
+ assert.match(html,/EllenGDraftSetup\.assertDraftSetupEditable\(S\)/);
+ assert.match(html,/querySelectorAll\("input,select,button"\)\.forEach\(el=>el\.disabled=locked\)/);
+ assert.match(html,/Setup is read-only; undo all picks/);
 });
