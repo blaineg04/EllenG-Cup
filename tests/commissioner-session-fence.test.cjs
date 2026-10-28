@@ -17,12 +17,12 @@ function harness(){
  const elements={loginCard:{style:{display:'block'}},adminApp:{style:{display:'none'}},
   authMsg:{textContent:''},connection:{textContent:''}};
  const buttons=[{disabled:false}],authReads=[],draftReads=[],writes=[];
- let authChanged,subscriptions=0,unsubscriptions=0,activeSubscriptions=0,renders=0,invalidations=0;const callbacks=[];
+ let authChanged,subscriptions=0,unsubscriptions=0,activeSubscriptions=0,renders=0,invalidations=0,confirmedUserId=null;const callbacks=[];
  const ctx={draftUpdatedAt:null,savingDraft:false,tick:null,liveMode:false,S:{picks:[]},
   fresh:()=>({picks:[]}),cfg:{draftId:'synthetic-only'},
   rsvpPreviewController:{invalidate:()=>{invalidations++}},
   document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons},
-  db:{auth:{getUser:()=>new Promise(resolve=>authReads.push(resolve)),
+  db:{auth:{getUser:()=>confirmedUserId!==null?Promise.resolve({data:{user:{id:confirmedUserId}},error:null}):new Promise(resolve=>authReads.push(resolve)),
    onAuthStateChange:cb=>{authChanged=cb}},
    from:()=>({select:()=>({eq:()=>({maybeSingle:()=>new Promise(resolve=>draftReads.push(resolve))})}),
     insert:()=>{writes.push('insert');throw Error('unexpected insert')}}),
@@ -34,18 +34,14 @@ function harness(){
   alert:()=>{},console:{error:()=>{}}};
  vm.createContext(ctx);vm.runInContext(code,ctx);
  return {ctx,elements,buttons,authReads,draftReads,writes,
-  open:()=>ctx.openAdmin(),save:()=>ctx.secureSave(),change:(event,session)=>authChanged(event,session),
+  open:()=>{confirmedUserId=null;return ctx.openAdmin()},save:()=>{confirmedUserId=null;return ctx.secureSave()},change:(event,session)=>authChanged(event,session),
   auth:(index,id)=>authReads[index]({data:{user:id?{id}:null},error:null}),
-  // A successful owner read is followed by a second getUser() identity check.
-  // Resolve that verification on the next microtask so the synthetic login
-  // behaves like a real Supabase response rather than leaving the suite pending.
+  // After the owner read, Supabase getUser() returns the current account for
+  // the second identity check. Saves explicitly switch back to deferred reads
+  // so sign-out races remain controllable in the synthetic test.
   draft:(index,id,confirmedId=id)=>{
-   const confirmationIndex=authReads.length;
+   confirmedUserId=confirmedId;
    draftReads[index]({data:{state:{picks:[]},owner_id:id,updated_at:'2026-10-27T00:00:00Z'},error:null});
-   queueMicrotask(()=>{
-    assert.equal(authReads.length,confirmationIndex+1,'commissioner must recheck identity after draft owner read');
-    authReads[confirmationIndex]({data:{user:confirmedId?{id:confirmedId}:null},error:null});
-   });
   },
   subscriptions:()=>subscriptions,unsubscriptions:()=>unsubscriptions,activeSubscriptions:()=>activeSubscriptions,
   invalidations:()=>invalidations,
@@ -100,11 +96,11 @@ test('signout during save authentication prevents commissioner database write',a
  h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
  h.draft(0,'commissioner-a');await opened;
  const saving=h.save();
- assert.equal(h.authReads.length,3,'initial login, owner recheck, and save authorization each require getUser');
+ assert.equal(h.authReads.length,2,'initial login and save authorization each require a deferred getUser');
  assert.equal(h.invalidations(),2,'opening commissioner verification and starting a save revoke old RSVP readiness');
  h.change('SIGNED_OUT',null);
  assert.equal(h.invalidations(),3,'signout must revoke any pending RSVP snapshot');
- h.auth(2,'commissioner-a');
+ h.auth(1,'commissioner-a');
  await assert.rejects(saving,/session changed while saving/);
  assert.deepEqual(h.writes,[]);
  assert.equal(h.elements.adminApp.style.display,'none');
@@ -221,7 +217,7 @@ test('reverification replaces the old commissioner channel without duplicate lis
  assert.equal(h.unsubscriptions(),1);
  assert.equal(h.activeSubscriptions(),0);
  assert.equal(h.elements.adminApp.style.display,'none');
- h.auth(2,'commissioner-b');await new Promise(resolve=>setImmediate(resolve));
+ h.auth(1,'commissioner-b');await new Promise(resolve=>setImmediate(resolve));
  h.draft(1,'commissioner-b');await second;
  assert.equal(h.subscriptions(),2);
  assert.equal(h.activeSubscriptions(),1);
