@@ -25,16 +25,16 @@ CREATE TRIGGER guard_score BEFORE INSERT ON elleng_lock_scores
 FOR EACH ROW EXECUTE FUNCTION pg_temp.elleng_lock_test_trigger();
 SET LOCAL ROLE elleng_lock_captain;
 INSERT INTO elleng_lock_scores VALUES ('event',1,4);
-DO $
+DO $$
 DECLARE denied boolean:=false;
 BEGIN
  BEGIN
   UPDATE public.elleng_lock_tournaments SET team_count=9 WHERE id='event';
  EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
  IF NOT denied THEN RAISE EXCEPTION 'Captain received tournament administration privilege'; END IF;
-END $;
+END $$;
 
-DO $
+DO $$
 DECLARE denied boolean:=false;
 BEGIN
  BEGIN INSERT INTO public.elleng_lock_scores VALUES ('event',3,4);
