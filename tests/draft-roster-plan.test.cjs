@@ -1,7 +1,9 @@
 'use strict';
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const {draftRosterPlan,draftPickOrder}=require('../event-rsvp-eligibility.js');
+const {draftRosterPlan,draftTurnAtPick,draftPickOrder}=require('../event-rsvp-eligibility.js');
+const fs=require('node:fs');
+const vm=require('node:vm');
 const golfers=Array.from({length:36},(_,i)=>({name:'Golfer '+i}));
 const rows=n=>Array.from({length:n},(_,i)=>({tournament_id:'nov20',user_id:'user'+i,golfer_index:i,status:'playing',approval_status:'approved'}));
 test('uneven 8-player draft across 3 teams has no lost seats',()=>{
@@ -43,4 +45,39 @@ test('invalid draft capacities and format fail closed',()=>{
  for(const capacities of [[],[2],[1,0],[1,-1],[1,1.5],null])
    assert.throws(()=>draftPickOrder(capacities),RangeError);
  assert.throws(()=>draftPickOrder([2,2],'random'),/Invalid draft format/);
+});
+
+test('snake partial final round allocates seats to the teams actually on the clock',()=>{
+ const plan=draftRosterPlan(rows(27),'nov20',golfers,7,'snake');
+ assert.deepEqual(plan.teamCapacities,[3,4,4,4,4,4,4]);
+ assert.deepEqual(draftPickOrder(plan.teamCapacities,'snake').slice(-6),[6,5,4,3,2,1]);
+});
+test('straight draft allocates partial final round from the first team',()=>{
+ const plan=draftRosterPlan(rows(27),'nov20',golfers,7,'straight');
+ assert.deepEqual(plan.teamCapacities,[4,4,4,4,4,4,3]);
+ assert.deepEqual(draftPickOrder(plan.teamCapacities,'straight').slice(-6),[0,1,2,3,4,5]);
+ assert.deepEqual(draftPickOrder(plan.teamCapacities,'standard'),draftPickOrder(plan.teamCapacities,'straight'));
+});
+test('approved-roster draft plan stays identical to live common.js turn order',()=>{
+ const source=fs.readFileSync('common.js','utf8');
+ const start=source.indexOf('function order(n){'),end=source.indexOf('function bandCounts()',start);
+ assert.ok(start>=0&&end>start,'Live draft order must be present');
+ const liveOrderSource=source.slice(start,end);
+ for(const [count,teams] of [[8,3],[10,4],[17,5],[27,7],[29,2],[36,9]]){
+  for(const format of ['snake','straight']){
+   const ctx={S:{teams:Array.from({length:teams},()=>({})),draftType:format},cfg:{defaultTeamCount:7}};
+   vm.runInNewContext(liveOrderSource+'\nthis.liveOrder=order;',ctx);
+   const expected=Array.from({length:count},(_,i)=>ctx.liveOrder(i));
+   const plan=draftRosterPlan(rows(count),'nov20',golfers,teams,format);
+   const planned=draftPickOrder(plan.teamCapacities,format);
+   assert.deepEqual(planned,expected,`${count} golfers / ${teams} teams / ${format}`);
+   assert.deepEqual(Array.from({length:count},(_,i)=>draftTurnAtPick(i,teams,format)),expected);
+   assert.equal(plan.teamCapacities.reduce((sum,n)=>sum+n,0),count);
+  }
+ }
+});
+test('unknown draft format cannot silently create a different turn schedule',()=>{
+ assert.throws(()=>draftRosterPlan(rows(8),'nov20',golfers,3,'random'),/Invalid draft format/);
+ assert.throws(()=>draftTurnAtPick(0,3,'random'),/Invalid draft format/);
+ assert.throws(()=>draftTurnAtPick(-1,3),RangeError);
 });
