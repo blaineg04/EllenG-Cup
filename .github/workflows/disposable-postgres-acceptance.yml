@@ -16,7 +16,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check reference schema RLS and team-size guardrails
         run: node --test tests/acceptance/event-rsvp-rollout.test.cjs tests/acceptance/event-rsvp-client.test.cjs tests/acceptance/event-rsvp-eligibility.test.cjs tests/reference-schema-security.test.cjs tests/realtime-client-reconnect.test.cjs tests/draft-reconnect.test.cjs tests/captain-pick-inflight.test.cjs tests/draft-subscribe-behavior.test.cjs tests/draft-timer-behavior.test.cjs tests/draft-two-client-simulation.test.cjs
-      - name: Verify commissioner authorization and RSVP regressions\n        run: node --test tests/commissioner-rsvp-preview.test.cjs\n      - name: Check scoring preflight contracts
+      - name: Verify commissioner authorization and RSVP regressions
+        run: node --test tests/commissioner-rsvp-preview.test.cjs
+      - name: Check scoring preflight contracts
         run: node --test tests/acceptance/scoring-preflight-contract.test.cjs
       - name: Run disposable native PostgreSQL contract without Docker
         shell: bash
