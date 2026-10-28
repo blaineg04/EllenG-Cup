@@ -208,3 +208,12 @@ test('approved seat coverage uses full draft size and does not imply readiness',
  assert.equal(result.matchesPreview,false);
  assert.equal(summarize([],'nov20',[],2,eligibility).approvedSeatCoverage,0);
 });
+
+test('fully approved named subset does not mark a partially configured draft ready',()=>{
+ const draft=[{name:'Alice'},{name:'Bob'},{name:''}];
+ const result=summarize(rows,'nov20',draft,2,eligibility);
+ assert.equal(result.approvedCount,2);
+ assert.equal(result.unnamedSlotCount,1);
+ assert.equal(result.shortfall,0);
+ assert.equal(result.matchesPreview,false);
+});
