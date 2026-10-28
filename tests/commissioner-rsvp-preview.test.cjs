@@ -601,7 +601,7 @@ test('draft pick and format changes during RSVP fetch cannot restore readiness',
 
 test('pre-draft RSVP readiness never certifies a draft after picks or assignments begin',async()=>{
  const mutations=[
-  draft=>{draft.picks.push({golfer:0,team:0});},
+  draft=>{draft.picks=[{golfer:0,team:0}];},
   draft=>{draft.teams[0].roster=[0];},
   draft=>{draft.golfers[0].team=0;}
  ];
