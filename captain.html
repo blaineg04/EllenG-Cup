@@ -880,6 +880,11 @@ document.getElementById("signin").onclick=async()=>{
   const msg=document.getElementById("msg"),status=document.getElementById("connection"),passwordInput=document.getElementById("pw");
   const email=document.getElementById("email").value.trim(),password=passwordInput.value;
   if(!email||!password){msg.textContent="Enter captain email and password.";if(status)status.textContent="READY";return}
+  // A new sign-in can replace an already authorized captain. Retire the old
+  // account BEFORE Supabase emits SIGNED_IN for the replacement; otherwise
+  // the auth-change handler revokes this new login while it is still pending.
+  // This also fences old Realtime callbacks, picks and timer refreshes.
+  if(captainUserId)revokeCaptainSession();
   // Interactive login supersedes any pending restored-session bootstrap.
   const loginEpoch=++captainBootstrapEpoch;captainRoleLookupId++;
   const label=button.textContent;button.disabled=true;button.textContent="Signing In…";msg.textContent="Signing in…";
