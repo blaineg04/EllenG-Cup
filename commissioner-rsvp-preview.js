@@ -38,7 +38,9 @@
    duplicateNamedCount:duplicateNamedIndices.length,
    duplicateNamedIndices:Object.freeze(duplicateNamedIndices),
    missingApprovedCount:missingApprovedIndices.length,
+   missingApprovedIndices:Object.freeze([...missingApprovedIndices]),
    mismatchedApprovedCount:mismatchedApprovedIndices.length,
+   mismatchedApprovedIndices:Object.freeze([...mismatchedApprovedIndices]),
    unapprovedNamedIndices:Object.freeze(unapprovedNamedIndices),
    shortfall:Math.max(0,teamCount-approved.length),
    // Client-side reconciliation is not authorization to save a draft.
