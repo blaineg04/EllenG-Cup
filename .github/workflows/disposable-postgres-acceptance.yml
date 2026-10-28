@@ -192,6 +192,21 @@ jobs:
           splitpair_db="${db}_splitpair"
           sudo -u postgres createdb "$splitpair_db"
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$splitpair_db" -f tests/acceptance/disposable-split-pair-atomic.sql
+          # Two genuine database sessions compete for the same tournament row lock.
+          # Hold the first transaction after committing the first pair write, while
+          # the second attempts to post the other pair.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$splitpair_db" -c "select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false); delete from public.elleng_pair_hole_scores; delete from public.elleng_team_scores;" >/dev/null
+          first_pair="$(mktemp)"
+          second_pair="$(mktemp)"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$splitpair_db" -c "begin; select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false); select public.elleng_test_authorized_split_pair('tournament-qa',0,13,0,18); select pg_sleep(2); commit;" > "$first_pair" 2>&1 &
+          first_pair_pid=$!
+          sleep 0.4
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$splitpair_db" -c "select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false); select public.elleng_test_authorized_split_pair('tournament-qa',0,13,1,19);" > "$second_pair" 2>&1
+          wait "$first_pair_pid"
+          test "$(sudo -u postgres psql -X -At -d "$splitpair_db" -c "select score from public.elleng_team_scores where tournament_id='tournament-qa' and team_index=0 and hole=13;")" = 37
+          test "$(sudo -u postgres psql -X -At -d "$splitpair_db" -c "select count(*) from public.elleng_pair_hole_scores where tournament_id='tournament-qa' and hole=13;")" = 2
+          rm -f "$first_pair" "$second_pair"
+          echo 'PASS: concurrent independent pair submissions produce one consistent team total.'
           sudo -u postgres dropdb "$splitpair_db"
           echo 'PASS: staged Split-Pair RPC completed, cleared, and denied an unauthorized actor.'
           echo 'Full Supabase Auth/RLS and two-device checks remain pending.'
