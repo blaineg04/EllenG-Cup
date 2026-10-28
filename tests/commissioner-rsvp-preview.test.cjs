@@ -333,12 +333,16 @@ test('remote draft application and confirmed saves revoke RSVP readiness',()=>{
  assert.ok(remoteInvalidate>=0 && remoteRead>remoteInvalidate,'RSVP readiness must clear before remote draft read');
  assert.ok(applied>remoteRead);
  assert.ok(loadBlock.indexOf('onApplied();')>applied);
+ const saveStarted=saveBlock.indexOf('savingDraft=true;');
+ const firstInvalidate=saveBlock.indexOf('rsvpPreviewController.invalidate();');
  const saved=saveBlock.indexOf('draftUpdatedAt=saved.updated_at;');
- const localInvalidate=saveBlock.indexOf('rsvpPreviewController.invalidate();');
- assert.ok(saved>=0 && localInvalidate>saved);
- assert.ok(saveBlock.indexOf('}catch(error)')>localInvalidate);
+ const confirmedInvalidate=saveBlock.lastIndexOf('rsvpPreviewController.invalidate();');
+ assert.ok(saveStarted>=0 && firstInvalidate>saveStarted && firstInvalidate<saved,
+  'a pending or failed save must immediately clear the previous approval result');
+ assert.ok(saved>=0 && confirmedInvalidate>saved);
+ assert.ok(saveBlock.indexOf('}catch(error)')>confirmedInvalidate);
  assert.equal(loadBlock.split('rsvpPreviewController.invalidate();').length-1,1);
- assert.equal(saveBlock.split('rsvpPreviewController.invalidate();').length-1,1);
+ assert.equal(saveBlock.split('rsvpPreviewController.invalidate();').length-1,2);
 });
 
 test('second-device roster replacement revokes old preview and fences a pending RSVP read',async()=>{
