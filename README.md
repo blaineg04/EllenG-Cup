@@ -31,7 +31,7 @@ Security:
 - Never place a Supabase secret/service-role key in these browser files.
 
 Note:
-The database RLS authorizes registered captains to update the shared draft row. The captain page additionally enforces turn ownership and ABCD eligibility. For adversarial/public-internet hardening, move the pick transaction into a Postgres RPC that validates turn, band quota, and golfer availability atomically.
+Current drafting uses the PostgreSQL `elleng_make_pick` RPC, which checks captain assignment, turn ownership, draft pause, and handicap-band eligibility while locking the draft row. `elleng_auto_pick` handles timeout picks; a staged parity fix and regression tests are under `db/patches/` and `tests/`. Captains must not receive unrestricted draft-row UPDATE permissions. Do not consider the draft launch-ready until authenticated negative-permission, concurrent-pick, and two-device tests pass.
 
 ## November 20 rehearsal — verification gates (development only)
 
@@ -46,3 +46,11 @@ This checklist is for the November 13 rehearsal, **not** permission to deploy or
 7. **Go/no-go:** Record the tested commit SHA, isolated project reference (not credentials), test account roles, device/browser versions, CI run links, pass/fail evidence, and any unresolved issues. A failed or untested critical item is **no-go**; do not merge/deploy as part of this checklist.
 
 **Known limitation:** GitHub Actions unit tests and disposable PostgreSQL contracts do not replace a live two-device rehearsal. Rehearsal execution requires confirmed isolated Supabase access and two authenticated sessions.
+
+## Draft auto-pick parity: staged change (October 28, 2026)
+
+- Proposed SQL: `db/patches/20261028_auto_pick_balance.sql` (committed **only**, not applied to live Supabase).
+- Reference logic tests: `node --test tests/auto-pick-balance.test.cjs` (pure JS; **not** PostgreSQL RPC integration tests).
+- Synthetic PostgreSQL eligibility checks: `tests/sql/auto_pick_balance_regression.sql`. Requires the live helper functions reproduced in an **isolated disposable** PostgreSQL test database; this script exercises the penalty helper and candidate calculation, **not** authenticated calls to `elleng_auto_pick`.
+- Required next gate: in that disposable database, test the actual auto-pick RPC as commissioner and captain, rejection of unassigned users, paused and premature timer no-ops, expiring timer, duplicate picks, and concurrent calls. Do not point any test at project `xepccqedhbucpbwuykoc`.
+- Important: GitHub commits and standalone JS passes do **not** verify applied Supabase migration, production function behavior, mobile/desktop appearance, or live Realtime synchronization.
