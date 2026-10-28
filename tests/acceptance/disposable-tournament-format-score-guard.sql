@@ -6,12 +6,21 @@ CREATE TABLE elleng_range_tournaments(id text PRIMARY KEY,draft_id text NOT NULL
 CREATE TABLE elleng_range_team_scores(tournament_id text NOT NULL REFERENCES elleng_range_tournaments(id),team_index integer NOT NULL,hole integer NOT NULL,score integer NOT NULL,PRIMARY KEY(tournament_id,team_index,hole),CHECK(score BETWEEN 1 AND 40));
 INSERT INTO elleng_range_drafts VALUES ('standard','{"playFormat":"elleng"}'),('split','{"playFormat":"split_pair"}');
 INSERT INTO elleng_range_tournaments VALUES ('event-standard','standard'),('event-split','split');
+CREATE TABLE elleng_range_pair_details(tournament_id text NOT NULL REFERENCES elleng_range_tournaments(id),score integer NOT NULL);
 -- Guard draft format changes when existing official totals would be invalid.
 CREATE FUNCTION pg_temp.validate_elleng_draft_format_change() RETURNS trigger
 LANGUAGE plpgsql AS $$
 DECLARE v_new_format text;
 BEGIN
  v_new_format:=NEW.state->>'playFormat';
+ IF v_new_format IS DISTINCT FROM OLD.state->>'playFormat'
+ AND EXISTS (
+  SELECT 1 FROM elleng_range_tournaments t
+  JOIN elleng_range_pair_details p ON p.tournament_id=t.id
+  WHERE t.draft_id=NEW.id
+ ) THEN
+  RAISE EXCEPTION 'Format change requires reconciling pair scores' USING ERRCODE='23514';
+ END IF;
  IF v_new_format IS DISTINCT FROM OLD.state->>'playFormat'
  AND EXISTS(
   SELECT 1 FROM elleng_range_tournaments t
@@ -83,16 +92,21 @@ BEGIN
  UPDATE elleng_range_drafts SET state='{"playFormat":"split_pair"}'::jsonb WHERE id='standard';
  IF (SELECT state->>'playFormat' FROM elleng_range_drafts WHERE id='standard')<>'split_pair'
  THEN RAISE EXCEPTION 'Valid format switch unexpectedly rejected'; END IF;
- -- A real tournament can have pair/player detail that cannot be reinterpreted
- -- merely by switching the draft format. Probe that stricter rollout rule.
- CREATE TEMP TABLE elleng_range_pair_details(tournament_id text,score integer) ON COMMIT DROP;
- INSERT INTO elleng_range_pair_details VALUES ('event-split',12);
+ -- A 12-point total fits both formats, but cannot be reinterpreted while
+ -- pair-level detail still exists: the actual draft trigger must reject it.
+ UPDATE elleng_range_team_scores SET score=12 WHERE tournament_id='event-split' AND hole=1;
+ INSERT INTO elleng_range_pair_details VALUES ('event-split',6);
  denied:=false;
  BEGIN
-  IF EXISTS (SELECT 1 FROM elleng_range_pair_details WHERE tournament_id='event-split')
-  THEN RAISE EXCEPTION 'Format change requires clearing or reconciling pair details' USING ERRCODE='23514'; END IF;
+  UPDATE elleng_range_drafts SET state='{"playFormat":"elleng"}'::jsonb WHERE id='split';
  EXCEPTION WHEN check_violation THEN denied:=true; END;
- IF NOT denied THEN RAISE EXCEPTION 'Pair detail reconciliation blocker not detected'; END IF;
+ IF NOT denied THEN RAISE EXCEPTION 'Compatible total bypassed pair-detail reconciliation guard'; END IF;
+ IF (SELECT state->>'playFormat' FROM elleng_range_drafts WHERE id='split')<>'split_pair'
+ THEN RAISE EXCEPTION 'Denied pair-detail switch changed saved format'; END IF;
+ DELETE FROM elleng_range_pair_details WHERE tournament_id='event-split';
+ UPDATE elleng_range_drafts SET state='{"playFormat":"elleng"}'::jsonb WHERE id='split';
+ IF (SELECT state->>'playFormat' FROM elleng_range_drafts WHERE id='split')<>'elleng'
+ THEN RAISE EXCEPTION 'Reconciled format switch unexpectedly rejected'; END IF;
  RAISE NOTICE 'PASS: tournament-linked guard enforces 20 standard / 40 Split-Pair for INSERT and UPDATE';
 END $$;
 ROLLBACK;
