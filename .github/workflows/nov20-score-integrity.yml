@@ -30,7 +30,7 @@ jobs:
       - name: Verify Node is installed
         run: node --version
       - name: Run isolated scoring regression tests
-        run: node --test tests/nov20-production-score-integrity.test.cjs tests/gator-hole-variable-teams.test.cjs tests/alternate-scoring-validation.test.cjs tests/cross-page-points-parity.test.cjs tests/auto-pick-balance.test.cjs tests/draft-turn-order.test.cjs tests/draft-scoring-roster-handoff.test.cjs
+        run: node --test tests/nov20-production-score-integrity.test.cjs tests/gator-hole-variable-teams.test.cjs tests/alternate-scoring-validation.test.cjs tests/cross-page-points-parity.test.cjs tests/auto-pick-balance.test.cjs tests/draft-turn-order.test.cjs tests/draft-scoring-roster-handoff.test.cjs tests/stored-score-completion.test.cjs
       - name: Verify commissioner RSVP snapshot safety
         run: node --test tests/commissioner-rsvp-preview.test.cjs
 
