@@ -38,6 +38,14 @@ BEGIN
  BEGIN INSERT INTO elleng_range_team_scores VALUES ('event-split',0,2,1);
  EXCEPTION WHEN check_violation THEN denied:=true; END;
  IF NOT denied THEN RAISE EXCEPTION 'Split-Pair score 1 bypassed guard'; END IF;
+ -- A change to the draft format must not silently grandfather invalid totals.
+ UPDATE elleng_range_drafts SET state='{"playFormat":"elleng"}'::jsonb WHERE id='split';
+ denied:=false;
+ BEGIN
+  UPDATE elleng_range_team_scores SET score=40 WHERE tournament_id='event-split';
+ EXCEPTION WHEN check_violation THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Draft switched to standard but 40-point score stayed writable'; END IF;
+ UPDATE elleng_range_drafts SET state='{"playFormat":"split_pair"}'::jsonb WHERE id='split';
  IF (SELECT score FROM elleng_range_team_scores WHERE tournament_id='event-split' AND hole=1)<>40
  THEN RAISE EXCEPTION 'Rejected UPDATE altered valid Split-Pair total'; END IF;
  RAISE NOTICE 'PASS: tournament-linked guard enforces 20 standard / 40 Split-Pair for INSERT and UPDATE';
