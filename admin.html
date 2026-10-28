@@ -46,8 +46,6 @@ const rsvpPreviewController=EllenGCommissionerRsvpPreview.create({
    const p=result.summary;
    status.textContent="Approved playing: "+p.approvedCount+
     " • Named draft slots not approved: "+p.unapprovedNamedCount+
-    " • Approved golfers missing from draft: "+p.missingApprovedCount+
-    " • Approved golfer mismatches: "+p.mismatchedApprovedCount+
     " • Duplicate golfer names: "+p.duplicateNamedCount+
     " • Unnamed draft slots: "+p.unnamedSlotCount+
     " • Approved seat coverage: "+Math.round(p.approvedSeatCoverage*100)+"%"+
