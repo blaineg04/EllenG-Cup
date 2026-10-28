@@ -52,6 +52,10 @@ jobs:
         env:
           CI: 'true'
         run: node tests/visual/run.cjs
+      - name: Verify browser report represents real isolated captures
+        if: success()
+        run: |
+          node -e 'const fs=require("node:fs");const r=JSON.parse(fs.readFileSync("visual-results/report.json","utf8"));if(r.mode!=="isolated-fixture"||r.checks.length<7||r.errors.length||r.checks.some(x=>x.horizontalOverflow||x.outsideControls?.length||x.overlappingControls?.length||x.clippedText?.length))process.exit(1);console.log("Verified isolated browser report:",r.checks.length,"views, 0 errors");'
       - name: Save isolated browser rehearsal report
         if: always()
         uses: actions/upload-artifact@v4
