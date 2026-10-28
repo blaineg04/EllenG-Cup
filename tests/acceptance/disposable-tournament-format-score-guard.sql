@@ -8,7 +8,7 @@ INSERT INTO elleng_range_drafts VALUES ('standard','{"playFormat":"elleng"}'),('
 INSERT INTO elleng_range_tournaments VALUES ('event-standard','standard'),('event-split','split');
 -- Guard draft format changes when existing official totals would be invalid.
 CREATE FUNCTION pg_temp.validate_elleng_draft_format_change() RETURNS trigger
-LANGUAGE plpgsql AS $
+LANGUAGE plpgsql AS $$
 DECLARE v_new_format text;
 BEGIN
  v_new_format:=NEW.state->>'playFormat';
@@ -23,7 +23,7 @@ BEGIN
    RAISE EXCEPTION 'Cannot change tournament format with incompatible existing scores' USING ERRCODE='23514';
  END IF;
  RETURN NEW;
-END $;
+END $$;
 CREATE TRIGGER prevent_invalid_format_change
 BEFORE UPDATE OF state ON elleng_range_drafts
 FOR EACH ROW EXECUTE FUNCTION pg_temp.validate_elleng_draft_format_change();
