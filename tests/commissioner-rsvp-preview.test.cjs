@@ -309,3 +309,8 @@ test('commissioner UI invalidates RSVP readiness when golfer details or roster s
   assert.ok(html.includes('document.getElementById("'+id+'")?.addEventListener?.("input",()=>{updateDraftSetupPreview();rsvpPreviewController.invalidate()});'));
  }
 });
+
+test('RSVP preview never claims independent roster verification',()=>{
+ const result=summarize(rows,'nov20',directory,2,eligibility);
+ assert.equal(result.independentlyVerified,false);
+});
