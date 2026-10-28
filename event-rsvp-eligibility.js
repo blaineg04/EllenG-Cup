@@ -32,7 +32,7 @@
       // current draft directory. Otherwise a seemingly complete approval
       // preview could conceal an orphaned event enrollment.
       if(r.golfer_index>=availableGolfers.length)
-        throw new Error("Event enrollment golfer index outside directory");
+        throw new Error("Event enrollment golfer index outside directory (missing from directory)");
       if(seenUsers.has(r.user_id))throw new Error("Duplicate event RSVP user");
       seenUsers.add(r.user_id);
       // A golfer index identifies one event enrollment, even if an RSVP is
