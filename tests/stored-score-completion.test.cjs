@@ -30,3 +30,13 @@ test('Shamble progress counts only valid stored score rows',()=>{
  assert.equal(rows.filter(valid).length,2);
  assert.match(html,/entered\.filter\(validStoredPlayerScore\)\.length/);
 });
+
+test('Split-Pair persistence requires four golfers and two valid pair scores',()=>{
+ assert.match(html,/if\(roster\.length===4&&validStoredPlayerScore\(a\)&&validStoredPlayerScore\(b\)\)/);
+ const shouldPost=(roster,a,b)=>roster.length===4&&valid(a)&&valid(b);
+ assert.equal(shouldPost([0,1,2,3],{score:3},{score:4}),true);
+ assert.equal(shouldPost([0,1,2],{score:3},{score:4}),false);
+ for(const bad of [null,{score:''},{score:0},{score:21},{score:true},{score:1.5}]){
+  assert.equal(shouldPost([0,1,2,3],{score:3},bad),false);
+ }
+});
