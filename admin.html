@@ -84,7 +84,18 @@ function updateDraftSetupPreview(){
  const unranked=nameFields.filter(input=>input.value.trim()&&
    !bands.includes(bandFields.find(b=>b.dataset.b===input.dataset.n)?.value)).length;
  const teams=S.teams.length;
+ const pendingTeams=Number(document.getElementById("setupTeamCount").value);
+ const pendingGolfers=Number(document.getElementById("setupGolferCount").value);
  const format=document.getElementById("dtype").value;
+ if(!Number.isInteger(pendingTeams)||pendingTeams<2||pendingTeams>36||
+    !Number.isInteger(pendingGolfers)||pendingGolfers<2||pendingGolfers>500){
+   el.textContent="Enter valid team (2–36) and golfer slot (2–500) counts.";
+   return;
+ }
+ if(pendingTeams!==teams||pendingGolfers!==S.golfers.length){
+   el.textContent="Team or golfer slot counts have unsaved changes. Apply & Save Counts before reviewing draft capacity.";
+   return;
+ }
  const capacities=Array(teams).fill(0);
  // Same live turn calculation, with the currently selected format.
  for(let pick=0;pick<named;pick++){
@@ -102,6 +113,8 @@ function updateDraftSetupPreview(){
 document.getElementById("grows").addEventListener("input",updateDraftSetupPreview);
 document.getElementById("grows").addEventListener("change",updateDraftSetupPreview);
 document.getElementById("dtype").addEventListener("change",updateDraftSetupPreview);
+document.getElementById("setupTeamCount").addEventListener("input",updateDraftSetupPreview);
+document.getElementById("setupGolferCount").addEventListener("input",updateDraftSetupPreview);
 function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map((g,i)=>`<tr><td>${i+1}</td><td><input data-n="${i}" value="${esc(g.name)}"></td><td><input data-h="${i}" type="number" step=".1" value="${esc(g.hcp)}"></td><td><select data-b="${i}"><option value="" ${!g.band?"selected":""}>Unranked</option>${bands.map(b=>`<option ${g.band===b?"selected":""}>${b}</option>`).join("")}</select></td></tr>`).join("");document.getElementById("trows").innerHTML=S.teams.map((t,i)=>`<tr><td>Team ${i+1}</td><td><input data-tn="${i}" value="${esc(t.name)}"></td><td><input data-tc="${i}" placeholder="Captain" value="${esc(t.captain)}"></td></tr>`).join("");document.getElementById("dtype").value=S.draftType;document.getElementById("tlen").value=S.timerLength;document.getElementById("setupTeamCount").value=S.teams.length;document.getElementById("setupGolferCount").value=S.golfers.length;
  // An active draft may be inspected, but its setup must never be edited.
  updateDraftSetupPreview();
