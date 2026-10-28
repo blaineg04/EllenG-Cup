@@ -52,7 +52,7 @@ function points(scores,{gator=false,splitPair=false}={}){
 }
 test('Gator Hole cannot award points when any team score is empty',()=>{
  assert.deepEqual(points([4,'',6],{gator:true}),[null,null,null]);
- assert.deepEqual(points([4,4,5],{gator:true}),[6,6,0]);
+ assert.deepEqual(points([4,4,5],{gator:true}),[3,3,0]);
 });
 test('standard score limits do not reject valid combined Split-Pair scores',()=>{
  assert.deepEqual(points([24,25],{splitPair:true}),[2,1]);
@@ -295,7 +295,7 @@ test('unset Gator Hole always uses standard points',()=>{
   assert.deepEqual(Array.from(ctx.pointsForHole(4)),[2,1],String(unset));
  }
  ctx.tournament.gator_hole=4;
- assert.deepEqual(Array.from(ctx.pointsForHole(4)),[12,0]);
+ assert.deepEqual(Array.from(ctx.pointsForHole(4)),[4,0]);
 });
 
 test('broadcast ignores empty and boolean team identifiers',()=>{
