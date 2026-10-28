@@ -106,3 +106,30 @@ test('current staged RSVP failure still fails closed and alerts',async()=>{
  assert.equal(h.renders(),1);
  assert.equal(h.alerts.length,1);
 });
+
+test('staged RSVP read cannot restore attendance after sign-out',async()=>{
+ const h=harness(true);
+ const pending=h.load();
+ h.ctx.user=null;
+ h.ctx.rsvps=[];
+ h.ctx.eventRsvpCounts=null;
+ h.lists[0].resolve([{user_id:'captain-a',status:'playing'}]);
+ h.counts[0].resolve({playing:1});
+ await pending;
+ assert.equal(h.ctx.rsvps.length,0);
+ assert.equal(h.ctx.eventRsvpCounts,null);
+ assert.equal(h.alerts.length,0);
+});
+test('stale staged counts failure cannot clear newer successful attendance',async()=>{
+ const h=harness(true);
+ const old=h.load(),current=h.load();
+ h.lists[1].resolve([{user_id:'captain-a',status:'playing'}]);
+ h.counts[1].resolve({playing:1});
+ await current;
+ h.lists[0].resolve([{user_id:'captain-a',status:'out'}]);
+ h.counts[0].reject(new Error('stale counts failure'));
+ await old;
+ assert.equal(h.ctx.rsvps[0].status,'playing');
+ assert.equal(h.ctx.eventRsvpCounts.playing,1);
+ assert.equal(h.alerts.length,0);
+});
