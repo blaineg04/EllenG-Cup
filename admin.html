@@ -70,7 +70,14 @@ async function secureSave(){
 save=secureSave;
 
 let liveMode=false,tick;
-function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map((g,i)=>`<tr><td>${i+1}</td><td><input data-n="${i}" value="${esc(g.name)}"></td><td><input data-h="${i}" type="number" step=".1" value="${esc(g.hcp)}"></td><td><select data-b="${i}"><option value="" ${!g.band?"selected":""}>Unranked</option>${bands.map(b=>`<option ${g.band===b?"selected":""}>${b}</option>`).join("")}</select></td></tr>`).join("");document.getElementById("trows").innerHTML=S.teams.map((t,i)=>`<tr><td>Team ${i+1}</td><td><input data-tn="${i}" value="${esc(t.name)}"></td><td><input data-tc="${i}" placeholder="Captain" value="${esc(t.captain)}"></td></tr>`).join("");document.getElementById("dtype").value=S.draftType;document.getElementById("tlen").value=S.timerLength;document.getElementById("setupTeamCount").value=S.teams.length;document.getElementById("setupGolferCount").value=S.golfers.length}
+function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map((g,i)=>`<tr><td>${i+1}</td><td><input data-n="${i}" value="${esc(g.name)}"></td><td><input data-h="${i}" type="number" step=".1" value="${esc(g.hcp)}"></td><td><select data-b="${i}"><option value="" ${!g.band?"selected":""}>Unranked</option>${bands.map(b=>`<option ${g.band===b?"selected":""}>${b}</option>`).join("")}</select></td></tr>`).join("");document.getElementById("trows").innerHTML=S.teams.map((t,i)=>`<tr><td>Team ${i+1}</td><td><input data-tn="${i}" value="${esc(t.name)}"></td><td><input data-tc="${i}" placeholder="Captain" value="${esc(t.captain)}"></td></tr>`).join("");document.getElementById("dtype").value=S.draftType;document.getElementById("tlen").value=S.timerLength;document.getElementById("setupTeamCount").value=S.teams.length;document.getElementById("setupGolferCount").value=S.golfers.length;
+ // An active draft may be inspected, but its setup must never be edited.
+ const locked=S.picks.length>0||S.teams.some(t=>t.roster.length>0)||S.golfers.some(g=>g.team!=null);
+ document.getElementById("setup").querySelectorAll("input,select,button").forEach(el=>el.disabled=locked);
+ const status=document.getElementById("setupSizeMsg");
+ if(locked)status.textContent="Draft picks exist. Setup is read-only; undo all picks before editing golfers, teams or draft format.";
+ else if(status.textContent.startsWith("Draft picks exist."))status.textContent="Setup unlocked. Changes must be saved before going live.";
+}
 function liveRender(){let total=S.golfers.filter(g=>g.name&&g.name.trim()).length,teamCount=S.teams.length,done=S.picks.length>=total,t=done?0:order(S.picks.length);document.getElementById("onclock").textContent=done?"DRAFT COMPLETE":"ON THE CLOCK: "+S.teams[t].name;document.getElementById("meta").textContent=done?"All rosters complete":`Round ${Math.floor(S.picks.length/Math.max(1,teamCount))+1} • Pick ${S.picks.length+1}`;document.getElementById("pool").innerHTML=S.golfers.map((g,i)=>({...g,i})).filter(g=>g.name&&g.team==null).map(g=>`<div class="player"><strong>${esc(g.name)}</strong><span class="badge">${g.band}</span><span class="muted">${esc(g.hcp||"—")}</span><button data-p="${g.i}" ${!done&&canBand(t,g.band)?"":"disabled"}>${done?"Complete":canBand(t,g.band)?"Draft":"Limit"}</button></div>`).join("");document.getElementById("teams").innerHTML=S.teams.map((tm,i)=>`<div class="team"><div class="teamhead"><strong>${esc(tm.name)}</strong><div class="muted" style="color:#ddd">${esc(tm.captain)}</div><div style="font-size:11px">${bands.map(b=>b+" "+tbc(i,b)).join(" • ")}</div></div><div class="roster">${Array.from({length:teamCapacity(i)},(_,j)=>{let g=S.golfers[tm.roster[j]];return g?`<div class="slot"><strong>${esc(g.name)}</strong> <span class="badge">${g.band}</span><div class="muted">HCP ${esc(g.hcp||"—")}</div></div>`:`<div class="slot muted">Open roster spot</div>`}).join("")}</div></div>`).join("");document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>pick(+b.dataset.p));drawClock()}
 function drawClock(){let x=remaining();document.getElementById("clock").textContent=Math.floor(x/60)+":"+String(x%60).padStart(2,"0");document.getElementById("clock").style.color=x<=10?"#9b2f2f":""}
 // Fence all optimistic commissioner actions to the verified login that began them.
@@ -89,6 +96,8 @@ async function pick(i){
  catch(e){if(!sameCommissionerAction(actionEpoch,actionUserId))return;S=before;liveRender()}
 }
 function readSetupFields(){
+  // Check before mutating S: a failed edit must not alter a live draft locally.
+  EllenGDraftSetup.assertDraftSetupEditable(S);
   document.querySelectorAll("[data-n]").forEach(x=>S.golfers[+x.dataset.n].name=x.value.trim());
   document.querySelectorAll("[data-h]").forEach(x=>S.golfers[+x.dataset.h].hcp=x.value);
   document.querySelectorAll("[data-b]").forEach(x=>S.golfers[+x.dataset.b].band=x.value);
