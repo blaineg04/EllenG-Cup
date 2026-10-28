@@ -40,17 +40,26 @@ assert.ok(channelStart>=0&&channelEnd>channelStart,'captain session channel life
 function channelHarness(){
  let subscriptions=0,unsubscriptions=0,renders=0;
  const callbacks=[];
- const ctx={captainUserId:'captain-a',captainAuthEpoch:0,
+ const elements={login:{style:{}},app:{style:{}},connection:{textContent:'LIVE'},msg:{textContent:''}};
+ const buttons=[{disabled:false}];
+ const ctx={captainUserId:'captain-a',myTeam:0,S:{teams:[{},{}]},
+  captainAuthEpoch:0,captainBootstrapEpoch:0,pickRequestEpoch:0,pickInFlight:false,pickSyncFailed:false,
+  document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons},clearInterval:()=>{},
   render:()=>renders++,console:{error:()=>{}},
   subscribe:callback=>{
    subscriptions++;callbacks.push(callback);
    let closed=false;
    return {unsubscribe:()=>{if(!closed){closed=true;unsubscriptions++}return Promise.resolve()}};
   }};
+ const guardStart=s.indexOf('function assertCaptainTeamPresent(){');
+ const revokeStart=s.indexOf('function revokeCaptainSession(){');
+ const revokeEnd=s.indexOf('db.auth.onAuthStateChange(',revokeStart);
+ assert.ok(guardStart>=0&&revokeStart>channelEnd&&revokeEnd>revokeStart);
  vm.createContext(ctx);
- vm.runInContext(s.slice(channelStart,channelEnd)+
+ vm.runInContext(s.slice(guardStart,channelStart)+'\n'+s.slice(channelStart,channelEnd)+
+  '\n'+s.slice(revokeStart,revokeEnd)+
   '\nthis.startChannel=startCaptainSubscription;this.stopChannel=stopCaptainSubscription;',ctx);
- return {ctx,callbacks,start:()=>ctx.startChannel(),stop:()=>ctx.stopChannel(),
+ return {ctx,callbacks,elements,buttons,start:()=>ctx.startChannel(),stop:()=>ctx.stopChannel(),
   subscriptions:()=>subscriptions,unsubscriptions:()=>unsubscriptions,renders:()=>renders};
 }
 test('captain signout disposes channel and fences a queued old-session callback',()=>{
@@ -78,6 +87,33 @@ test('captain re-login replaces channel without duplicate listeners or cross-acc
  assert.equal(h.renders(),1);
  h.stop();assert.equal(h.unsubscriptions(),2);
 });
+test('authoritative reconnect revokes captain access when commissioner removes assigned team',()=>{
+ const h=channelHarness();h.ctx.myTeam=1;h.start();
+ h.ctx.S={teams:[{}]}; // Team 1 was removed in the refreshed draft.
+ h.callbacks[0]();
+ assert.equal(h.renders(),0,'invalid team must never re-enable pick controls');
+ assert.equal(h.unsubscriptions(),1,'revoked captain listener must be disposed');
+ assert.equal(h.ctx.captainUserId,null);
+ assert.equal(h.ctx.myTeam,null);
+ assert.equal(h.ctx.pickSyncFailed,true);
+ assert.equal(h.elements.app.style.display,'none');
+ assert.equal(h.elements.login.style.display,'block');
+ assert.equal(h.elements.connection.textContent,'SIGN IN');
+ assert.match(h.elements.msg.textContent,/team assignment does not match this draft/);
+ assert.equal(h.buttons[0].disabled,true);
+ assert.equal(h.callbacks[0].isCurrent(),false,'queued callbacks must remain fenced');
+ h.callbacks[0]();
+ assert.equal(h.renders(),0);
+});
+test('authoritative reconnect retains a valid captain assignment',()=>{
+ const h=channelHarness();h.ctx.myTeam=1;h.start();
+ h.callbacks[0]();
+ assert.equal(h.renders(),1);
+ assert.equal(h.unsubscriptions(),0);
+ assert.equal(h.ctx.captainUserId,'captain-a');
+ assert.equal(h.callbacks[0].isCurrent(),true);
+});
+
 test('both captain login paths use managed realtime subscriptions',()=>{
  assert.equal(s.split('startCaptainSubscription();').length-1,2);
  assert.doesNotMatch(s,/subscribe\(render\)/);

@@ -809,7 +809,18 @@ function startCaptainSubscription(){
  stopCaptainSubscription();
  const epoch=captainSubscriptionEpoch,authEpoch=captainAuthEpoch,userId=captainUserId;
  if(!userId)return;
- const renderForSession=()=>{if(renderForSession.isCurrent())render()};
+ const renderForSession=()=>{
+  if(!renderForSession.isCurrent())return;
+  // Realtime can deliver a new draft after the commissioner removes a team.
+  // The original login-time assignment is no longer sufficient in that case.
+  try{assertCaptainTeamPresent();}
+  catch(error){
+   revokeCaptainSession();
+   document.getElementById("msg").textContent=error.message;
+   return;
+  }
+  render();
+ };
  // common.js subscribe() uses this guard for queued status callbacks and reads.
  renderForSession.isCurrent=()=>epoch===captainSubscriptionEpoch&&authEpoch===captainAuthEpoch&&captainUserId===userId;
  captainChannel=subscribe(renderForSession);
