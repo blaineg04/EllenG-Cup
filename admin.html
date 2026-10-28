@@ -45,6 +45,8 @@ const rsvpPreviewController=EllenGCommissionerRsvpPreview.create({
    const p=result.summary;
    status.textContent="Approved playing: "+p.approvedCount+
     " • Named draft slots not approved: "+p.unapprovedNamedCount+
+    " • Approved golfers missing from draft: "+p.missingApprovedCount+
+    " • Approved golfer mismatches: "+p.mismatchedApprovedCount+
     " • Duplicate golfer names: "+p.duplicateNamedCount+
     " • Additional approvals needed for team count: "+p.shortfall+
     ". "+(p.matchesPreview?"Roster matches the read-only preview. ":"Review roster differences before drafting. ")+
