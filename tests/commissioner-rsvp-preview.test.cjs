@@ -850,3 +850,89 @@ test('explicit invalidation during eligibility calculation prevents a late succe
   assert.equal(h.renders(),1);assert.equal(h.subscriptions(),1);
  });
 }
+
+ 
+// Exercise the actual commissioner Realtime reload and revocation functions
+// with deferred read-only responses. No hosted Supabase project is contacted.
+{
+ const fs=require('node:fs'),vm=require('node:vm');
+ const html=fs.readFileSync('admin.html','utf8');
+ const loadStart=html.indexOf('let commissionerLoadRequest=0;');
+ const loadEnd=html.indexOf('async function secureSave()',loadStart);
+ const revokeStart=html.indexOf('function revokeCommissionerSession(){');
+ const revokeEnd=html.indexOf('// A revoked or superseded commissioner',revokeStart);
+ assert.ok(loadStart>=0&&loadEnd>loadStart&&revokeStart>=0&&revokeEnd>revokeStart);
+ const source=html.slice(loadStart,loadEnd)+'\n'+html.slice(revokeStart,revokeEnd)+'\nthis.refreshDraft=load;';
+ function remoteOwnerHarness(){
+  const reads=[],elements=new Map();
+  let unsubscribed=0,invalidations=0;
+  const element=id=>{
+   if(!elements.has(id))elements.set(id,{style:{display:'block'},textContent:'',disabled:false});
+   return elements.get(id);
+  };
+  const ctx={
+   savingDraft:false,commissionerAuthEpoch:1,commissionerOpenId:1,
+   commissionerUserId:'owner-a',commissionerChannel:null,
+   draftUpdatedAt:'2026-10-27T00:00:00Z',
+   S:{teams:[{name:'Original'}],golfers:[],picks:[]},
+   cfg:{draftId:'elleng-cup'},
+   rsvpPreviewController:{invalidate(){invalidations++}},
+   stopCommissionerSubscription(){unsubscribed++},
+   document:{getElementById:element,querySelectorAll:()=>[]},
+   db:{from(table){
+    assert.equal(table,'elleng_drafts');
+    return {select(columns){
+     assert.match(columns,/owner_id/,'remote refresh must fetch authoritative owner');
+     return {eq(key,id){
+      assert.equal(key,'id');assert.equal(id,'elleng-cup');
+      return {single(){const d=deferred();reads.push(d);return d.promise}};
+     }};
+    }};
+   }},
+   fresh:()=>({teams:[],golfers:[],picks:[]}),
+   console:{error(){}}
+  };
+  vm.createContext(ctx);
+  vm.runInContext(source,ctx);
+  return {ctx,reads,element,invalidations:()=>invalidations,unsubscribed:()=>unsubscribed,
+   refresh:(isCurrent,onApplied)=>ctx.refreshDraft(isCurrent,onApplied)};
+ }
+ test('remote draft owner change revokes commissioner controls before applying state',async()=>{
+  const h=remoteOwnerHarness(),original=h.ctx.S;
+  let applied=0;
+  const work=h.refresh(()=>true,()=>applied++);
+  h.reads[0].resolve({data:{owner_id:'owner-b',state:{teams:[{name:'Unauthorized'}]},updated_at:'2026-10-28T00:00:00Z'},error:null});
+  await work;
+  assert.equal(h.ctx.commissionerUserId,null);
+  assert.equal(h.element('adminApp').style.display,'none');
+  assert.equal(h.element('connection').textContent,'SIGN IN');
+  assert.equal(h.ctx.S,original,'unauthorized state must never replace current draft');
+  assert.equal(applied,0);
+  assert.equal(h.unsubscribed(),1);
+  assert.equal(h.ctx.draftUpdatedAt,null);
+ });
+ test('same owner remote refresh remains authorized and applies newest state',async()=>{
+  const h=remoteOwnerHarness();
+  let applied=0;
+  const work=h.refresh(()=>true,()=>applied++);
+  h.reads[0].resolve({data:{owner_id:'owner-a',state:{teams:[{name:'Latest'}]},updated_at:'2026-10-28T00:00:00Z'},error:null});
+  await work;
+  assert.equal(h.ctx.commissionerUserId,'owner-a');
+  assert.equal(h.ctx.S.teams[0].name,'Latest');
+  assert.equal(applied,1);
+  assert.equal(h.unsubscribed(),0);
+ });
+ test('stale owner response cannot revoke a replacement commissioner session',async()=>{
+  const h=remoteOwnerHarness(),original=h.ctx.S;
+  let applied=0;
+  const work=h.refresh(()=>true,()=>applied++);
+  h.ctx.commissionerAuthEpoch++;
+  h.ctx.commissionerUserId='owner-b';
+  h.reads[0].resolve({data:{owner_id:'owner-c',state:{teams:[{name:'Stale'}]},updated_at:'2026-10-28T00:00:00Z'},error:null});
+  await work;
+  assert.equal(h.ctx.commissionerUserId,'owner-b');
+  assert.equal(h.ctx.S,original);
+  assert.equal(applied,0);
+  assert.equal(h.unsubscribed(),0);
+ });
+}
