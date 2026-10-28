@@ -278,3 +278,66 @@ test('captain role lookup still grants a valid unchanged authenticated account',
  assert.equal(h.ctx.myTeam,1);
  assert.equal(h.counts().authChecks,2);
 });
+
+test('interactive captain replacement survives Supabase SIGNED_IN without revoking the new login',async()=>{
+ const elements=captainAuthElements();
+ let onAuthEvent,roleChecks=0,subscriptions=0,stopped=0,timersStopped=0,loaded=0;
+ const ctx={
+  captainBootstrapEpoch:0,captainRoleLookupId:0,captainAuthEpoch:0,
+  captainUserId:'captain-a',myTeam:0,pickRequestEpoch:0,pickInFlight:false,pickSyncFailed:false,
+  document:{getElementById:id=>elements[id],querySelectorAll:()=>[{disabled:false}]},
+  db:{auth:{
+   onAuthStateChange:fn=>{onAuthEvent=fn},
+   signInWithPassword:async()=>{onAuthEvent('SIGNED_IN',{user:{id:'captain-b'}});return {error:null}}
+  }},
+  whoami:async()=>{roleChecks++;ctx.captainUserId='captain-b';ctx.myTeam=1;return true},
+  load:async()=>{loaded++},render:()=>{},
+  startCaptainSubscription:()=>subscriptions++,startCaptainDrawTimer:()=>{},
+  stopCaptainSubscription:()=>stopped++,stopCaptainDrawTimer:()=>timersStopped++
+ };
+ vm.createContext(ctx);
+ const loginStart=s.indexOf('document.getElementById("signin").onclick=async()=>{');
+ const loginEnd=s.indexOf('document.getElementById("soundToggle").onclick=',loginStart);
+ const revokeStart=s.indexOf('function revokeCaptainSession(){');
+ const revokeEnd=s.indexOf('(async()=>{',revokeStart);
+ assert.ok(loginStart>=0&&loginEnd>loginStart&&revokeStart>0&&revokeEnd>revokeStart);
+ vm.runInContext(s.slice(loginStart,loginEnd)+s.slice(revokeStart,revokeEnd),ctx);
+ await elements.signin.onclick();
+ assert.equal(stopped,1,'previous captain subscription is disposed before replacement');
+ assert.equal(timersStopped,1,'previous captain refresh timer is disposed');
+ assert.equal(ctx.captainAuthEpoch,1,'old captain session is fenced once');
+ assert.equal(roleChecks,1,'replacement login reaches authorization');
+ assert.equal(loaded,1,'replacement login loads authoritative state');
+ assert.equal(subscriptions,1,'new captain subscribes once');
+ assert.equal(ctx.captainUserId,'captain-b');
+ assert.equal(ctx.myTeam,1);
+ assert.equal(elements.app.style.display,'block');
+ assert.equal(elements.login.style.display,'none');
+ assert.equal(elements.signin.disabled,false);
+});
+
+test('failed captain replacement remains signed out rather than restoring old team controls',async()=>{
+ const elements=captainAuthElements();
+ const ctx={
+  captainBootstrapEpoch:0,captainRoleLookupId:0,captainAuthEpoch:0,
+  captainUserId:'captain-a',myTeam:0,pickRequestEpoch:0,pickInFlight:false,pickSyncFailed:false,
+  document:{getElementById:id=>elements[id],querySelectorAll:()=>[{disabled:false}]},
+  db:{auth:{signInWithPassword:async()=>({error:new Error('synthetic rejected credentials')})}},
+  whoami:async()=>{throw new Error('role lookup must not run on failed sign-in')},
+  stopCaptainSubscription:()=>{},stopCaptainDrawTimer:()=>{},
+  startCaptainSubscription:()=>{throw new Error('must not subscribe')},
+  startCaptainDrawTimer:()=>{throw new Error('must not start timer')}
+ };
+ vm.createContext(ctx);
+ const loginStart=s.indexOf('document.getElementById("signin").onclick=async()=>{');
+ const loginEnd=s.indexOf('document.getElementById("soundToggle").onclick=',loginStart);
+ const revokeStart=s.indexOf('function revokeCaptainSession(){');
+ const revokeEnd=s.indexOf('db.auth.onAuthStateChange(',revokeStart);
+ vm.runInContext(s.slice(loginStart,loginEnd)+s.slice(revokeStart,revokeEnd),ctx);
+ await elements.signin.onclick();
+ assert.equal(ctx.captainUserId,null);
+ assert.equal(ctx.myTeam,null);
+ assert.equal(elements.app.style.display,'none');
+ assert.equal(elements.login.style.display,'block');
+ assert.match(elements.msg.textContent,/synthetic rejected credentials/);
+});
