@@ -35,12 +35,14 @@ const rsvpPreviewController=EllenGCommissionerRsvpPreview.create({
  eventId:rsvpPreviewEnabled?cfg.eventRsvpTournamentId:"",
  getAuth:()=>({epoch:commissionerAuthEpoch,userId:commissionerUserId}),
  getDraft:()=>S,
+ hasPendingRosterEdits,
  render:result=>{
   const status=document.getElementById("rsvpReadinessStatus");
   if(!status)return;
   if(result.status==="loading")status.textContent="Checking approved event RSVPs… Draft remains unchanged.";
   else if(result.status==="error")status.textContent="Could not verify approved RSVPs. Draft remains unchanged; do not treat this preview as approval.";
   else if(result.status==="disabled")status.textContent="Event RSVP preview is disabled pending migration and authenticated rehearsal.";
+  else if(result.status==="unsaved")status.textContent="Unsaved golfer names or roster counts. Save or discard setup changes before checking approved RSVPs.";
   else if(result.status==="invalidated")status.textContent="RSVP preview is no longer current. Refresh after confirming commissioner session and roster.";
   else if(result.status==="success"){
    const p=result.summary;
@@ -110,6 +112,25 @@ save=secureSave;
 let liveMode=false,tick;
 function setupIsLocked(){
  return S.picks.length>0||S.teams.some(t=>t.roster.length>0)||S.golfers.some(g=>g.team!=null);
+}
+// Read-only comparison of visible roster inputs with the last saved draft state.
+// Never certify the saved roster while the commissioner is editing another one.
+function hasPendingRosterEdits(){
+ if(savingDraft)return true;
+ const names=[...document.querySelectorAll("#grows [data-n]")];
+ const teams=document.getElementById("setupTeamCount");
+ const golfers=document.getElementById("setupGolferCount");
+ if(!teams||!golfers||!Array.isArray(S?.golfers)||!Array.isArray(S?.teams)||
+    names.length!==S.golfers.length||
+    Number(teams.value)!==S.teams.length||
+    Number(golfers.value)!==S.golfers.length)return true;
+ const seen=new Set();
+ return names.some(input=>{
+  const index=Number(input.dataset.n);
+  if(!Number.isInteger(index)||index<0||index>=S.golfers.length||seen.has(index))return true;
+  seen.add(index);
+  return input.value.trim()!==String(S.golfers[index]?.name??"").trim();
+ });
 }
 function updateDraftSetupPreview(){
  const el=document.getElementById("draftSetupPreview");
