@@ -11,7 +11,11 @@
   // Resizing was already guarded, but Save Setup could previously rewrite
   // golfer names, handicap bands, team names or draft order after a live pick.
   function assertDraftSetupEditable(state){
-    assertDraftSetupEditable(state);
+    if(!state||!Array.isArray(state.golfers)||!Array.isArray(state.teams)||!Array.isArray(state.picks))
+      throw new TypeError("Invalid draft state");
+    if(state.picks.length||state.teams.some(t=>!t||!Array.isArray(t.roster)||t.roster.length)||
+       state.golfers.some(g=>!g||g.team!=null))
+      throw new Error("Cannot resize after draft picks or assignments; undo picks first");
     return true;
   }
   function resizeDraftSetup(state,teamCount,golferCount){
@@ -19,11 +23,7 @@
       throw new RangeError("Teams must be between 2 and 36");
     if(!Number.isInteger(golferCount)||golferCount<teamCount||golferCount>500)
       throw new RangeError("Golfer slots must be between team count and 500");
-    if(!state||!Array.isArray(state.golfers)||!Array.isArray(state.teams)||!Array.isArray(state.picks))
-      throw new TypeError("Invalid draft state");
-    if(state.picks.length||state.teams.some(t=>!t||!Array.isArray(t.roster)||t.roster.length)||
-       state.golfers.some(g=>!g||g.team!=null))
-      throw new Error("Cannot resize after draft picks or assignments; undo picks first");
+    assertDraftSetupEditable(state);
     for(let i=golferCount;i<state.golfers.length;i++){
       const g=state.golfers[i];
       if(String(g.name??"").trim()||String(g.hcp??"").trim()||String(g.band??"").trim())
