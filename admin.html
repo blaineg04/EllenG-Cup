@@ -41,6 +41,7 @@ const rsvpPreviewController=EllenGCommissionerRsvpPreview.create({
   if(result.status==="loading")status.textContent="Checking approved event RSVPs… Draft remains unchanged.";
   else if(result.status==="error")status.textContent="Could not verify approved RSVPs. Draft remains unchanged; do not treat this preview as approval.";
   else if(result.status==="disabled")status.textContent="Event RSVP preview is disabled pending migration and authenticated rehearsal.";
+  else if(result.status==="invalidated")status.textContent="RSVP preview is no longer current. Refresh after confirming commissioner session and roster.";
   else if(result.status==="success"){
    const p=result.summary;
    status.textContent="Approved playing: "+p.approvedCount+
