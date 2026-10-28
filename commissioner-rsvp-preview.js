@@ -50,7 +50,7 @@
    // number of named slots exceeds the team minimum.
    approvedSeatCoverage:golfers.length?approved.length/golfers.length:0,
    // Client-side reconciliation is not authorization to save a draft.
-   matchesPreview:approved.length>=teamCount&&reconciliation.ready&&duplicateNamedIndices.length===0
+   matchesPreview:approved.length>=teamCount&&reconciliation.ready&&duplicateNamedIndices.length===0&&golfers.every(g=>!!g?.name?.trim())
   });
  }
  function create({db,client,eligibility,eventId,getAuth,getDraft,render}){
