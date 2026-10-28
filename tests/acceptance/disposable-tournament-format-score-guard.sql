@@ -69,6 +69,20 @@ BEGIN
  THEN RAISE EXCEPTION 'Denied format change mutated saved draft'; END IF;
  IF (SELECT score FROM elleng_range_team_scores WHERE tournament_id='event-split' AND hole=1)<>40
  THEN RAISE EXCEPTION 'Rejected UPDATE altered valid Split-Pair total'; END IF;
+ -- Switching standard to Split-Pair must not retain a 1-point official total.
+ UPDATE elleng_range_team_scores SET score=1 WHERE tournament_id='event-standard' AND hole=1;
+ denied:=false;
+ BEGIN
+  UPDATE elleng_range_drafts SET state='{"playFormat":"split_pair"}'::jsonb WHERE id='standard';
+ EXCEPTION WHEN check_violation THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Standard-to-Split-Pair conversion accepted incompatible 1-point score'; END IF;
+ IF (SELECT state->>'playFormat' FROM elleng_range_drafts WHERE id='standard')<>'elleng'
+ THEN RAISE EXCEPTION 'Rejected Split-Pair conversion changed draft'; END IF;
+ -- After correcting the score, the format switch is permitted.
+ UPDATE elleng_range_team_scores SET score=2 WHERE tournament_id='event-standard' AND hole=1;
+ UPDATE elleng_range_drafts SET state='{"playFormat":"split_pair"}'::jsonb WHERE id='standard';
+ IF (SELECT state->>'playFormat' FROM elleng_range_drafts WHERE id='standard')<>'split_pair'
+ THEN RAISE EXCEPTION 'Valid format switch unexpectedly rejected'; END IF;
  RAISE NOTICE 'PASS: tournament-linked guard enforces 20 standard / 40 Split-Pair for INSERT and UPDATE';
 END $$;
 ROLLBACK;
