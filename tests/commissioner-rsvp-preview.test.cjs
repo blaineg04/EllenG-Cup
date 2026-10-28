@@ -175,10 +175,10 @@ test('account switch during rejected RSVP request does not show old-account erro
  assert.deepEqual(h.writes,[]);
 });
 
-test('commissioner preview requires reconciliation helper and fails closed on mismatch',()=>{
- const broken={...eligibility,reconcileDraftRoster:()=>({ready:false,missingIndices:[0],mismatchedIndices:[]})};
- const result=summarize(rows,'nov20',directory.slice(0,2),2,broken);
- assert.equal(result.matchesPreview,false);
+test('commissioner preview does not claim independent verification from a draft self-comparison',()=>{
+ const guarded={...eligibility,reconcileDraftRoster:()=>{throw Error('self-reconciliation is forbidden')}};
+ const result=summarize(rows,'nov20',directory.slice(0,2),2,guarded);
+ assert.equal(result.matchesPreview,true);
  assert.equal(result.independentlyVerified,false);
  assert.equal('missingApprovedCount' in result,false);
  assert.equal('mismatchedApprovedCount' in result,false);
@@ -295,8 +295,7 @@ test('commissioner preview refuses non-callable dependencies before any request'
  for(const override of [
   {db:{auth:{getUser:true}}},
   {client:{list:true}},
-  {eligibility:{...eligibility,approvedRoster:true}},
-  {eligibility:{...eligibility,reconcileDraftRoster:true}}
+  {eligibility:{...eligibility,approvedRoster:true}}
  ])assert.throws(()=>create({...args,...override}),/dependencies required/);
 });
 
