@@ -29,3 +29,10 @@ test('candidate generator refuses implicit deployment output',()=>{
  assert.notEqual(r.status,0);
  assert.equal(r.stdout,'');
 });
+
+test('production release SQL cannot be emitted before approval',()=>{
+ const r=spawnSync(process.execPath,[script,'--release'],{encoding:'utf8'});
+ assert.notEqual(r.status,0);
+ assert.equal(r.stdout,'');
+ assert.match(r.stderr,/NO-GO: release build disabled/);
+});
