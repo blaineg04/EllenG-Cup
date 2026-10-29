@@ -247,7 +247,7 @@ jobs:
               'public.elleng_test_commissioner_clear_scores(text)'::regprocedure
             ] LOOP
               IF has_function_privilege('anon',fn,'EXECUTE')
-                OR has_function_privilege('PUBLIC',fn,'EXECUTE')
+                OR EXISTS (SELECT 1 FROM pg_proc p, aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) acl WHERE p.oid=fn AND acl.grantee=0 AND acl.privilege_type='EXECUTE')
                 OR NOT has_function_privilege('authenticated',fn,'EXECUTE')
               THEN RAISE EXCEPTION 'Invalid RPC execute ACL: %',fn; END IF;
               IF NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=fn
