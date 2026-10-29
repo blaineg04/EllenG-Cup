@@ -38,7 +38,7 @@ jobs:
            const log=fs.openSync(path.join(root,tool+'.log'),'a',0o600);
            const r=spawnSync(path.join(bin,tool),args,{env,input,stdio:[input===undefined?'ignore':'pipe',log,log],timeout:180000});
            fs.closeSync(log);
-           if(r.status!==0){console.log('RESTORE_BLOCKED '+JSON.stringify({tool,exit:r.status,private_logs:true}));throw Error('Private restore step failed; SQL and records not printed');}
+           if(r.status!==0){const text=fs.readFileSync(path.join(root,tool+'.log'),'utf8');const kinds=[['duplicate_schema',/schema "[a-z_]+" already exists/],['missing_role',/role "[a-z_]+" does not exist/],['missing_extension',/extension "[a-z_]+" is not available/],['permission_denied',/permission denied/],['missing_relation',/relation "[a-z_.]+" does not exist/],['missing_function',/function .* does not exist/]];console.log('RESTORE_DIAGNOSTIC '+JSON.stringify({category:kinds.find(x=>x[1].test(text))?.[0]||'unclassified',sqlstate:text.match(/ERROR:\\s+([0-9A-Z]{5})\\b/)?.[1]||null}));console.log('RESTORE_BLOCKED '+JSON.stringify({tool,exit:r.status,private_logs:true}));throw Error('Private restore step failed; SQL and records not printed');}
           }
           try{
            run('initdb',['-D',data,'-U','postgres','--auth-local=trust','--auth-host=reject']);
