@@ -408,6 +408,16 @@ function recheckCommissionerOnReconnect(){
 if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){
  window.addEventListener("offline",markCommissionerOffline);
  window.addEventListener("online",recheckCommissionerOnReconnect);
+ // Back-forward cache can restore a previously authorized DOM without a
+ // visibilitychange or online event. Recheck identity and draft ownership,
+ // and replace the old Realtime subscription before exposing controls.
+ window.addEventListener("pageshow",event=>{
+  if(!event?.persisted)return;
+  const state=document.getElementById("connection").textContent;
+  if(!commissionerUserId&&!["VERIFYING","PAUSED","OFFLINE","UNAVAILABLE"].includes(state))return;
+  if(commissionerUserId)revokeCommissionerSession();
+  return openAdmin();
+ });
 }
 // A hidden tab may miss ownership changes without a Realtime event. Revoke
 // cached commissioner controls immediately, including a pending login check;
