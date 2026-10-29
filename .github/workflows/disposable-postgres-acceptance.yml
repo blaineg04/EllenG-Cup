@@ -64,10 +64,18 @@ jobs:
             RETURNS integer LANGUAGE sql AS 'SELECT 1';
           CREATE FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)
             RETURNS integer LANGUAGE sql AS 'SELECT 1';
+          CREATE FUNCTION public.elleng_test_authorized_scramble(text,integer,integer,integer)
+            RETURNS integer LANGUAGE sql AS 'SELECT 1';
+          CREATE FUNCTION public.elleng_test_commissioner_clear_scores(text)
+            RETURNS integer LANGUAGE sql AS 'SELECT 1';
           REVOKE ALL ON FUNCTION public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer) FROM PUBLIC,anon;
           REVOKE ALL ON FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer) FROM PUBLIC,anon;
+          REVOKE ALL ON FUNCTION public.elleng_test_authorized_scramble(text,integer,integer,integer) FROM PUBLIC,anon;
+          REVOKE ALL ON FUNCTION public.elleng_test_commissioner_clear_scores(text) FROM PUBLIC,anon;
           GRANT EXECUTE ON FUNCTION public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer) TO authenticated;
           GRANT EXECUTE ON FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer) TO authenticated;
+          GRANT EXECUTE ON FUNCTION public.elleng_test_authorized_scramble(text,integer,integer,integer) TO authenticated;
+          GRANT EXECUTE ON FUNCTION public.elleng_test_commissioner_clear_scores(text) TO authenticated;
           SQL
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -v REQUIRE_SCORING_READY=1 -d "$db" -f tests/acceptance/scoring-deployment-preflight.sql >/dev/null
           echo 'PASS: strict scoring preflight accepts valid disposable RPC grants and RLS.'
@@ -75,6 +83,8 @@ jobs:
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" <<'SQL'
           DROP FUNCTION public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer);
           DROP FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer);
+          DROP FUNCTION public.elleng_test_authorized_scramble(text,integer,integer,integer);
+          DROP FUNCTION public.elleng_test_commissioner_clear_scores(text);
           DROP TABLE public.elleng_pair_hole_scores;
           DROP TABLE public.elleng_team_scores;
           SQL
