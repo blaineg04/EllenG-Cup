@@ -11,6 +11,7 @@ test('integrated scoring candidate is explicitly nondeployable until database by
  assert.match(s,/^BEGIN;/m);
  assert.match(s,/^COMMIT;/m);
  assert.match(s,/elleng_test_authorized_shamble/);
+ assert.match(s,/elleng_test_authorized_scramble/);
  assert.match(s,/elleng_test_authorized_split_pair/);
  assert.match(s,/elleng_enforce_team_score_format/);
  assert.match(s,/elleng_prevent_scored_draft_format_change/);
