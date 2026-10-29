@@ -388,8 +388,10 @@ function recheckCommissionerOnReconnect(){
  // reverify even when the cached UI still says READY; otherwise a commissioner
  // whose ownership changed during the gap can keep stale local controls.
  if(document.getElementById("connection").textContent!=="OFFLINE"&&!commissionerUserId)return Promise.resolve();
- // Supabase retains the browser session; verify identity AND draft ownership
- // again before restoring any controls. Do not replay unsaved local edits.
+ // Supabase retains the browser session, but a missed offline event can
+ // leave previously enabled controls in the DOM. Retire that session before
+ // rechecking identity and draft ownership; do not replay unsaved edits.
+ if(commissionerUserId)revokeCommissionerSession();
  return openAdmin();
 }
 if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){
