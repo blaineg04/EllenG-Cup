@@ -58,9 +58,21 @@ const sql=[
 ].join('\n\n');
 // A deployable artifact is intentionally unavailable until its complete
 // production-shaped commit/rollback test and explicit approval are recorded.
+// Only for disposable PostgreSQL CI: remove the intentional rollback exception.
+// Never use this flag on hosted systems or as production approval evidence.
+const disposableInstall=process.argv.includes('--disposable-install');
+if(disposableInstall && process.env.ELLENG_DISPOSABLE_PG_TEST !== 'I_UNDERSTAND_ISOLATED_ONLY'){
+ process.stderr.write('NO-GO: disposable install requires explicit CI-only environment guard.\n');
+ process.exit(4);
+}
+const disposableSql=disposableInstall
+ ? sql.replace(/DO \$block\$ BEGIN RAISE EXCEPTION 'REVIEW-ONLY scoring candidate: direct-DML permissions and trigger owner must be reconciled before deployment'; END \$block\$;/,
+   '-- Intentional abort removed for disposable PostgreSQL installation test only.')
+ : sql;
 const releaseRequested=process.argv.includes('--release');
 if(releaseRequested){
  process.stderr.write('NO-GO: release build disabled; owner, rollback and hosted schema validation pending.\n');
  process.exitCode=3;
-}else if(process.argv.includes('--stdout') || process.argv.includes('--coordinated-review'))process.stdout.write(sql+'\n');
+}else if(disposableInstall)process.stdout.write(disposableSql+'\n');
+else if(process.argv.includes('--stdout') || process.argv.includes('--coordinated-review'))process.stdout.write(sql+'\n');
 else {process.stderr.write('Review only. Run with --stdout to inspect; final SQL deliberately aborts.\n');process.exitCode=2;}
