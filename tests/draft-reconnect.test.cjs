@@ -25,7 +25,6 @@ test('draft status strip follows channel state and failed catch-up',()=>{
 });
 
 const vm=require('node:vm');
-const fs=require('node:fs');
 const viewerHtml=fs.readFileSync('draft.html','utf8');
 const viewerStart=viewerHtml.indexOf('function setDraftConnectionStatus(state,label)');
 const viewerEnd=viewerHtml.indexOf('</script></body></html>',viewerStart);
