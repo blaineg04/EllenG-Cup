@@ -12,8 +12,12 @@ jobs:
   application-restore:
     if: github.repository == 'blaineg04/EllenG-Cup'
     runs-on: [self-hosted, macOS]
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: a090d2d8c5fbb2d4d3963b7ee3bd9bec22acad7e
+          persist-credentials: false
       - name: Restore fingerprinted backup in private native cluster
         shell: bash
         run: |
@@ -81,7 +85,35 @@ jobs:
            // Scope checks deliberately do not claim hosted role equivalence or full recovery.
            const result=spawnSync(path.join(bin,'psql'),['-X','-At','-v','ON_ERROR_STOP=1','-c',"SELECT count(*) FROM pg_tables WHERE schemaname='public' AND tablename IN ('elleng_team_scores','elleng_pair_hole_scores','elleng_player_hole_scores','elleng_tournaments','elleng_drafts');"],{env,encoding:'utf8',timeout:10000});
            if(result.status!==0||result.stdout.trim()!=='5')throw Error('Restored scoring table set incomplete');
-           fs.writeFileSync(path.join(root,'result.json'),JSON.stringify({scope:'application_restore_excluding_vault',source_sha256:expected,omitted_vault_sections:omitted,scoring_tables:5,full_project_recovery:false,production_changed:false},null,2),{mode:0o600});
+           // Pin the exact reviewed source; all database commands still use the private socket.
+          const beforeDump=path.join(root,'before-scoring-install.dump');
+          run('pg_dump',['-Fc','-f',beforeDump]);
+          const generate=spawnSync(process.execPath,['scripts/build-scoring-migration-review.cjs','--coordinated-review','--disposable-install'],{env:{...env,ELLENG_DISPOSABLE_PG_TEST:'I_UNDERSTAND_ISOLATED_ONLY'},encoding:'utf8',timeout:10000,maxBuffer:2*1024*1024});
+          if(generate.status!==0)throw Error('Pinned disposable migration generation failed');
+          const migration=path.join(root,'disposable-scoring-install.sql');
+          fs.writeFileSync(migration,generate.stdout,{mode:0o600});
+          const catalogQuery="SELECT jsonb_build_object('constraints',(SELECT jsonb_agg(jsonb_build_array(c.relname,k.conname,pg_get_constraintdef(k.oid)) ORDER BY c.relname,k.conname) FROM pg_constraint k JOIN pg_class c ON c.oid=k.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname LIKE 'elleng_%'),'policies',(SELECT jsonb_agg(to_jsonb(p) ORDER BY tablename,policyname) FROM pg_policies p WHERE schemaname='public' AND tablename LIKE 'elleng_%'),'triggers',(SELECT jsonb_agg(pg_get_triggerdef(t.oid) ORDER BY c.relname,t.tgname) FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname LIKE 'elleng_%' AND NOT t.tgisinternal),'table_acl',(SELECT jsonb_agg(jsonb_build_array(c.relname,c.relacl::text,c.relrowsecurity) ORDER BY c.relname) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind='r' AND c.relname LIKE 'elleng_%'))::text;";
+          function query(sql,database='postgres'){
+           const r=spawnSync(path.join(bin,'psql'),['-X','-At','-v','ON_ERROR_STOP=1','-d',database,'-c',sql],{env,encoding:'utf8',timeout:30000,maxBuffer:4*1024*1024});
+           if(r.status!==0)throw Error('Private catalog verification failed');
+           return r.stdout.trim();
+          }
+          const baseline=query(catalogQuery);
+          const scoreQuery="SELECT jsonb_build_object('team',(SELECT coalesce(jsonb_agg(to_jsonb(s) ORDER BY tournament_id,team_index,hole),'[]'::jsonb) FROM public.elleng_team_scores s),'pair',(SELECT coalesce(jsonb_agg(to_jsonb(s) ORDER BY tournament_id,team_index,hole,pair_index),'[]'::jsonb) FROM public.elleng_pair_hole_scores s),'player',(SELECT coalesce(jsonb_agg(to_jsonb(s) ORDER BY tournament_id,team_index,hole,golfer_index),'[]'::jsonb) FROM public.elleng_player_hole_scores s))::text;";
+          const scoresBefore=query(scoreQuery);
+          run('psql',['-X','-v','ON_ERROR_STOP=1','-f',migration]);
+          const rpcCount=query("SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('elleng_test_authorized_scramble','elleng_test_authorized_shamble','elleng_test_authorized_split_pair','elleng_test_commissioner_clear_scores');");
+          if(rpcCount!=='4')throw Error('Four scoring RPCs not installed');
+          const writeCount=query("SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN ('elleng_team_scores','elleng_pair_hole_scores','elleng_player_hole_scores') AND (has_table_privilege('anon',c.oid,'INSERT,UPDATE,DELETE') OR has_table_privilege('authenticated',c.oid,'INSERT,UPDATE,DELETE'));");
+          if(writeCount!=='0')throw Error('Direct API scoring writes still available');
+          if(query(scoreQuery)!==scoresBefore)throw Error('Migration changed existing score records');
+          console.log('PINNED_MIGRATION_INSTALL_PASS '+JSON.stringify({source:'a090d2d8c5fbb2d4d3963b7ee3bd9bec22acad7e',rpc_count:4,direct_api_write_tables:0,existing_scores_preserved:true,production_changed:false}));
+          run('createdb',['-T','template0','elleng_recovery_trial']);
+          run('pg_restore',['--exit-on-error','-d','elleng_recovery_trial',beforeDump]);
+          if(query(catalogQuery,'elleng_recovery_trial')!==baseline)throw Error('Recovered application catalog differs from baseline');
+          if(query(scoreQuery,'elleng_recovery_trial')!==scoresBefore)throw Error('Recovered score records differ from baseline');
+          console.log('PREINSTALL_SNAPSHOT_RECOVERY_PASS '+JSON.stringify({catalog_equal:true,score_records_equal:true,scope:'application_excluding_vault',post_install_score_rollback_tested:false,production_changed:false}));
+          fs.writeFileSync(path.join(root,'result.json'),JSON.stringify({scope:'application_restore_excluding_vault',source_sha256:expected,omitted_vault_sections:omitted,scoring_tables:5,full_project_recovery:false,production_changed:false},null,2),{mode:0o600});
            console.log('APPLICATION_RESTORE_PASS '+JSON.stringify({omitted_vault_sections:omitted,scoring_tables:5,full_project_recovery:false,production_changed:false}));
           }finally{
            if(started)run('pg_ctl',['-D',data,'-m','fast','-w','stop']);
