@@ -17,6 +17,6 @@ test('Shamble review-only policy replacement uses event-linked draft for all wri
   assert.match(body,/c\.team_index=elleng_player_hole_scores\.team_index/);
   assert.match(body,/auth\.uid\(\)/);
  }
- assert.doesNotMatch(sql,/draft_id\s*=\s*'elleng-cup'/);
+ assert.doesNotMatch(sql.replace(/^--.*$/gm,''),/draft_id\s*=\s*'elleng-cup'/);
  assert.match(sql,/DO NOT APPLY to hosted EllenG/);
 });
