@@ -127,6 +127,12 @@ jobs:
           rm -f "$integrated_log" /tmp/elleng-integrated-"$GITHUB_RUN_ID".sql
           sudo -u postgres dropdb "$integrated_db"
           echo 'PASS: integrated migration executes to deliberate stop and rolls back.'
+          # Exercise standard Scramble through the authenticated API role under lockdown.
+          scramble_role_db="${db}_scramble_role"
+          sudo -u postgres createdb "$scramble_role_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$scramble_role_db" -f tests/acceptance/authorized-scramble-restricted-role.sql >/dev/null
+          sudo -u postgres dropdb "$scramble_role_db"
+          echo 'PASS: authorized Scramble survives direct-DML lockdown.'
           # Independent role fixture: two drafts, two captains and actual staged Shamble policies.
           shamble_policy_db="${db}_shamble_policy"
           sudo -u postgres createdb "$shamble_policy_db"
