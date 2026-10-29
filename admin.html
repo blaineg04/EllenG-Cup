@@ -371,6 +371,11 @@ if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){
  window.addEventListener("offline",markCommissionerOffline);
  window.addEventListener("online",recheckCommissionerOnReconnect);
 }
+// A backgrounded tab may miss a Realtime owner change without going offline.
+// Retire cached commissioner controls before checking identity and ownership.
+if(typeof document.addEventListener==="function")document.addEventListener("visibilitychange",()=>{
+ if(document.visibilityState==="visible"&&commissionerUserId)return openAdmin();
+});
 async function openAdmin(){
  // A new verification supersedes any previous subscription, draft read or save.
  stopCommissionerSubscription();commissionerAuthEpoch++;commissionerUserId=null;

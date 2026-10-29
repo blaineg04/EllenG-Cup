@@ -16,12 +16,13 @@ const code=source.slice(varsStart,source.indexOf('\n',varsStart)+1)+'\n'+
 function harness(){
  const elements={loginCard:{style:{display:'block'}},adminApp:{style:{display:'none'}},
   authMsg:{textContent:''},connection:{textContent:''}};
- const buttons=[{disabled:false}],authReads=[],draftReads=[],writes=[],windowEvents={};
+ const buttons=[{disabled:false}],authReads=[],draftReads=[],writes=[],windowEvents={},documentEvents={};
  let authChanged,subscriptions=0,unsubscriptions=0,activeSubscriptions=0,renders=0,invalidations=0,confirmedUserId=null;const callbacks=[];
  const ctx={draftUpdatedAt:null,savingDraft:false,tick:null,liveMode:false,S:{picks:[]},
   fresh:()=>({picks:[]}),cfg:{draftId:'synthetic-only'},
   rsvpPreviewController:{invalidate:()=>{invalidations++}},
-  document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons},
+  document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons,visibilityState:'hidden',
+   addEventListener:(event,cb)=>{documentEvents[event]=cb}},
   navigator:{onLine:true},window:{addEventListener:(event,cb)=>{windowEvents[event]=cb}},
   db:{auth:{getUser:()=>confirmedUserId!==null?Promise.resolve({data:{user:{id:confirmedUserId}},error:null}):new Promise(resolve=>authReads.push(resolve)),
    onAuthStateChange:cb=>{authChanged=cb}},
@@ -38,6 +39,8 @@ function harness(){
   open:()=>{confirmedUserId=null;return ctx.openAdmin()},save:()=>{confirmedUserId=null;return ctx.secureSave()},change:(event,session)=>authChanged(event,session),
   offline:()=>{ctx.navigator.onLine=false;return windowEvents.offline()},
   online:()=>{ctx.navigator.onLine=true;confirmedUserId=null;return windowEvents.online()},
+  hidden:()=>{ctx.document.visibilityState='hidden';return documentEvents.visibilitychange()},
+  visible:()=>{ctx.document.visibilityState='visible';confirmedUserId=null;return documentEvents.visibilitychange()},
   auth:(index,id)=>authReads[index]({data:{user:id?{id}:null},error:null}),
   // After the owner read, Supabase getUser() returns the current account for
   // the second identity check. Saves explicitly switch back to deferred reads
@@ -85,6 +88,41 @@ test('offline commissioner immediately loses controls and reconnect rechecks own
  assert.equal(h.elements.connection.textContent,'READY');
  assert.equal(h.subscriptions(),2);
  assert.equal(oldListener.isCurrent(),false,'old channel stays fenced after reconnect');
+});
+test('foreground commissioner tab verifies ownership before restoring cached controls',async()=>{
+ const h=harness(),first=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await first;
+ const oldListener=h.listener(0);
+ h.hidden();
+ assert.equal(h.authReads.length,1,'hidden tabs should not initiate a second lookup');
+ const resumed=h.visible();
+ assert.equal(h.elements.connection.textContent,'VERIFYING');
+ assert.equal(h.elements.adminApp.style.display,'none','cached controls must be hidden before async verification');
+ assert.equal(oldListener.isCurrent(),false,'old Realtime listener must be fenced immediately');
+ assert.equal(h.unsubscriptions(),1);
+ assert.equal(h.authReads.length,2);
+ h.auth(1,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(1,'commissioner-b');await resumed;
+ assert.equal(h.elements.connection.textContent,'NO ACCESS','changed owner must fail closed');
+ assert.equal(h.elements.adminApp.style.display,'none');
+ assert.equal(h.subscriptions(),1,'unauthorized return must not create another listener');
+ assert.equal(oldListener.isCurrent(),false);
+});
+test('signout while foreground owner lookup is pending cannot reopen commissioner controls',async()=>{
+ const h=harness(),first=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await first;
+ const resumed=h.visible();
+ h.auth(1,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.draftReads.length,2);
+ h.change('SIGNED_OUT',null);
+ h.draft(1,'commissioner-a');await resumed;
+ assert.equal(h.elements.connection.textContent,'SIGN IN');
+ assert.equal(h.elements.adminApp.style.display,'none');
+ assert.equal(h.subscriptions(),1,'stale response must not resubscribe');
+ assert.equal(h.activeSubscriptions(),0);
+ assert.equal(vm.runInContext('commissionerUserId',h.ctx),null);
 });
 test('offline during commissioner owner lookup fences late response and reconnect verifies anew',async()=>{
  const h=harness(),pending=h.open();
