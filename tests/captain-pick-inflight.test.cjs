@@ -298,7 +298,10 @@ test('account switch during role refresh revokes captain controls',async()=>{
  assert.match(h.elements.msg.textContent,/account changed during refresh/);
 });
 test('both captain login paths use managed realtime subscriptions',()=>{
- assert.equal(s.split('startCaptainSubscription();').length-1,2);
+ const interactive=s.slice(s.indexOf('document.getElementById("signin").onclick'),s.indexOf('document.getElementById("soundToggle").onclick'));
+ const restored=s.slice(s.lastIndexOf('(async()=>{'));
+ assert.match(interactive,/startCaptainSubscription\(\);\s*startCaptainDrawTimer\(\)/,'interactive login must start managed subscription');
+ assert.match(restored,/startCaptainSubscription\(\);\s*startCaptainDrawTimer\(\)/,'restored login must start managed subscription');
  assert.doesNotMatch(s,/subscribe\(render\)/);
  assert.match(s,/function revokeCaptainSession\(\)\{\s*captainAuthEpoch\+\+;[\s\S]*?pickRequestEpoch\+\+;\s*pickInFlight=false;\s*stopCaptainSubscription\(\)/);
 });
