@@ -167,6 +167,11 @@ jobs:
           wait "$shamble_pid"
           test "$(sudo -u postgres psql -X -At -d "$shamble_race_db" -c "SELECT count(*) FROM public.elleng_player_hole_scores WHERE tournament_id='fixture' AND hole=10;")" = 2
           test "$(sudo -u postgres psql -X -At -d "$shamble_race_db" -c "SELECT score FROM public.elleng_team_scores WHERE tournament_id='fixture' AND hole=10;")" = 4
+          # A subsequent clear must remove the derived official total,
+          # rather than leaving the earlier complete-team total visible.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$shamble_race_db" -c "BEGIN; SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000002',true); SELECT public.elleng_test_authorized_shamble('fixture',0,10,1,NULL); COMMIT;" >"$shamble_b" 2>&1
+          test "$(sudo -u postgres psql -X -At -d "$shamble_race_db" -c "SELECT count(*) FROM public.elleng_player_hole_scores WHERE tournament_id='fixture' AND hole=10;")" = 1
+          test "$(sudo -u postgres psql -X -At -d "$shamble_race_db" -c "SELECT count(*) FROM public.elleng_team_scores WHERE tournament_id='fixture' AND hole=10;")" = 0
           rm -f "$shamble_a" "$shamble_b"
           sudo -u postgres dropdb "$shamble_race_db"
           echo 'PASS: concurrent Shamble golfer updates derive the correct final team total.'
