@@ -67,5 +67,21 @@ DO $check$ BEGIN
  IF (SELECT score FROM public.elleng_player_hole_scores WHERE tournament_id='event-b')<>7
  THEN RAISE EXCEPTION 'FAIL: commissioner b cannot update own event'; END IF;
 END $check$;
+-- Commissioner B must not gain write access to tournament A simply
+-- because they own a different tournament.
+DO $check$ DECLARE n integer; BEGIN
+ UPDATE public.elleng_player_hole_scores SET score=11 WHERE tournament_id='event-a';
+ GET DIAGNOSTICS n=ROW_COUNT;
+ IF n<>0 THEN RAISE EXCEPTION 'FAIL: commissioner b updated tournament a'; END IF;
+ DELETE FROM public.elleng_player_hole_scores WHERE tournament_id='event-a';
+ GET DIAGNOSTICS n=ROW_COUNT;
+ IF n<>0 THEN RAISE EXCEPTION 'FAIL: commissioner b deleted tournament a'; END IF;
+END $check$;
+-- Confirm commissioner B can clear their own tournament score.
+DELETE FROM public.elleng_player_hole_scores WHERE tournament_id='event-b';
+DO $check$ BEGIN
+ IF EXISTS(SELECT 1 FROM public.elleng_player_hole_scores WHERE tournament_id='event-b')
+ THEN RAISE EXCEPTION 'FAIL: commissioner b could not clear own event'; END IF;
+END $check$;
 RESET ROLE;
 ROLLBACK;
