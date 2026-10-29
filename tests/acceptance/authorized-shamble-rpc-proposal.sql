@@ -30,7 +30,7 @@ BEGIN
      WHERE c.draft_id=d.id AND c.team_index=p_team_index AND c.user_id=v_uid
    ));
  IF v_draft IS NULL THEN RAISE EXCEPTION 'Not authorized for this team' USING ERRCODE='42501'; END IF;
- IF v_state->>'playFormat' = 'split_pair' THEN RAISE EXCEPTION 'Shamble scoring unavailable for Split-Pair format' USING ERRCODE='22023'; END IF;
+ IF coalesce(v_state->>'playFormat','standard') NOT IN ('standard','elleng') THEN RAISE EXCEPTION 'Shamble requires standard scoring format' USING ERRCODE='22023'; END IF;
  -- Authoritative roster from stored draft, not client-supplied data.
  -- Current browser roster entries may be integers or {golferIndex: integer}.
  -- Invalid entries and duplicates fail closed rather than shrinking the team.
