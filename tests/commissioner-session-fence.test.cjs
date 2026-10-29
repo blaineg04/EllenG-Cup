@@ -129,6 +129,25 @@ test('online event without offline callback restores commissioner only after fre
  assert.equal(oldListener.isCurrent(),false);
  assert.equal(h.listener(1).isCurrent(),true);
 });
+test('online event retires an in-flight commissioner owner lookup after missed offline event',async()=>{
+ const h=harness(),stale=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.draftReads.length,1,'initial owner lookup is pending');
+ assert.equal(h.elements.connection.textContent,'VERIFYING');
+ h.ctx.navigator.onLine=false; // Offline notification was missed while the owner read was pending.
+ const resumed=h.online();
+ assert.equal(h.authReads.length,2,'online must begin a fresh identity lookup');
+ assert.equal(h.elements.adminApp.style.display,'none');
+ h.draft(0,'commissioner-a');await stale;
+ assert.equal(h.elements.adminApp.style.display,'none','retired owner result cannot reopen controls');
+ assert.equal(h.subscriptions(),0,'retired owner result cannot establish Realtime');
+ h.auth(1,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.draftReads.length,2);
+ h.draft(1,'commissioner-b');await resumed;
+ assert.equal(h.elements.connection.textContent,'NO ACCESS','fresh revoked ownership must deny access');
+ assert.equal(h.elements.adminApp.style.display,'none');
+ assert.equal(h.subscriptions(),0);
+});
 test('offline commissioner bootstrap cannot authorize cached session before reconnect',async()=>{
  const h=harness();
  h.ctx.navigator.onLine=false; // Simulate browser offline before its event arrives.
