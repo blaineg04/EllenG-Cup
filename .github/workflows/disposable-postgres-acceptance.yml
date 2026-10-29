@@ -234,6 +234,28 @@ jobs:
             END;
           END \$role_gate\$;
           RESET ROLE;" >/dev/null
+          # All four privileged score RPCs require explicit authenticated grants.
+          # Verify function ownership and role ACLs after installation.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -c "
+          DO \$rpc_owner_gate\$
+          DECLARE fn regprocedure;
+          BEGIN
+            FOREACH fn IN ARRAY ARRAY[
+              'public.elleng_test_authorized_scramble(text,integer,integer,integer)'::regprocedure,
+              'public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)'::regprocedure,
+              'public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)'::regprocedure,
+              'public.elleng_test_commissioner_clear_scores(text)'::regprocedure
+            ] LOOP
+              IF has_function_privilege('anon',fn,'EXECUTE')
+                OR has_function_privilege('PUBLIC',fn,'EXECUTE')
+                OR NOT has_function_privilege('authenticated',fn,'EXECUTE')
+              THEN RAISE EXCEPTION 'Invalid RPC execute ACL: %',fn; END IF;
+              IF NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=fn
+                AND p.prosecdef AND p.proowner='postgres'::regrole
+                AND p.proconfig @> ARRAY['search_path='])
+              THEN RAISE EXCEPTION 'RPC owner/definer/search_path mismatch: %',fn; END IF;
+            END LOOP;
+          END \$rpc_owner_gate\$;" >/dev/null
           sudo -u postgres dropdb "$install_db"
           rm -f /tmp/elleng-install-"$GITHUB_RUN_ID".sql
           echo 'PASS: coordinated migration committed and verified in disposable PostgreSQL.'
