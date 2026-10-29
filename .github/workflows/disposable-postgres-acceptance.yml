@@ -89,6 +89,7 @@ jobs:
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/acceptance/disposable-tournament-format-score-guard.sql
           node --test tests/acceptance/shamble-dynamic-draft-policies.test.cjs
           node --test tests/acceptance/integrated-scoring-candidate.test.cjs
+          node --test tests/acceptance/commissioner-score-reset-rpc.test.cjs
           # Actually execute the assembled SQL in an isolated PostgreSQL database.
           # The expected final exception is the deliberate deployment stop; any
           # earlier SQL failure must fail CI rather than claiming migration readiness.
