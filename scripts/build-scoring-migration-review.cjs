@@ -73,11 +73,15 @@ const disposableSql=disposableInstall
  : sql;
 // Reproducible review fingerprint, NOT production approval or a deployment SQL.
 const manifestRequested=process.argv.includes('--review-manifest');
+if(manifestRequested && !process.argv.includes('--coordinated-review')){
+ process.stderr.write('NO-GO: review manifest requires --coordinated-review.\n');
+ process.exit(5);
+}
 const sha256=s=>crypto.createHash('sha256').update(s,'utf8').digest('hex');
 const manifest={
  status:'REVIEW_ONLY_NOT_APPROVED',
  generated_sql_sha256:sha256(sql),
- coordinated_sql_sha256:sha256(sql.replace(/DO \$block\$ BEGIN RAISE EXCEPTION 'REVIEW-ONLY scoring candidate: direct-DML permissions and trigger owner must be reconciled before deployment'; END \$block\$;/,'-- disposable install only')),
+ coordinated_sql_sha256:sha256(sql),
  sources:parts.map(p=>({path:p,sha256:sha256(read(p))}))
 };
 const releaseRequested=process.argv.includes('--release');
