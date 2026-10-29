@@ -209,6 +209,31 @@ jobs:
            IF n<>3 THEN RAISE EXCEPTION 'Post-install scoring SELECT access missing: % of 3',n; END IF;
           END \$read_gate\$;" >/dev/null
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -f tests/acceptance/disposable-installed-authenticated-scramble.sql >/dev/null
+          # Exercise actual PostgreSQL API roles (not only simulated JWT claims).
+          # RPCs must reject anon; authenticated may execute but cannot write
+          # score tables directly after coordinated privilege lockdown.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -c "
+          DO \$role_gate\$
+          BEGIN
+            IF has_function_privilege('anon',
+              'public.elleng_test_authorized_scramble(text,integer,integer,integer)', 'EXECUTE')
+            THEN RAISE EXCEPTION 'anon can execute scoring RPC'; END IF;
+            IF NOT has_function_privilege('authenticated',
+              'public.elleng_test_authorized_scramble(text,integer,integer,integer)', 'EXECUTE')
+            THEN RAISE EXCEPTION 'authenticated cannot execute scoring RPC'; END IF;
+          END \$role_gate\$;" >/dev/null
+          # SET ROLE enforces the actual database role; no JWT must fail closed.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -c "
+          SET ROLE authenticated;
+          DO \$role_gate\$
+          BEGIN
+            BEGIN
+              PERFORM public.elleng_test_authorized_scramble('auth-tournament',0,4,5);
+              RAISE EXCEPTION 'Authenticated role without JWT was permitted to score';
+            EXCEPTION WHEN insufficient_privilege THEN NULL;
+            END;
+          END \$role_gate\$;
+          RESET ROLE;" >/dev/null
           sudo -u postgres dropdb "$install_db"
           rm -f /tmp/elleng-install-"$GITHUB_RUN_ID".sql
           echo 'PASS: coordinated migration committed and verified in disposable PostgreSQL.'
