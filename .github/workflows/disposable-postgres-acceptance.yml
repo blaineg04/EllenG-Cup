@@ -252,7 +252,7 @@ jobs:
               THEN RAISE EXCEPTION 'Invalid RPC execute ACL: %',fn; END IF;
               IF NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=fn
                 AND p.prosecdef AND p.proowner='postgres'::regrole
-                AND p.proconfig && ARRAY['search_path=','search_path=""']::text[])
+                AND EXISTS (SELECT 1 FROM unnest(coalesce(p.proconfig,ARRAY[]::text[])) setting WHERE setting LIKE 'search_path=%'))
               THEN RAISE EXCEPTION 'RPC owner/definer/search_path mismatch: %',fn; END IF;
             END LOOP;
           END \$rpc_owner_gate\$;" >/dev/null
