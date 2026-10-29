@@ -4592,7 +4592,7 @@ function endScoreSave(ok=true){
  scoreSaveBusy=false;setSyncStatus(ok?"saved":"error",ok?"Saved ✓":"Save failed");
 }
 async function savePlayerShambleScore(teamIndex,golferIndex,val){
- if(hole<10||hole>18||!canEditTeam(teamIndex)||!Number.isInteger(teamIndex)||!Number.isInteger(golferIndex)||!teamRosterGolfers(teamIndex).some(g=>g.index===golferIndex))return;
+ if(isSplitPair()||hole<10||hole>18||!canEditTeam(teamIndex)||!Number.isInteger(teamIndex)||!Number.isInteger(golferIndex)||!teamRosterGolfers(teamIndex).some(g=>g.index===golferIndex))return;
  if(!beginScoreSave())return;
  const scoreHole=hole;
  const el=$("saveMsg");
