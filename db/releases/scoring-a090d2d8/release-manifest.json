@@ -1,0 +1,41 @@
+{
+  "source_commit": "a090d2d8c5fbb2d4d3963b7ee3bd9bec22acad7e",
+  "target_project": "xepccqedhbucpbwuykoc",
+  "sql_file": "tested-install.sql",
+  "sql_sha256": "049988581409c8cff326fd2a506c4ddd40f43e9a977c8c9e7dd39ef2df63b8b4",
+  "status": "TESTED_CANDIDATE_NOT_DEPLOYED",
+  "evidence": {
+    "hosted_application_restore": "https://github.com/blaineg04/EllenG-Cup/actions/runs/40956011179",
+    "migration_install_and_preinstall_recovery": "https://github.com/blaineg04/EllenG-Cup/actions/runs/40960469221",
+    "local_authenticated_role_and_postinstall_recovery": "https://github.com/blaineg04/EllenG-Cup/actions/runs/40960862236"
+  },
+  "backup": {
+    "sha256": "e82e5ee20d37afb4839ef3f911f490c243f89e5620f2f4cc4b59c77a344fc5ef",
+    "bytes": 576992,
+    "scope": "Application restore excludes eight Vault sections; full original dump preserved privately."
+  },
+  "verified": [
+    "four scoring RPCs install",
+    "direct score table writes rejected",
+    "Scramble/Shamble/Split-Pair under local authenticated role",
+    "cross-team denial",
+    "preinstall application catalog and scores recovered",
+    "postinstall scores including Split-Pair 37 recovered"
+  ],
+  "remaining": [
+    "fresh hosted schema/ACL drift and active-scoring check",
+    "review app and database release ordering and maintenance window",
+    "exercise a non-destructive schema rollback or explicitly retain migrated schema during recovery",
+    "hosted authenticated two-client scoring and Realtime acceptance",
+    "verify deployed app version and final responsive acceptance"
+  ],
+  "inactive_dependencies": [
+    "event RSVP RPC adapter remains staged and inactive in scoring.html"
+  ],
+  "limitations": [
+    "Local database engine is PostgreSQL 18; hosted engine is PostgreSQL 17.6.",
+    "Local role checks do not establish hosted Auth/PostgREST/Realtime behavior.",
+    "A snapshot restore is not an in-place schema rollback preserving newer records.",
+    "SQL retains review/disposable provenance comments; do not infer approval from artifact presence."
+  ]
+}
