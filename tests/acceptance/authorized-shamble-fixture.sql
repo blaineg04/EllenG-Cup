@@ -25,6 +25,16 @@ BEGIN
  IF EXISTS(SELECT 1 FROM public.elleng_player_hole_scores WHERE tournament_id='fixture')
  THEN RAISE EXCEPTION 'Rejected format write altered player scores'; END IF;
 END $format$;
+UPDATE public.elleng_drafts SET state=jsonb_set(state,'{playFormat}','"unexpected_format"'::jsonb,true) WHERE id='draft';
+DO $format$
+DECLARE denied boolean:=false;
+BEGIN
+ BEGIN PERFORM public.elleng_test_authorized_shamble('fixture',0,10,0,7);
+ EXCEPTION WHEN invalid_parameter_value THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Unknown draft format accepted Shamble score'; END IF;
+ IF EXISTS(SELECT 1 FROM public.elleng_player_hole_scores WHERE tournament_id='fixture')
+ THEN RAISE EXCEPTION 'Unknown format check wrote player data'; END IF;
+END $format$;
 UPDATE public.elleng_drafts SET state=jsonb_set(state,'{playFormat}','"standard"'::jsonb,true) WHERE id='draft';
 
 SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000002',false);
