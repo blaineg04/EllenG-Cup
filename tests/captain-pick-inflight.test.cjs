@@ -430,7 +430,7 @@ test('late interactive sign-in result cannot restore revoked captain controls',a
  assert.equal(lookups,0,'revoked login never grants a captain role');
  assert.equal(subscribed,0);
  assert.equal(elements.app.style.display,'block','late completion does not alter newer UI');
- assert.equal(elements.signin.disabled,false,'button cleanup still runs');
+ assert.equal(elements.signin.disabled,true,'retired login must not unlock a replacement in progress; actual revocation releases the button');
  assert.match(s,/function revokeCaptainSession\(\)\{\s*captainAuthEpoch\+\+;\s*captainBootstrapEpoch\+\+;/);
 });
 
