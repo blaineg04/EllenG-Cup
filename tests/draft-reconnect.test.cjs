@@ -30,7 +30,7 @@ const viewerStart=viewerHtml.indexOf('function setDraftConnectionStatus(state,la
 const viewerEnd=viewerHtml.indexOf('</script></body></html>',viewerStart);
 assert.ok(viewerStart>0&&viewerEnd>viewerStart,'public draft viewer bootstrap is available');
 const viewerBootstrap=viewerHtml.slice(viewerStart,viewerEnd).replace('(async()=>{','this.viewerReady=(async()=>{');
-async function viewerHarness({failInitial=false,applyInitial=true,failSubscribe=false}={}){
+async function viewerHarness({failInitial=false,applyInitial=true,failSubscribe=false,initialOffline=false}={}){
  let reads=0,renders=0,subscriptions=0,clockStarts=0,unsubscriptions=0;
  const callbacks=[],events={};
  const classes=new Set();
@@ -39,7 +39,7 @@ async function viewerHarness({failInitial=false,applyInitial=true,failSubscribe=
  const elements={connection,draftStatusStrip:strip,onclock,meta};
  const ctx={
   document:{getElementById:id=>elements[id]||null,visibilityState:'visible',addEventListener:(name,cb)=>{events[name]=cb}},
-  navigator:{onLine:true},window:{addEventListener:(name,cb)=>{events[name]=cb}},
+  navigator:{onLine:!initialOffline},window:{addEventListener:(name,cb)=>{events[name]=cb}},
   load:async (_guard,onApplied)=>{reads++;if(failInitial)throw Error('transient read outage');if(applyInitial)onApplied()},
   render:()=>{renders++},
   subscribe:cb=>{subscriptions++;if(failSubscribe)throw Error('channel unavailable');callbacks.push(cb);return {unsubscribe:()=>{unsubscriptions++;return Promise.resolve()}}},
@@ -108,4 +108,15 @@ test('hidden public viewer pauses its channel and refreshes on foreground',async
  assert.equal(h.stats().subscriptions,2);
  h.emit(1);
  assert.equal(h.stats().renders,rendered+1);
+});
+
+test('offline public viewer startup waits for online before first subscription',async()=>{
+ const h=await viewerHarness({initialOffline:true});
+ assert.deepEqual(h.stats(),{reads:0,renders:0,subscriptions:0,clockStarts:0});
+ assert.equal(h.connection.textContent,'OFFLINE');
+ h.online();
+ assert.equal(h.connection.textContent,'CONNECTING');
+ assert.equal(h.stats().subscriptions,1);
+ h.emit();
+ assert.equal(h.stats().renders,1,'new subscriber can render after its authoritative catch-up');
 });
