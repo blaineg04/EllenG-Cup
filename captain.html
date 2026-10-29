@@ -814,6 +814,7 @@ function startCaptainSubscription(){
  if(!userId)return;
  const renderForSession=async(refreshDraft=false)=>{
   if(!renderForSession.isCurrent())return;
+  if(typeof navigator!=="undefined"&&navigator.onLine===false){markCaptainOffline();return;}
   const roleEpoch=++captainRoleRefreshEpoch;
   captainRoleRefreshPending=true;
   document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
@@ -849,6 +850,7 @@ function startCaptainSubscription(){
     assertCaptainTeamPresent();
     pickSyncFailed=false;
    }
+   if(typeof navigator!=="undefined"&&navigator.onLine===false){markCaptainOffline();return;}
    captainRoleRefreshPending=false;
    if(status){status.textContent="LIVE";status.className="online"}
    render();
@@ -1019,8 +1021,21 @@ function recheckCaptainOnResume(){
 if(typeof document.addEventListener==="function")document.addEventListener("visibilitychange",()=>{
  if(document.visibilityState==="visible")return recheckCaptainOnResume();
 });
-if(typeof window!=="undefined"&&typeof window.addEventListener==="function")
+function markCaptainOffline(){
+ const recheck=captainRoleRecheck;
+ if(!recheck||!recheck.isCurrent())return;
+ // An offline browser must not leave cached LIVE pick controls usable.
+ // Invalidate any pending role read; only an online recheck can restore LIVE.
+ captainRoleRefreshEpoch++;
+ captainRoleRefreshPending=true;pickSyncFailed=true;
+ const status=document.getElementById("connection");
+ if(status){status.textContent="OFFLINE";status.className="offline";}
+ document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
+}
+if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){
  window.addEventListener("online",recheckCaptainOnResume);
+ window.addEventListener("offline",markCaptainOffline);
+}
 (async()=>{
   const bootEpoch=captainBootstrapEpoch;
   const status=document.getElementById("connection");

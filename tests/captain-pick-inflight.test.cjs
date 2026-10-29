@@ -46,7 +46,7 @@ function channelHarness(){
  const ctx={captainUserId:'captain-a',myTeam:0,S:{teams:[{},{}]},
   captainAuthEpoch:0,captainBootstrapEpoch:0,pickRequestEpoch:0,pickInFlight:false,pickSyncFailed:false,
   document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons,visibilityState:'hidden',
-   addEventListener:(name,cb)=>{events[name]=cb}},window:{addEventListener:(name,cb)=>{windowEvents[name]=cb}},
+   addEventListener:(name,cb)=>{events[name]=cb}},navigator:{onLine:true},window:{addEventListener:(name,cb)=>{windowEvents[name]=cb}},
   clearInterval:()=>{},render:()=>renders++,console:{error:()=>{}},cfg:{draftId:'isolated-test'},
   load:async(guard,onApplied)=>{draftLoads++;if(draftLoadError)throw draftLoadError;if(guard())onApplied?.()},
   db:{auth:{getUser:async()=>({data:{user:{id:authUserId||ctx.captainUserId}},error:null})},
@@ -73,7 +73,8 @@ function channelHarness(){
  return {ctx,callbacks,elements,buttons,start:()=>ctx.startChannel(),stop:()=>ctx.stopChannel(),
   resumeVisible:()=>{ctx.document.visibilityState='visible';return events.visibilitychange()},
   resumeHidden:()=>{ctx.document.visibilityState='hidden';return events.visibilitychange()},
-  resumeOnline:()=>windowEvents.online(),draftLoads:()=>draftLoads,
+  resumeOnline:()=>{ctx.navigator.onLine=true;return windowEvents.online()},
+  goOffline:()=>{ctx.navigator.onLine=false;return windowEvents.offline()},draftLoads:()=>draftLoads,
   failDraftLoad:error=>{draftLoadError=error},
   subscriptions:()=>subscriptions,unsubscriptions:()=>unsubscriptions,renders:()=>renders,
   rolePending:()=>vm.runInContext('captainRoleRefreshPending',ctx),
@@ -187,6 +188,34 @@ test('online resume verifies role and refreshes authoritative draft before enabl
  await h.resumeOnline();
  assert.equal(h.draftLoads(),1,'disposed session must not issue another read');
  assert.equal(h.renders(),1);
+});
+test('offline transition immediately freezes captain picks until verified reconnect',async()=>{
+ const h=channelHarness();h.start();
+ h.goOffline();
+ assert.equal(h.elements.connection.textContent,'OFFLINE');
+ assert.equal(h.rolePending(),true);
+ assert.equal(h.ctx.pickSyncFailed,true);
+ assert.equal(h.buttons[0].disabled,true);
+ await h.callbacks[0]();
+ assert.equal(h.renders(),0,'queued realtime callback must not restore LIVE while offline');
+ assert.equal(h.draftLoads(),0,'offline callbacks must not attempt a draft read');
+ await h.resumeOnline();
+ assert.equal(h.draftLoads(),1);
+ assert.equal(h.renders(),1);
+ assert.equal(h.rolePending(),false);
+ assert.equal(h.ctx.pickSyncFailed,false);
+ assert.equal(h.elements.connection.textContent,'LIVE');
+});
+test('offline transition fences pending captain role verification',async()=>{
+ const h=channelHarness();h.start();h.deferRoles(true);
+ const refresh=h.callbacks[0]();
+ assert.equal(h.pendingRoles(),1);
+ h.goOffline();
+ h.resolveRole({data:{team_index:0},error:null});await refresh;
+ assert.equal(h.renders(),0);
+ assert.equal(h.elements.connection.textContent,'OFFLINE');
+ assert.equal(h.rolePending(),true);
+ assert.equal(h.buttons[0].disabled,true);
 });
 test('failed online draft read leaves captain controls disabled',async()=>{
  const h=channelHarness();h.start();h.failDraftLoad(new Error('offline synthetic read failure'));
