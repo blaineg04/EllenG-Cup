@@ -37,3 +37,8 @@
 - Run the strict four-RPC preflight on a hosted-schema replica; inspect all existing score-write policies (especially hardcoded draft IDs).
 - Record commissioner-approved maintenance window and ensure the matching RPC-based browser client deploys together with the database change.
 - Do not execute the guarded disposable-test SQL or remove its intentional abort and present that as production-approved SQL.
+
+## Policy-cleanup verification — 2026-10-29
+- Disposable PostgreSQL acceptance #921 passed with coordinated removal of nine legacy active-event scoring write policies.
+- This is not a live authorization test. Before approval, verify RPC calls as an authenticated captain and commissioner, reject unauthorized and anonymous writes, and confirm SELECT-based leaderboards remain available.
+- Freeze the new policy-cleanup patch in the exact SQL checksum; prior manifests are superseded by any SQL change.
