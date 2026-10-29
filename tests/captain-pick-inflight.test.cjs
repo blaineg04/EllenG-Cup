@@ -480,7 +480,7 @@ test('interactive captain replacement survives Supabase SIGNED_IN without revoki
    signInWithPassword:async()=>{onAuthEvent('SIGNED_IN',{user:{id:'captain-b'}});return {error:null}}
   }},
   whoami:async()=>{roleChecks++;ctx.captainUserId='captain-b';ctx.myTeam=1;return true},
-  load:async()=>{loaded++},render:()=>{},
+  load:async(guard,onApplied)=>{loaded++;if(guard())onApplied?.()},render:()=>{},
   startCaptainSubscription:()=>subscriptions++,startCaptainDrawTimer:()=>{},
   stopCaptainSubscription:()=>stopped++,stopCaptainDrawTimer:()=>timersStopped++
  };
@@ -546,7 +546,7 @@ test('invalid captain team mapping cannot activate an interactive session',async
   document:{getElementById:id=>elements[id]},
   db:{auth:{signInWithPassword:async()=>({error:null})}},
   whoami:async()=>{ctx.captainUserId='captain-a';ctx.myTeam=2;return true},
-  load:async()=>{},render:()=>{throw Error('invalid team must not render')},
+  load:async(guard,onApplied)=>{if(guard())onApplied?.()},render:()=>{throw Error('invalid team must not render')},
   startCaptainSubscription:()=>subscriptions++,startCaptainDrawTimer:()=>timers++
  };
  vm.createContext(ctx);
@@ -570,7 +570,7 @@ test('restored captain session rejects a stale team assignment after team count 
   document:{getElementById:id=>elements[id]},
   db:{auth:{getUser:async()=>({data:{user:{id:'captain-a'}}})}},
   whoami:async()=>{ctx.captainUserId='captain-a';ctx.myTeam=5;return true},
-  load:async()=>{},render:()=>{throw Error('invalid team must not render')},
+  load:async(guard,onApplied)=>{if(guard())onApplied?.()},render:()=>{throw Error('invalid team must not render')},
   startCaptainSubscription:()=>subscriptions++,startCaptainDrawTimer:()=>timers++,
   console:{error:()=>{}}
  };
@@ -619,7 +619,7 @@ test('captain render cannot enable pick buttons while hidden or offline without 
  assert.match(s.slice(start,end),/mine=[^;]+&&captainSessionForegroundOnline\(\)/);
 });
 
-function captainEntryLifecycleHarness(mode){
+function captainEntryLifecycleHarness(mode,{applied=true}={}){
  const elements=captainAuthElements();
  elements.login.style.display='block';elements.app.style.display='none';
  let finishLoad,loadGuard,subscriptions=0,timers=0,renders=0;
@@ -632,7 +632,7 @@ function captainEntryLifecycleHarness(mode){
    signInWithPassword:async()=>({error:null})
   }},
   whoami:async()=>{ctx.captainUserId='captain-a';ctx.myTeam=0;return true},
-  load:guard=>{loadGuard=guard;return new Promise(resolve=>{finishLoad=resolve})},
+  load:(guard,onApplied)=>{loadGuard=guard;return new Promise(resolve=>{finishLoad=()=>{if(applied&&guard())onApplied?.();resolve()}})},
   render:()=>renders++,startCaptainSubscription:()=>subscriptions++,
   startCaptainDrawTimer:()=>timers++,console:{error:()=>{}}
  };
@@ -703,6 +703,34 @@ for(const mode of ['bootstrap','interactive']){
  });
 }
 
+
+for(const mode of ['bootstrap','interactive']){
+ test('captain '+mode+' entry cannot authorize an unapplied superseded draft read',async()=>{
+  const h=captainEntryLifecycleHarness(mode,{applied:false});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(h.guard()(),true,'entry remains current and online');
+  h.finish();await h.pending;
+  assert.equal(h.ctx.captainUserId,null);
+  assert.equal(h.ctx.myTeam,null);
+  assert.equal(h.ctx.pickSyncFailed,true);
+  assert.equal(h.elements.app.style.display,'none');
+  assert.equal(h.elements.login.style.display,'block');
+  assert.match(h.elements.msg.textContent,/draft could not be verified/);
+  assert.equal(h.subscriptions(),0);assert.equal(h.timers(),0);assert.equal(h.renders(),0);
+ });
+ test('captain '+mode+' entry permits a current applied authoritative draft read',async()=>{
+  const h=captainEntryLifecycleHarness(mode,{applied:true});
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(h.guard()(),true);
+  h.finish();await h.pending;
+  assert.equal(h.ctx.captainUserId,'captain-a');
+  assert.equal(h.ctx.myTeam,0);
+  assert.equal(h.ctx.pickSyncFailed,false);
+  assert.equal(h.elements.app.style.display,'block');
+  assert.equal(h.elements.login.style.display,'none');
+  assert.equal(h.subscriptions(),1);assert.equal(h.timers(),1);assert.equal(h.renders(),1);
+ });
+}
 
 // Exercise the real captain pick handler with synthetic RPC and draft reads.
 // A superseded or offline read must never be mistaken for an applied snapshot.

@@ -994,12 +994,17 @@ document.getElementById("signin").onclick=async()=>{
     if(!authorized){if(status)status.textContent="READY";return}
     document.getElementById("login").style.display="none";
     document.getElementById("app").style.display="block";
+    // A newer draft read can supersede this one without throwing. Do not
+    // activate captain controls unless this entry read actually applied.
+    let draftApplied=false;
     await load(()=>loginEpoch===captainBootstrapEpoch&&!!captainUserId&&
-      document.visibilityState!=="hidden"&&(typeof navigator==="undefined"||navigator.onLine!==false));
+      document.visibilityState!=="hidden"&&(typeof navigator==="undefined"||navigator.onLine!==false),()=>{draftApplied=true});
     if(loginEpoch!==captainBootstrapEpoch)return;
     if(document.visibilityState==="hidden"||(typeof navigator!=="undefined"&&navigator.onLine===false))
      throw new Error("Captain verification interrupted while offline or hidden. Return online and sign in again.");
-    if(!captainUserId)throw new Error("Captain session changed while loading. Sign in again.");assertCaptainTeamPresent();pickSyncFailed=false;render();
+    if(!captainUserId)throw new Error("Captain session changed while loading. Sign in again.");
+    if(!draftApplied)throw new Error("Captain draft could not be verified. Sign in again.");
+    assertCaptainTeamPresent();pickSyncFailed=false;render();
     if(status)status.textContent="CONNECTING";
     startCaptainSubscription();startCaptainDrawTimer();
   }catch(e){
@@ -1087,12 +1092,16 @@ if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){
       if(bootEpoch!==captainBootstrapEpoch)return;
       document.getElementById("login").style.display="none";
       document.getElementById("app").style.display="block";
+      // An overlapping read can supersede the bootstrap snapshot without error.
+      // Only an applied authoritative snapshot may unlock a restored captain.
+      let draftApplied=false;
       await load(()=>bootEpoch===captainBootstrapEpoch&&!!captainUserId&&
-       document.visibilityState!=="hidden"&&(typeof navigator==="undefined"||navigator.onLine!==false));
+       document.visibilityState!=="hidden"&&(typeof navigator==="undefined"||navigator.onLine!==false),()=>{draftApplied=true});
       if(bootEpoch!==captainBootstrapEpoch)return;
       if(document.visibilityState==="hidden"||(typeof navigator!=="undefined"&&navigator.onLine===false))
        throw new Error("Captain verification interrupted while offline or hidden. Return online and sign in again.");
       if(!captainUserId)throw new Error("Captain session changed while loading. Sign in again.");
+      if(!draftApplied)throw new Error("Captain draft could not be verified. Sign in again.");
       assertCaptainTeamPresent();pickSyncFailed=false;render();
       if(status)status.textContent="CONNECTING";
       startCaptainSubscription();
