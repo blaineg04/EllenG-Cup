@@ -91,6 +91,44 @@ test('offline commissioner immediately loses controls and reconnect rechecks own
  assert.equal(h.subscriptions(),2);
  assert.equal(oldListener.isCurrent(),false,'old channel stays fenced after reconnect');
 });
+test('online event rechecks commissioner after a missed offline event and revoked ownership',async()=>{
+ const h=harness(),first=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await first;
+ const oldListener=h.listener(0);
+ h.ctx.navigator.onLine=false; // Browser missed the offline event; READY remains cached.
+ assert.equal(h.elements.connection.textContent,'READY');
+ assert.equal(oldListener.isCurrent(),false,'offline browser must not apply draft updates');
+ const resumed=h.online(); // Only online fires after connectivity returns.
+ assert.equal(h.elements.connection.textContent,'VERIFYING');
+ assert.equal(h.elements.adminApp.style.display,'none','stale controls must lock before async verification');
+ assert.equal(h.buttons[0].disabled,true);
+ assert.equal(oldListener.isCurrent(),false,'old subscription must remain fenced');
+ assert.equal(h.unsubscriptions(),1);
+ assert.equal(h.authReads.length,2,'missed offline event must still trigger a new identity lookup');
+ h.auth(1,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(1,'commissioner-b');await resumed;
+ assert.equal(h.elements.connection.textContent,'NO ACCESS','revoked commissioner cannot regain controls');
+ assert.equal(h.elements.adminApp.style.display,'none');
+ assert.equal(h.subscriptions(),1,'revoked commissioner must not subscribe again');
+});
+test('online event without offline callback restores commissioner only after fresh owner check',async()=>{
+ const h=harness(),first=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await first;
+ const oldListener=h.listener(0);
+ h.ctx.navigator.onLine=false;
+ const resumed=h.online();
+ assert.equal(h.elements.connection.textContent,'VERIFYING');
+ assert.equal(h.elements.adminApp.style.display,'none');
+ h.auth(1,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(1,'commissioner-a');await resumed;
+ assert.equal(h.elements.connection.textContent,'READY');
+ assert.equal(h.elements.adminApp.style.display,'block');
+ assert.equal(h.subscriptions(),2);
+ assert.equal(oldListener.isCurrent(),false);
+ assert.equal(h.listener(1).isCurrent(),true);
+});
 test('offline commissioner bootstrap cannot authorize cached session before reconnect',async()=>{
  const h=harness();
  h.ctx.navigator.onLine=false; // Simulate browser offline before its event arrives.
