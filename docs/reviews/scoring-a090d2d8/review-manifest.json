@@ -1,0 +1,52 @@
+{
+  "status": "REVIEW_ONLY_NOT_APPROVED",
+  "generated_sql_sha256": "07bd03d234a4ef8a8f43b2331ef19165e5d71571a44aba5d8aea5d8e3218c3d0",
+  "coordinated_sql_sha256": "07bd03d234a4ef8a8f43b2331ef19165e5d71571a44aba5d8aea5d8e3218c3d0",
+  "sources": [
+    {
+      "path": "db/patches/20261028_split_pair_team_total_range_REVIEW_ONLY.sql",
+      "sha256": "1e8905a41dfb9e1552c610b6cd718b556b2793c9ecae119a648a54f80f6eff55"
+    },
+    {
+      "path": "db/patches/20261028_team_score_format_trigger_REVIEW_ONLY.sql",
+      "sha256": "18dd3119fd22a628bef75403c711ffc1157f4a113ef2f3b34d20640231a9810c"
+    },
+    {
+      "path": "db/patches/20261028_tournament_config_score_guard_REVIEW_ONLY.sql",
+      "sha256": "f4d8d700a96c31ac1ec2c4b308720953becec59e173a33850c466e952e4f1034"
+    },
+    {
+      "path": "db/patches/20261028_shamble_dynamic_draft_policies_REVIEW_ONLY.sql",
+      "sha256": "3937081df7d1c96b226a27b3cbdfc777caf14aee2624d9c9e8e3bd30545aef57"
+    },
+    {
+      "path": "db/patches/20261028_split_pair_atomic_rpc_REVIEW_ONLY.sql",
+      "sha256": "34e0665fb0d9036341286af4a5068fb268af7b04ccb86923156d5f7a386bf5fc"
+    },
+    {
+      "path": "db/patches/20261029_scramble_authorized_rpc_REVIEW_ONLY.sql",
+      "sha256": "55e3611e4b938530f240896d0e20f2c0f3488566c35e2fd05d60d30a24766ed4"
+    },
+    {
+      "path": "db/patches/20261029_commissioner_score_reset_rpc_REVIEW_ONLY.sql",
+      "sha256": "c16af96cfa3337a7c97c9408440e56dd2704ab00d3d90e1e06d7f69216099c76"
+    },
+    {
+      "path": "tests/acceptance/authorized-shamble-rpc-proposal.sql",
+      "sha256": "b2cea405084f5c7d0d6dc0bcc501b88a95b2606f26a77c80058de0a640c31c63"
+    },
+    {
+      "path": "db/patches/20261029_scoring_remove_legacy_write_policies_REVIEW_ONLY.sql",
+      "sha256": "9d1635b8a22daab04c9d39bae79378d77fe9f95930dd019fb4938e9235fa147a"
+    },
+    {
+      "path": "db/patches/20261029_score_table_dml_lockdown_REVIEW_ONLY.sql",
+      "sha256": "f0be2a213776e6f8ef3ba4697f2fbb6d06b3ad1b4f3b498acc6ef91b5be33995"
+    },
+    {
+      "path": "db/patches/20261029_scoring_rpc_owner_acl_audit_REVIEW_ONLY.sql",
+      "sha256": "2301d81da526361b03ea60e38b60d40361388eaf51a59a9a4fa56461b555755d"
+    }
+  ],
+  "manifest_scope": "Coordinated review SQL including cleanup, lockdown and owner/ACL audit; not approved for deployment."
+}
