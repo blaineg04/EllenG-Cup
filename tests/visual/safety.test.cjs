@@ -206,6 +206,7 @@ test('commissioner saves use version checked RPC and reject a stale write',async
   hasPendingRosterEdits:()=>false,
   EllenGEventRsvp:{},EllenGRsvpEligibility:{},
   S:{picks:[{golfer:1,team:0}]},
+  document:{visibilityState:'visible'},navigator:{onLine:true},
   fresh:()=>({}),
   alert:()=>{},
   db:{auth:{getUser:async()=>({data:{user:{id:'commissioner'}},error:null})},
@@ -234,6 +235,7 @@ test('commissioner refuses overlapping saves until the first finishes',async()=>
   hasPendingRosterEdits:()=>false,
   EllenGEventRsvp:{},EllenGRsvpEligibility:{},
   S:{picks:[]},fresh:()=>({}),alert:()=>{},
+  document:{visibilityState:'visible'},navigator:{onLine:true},
   db:{auth:{getUser:async()=>({data:{user:{id:'commissioner'}},error:null})},
    rpc:async()=>{called++;return pending}}
  });
