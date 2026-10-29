@@ -148,6 +148,33 @@ test('online event retires an in-flight commissioner owner lookup after missed o
  assert.equal(h.elements.adminApp.style.display,'none');
  assert.equal(h.subscriptions(),0);
 });
+test('online event recovers a commissioner Auth outage without a cached user',async()=>{
+ const h=harness(),pending=h.open();
+ assert.equal(h.authReads.length,1);
+ h.authReads[0]({data:{user:null},error:new Error('synthetic temporary Auth outage')});
+ await pending;
+ assert.equal(h.elements.connection.textContent,'UNAVAILABLE');
+ assert.equal(h.subscriptions(),0);
+ const resumed=h.online();
+ assert.equal(h.elements.connection.textContent,'VERIFYING');
+ assert.equal(h.authReads.length,2,'online must retry a failed initial Auth lookup');
+ h.auth(1,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.draftReads.length,1);
+ h.draft(0,'commissioner-a');await resumed;
+ assert.equal(h.elements.connection.textContent,'READY');
+ assert.equal(h.elements.adminApp.style.display,'block');
+ assert.equal(h.subscriptions(),1);
+});
+test('online event does not retry a denied commissioner ownership check',async()=>{
+ const h=harness(),pending=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-b');await pending;
+ assert.equal(h.elements.connection.textContent,'NO ACCESS');
+ await h.online();
+ assert.equal(h.authReads.length,1,'permission denial must not be treated as a transient outage');
+ assert.equal(h.elements.connection.textContent,'NO ACCESS');
+ assert.equal(h.subscriptions(),0);
+});
 test('offline commissioner bootstrap cannot authorize cached session before reconnect',async()=>{
  const h=harness();
  h.ctx.navigator.onLine=false; // Simulate browser offline before its event arrives.

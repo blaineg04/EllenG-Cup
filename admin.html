@@ -395,7 +395,10 @@ function recheckCommissionerOnReconnect(){
  // The online event must retire that pre-disconnect verification rather than
  // allow its delayed response to authorize commissioner controls.
  const connectionState=document.getElementById("connection").textContent;
- if(connectionState!=="OFFLINE"&&connectionState!=="VERIFYING"&&!commissionerUserId)return Promise.resolve();
+ // A transient Auth/owner lookup failure leaves no cached commissioner identity.
+ // A subsequent online event must retry verification, rather than leaving the
+ // page stuck at UNAVAILABLE until a manual refresh. Do not retry NO ACCESS.
+ if(!["OFFLINE","VERIFYING","UNAVAILABLE"].includes(connectionState)&&!commissionerUserId)return Promise.resolve();
  // Supabase retains the browser session, but a missed offline event can
  // leave previously enabled controls in the DOM. Retire that session before
  // rechecking identity and draft ownership; do not replay unsaved edits.
