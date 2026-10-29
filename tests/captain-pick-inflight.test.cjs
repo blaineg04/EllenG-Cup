@@ -691,7 +691,7 @@ for(const mode of ['bootstrap','interactive']){
   await new Promise(resolve=>setImmediate(resolve));
   assert.equal(typeof h.guard(),'function');
   h.ctx.navigator.onLine=false; // offline event has not fired
-  assert.equal(h.guard(),false,'offline draft response must not apply');
+  assert.equal(h.guard()(),false,'offline draft response must not apply');
   h.finish();await h.pending;
   assert.equal(h.ctx.captainUserId,null);
   assert.equal(h.ctx.myTeam,null);
