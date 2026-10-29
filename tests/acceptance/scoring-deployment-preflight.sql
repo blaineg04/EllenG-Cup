@@ -70,8 +70,8 @@ BEGIN
   WHERE schemaname='public'
     AND tablename IN ('elleng_pair_hole_scores','elleng_player_hole_scores','elleng_team_scores')
     AND cmd IN ('INSERT','UPDATE','DELETE','ALL')
-    AND (coalesce(qual,'') ~ $draft_id[[:space:]]*=[[:space:]]*'elleng-cup'$
-      OR coalesce(with_check,'') ~ $draft_id[[:space:]]*=[[:space:]]*'elleng-cup'$)
+    AND (coalesce(qual,'') ~ 'draft_id[[:space:]]*=[[:space:]]*''elleng-cup'''
+      OR coalesce(with_check,'') ~ 'draft_id[[:space:]]*=[[:space:]]*''elleng-cup''')
  ) THEN RAISE EXCEPTION 'Scoring rehearsal blocked: fixed draft ID in write policy'; END IF;
  IF (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
      WHERE n.nspname='public' AND c.relname IN ('elleng_pair_hole_scores','elleng_player_hole_scores','elleng_team_scores')
