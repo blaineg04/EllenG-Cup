@@ -10,7 +10,7 @@ const saveEnd=source.indexOf('save=secureSave;',saveStart);
 const authStart=source.indexOf('function revokeCommissionerSession()');
 const authEnd=source.indexOf('document.getElementById("login").onclick',authStart);
 assert.ok(varsStart>0&&saveStart>varsStart&&saveEnd>saveStart&&authStart>saveEnd&&authEnd>authStart);
-const code=source.slice(varsStart,source.indexOf('\n',varsStart)+1)+'\n'+
+const code=source.slice(varsStart,source.indexOf('\n',source.indexOf('\n',varsStart)+1)+1)+'\n'+
  source.slice(saveStart,saveEnd)+'\n'+source.slice(authStart,authEnd)+
  '\nthis.openAdmin=openAdmin;this.secureSave=secureSave;';
 function harness(){
