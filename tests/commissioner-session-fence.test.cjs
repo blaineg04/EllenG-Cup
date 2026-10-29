@@ -16,7 +16,7 @@ const code=source.slice(varsStart,source.indexOf('\n',source.indexOf('\n',varsSt
 function harness(){
  const elements={loginCard:{style:{display:'block'}},adminApp:{style:{display:'none'}},
   authMsg:{textContent:''},connection:{textContent:''}};
- const buttons=[{disabled:false}],authReads=[],draftReads=[],writes=[],windowEvents={},documentEvents={};
+ const buttons=[{disabled:false}],authReads=[],draftReads=[],writes=[],windowEvents={},documentEvents={},timers=[];
  let authChanged,subscriptions=0,unsubscriptions=0,activeSubscriptions=0,renders=0,invalidations=0,confirmedUserId=null;const callbacks=[];
  const ctx={draftUpdatedAt:null,savingDraft:false,tick:null,liveMode:false,S:{picks:[]},
   fresh:()=>({picks:[]}),cfg:{draftId:'synthetic-only'},
@@ -32,7 +32,7 @@ function harness(){
   setupRender:()=>{renders++},subscribe:cb=>{
    subscriptions++;activeSubscriptions++;callbacks.push(cb);let closed=false;
    return {unsubscribe:()=>{if(!closed){closed=true;unsubscriptions++;activeSubscriptions--}return Promise.resolve('ok')}};
-  },setInterval:()=>1,
+  },setInterval:()=>1,setTimeout:callback=>{timers.push(callback);return timers.length},
   alert:()=>{},console:{error:()=>{}}};
  vm.createContext(ctx);vm.runInContext(code,ctx);
  return {ctx,elements,buttons,authReads,draftReads,writes,
@@ -51,7 +51,9 @@ function harness(){
   },
   subscriptions:()=>subscriptions,unsubscriptions:()=>unsubscriptions,activeSubscriptions:()=>activeSubscriptions,
   invalidations:()=>invalidations,
-  renders:()=>renders,notify:index=>callbacks[index](),listener:index=>callbacks[index]};
+  renders:()=>renders,notify:index=>callbacks[index](),listener:index=>callbacks[index],
+  pendingTimers:()=>timers.length,
+  flushDeferred:()=>{confirmedUserId=null;const callback=timers.shift();assert.ok(callback,'deferred auth recheck expected');return callback()}};
 }
 test('commissioner Realtime read guard is revoked on sign-out',async()=>{
  const h=harness(),opening=h.open();
@@ -718,4 +720,53 @@ test('commissioner action guard checks foreground and connectivity without lifec
  assert.equal(ctx.sameCommissionerAction(3,'commissioner-a'),false);
  ctx.navigator.onLine=true;
  assert.equal(ctx.sameCommissionerAction(3,'commissioner-b'),false);
+});
+
+test('same-account commissioner token refresh revokes controls and rechecks changed ownership',async()=>{
+ const h=harness(),initial=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await initial;
+ const oldListener=h.listener(0);
+ h.change('TOKEN_REFRESHED',{user:{id:'commissioner-a'}});
+ assert.equal(h.elements.adminApp.style.display,'none','cached controls must be hidden immediately');
+ assert.equal(h.buttons[0].disabled,true);
+ assert.equal(oldListener.isCurrent(),false,'old Realtime callback must be fenced');
+ assert.equal(h.unsubscriptions(),1);
+ assert.equal(h.pendingTimers(),1);
+ assert.equal(h.authReads.length,1,'Supabase auth callback must defer verification');
+ const resumed=h.flushDeferred();
+ assert.equal(h.authReads.length,2,'token refresh must recheck identity');
+ h.auth(1,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(1,'commissioner-b');await resumed;
+ assert.equal(h.elements.connection.textContent,'NO ACCESS','changed owner must not regain controls');
+ assert.equal(h.elements.adminApp.style.display,'none');
+ assert.equal(h.subscriptions(),1,'revoked owner must not create another channel');
+});
+test('sign-out cancels deferred same-account commissioner token recheck',async()=>{
+ const h=harness(),initial=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await initial;
+ h.change('TOKEN_REFRESHED',{user:{id:'commissioner-a'}});
+ h.change('SIGNED_OUT',null);
+ await h.flushDeferred();
+ assert.equal(h.authReads.length,1,'sign-out must prevent another auth lookup');
+ assert.equal(h.elements.connection.textContent,'SIGN IN');
+ assert.equal(h.elements.adminApp.style.display,'none');
+ assert.equal(h.subscriptions(),1);
+});
+test('same-account auth refresh while hidden remains suspended until foreground verification',async()=>{
+ const h=harness(),initial=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await initial;
+ h.change('USER_UPDATED',{user:{id:'commissioner-a'}});
+ h.ctx.document.visibilityState='hidden';
+ await h.flushDeferred();
+ assert.equal(h.elements.connection.textContent,'PAUSED');
+ assert.equal(h.authReads.length,1,'hidden refresh must not initiate auth lookup');
+ const resumed=h.visible();
+ assert.equal(h.authReads.length,2,'foreground must verify identity and owner');
+ h.auth(1,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(1,'commissioner-a');await resumed;
+ assert.equal(h.elements.adminApp.style.display,'block');
+ assert.equal(h.subscriptions(),2);
 });

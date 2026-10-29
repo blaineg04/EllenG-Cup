@@ -357,6 +357,22 @@ db.auth.onAuthStateChange((event,session)=>{
  if(event==="SIGNED_OUT"||
     (commissionerUserId&&["SIGNED_IN","TOKEN_REFRESHED","USER_UPDATED"].includes(event)&&session?.user?.id!==commissionerUserId)){
   revokeCommissionerSession();
+  return;
+ }
+ if(commissionerUserId&&["SIGNED_IN","TOKEN_REFRESHED","USER_UPDATED"].includes(event)){
+  // A refreshed token for the same account does not prove draft ownership
+  // is unchanged. Revoke cached controls immediately and verify ownership
+  // again before permitting another commissioner action.
+  revokeCommissionerSession();
+  const verificationEpoch=commissionerAuthEpoch;
+  // Supabase auth callbacks must not synchronously invoke getUser().
+  // A later sign-out or explicit sign-in invalidates this deferred recheck.
+  setTimeout(()=>{
+   if(verificationEpoch!==commissionerAuthEpoch||commissionerUserId)return;
+   if(document.visibilityState==="hidden"){suspendCommissionerForVisibility(true);return;}
+   if(typeof navigator!=="undefined"&&navigator.onLine===false){markCommissionerOffline();return;}
+   return openAdmin();
+  },0);
  }
 });
 // An offline tab must never retain a commissioner session authorized from
