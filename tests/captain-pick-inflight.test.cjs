@@ -12,7 +12,7 @@ test('captain cannot submit overlapping pick requests on repeated taps',()=>{
  assert.match(pick,/finally\s*\{\s*\/\/[^\n]*\n\s*if\(thisPickRequest===pickRequestEpoch&&sameCaptainSession\(\)\)\{\s*pickInFlight=false;\s*render\(\)/);
 });
 test('pick failure catches refresh failure and eventually restores interaction',()=>{
- assert.match(pick,/await load\(sameCaptainSession\)/);
+ assert.match(pick,/await load\(canApplyPickRefresh,/);
  assert.match(pick,/if\(!sameCaptainSession\(\)\)return;/);
  assert.match(pick,/finally\s*\{/);
 });
@@ -702,3 +702,56 @@ for(const mode of ['bootstrap','interactive']){
   assert.equal(h.subscriptions(),0);assert.equal(h.timers(),0);assert.equal(h.renders(),0);
  });
 }
+
+
+// Exercise the real captain pick handler with synthetic RPC and draft reads.
+// A superseded or offline read must never be mistaken for an applied snapshot.
+function pickRefreshHarness({applied=true,rpcError=false,foreground=true}={}){
+ const alerts=[],buttons=[{disabled:false}];let renders=0,loads=0;
+ const start=s.indexOf('async function pick(i){');
+ const end=s.indexOf('document.getElementById("signin").onclick',start);
+ assert.ok(start>=0&&end>start,'real captain pick handler must exist');
+ const ctx={
+  S:{timerPaused:false,golfers:[{name:'Test Golfer'}],teams:[{name:'Team 1'}],picks:[]},
+  myTeam:0,pickInFlight:false,pickRequestEpoch:0,captainAuthEpoch:0,
+  captainUserId:'captain-a',pickSyncFailed:false,draftSoundEnabled:false,
+  cfg:{draftId:'synthetic-only'},canSubmitCaptainPick:()=>true,
+  captainSessionForegroundOnline:()=>foreground,confirm:()=>true,
+  document:{querySelectorAll:()=>buttons},alert:msg=>alerts.push(msg),
+  render:()=>renders++,console:{error:()=>{}},
+  db:{rpc:async()=>rpcError?{error:new Error('Rejected by server')}:{data:{ok:true},error:null}},
+  load:async(guard,onApplied)=>{loads++;if(applied&&guard())onApplied()},
+ };
+ vm.createContext(ctx);vm.runInContext(s.slice(start,end)+'\nthis.performPick=pick;',ctx);
+ return {ctx,alerts,buttons,loads:()=>loads,renders:()=>renders,
+  pick:()=>ctx.performPick(0)};
+}
+test('successful pick RPC cannot certify a superseded, unapplied draft refresh',async()=>{
+ const h=pickRefreshHarness({applied:false});
+ await h.pick();
+ assert.equal(h.loads(),1);
+ assert.equal(h.ctx.pickSyncFailed,true,'no authoritative snapshot means drafting stays locked');
+ assert.equal(h.ctx.pickInFlight,false);
+ assert.equal(h.renders(),1);
+ assert.match(h.alerts.join(' '),/latest draft could not be loaded/);
+});
+test('successful pick RPC restores synchronized state only after authoritative read applies',async()=>{
+ const h=pickRefreshHarness({applied:true});
+ await h.pick();
+ assert.equal(h.ctx.pickSyncFailed,false);
+ assert.equal(h.ctx.pickInFlight,false);
+ assert.deepEqual(h.alerts,[]);
+ assert.equal(h.renders(),1);
+});
+test('rejected pick RPC cannot unlock drafting when recovery read was superseded',async()=>{
+ const h=pickRefreshHarness({applied:false,rpcError:true});
+ await h.pick();
+ assert.equal(h.ctx.pickSyncFailed,true);
+ assert.match(h.alerts.join(' '),/Unable to refresh the draft/);
+});
+test('hidden captain cannot certify delayed post-pick refresh without visibility event',async()=>{
+ const h=pickRefreshHarness({applied:true,foreground:false});
+ await h.pick();
+ assert.equal(h.ctx.pickSyncFailed,true);
+ assert.match(h.alerts.join(' '),/latest draft could not be loaded/);
+});

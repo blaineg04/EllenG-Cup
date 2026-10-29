@@ -925,6 +925,8 @@ async function pick(i){
  // Its response must never repopulate the new session's draft state or controls.
  const pickAuthEpoch=captainAuthEpoch,pickCaptainId=captainUserId;
  const sameCaptainSession=()=>pickAuthEpoch===captainAuthEpoch&&pickCaptainId===captainUserId&&!!captainUserId;
+ // A delayed RPC or read must not certify a hidden/offline browser as synchronized.
+ const canApplyPickRefresh=()=>sameCaptainSession()&&captainSessionForegroundOnline();
  document.querySelectorAll("[data-p]").forEach(b=>b.disabled=true);
  try{
   const {data,error}=await db.rpc("elleng_make_pick",{p_draft_id:cfg.draftId,p_golfer_index:i});
@@ -934,8 +936,10 @@ async function pick(i){
   // this request was in flight. Re-read the authoritative draft rather than
   // rolling a newer Realtime snapshot back to the older RPC response.
   try{
-   await load(sameCaptainSession);
+   let applied=false;
+   await load(canApplyPickRefresh,()=>{applied=true});
    if(!sameCaptainSession())return;
+   if(!applied||!canApplyPickRefresh())throw new Error("Authoritative captain post-pick refresh was not applied");
    pickSyncFailed=false;
   }catch(refreshError){
    if(!sameCaptainSession())return;
@@ -948,8 +952,10 @@ async function pick(i){
  }catch(e){
   if(!sameCaptainSession())return;
   try{
-   await load(sameCaptainSession);
+   let applied=false;
+   await load(canApplyPickRefresh,()=>{applied=true});
    if(!sameCaptainSession())return;
+   if(!applied||!canApplyPickRefresh())throw new Error("Authoritative captain recovery refresh was not applied");
    pickSyncFailed=false;
   }catch(refreshError){
    if(!sameCaptainSession())return;
