@@ -773,11 +773,16 @@ input,select,textarea{
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script>
 let myTeam=null,captainUserId=null,captainAuthEpoch=0,captainRoleLookupId=0,captainBootstrapEpoch=0;
 // Only the newest role lookup may grant captain access. Auth revocation also invalidates it.
-async function whoami(){const authEpoch=captainAuthEpoch,lookupId=++captainRoleLookupId;myTeam=null;captainUserId=null;const {data:{user}}=await db.auth.getUser();if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId||!user)return false;const {data,error}=await db.from("elleng_captains").select("team_index").eq("draft_id",cfg.draftId).eq("user_id",user.id).single();if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId)return false;if(error||!data||data.team_index==null||typeof data.team_index==="boolean"||!Number.isInteger(Number(data.team_index))||Number(data.team_index)<0){document.getElementById("msg").textContent="This account is not assigned to a team. Ask the commissioner to assign your captain account.";return false}
+async function whoami(){const authEpoch=captainAuthEpoch,lookupId=++captainRoleLookupId;myTeam=null;captainUserId=null;
+ // A restored/cached identity cannot authorize a captain while this tab is
+ // hidden or offline, even if browser lifecycle events have not fired.
+ if(document.visibilityState==="hidden"||(typeof navigator!=="undefined"&&navigator.onLine===false))return false;
+ const {data:{user}}=await db.auth.getUser();if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId||!user)return false;const {data,error}=await db.from("elleng_captains").select("team_index").eq("draft_id",cfg.draftId).eq("user_id",user.id).single();if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId)return false;if(error||!data||data.team_index==null||typeof data.team_index==="boolean"||!Number.isInteger(Number(data.team_index))||Number(data.team_index)<0){document.getElementById("msg").textContent="This account is not assigned to a team. Ask the commissioner to assign your captain account.";return false}
  // A different user may sign in while the role query is pending, before captainUserId is set.
  // Recheck the authoritative auth identity before granting this role to the page.
  const {data:confirmed,error:confirmationError}=await db.auth.getUser();
- if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId||confirmationError||confirmed?.user?.id!==user.id)return false;
+ if(authEpoch!==captainAuthEpoch||lookupId!==captainRoleLookupId||confirmationError||confirmed?.user?.id!==user.id||
+  document.visibilityState==="hidden"||(typeof navigator!=="undefined"&&navigator.onLine===false))return false;
  myTeam=Number(data.team_index);captainUserId=user.id;return true}
 // A valid captain mapping must also reference a team in the loaded draft.
 // This matters when the commissioner changes the number of teams between events.
@@ -983,13 +988,19 @@ document.getElementById("signin").onclick=async()=>{
     if(!authorized){if(status)status.textContent="READY";return}
     document.getElementById("login").style.display="none";
     document.getElementById("app").style.display="block";
-    await load(()=>loginEpoch===captainBootstrapEpoch&&!!captainUserId);
+    await load(()=>loginEpoch===captainBootstrapEpoch&&!!captainUserId&&
+      document.visibilityState!=="hidden"&&(typeof navigator==="undefined"||navigator.onLine!==false));
     if(loginEpoch!==captainBootstrapEpoch)return;
+    if(document.visibilityState==="hidden"||(typeof navigator!=="undefined"&&navigator.onLine===false))
+     throw new Error("Captain verification interrupted while offline or hidden. Return online and sign in again.");
     if(!captainUserId)throw new Error("Captain session changed while loading. Sign in again.");assertCaptainTeamPresent();pickSyncFailed=false;render();
     if(status)status.textContent="CONNECTING";
     startCaptainSubscription();startCaptainDrawTimer();
   }catch(e){
     if(loginEpoch!==captainBootstrapEpoch)return;
+    // A failed entry must not leave a locally authorized captain without a
+    // verified LIVE subscription. Next sign-in must verify the role again.
+    myTeam=null;captainUserId=null;pickSyncFailed=true;
     document.getElementById("login").style.display="block";document.getElementById("app").style.display="none";
     if(status)status.textContent="ERROR";
     msg.textContent=e?.message||"Captain sign-in unavailable. Try again.";
@@ -1070,8 +1081,11 @@ if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){
       if(bootEpoch!==captainBootstrapEpoch)return;
       document.getElementById("login").style.display="none";
       document.getElementById("app").style.display="block";
-      await load(()=>bootEpoch===captainBootstrapEpoch&&!!captainUserId);
+      await load(()=>bootEpoch===captainBootstrapEpoch&&!!captainUserId&&
+       document.visibilityState!=="hidden"&&(typeof navigator==="undefined"||navigator.onLine!==false));
       if(bootEpoch!==captainBootstrapEpoch)return;
+      if(document.visibilityState==="hidden"||(typeof navigator!=="undefined"&&navigator.onLine===false))
+       throw new Error("Captain verification interrupted while offline or hidden. Return online and sign in again.");
       if(!captainUserId)throw new Error("Captain session changed while loading. Sign in again.");
       assertCaptainTeamPresent();pickSyncFailed=false;render();
       if(status)status.textContent="CONNECTING";
@@ -1086,6 +1100,7 @@ if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){
     }
   }catch(e){
     if(bootEpoch!==captainBootstrapEpoch)return;
+    myTeam=null;captainUserId=null;pickSyncFailed=true;
     console.error("Captain page startup error:",e);
     if(status)status.textContent="ERROR";
     document.getElementById("login").style.display="block";
