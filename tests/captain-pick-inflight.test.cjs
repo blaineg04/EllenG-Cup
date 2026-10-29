@@ -895,3 +895,18 @@ test('back-forward cache restore replaces captain channel and requires fresh rol
  assert.equal(h.elements.connection.textContent,'LIVE','fresh role and draft can restore controls');
  assert.equal(h.ctx.captainUserId,'captain-a');
 });
+
+test('cached captain page cannot regain controls after team reassignment',async()=>{
+ const h=channelHarness();h.start();
+ await h.callbacks[0]();
+ h.pageShow(true);
+ h.setRoleIndex(1); // Commissioner reassigned this captain while page was cached.
+ await h.callbacks[1](true);
+ assert.equal(h.ctx.captainUserId,null,'stale captain identity must be revoked');
+ assert.equal(h.elements.app.style.display,'none');
+ assert.equal(h.elements.login.style.display,'block');
+ assert.equal(h.elements.connection.textContent,'SIGN IN');
+ assert.equal(h.buttons[0].disabled,true);
+ assert.equal(h.unsubscriptions(),2,'both old and denied replacement channels must close');
+ assert.equal(h.callbacks[1].isCurrent(),false,'denied replacement callback remains fenced');
+});
