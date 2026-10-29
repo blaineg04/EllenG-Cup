@@ -23,6 +23,7 @@ test('Shamble refuses unassigned golfer before any scoring RPC',()=>{
  const end=html.indexOf('function renderPairScoring(',start);
  assert.ok(start>=0&&end>start);
  const body=html.slice(start,end);
+ assert.match(body,/if\(isSplitPair\(\)\|\|hole<10\|\|hole>18/);
  assert.match(body,/teamRosterGolfers\(teamIndex\)\.some\(g=>g\.index===golferIndex\)/);
  assert.ok(body.indexOf('teamRosterGolfers(teamIndex).some')<body.indexOf('beginScoreSave()'));
  assert.match(body,/db\.rpc\("elleng_test_authorized_shamble"/);
