@@ -46,25 +46,28 @@ ORDER BY tablename,policyname;
 \if :{?REQUIRE_SCORING_READY}
 DO $preflight$
 BEGIN
- IF to_regprocedure('public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)') IS NULL
-    OR to_regprocedure('public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)') IS NULL
- THEN RAISE EXCEPTION 'Scoring rehearsal blocked: required RPC missing'; END IF;
- IF NOT has_function_privilege('authenticated','public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)','EXECUTE')
-    OR has_function_privilege('anon','public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)','EXECUTE')
-    OR NOT has_function_privilege('authenticated','public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)','EXECUTE')
-    OR has_function_privilege('anon','public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)','EXECUTE')
- THEN RAISE EXCEPTION 'Scoring rehearsal blocked: RPC role grants invalid'; END IF;
- IF EXISTS(
+ -- Every browser-facing scoring and reset function must be present and scoped.
+ IF EXISTS (
   SELECT 1 FROM (VALUES
+   ('public.elleng_test_authorized_scramble(text,integer,integer,integer)'),
    ('public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)'),
-   ('public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)')
-  ) AS expected(signature)
-  JOIN pg_proc p ON p.oid=to_regprocedure(expected.signature)
-  WHERE EXISTS (
-   SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) acl
-   WHERE acl.grantee=0 AND acl.privilege_type='EXECUTE'
-  )
- ) THEN RAISE EXCEPTION 'Scoring rehearsal blocked: RPC executable by PUBLIC'; END IF;
+   ('public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)'),
+   ('public.elleng_test_commissioner_clear_scores(text)')
+  ) AS required(signature)
+  WHERE to_regprocedure(required.signature) IS NULL
+ ) THEN RAISE EXCEPTION 'Scoring rehearsal blocked: required RPC missing'; END IF;
+ IF EXISTS (
+  SELECT 1 FROM (VALUES
+   ('public.elleng_test_authorized_scramble(text,integer,integer,integer)'),
+   ('public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)'),
+   ('public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)'),
+   ('public.elleng_test_commissioner_clear_scores(text)')
+  ) AS required(signature)
+  JOIN pg_proc p ON p.oid=to_regprocedure(required.signature)
+  WHERE NOT has_function_privilege('authenticated',p.oid,'EXECUTE')
+   OR has_function_privilege('anon',p.oid,'EXECUTE')
+   OR has_function_privilege('public',p.oid,'EXECUTE')
+ ) THEN RAISE EXCEPTION 'Scoring rehearsal blocked: RPC role grants invalid'; END IF;
  IF EXISTS (
   SELECT 1 FROM pg_policies
   WHERE schemaname='public'
