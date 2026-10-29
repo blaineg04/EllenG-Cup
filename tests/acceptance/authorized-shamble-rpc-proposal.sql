@@ -28,7 +28,8 @@ BEGIN
    AND (d.owner_id=v_uid OR EXISTS(
      SELECT 1 FROM public.elleng_captains c
      WHERE c.draft_id=d.id AND c.team_index=p_team_index AND c.user_id=v_uid
-   ));
+   ))
+ FOR SHARE OF d;
  IF v_draft IS NULL THEN RAISE EXCEPTION 'Not authorized for this team' USING ERRCODE='42501'; END IF;
  IF coalesce(v_state->>'playFormat','standard') NOT IN ('standard','elleng') THEN RAISE EXCEPTION 'Shamble requires standard scoring format' USING ERRCODE='22023'; END IF;
  -- Authoritative roster from stored draft, not client-supplied data.
