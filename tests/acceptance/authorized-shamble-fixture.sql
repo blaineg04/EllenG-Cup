@@ -106,6 +106,21 @@ BEGIN
  UPDATE public.elleng_tournaments SET status='live' WHERE id='fixture';
  RAISE NOTICE 'PASS: update, clear, resume and completed-event scoring guard';
 END $score_lifecycle$;
+-- Reject an out-of-range team without modifying existing official scores.
+SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000001',false);
+DO $team_bounds$
+DECLARE denied boolean:=false;
+BEGIN
+ BEGIN
+  PERFORM public.elleng_test_authorized_shamble('fixture',2,10,0,7);
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Out-of-range team accepted for tournament'; END IF;
+ IF EXISTS (SELECT 1 FROM public.elleng_player_hole_scores WHERE tournament_id='fixture' AND team_index=2)
+ THEN RAISE EXCEPTION 'Out-of-range team created player score'; END IF;
+ IF EXISTS (SELECT 1 FROM public.elleng_team_scores WHERE tournament_id='fixture' AND team_index=2)
+ THEN RAISE EXCEPTION 'Out-of-range team created official score'; END IF;
+ RAISE NOTICE 'PASS: team index is bounded by saved tournament count';
+END $team_bounds$;
 -- Separate draft/tournament: prove authorization is scoped to the selected event, not a hard-coded draft.
 INSERT INTO public.elleng_drafts VALUES('draft-two','00000000-0000-4000-8000-000000000004','{"teams":[{"roster":[0,1]}]}'::jsonb);
 INSERT INTO public.elleng_tournaments VALUES('fixture-two','draft-two','live',1);
