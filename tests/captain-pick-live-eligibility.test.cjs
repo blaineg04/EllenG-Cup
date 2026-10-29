@@ -19,7 +19,7 @@ function harness(){
   db:{rpc:async(name,args)=>{calls.push({name,args});if(holdRpc)return new Promise(resolve=>{pendingRpcReplies.push(resolve)});return {data:state,error:null}}},
   document:{getElementById:id=>id==='connection'?connection:id==='login'?{style:{}}:id==='app'?{style:{}}:id==='msg'?{textContent:''}:null,querySelectorAll:()=>buttons},
   confirm:()=>confirmAction(),alert:msg=>messages.push(msg),render:()=>rendered++,
-  draftSoundEnabled:false,load:async()=>{loadCount++;if(loadError)throw loadError},console:{error:()=>{}}};
+  draftSoundEnabled:false,load:async(guard,onApplied)=>{loadCount++;if(loadError)throw loadError;if(guard())onApplied?.()},console:{error:()=>{}}};
  vm.createContext(ctx);
  vm.runInContext(pickSource+';this.submitPick=pick;',ctx);
  const revokeStart=source.indexOf('function revokeCaptainSession()');
