@@ -26,3 +26,28 @@ END $guard$;
 -- FOR EACH ROW EXECUTE FUNCTION public.elleng_enforce_team_score_format();
 -- Beware: captain execution as SECURITY INVOKER requires permission to
 -- SELECT tournaments and drafts. Parent row locking is a separate gate.
+
+-- Guard format changes on the draft itself, including transitions where
+-- an existing score happens to fall inside both numeric ranges.
+-- Concurrent score writes must also lock the parent draft/tournament:
+-- this trigger alone does not establish a cross-table serialization guarantee.
+CREATE OR REPLACE FUNCTION public.elleng_prevent_scored_draft_format_change()
+RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path=''
+AS $guard$
+BEGIN
+ IF coalesce(NEW.state->>'playFormat','standard') IS DISTINCT FROM
+    coalesce(OLD.state->>'playFormat','standard')
+ AND EXISTS (
+   SELECT 1 FROM public.elleng_tournaments t WHERE t.draft_id=OLD.id
+   AND (EXISTS(SELECT 1 FROM public.elleng_team_scores s WHERE s.tournament_id=t.id)
+     OR EXISTS(SELECT 1 FROM public.elleng_pair_hole_scores p WHERE p.tournament_id=t.id)
+     OR EXISTS(SELECT 1 FROM public.elleng_player_hole_scores g WHERE g.tournament_id=t.id))
+ ) THEN
+   RAISE EXCEPTION 'Cannot change format after tournament scoring begins' USING ERRCODE='23514';
+ END IF;
+ RETURN NEW;
+END $guard$;
+-- Install with reviewed migrations only:
+-- CREATE TRIGGER elleng_prevent_scored_draft_format_change
+-- BEFORE UPDATE OF state ON public.elleng_drafts
+-- FOR EACH ROW EXECUTE FUNCTION public.elleng_prevent_scored_draft_format_change();
