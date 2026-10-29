@@ -332,6 +332,10 @@ document.getElementById("resetClock").onclick=()=>saveCommissionerAction(()=>{
 function revokeCommissionerSession(){
  commissionerSuspendedForVisibility=false;
  commissionerAuthEpoch++;commissionerOpenId++;commissionerUserId=null;
+ // A sign-out must release an unfinished sign-in immediately. Its retired
+ // completion must not unlock a replacement request started afterward.
+ const loginButton=document.getElementById("login");
+ if(loginButton){loginButton._ellengSignInAttempt=null;loginButton.disabled=false;loginButton.textContent="Sign In";}
  if(typeof rsvpPreviewController!=="undefined")rsvpPreviewController.invalidate();
  const rsvpButton=document.getElementById("refreshRsvpPreview");
  if(rsvpButton)rsvpButton.disabled=true;
@@ -490,6 +494,9 @@ document.getElementById("login").onclick=async()=>{
  if(commissionerUserId)revokeCommissionerSession();
  else {commissionerAuthEpoch++;commissionerOpenId++;}
  const loginEpoch=commissionerAuthEpoch;
+ // Track the request independently of the auth epoch: openAdmin() advances
+ // that epoch on successful login, but only this request may reset its button.
+ const loginAttempt={};button._ellengSignInAttempt=loginAttempt;
  const label=button.textContent;button.disabled=true;button.textContent="Signing In…";msg.textContent="Signing in…";status.textContent="CONNECTING";
  try{
   const {error}=await db.auth.signInWithPassword({email,password});
@@ -500,7 +507,12 @@ document.getElementById("login").onclick=async()=>{
   // An older login failure must not overwrite a replacement session's UI.
   if(loginEpoch!==commissionerAuthEpoch)return;
   status.textContent="ERROR";msg.textContent=e?.message||"Sign-in unavailable. Try again.";
- }finally{button.disabled=false;button.textContent=label;}
+ }finally{
+  // A retired request must never enable a newer sign-in still awaiting Auth.
+  if(button._ellengSignInAttempt===loginAttempt){
+   button._ellengSignInAttempt=null;button.disabled=false;button.textContent=label;
+  }
+ }
 };
 document.getElementById("refreshRsvpPreview").onclick=()=>rsvpPreviewController.refresh();
 (async()=>{try{await openAdmin()}catch(e){document.getElementById("authMsg").textContent=e.message}})();</script></body></html>

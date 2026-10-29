@@ -808,3 +808,34 @@ test('same-account auth refresh while hidden remains suspended until foreground 
  assert.equal(h.elements.adminApp.style.display,'block');
  assert.equal(h.subscriptions(),2);
 });
+
+test('commissioner sign-out immediately releases an unfinished login',async()=>{
+ const h=commissionerLoginHarness();
+ const pending=h.click();
+ assert.equal(h.els.login.disabled,true);
+ h.change('SIGNED_OUT',null);
+ assert.equal(h.els.login.disabled,false,'sign-out must not wait for a pending Auth request');
+ assert.equal(h.els.login.textContent,'Sign In');
+ h.resolve(0);
+ await pending;
+ assert.equal(h.els.login.disabled,false);
+ assert.equal(h.events.includes('openAdmin'),false,'retired login cannot restore access');
+});
+test('stale commissioner login completion cannot unlock a newer login',async()=>{
+ const h=commissionerLoginHarness();
+ const old=h.click();
+ h.change('SIGNED_OUT',null);
+ const replacement=h.click();
+ assert.equal(h.pending.length,2);
+ assert.equal(h.els.login.disabled,true);
+ h.resolve(0,new Error('synthetic retired login failure'));
+ await old;
+ assert.equal(h.els.login.disabled,true,'retired finally must not unlock replacement login');
+ assert.equal(h.els.login.textContent,'Signing In…');
+ assert.equal(h.els.connection.textContent,'CONNECTING');
+ h.resolve(1);
+ await replacement;
+ assert.equal(h.els.login.disabled,false);
+ assert.equal(h.els.login.textContent,'Sign In');
+ assert.deepEqual(h.events.filter(e=>e==='openAdmin'),['openAdmin']);
+});
