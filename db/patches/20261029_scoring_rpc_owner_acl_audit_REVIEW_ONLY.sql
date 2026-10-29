@@ -3,7 +3,7 @@
 DO $rpc_owners$
 DECLARE bad text;
 BEGIN
- SELECT string_agg(p.proname||' owner='||r.rolname, ', ')
+ SELECT string_agg(p.proname||' owner='||r.rolname||' definer='||p.prosecdef||' config='||coalesce(array_to_string(p.proconfig,','),'null')||' anon_exec='||has_function_privilege('anon',p.oid,'EXECUTE')||' auth_exec='||has_function_privilege('authenticated',p.oid,'EXECUTE'), ', ')
  INTO bad
  FROM pg_proc p
  JOIN pg_namespace n ON n.oid=p.pronamespace
@@ -15,7 +15,7 @@ BEGIN
  )
  AND (
   NOT p.prosecdef OR p.proconfig IS NULL
-  OR NOT ('search_path='=ANY(p.proconfig))
+  OR NOT (p.proconfig && ARRAY['search_path=','search_path=""']::text[])
   OR r.rolname IN ('anon','authenticated')
   OR has_function_privilege('anon',p.oid,'EXECUTE')
   OR NOT has_function_privilege('authenticated',p.oid,'EXECUTE')
