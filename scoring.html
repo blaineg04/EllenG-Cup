@@ -5295,12 +5295,9 @@ async function clearScoresOnly(){
  if(!confirm("Clear ALL live scores for the current tournament? This cannot be undone from the live scoreboard."))return;
  const msg=$("newTournamentMsg"); if(msg)msg.textContent="Clearing scores…";
  try{
-  const {error}=await db.from("elleng_team_scores").delete().eq("tournament_id",TOURNAMENT_ID);
+  // Atomic commissioner-authorized RPC; never perform partial client-side table deletes.
+  const {error}=await db.rpc("elleng_test_commissioner_clear_scores",{p_tournament_id:TOURNAMENT_ID});
   if(error)throw error;
-  const {error:pe}=await db.from("elleng_player_hole_scores").delete().eq("tournament_id",TOURNAMENT_ID);
-  if(pe)throw pe;
-  const {error:pairDeleteError}=await db.from("elleng_pair_hole_scores").delete().eq("tournament_id",TOURNAMENT_ID);
-  if(pairDeleteError)throw pairDeleteError;
   scores=[]; playerScores=[]; pairScores=[]; renderAll(); if(msg)msg.textContent="All live scores were cleared, including Back 9 individual shamble scores. Teams and golfers were left unchanged.";
  }catch(e){if(msg)msg.textContent=e?.message||"Unable to clear scores."}
 }
