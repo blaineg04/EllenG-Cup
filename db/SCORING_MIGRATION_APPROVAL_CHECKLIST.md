@@ -49,6 +49,6 @@
 - Production approval remains blocked pending hosted-schema exact SQL review, backup recovery evidence and role-based end-to-end score writes.
 
 ## Test realism gap requiring closure
-- The disposable integrated schema currently defines `auth.uid()` as a constant NULL UUID. Its post-install checks prove SQL installation, grants and policy catalog state, but **cannot** simulate real captain/commissioner identities or demonstrate authorized score writes.
-- Do not interpret a passing isolated installation as authenticated end-to-end scoring. Add session-specific identity fixtures and execute positive and negative score mutations with data assertions before approving deployment.
-- PostgreSQL acceptance #929 passed the existing installation suite, not this missing role-behavior coverage.
+- **Resolved in isolated CI:** the disposable integrated schema now reads a session-specific JWT subject through `auth.uid()`. Post-install SQL exercises captain, commissioner, unauthorized and missing-identity scenarios; this is still not a hosted two-device test.
+- PostgreSQL acceptance #949 passed installed Scramble, Shamble and Split-Pair scoring behaviors plus commissioner reset checks. These are simulated JWT subjects under disposable PostgreSQL, not actual Supabase Auth sessions.
+- Hosted role/ownership compatibility, actual authenticated multi-device scoring, production recovery and exact SQL approval remain open.
