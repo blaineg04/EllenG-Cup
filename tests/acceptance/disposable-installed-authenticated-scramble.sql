@@ -114,3 +114,40 @@ BEGIN
  WHERE tournament_id='auth-tournament' AND hole=11)
  THEN RAISE EXCEPTION 'Unauthorized Shamble write persisted'; END IF;
 END $test$;
+
+-- Installed Split-Pair RPC: only a complete pair of pair-scores creates a team total.
+INSERT INTO public.elleng_drafts(id,owner_id,state) VALUES
+('pair-auth-trial','11111111-1111-4111-8111-111111111111',
+'{"playFormat":"split_pair","golfers":[{"name":"A"},{"name":"B"},{"name":"C"},{"name":"D"}],"teams":[{"roster":[0,1,2,3]}]}'::jsonb);
+INSERT INTO public.elleng_tournaments(id,draft_id,status,team_count)
+VALUES ('pair-auth-tournament','pair-auth-trial','live',1);
+INSERT INTO public.elleng_captains(draft_id,user_id,team_index)
+VALUES ('pair-auth-trial','22222222-2222-4222-8222-222222222222',0);
+SELECT set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',false);
+SELECT public.elleng_test_authorized_split_pair('pair-auth-tournament',0,1,0,5);
+DO $test$
+BEGIN
+ IF EXISTS (SELECT 1 FROM public.elleng_team_scores
+ WHERE tournament_id='pair-auth-tournament' AND hole=1)
+ THEN RAISE EXCEPTION 'Incomplete Split-Pair incorrectly created team score'; END IF;
+END $test$;
+SELECT public.elleng_test_authorized_split_pair('pair-auth-tournament',0,1,1,6);
+DO $test$
+BEGIN
+ IF NOT EXISTS (SELECT 1 FROM public.elleng_team_scores
+ WHERE tournament_id='pair-auth-tournament' AND hole=1 AND score=11)
+ THEN RAISE EXCEPTION 'Completed Split-Pair total not saved'; END IF;
+END $test$;
+SELECT set_config('request.jwt.claim.sub','33333333-3333-4333-8333-333333333333',false);
+DO $test$
+BEGIN
+ BEGIN
+  PERFORM public.elleng_test_authorized_split_pair('pair-auth-tournament',0,2,0,5);
+  RAISE EXCEPTION 'Unauthorized Split-Pair write accepted';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM='Unauthorized Split-Pair write accepted' THEN RAISE; END IF;
+ END;
+ IF EXISTS (SELECT 1 FROM public.elleng_pair_hole_scores
+ WHERE tournament_id='pair-auth-tournament' AND hole=2)
+ THEN RAISE EXCEPTION 'Unauthorized Split-Pair write persisted'; END IF;
+END $test$;
