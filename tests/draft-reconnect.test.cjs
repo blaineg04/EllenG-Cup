@@ -23,3 +23,51 @@ test('draft status strip follows channel state and failed catch-up',()=>{
  assert.match(block,/strip\.classList\.add\(st==="SUBSCRIBED"/);
  assert.match(block,/strip\.classList\.add\("status-offline"\)/);
 });
+
+const vm=require('node:vm');
+const fs=require('node:fs');
+const viewerHtml=fs.readFileSync('draft.html','utf8');
+const viewerStart=viewerHtml.indexOf('function setDraftConnectionStatus(state,label)');
+const viewerEnd=viewerHtml.indexOf('</script></body></html>',viewerStart);
+assert.ok(viewerStart>0&&viewerEnd>viewerStart,'public draft viewer bootstrap is available');
+const viewerBootstrap=viewerHtml.slice(viewerStart,viewerEnd).replace('(async()=>{','this.viewerReady=(async()=>{');
+async function viewerHarness({failInitial=false,applyInitial=true,failSubscribe=false}={}){
+ let reads=0,renders=0,subscriptions=0,clockStarts=0,callback;
+ const classes=new Set();
+ const connection={textContent:''},onclock={textContent:''},meta={textContent:''};
+ const strip={classList:{remove:(...items)=>items.forEach(item=>classes.delete(item)),add:item=>classes.add(item)}};
+ const elements={connection,draftStatusStrip:strip,onclock,meta};
+ const ctx={
+  document:{getElementById:id=>elements[id]||null},
+  load:async (_guard,onApplied)=>{reads++;if(failInitial)throw Error('transient read outage');if(applyInitial)onApplied()},
+  render:()=>{renders++},
+  subscribe:cb=>{subscriptions++;if(failSubscribe)throw Error('channel unavailable');callback=cb},
+  setInterval:()=>{clockStarts++},
+  draw:()=>{},
+  console:{error:()=>{}}
+ };
+ vm.createContext(ctx);vm.runInContext(viewerBootstrap,ctx);
+ await ctx.viewerReady;
+ return {connection,onclock,meta,classes,emit:()=>callback?.(),stats:()=>({reads,renders,subscriptions,clockStarts})};
+}
+test('public viewer retries catch-up after initial draft load failure',async()=>{
+ const h=await viewerHarness({failInitial:true});
+ assert.deepEqual(h.stats(),{reads:1,renders:0,subscriptions:1,clockStarts:1});
+ assert.equal(h.connection.textContent,'CONNECTING','subscription can still recover a failed initial read');
+ assert.ok(h.classes.has('status-connecting'));
+ h.emit();
+ assert.equal(h.stats().renders,1,'successful subscriber catch-up can render the viewer');
+});
+test('public viewer does not render a superseded initial draft read',async()=>{
+ const h=await viewerHarness({applyInitial:false});
+ assert.deepEqual(h.stats(),{reads:1,renders:0,subscriptions:1,clockStarts:1});
+ h.emit();
+ assert.equal(h.stats().renders,1);
+});
+test('public viewer keeps subscription setup failures visible and stops its clock',async()=>{
+ const h=await viewerHarness({failSubscribe:true});
+ assert.deepEqual(h.stats(),{reads:1,renders:1,subscriptions:1,clockStarts:0});
+ assert.equal(h.connection.textContent,'OFFLINE');
+ assert.ok(h.classes.has('status-offline'));
+ assert.match(h.meta.textContent,/Reload to retry/);
+});

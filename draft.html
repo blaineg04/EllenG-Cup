@@ -799,13 +799,27 @@ function setDraftConnectionStatus(state,label){
 }
 
 (async()=>{
+ // A transient first-read failure must not strand the public viewer forever.
+ // Realtime SUBSCRIBED always performs a fresh authoritative catch-up.
  try{
-   await load();setDraftConnectionStatus("connecting","CONNECTING");render();subscribe(render);setInterval(draw,500);
+   let applied=false;
+   await load(()=>true,()=>{applied=true});
+   if(applied)render();
  }catch(e){
    console.error("Draft load error:",e);
-   setDraftConnectionStatus("offline","OFFLINE");
+   setDraftConnectionStatus("offline","SYNC ERROR");
    document.getElementById("onclock").textContent="Draft connection error";
    document.getElementById("meta").textContent=e?.message||"Unable to load the live draft.";
+ }
+ try{
+   setDraftConnectionStatus("connecting","CONNECTING");
+   subscribe(render);
+   setInterval(draw,500);
+ }catch(e){
+   console.error("Draft subscription error:",e);
+   setDraftConnectionStatus("offline","OFFLINE");
+   document.getElementById("onclock").textContent="Draft connection error";
+   document.getElementById("meta").textContent="Unable to subscribe to the live draft. Reload to retry.";
  }
 })();
 </script></body></html>
