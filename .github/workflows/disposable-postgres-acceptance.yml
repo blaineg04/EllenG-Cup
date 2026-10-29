@@ -105,6 +105,14 @@ jobs:
             echo 'FAIL: integrated candidate failed before its deliberate stop'; exit 1
           fi
           test "$(sudo -u postgres psql -X -At -d "$integrated_db" -c "SELECT count(*) FROM pg_proc WHERE proname IN ('elleng_test_authorized_shamble','elleng_test_authorized_split_pair');")" = 0
+          # Negative gate: a production-like authenticated direct-write grant
+          # must stop the candidate BEFORE migration DDL is installed.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -c "GRANT INSERT,UPDATE,DELETE ON public.elleng_team_scores TO authenticated;" >/dev/null
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -f /tmp/elleng-integrated-"$GITHUB_RUN_ID".sql >"$integrated_log" 2>&1; then
+            echo 'FAIL: unsafe direct-write grant did not block migration'; exit 1
+          fi
+          grep -q 'NO-GO: authenticated direct scoring DML' "$integrated_log"
+          test "$(sudo -u postgres psql -X -At -d "$integrated_db" -c "SELECT count(*) FROM pg_proc WHERE proname IN ('elleng_test_authorized_shamble','elleng_test_authorized_split_pair');")" = 0
           rm -f "$integrated_log" /tmp/elleng-integrated-"$GITHUB_RUN_ID".sql
           sudo -u postgres dropdb "$integrated_db"
           echo 'PASS: integrated migration executes to deliberate stop and rolls back.'
