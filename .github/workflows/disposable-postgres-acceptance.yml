@@ -140,6 +140,11 @@ jobs:
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$split_role_db" -f tests/acceptance/authorized-split-pair-restricted-role.sql >/dev/null
           sudo -u postgres dropdb "$split_role_db"
           echo 'PASS: authorized Split-Pair survives direct-DML lockdown.'
+          reset_role_db="${db}_reset_role"
+          sudo -u postgres createdb "$reset_role_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$reset_role_db" -f tests/acceptance/commissioner-reset-restricted-role.sql >/dev/null
+          sudo -u postgres dropdb "$reset_role_db"
+          echo 'PASS: commissioner-only reset operates with direct score DML disabled.'
           # Independent role fixture: two drafts, two captains and actual staged Shamble policies.
           shamble_policy_db="${db}_shamble_policy"
           sudo -u postgres createdb "$shamble_policy_db"
