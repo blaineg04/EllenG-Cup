@@ -45,7 +45,7 @@ function channelHarness(){
  const buttons=[{disabled:false}];
  const ctx={captainUserId:'captain-a',myTeam:0,S:{teams:[{},{}]},
   captainAuthEpoch:0,captainBootstrapEpoch:0,pickRequestEpoch:0,pickInFlight:false,pickSyncFailed:false,
-  document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons,visibilityState:'hidden',
+  document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons,visibilityState:'visible',
    addEventListener:(name,cb)=>{events[name]=cb}},navigator:{onLine:true},window:{addEventListener:(name,cb)=>{windowEvents[name]=cb}},
   clearInterval:()=>{},render:()=>renders++,console:{error:()=>{}},cfg:{draftId:'isolated-test'},
   load:async(guard,onApplied)=>{draftLoads++;if(draftLoadError)throw draftLoadError;if(guard())onApplied?.()},
@@ -175,6 +175,40 @@ test('returning to a visible captain tab checks reassignment even without a draf
  assert.equal(h.draftLoads(),0,'unauthorized captain must not reload draft as LIVE');
  assert.equal(h.elements.connection.textContent,'SIGN IN');
  assert.equal(h.buttons[0].disabled,true);
+});
+test('hiding a captain tab freezes cached controls and ignores hidden realtime callbacks',async()=>{
+ const h=channelHarness();h.start();
+ await h.callbacks[0]();
+ assert.equal(h.renders(),1);
+ h.buttons[0].disabled=false;
+ await h.resumeHidden();
+ assert.equal(h.elements.connection.textContent,'PAUSED');
+ assert.equal(h.rolePending(),true);
+ assert.equal(h.ctx.pickSyncFailed,true);
+ assert.equal(h.buttons[0].disabled,true);
+ await h.callbacks[0]();
+ assert.equal(h.renders(),1,'hidden realtime callback cannot restore LIVE');
+ assert.equal(h.draftLoads(),0,'hidden tab must not issue an authorization refresh');
+ await h.resumeVisible();
+ assert.equal(h.draftLoads(),1,'foreground requires authoritative catch-up');
+ assert.equal(h.renders(),2);
+ assert.equal(h.elements.connection.textContent,'LIVE');
+ assert.equal(h.rolePending(),false);
+});
+test('hiding a tab fences a pending role lookup before it can re-enable controls',async()=>{
+ const h=channelHarness();h.start();h.deferRoles(true);
+ const pending=h.callbacks[0]();
+ assert.equal(h.pendingRoles(),1);
+ await h.resumeHidden();
+ h.resolveRole({data:{team_index:0},error:null});await pending;
+ assert.equal(h.renders(),0);
+ assert.equal(h.elements.connection.textContent,'PAUSED');
+ assert.equal(h.buttons[0].disabled,true);
+ h.deferRoles(false);
+ await h.resumeVisible();
+ assert.equal(h.draftLoads(),1);
+ assert.equal(h.renders(),1);
+ assert.equal(h.elements.connection.textContent,'LIVE');
 });
 test('online resume verifies role and refreshes authoritative draft before enabling picks',async()=>{
  const h=channelHarness();h.start();

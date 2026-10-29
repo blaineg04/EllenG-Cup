@@ -814,6 +814,8 @@ function startCaptainSubscription(){
  if(!userId)return;
  const renderForSession=async(refreshDraft=false)=>{
   if(!renderForSession.isCurrent())return;
+  // A backgrounded tab must not restore cached drafting rights from Realtime.
+  if(document.visibilityState==="hidden"){markCaptainSuspended();return;}
   if(typeof navigator!=="undefined"&&navigator.onLine===false){markCaptainOffline();return;}
   const roleEpoch=++captainRoleRefreshEpoch;
   captainRoleRefreshPending=true;
@@ -850,6 +852,7 @@ function startCaptainSubscription(){
     assertCaptainTeamPresent();
     pickSyncFailed=false;
    }
+   if(document.visibilityState==="hidden"){markCaptainSuspended();return;}
    if(typeof navigator!=="undefined"&&navigator.onLine===false){markCaptainOffline();return;}
    captainRoleRefreshPending=false;
    if(status){status.textContent="LIVE";status.className="online"}
@@ -1019,8 +1022,20 @@ function recheckCaptainOnResume(){
  return recheck(true);
 }
 if(typeof document.addEventListener==="function")document.addEventListener("visibilitychange",()=>{
+ if(document.visibilityState==="hidden"){markCaptainSuspended();return;}
  if(document.visibilityState==="visible")return recheckCaptainOnResume();
 });
+function markCaptainSuspended(){
+ const recheck=captainRoleRecheck;
+ if(!recheck||!recheck.isCurrent())return;
+ // Invalidate any pending role check; foreground requires a fresh role, identity
+ // and authoritative draft read before draft controls can become LIVE again.
+ captainRoleRefreshEpoch++;
+ captainRoleRefreshPending=true;pickSyncFailed=true;
+ const status=document.getElementById("connection");
+ if(status){status.textContent="PAUSED";status.className="offline";}
+ document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
+}
 function markCaptainOffline(){
  const recheck=captainRoleRecheck;
  if(!recheck||!recheck.isCurrent())return;
