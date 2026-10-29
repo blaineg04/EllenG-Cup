@@ -834,7 +834,10 @@ function captainSignInRevocationHarness(){
   login:{style:{display:'block'}},app:{style:{display:'none'}}
  };
  const pending=[];
+ let pageshow;
  const ctx={
+  captainRoleRecheck:null,
+  window:{addEventListener:(name,callback)=>{if(name==="pageshow")pageshow=callback}},
   captainUserId:null,captainAuthEpoch:0,captainBootstrapEpoch:0,
   captainRoleLookupId:0,pickRequestEpoch:0,pickInFlight:false,
   pickSyncFailed:false,myTeam:null,
@@ -844,7 +847,12 @@ function captainSignInRevocationHarness(){
  };
  vm.createContext(ctx);
  vm.runInContext(s.slice(signInStart,signInEnd)+s.slice(revokeStart,revokeEnd),ctx);
+ const pageShowStart=s.indexOf('window.addEventListener("pageshow",event=>{');
+ const pageShowClose=s.indexOf("\n });",pageShowStart);
+ assert.ok(pageShowStart>=0&&pageShowClose>pageShowStart,"captain pageshow handler must exist");
+ vm.runInContext(s.slice(pageShowStart,pageShowClose+5),ctx);
  return {ctx,elements,pending,click:()=>elements.signin.onclick(),
+  pageShow:(persisted=true)=>pageshow({persisted}),
   revoke:()=>ctx.revokeCaptainSession(),
   settle:(index)=>pending[index]({error:new Error('synthetic login failure')})};
 }
@@ -873,6 +881,35 @@ test('retired captain sign-in completion cannot unlock a newer pending login',as
  assert.equal(h.elements.signin.disabled,false);
  assert.equal(h.elements.signin.textContent,'Sign In');
  assert.equal(h.elements.connection.textContent,'ERROR');
+});
+
+
+test('back-forward cache restore retires an unfinished captain sign-in',async()=>{
+ const h=captainSignInRevocationHarness();
+ const old=h.click();
+ assert.equal(h.elements.signin.disabled,true);
+ const epoch=h.ctx.captainBootstrapEpoch;
+ h.pageShow(false);
+ assert.equal(h.ctx.captainBootstrapEpoch,epoch,'normal pageshow must not retire sign-in');
+ h.pageShow(true);
+ assert.equal(h.ctx.captainBootstrapEpoch,epoch+1,'cached login must be invalidated');
+ assert.equal(h.elements.signin.disabled,false,'captain can sign in again immediately');
+ assert.equal(h.elements.login.style.display,'block');
+ assert.equal(h.elements.app.style.display,'none');
+ assert.match(h.elements.msg.textContent,/browser restore/);
+ h.settle(0);await old;
+ assert.equal(h.elements.connection.textContent,'SIGN IN','late Auth response cannot restore cached access');
+});
+
+test('back-forward cache restore retires an unfinished captain bootstrap',()=>{
+ const h=captainSignInRevocationHarness();
+ h.elements.connection.textContent='CONNECTING';
+ const epoch=h.ctx.captainBootstrapEpoch;
+ h.pageShow(true);
+ assert.equal(h.ctx.captainBootstrapEpoch,epoch+1,'pending bootstrap must be invalidated');
+ assert.equal(h.elements.connection.textContent,'SIGN IN');
+ assert.equal(h.elements.app.style.display,'none');
+ assert.match(h.elements.msg.textContent,/browser restore/);
 });
 
 test('back-forward cache restore replaces captain channel and requires fresh role and draft',async()=>{
