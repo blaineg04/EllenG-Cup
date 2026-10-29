@@ -1,32 +1,90 @@
-name: MacBook restore dependency diagnosis
+name: MacBook private application restore
 on:
   push:
     branches: ['development/nov20-release-reconciliation-20261026']
     paths: ['.github/workflows/macbook-private-application-restore.yml']
 permissions:
   contents: read
+concurrency:
+  group: elleng-private-application-restore
+  cancel-in-progress: false
 jobs:
-  diagnose-private-restore:
+  application-restore:
     if: github.repository == 'blaineg04/EllenG-Cup'
     runs-on: [self-hosted, macOS]
-    timeout-minutes: 3
+    timeout-minutes: 12
     steps:
-      - name: Report catalog dependency without exposing records
+      - name: Restore fingerprinted backup in private native cluster
         shell: bash
         run: |
           set -euo pipefail
+          umask 077
           node <<'NODE'
-          const fs=require('node:fs'),path=require('node:path');
-          const dirs=fs.readdirSync(process.env.HOME).filter(n=>n.startsWith('elleng-private-restore-')).map(n=>path.join(process.env.HOME,n)).filter(p=>fs.lstatSync(p).isDirectory()&&!fs.lstatSync(p).isSymbolicLink()).sort((a,b)=>fs.statSync(b).mtimeMs-fs.statSync(a).mtimeMs);
-          const root=dirs.find(p=>fs.existsSync(path.join(p,'psql.log')));
-          if(!root)throw Error('Private restore log unavailable');
-          const log=fs.readFileSync(path.join(root,'psql.log'),'utf8');
-          const relation=log.match(/relation "([a-zA-Z0-9_.]+)" does not exist/)?.[1]||null;
-          const permission=log.match(/permission denied (?:for|to) ([a-zA-Z_ ]+(?: "[a-zA-Z0-9_.]+"| [a-zA-Z0-9_.]+)?)/)?.[1]||null;
-          const line=log.match(/application-without-vault.sql:(\d+):/)?.[1]||null;
-          const sql=fs.readFileSync(path.join(root,'application-without-vault.sql'),'utf8').split('\n');
-          const n=line?Number(line):0;
-          const nearby=sql.slice(Math.max(0,n-12),n);
-          const command=nearby.reverse().find(l=>/^(ALTER|CREATE|GRANT|REVOKE|COPY|COMMENT|SELECT|SET)\b/.test(l))?.match(/^[A-Z]+/)?.[0]||null;
-          console.log('RESTORE_DEPENDENCY '+JSON.stringify({missing_relation:relation,permission_target:permission,statement_line:n,statement_type:command,raw_log_disclosed:false,restore_retried:false,production_changed:false}));
+          const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+          const {spawnSync}=require('node:child_process');
+          const bin='/Applications/Postgres.app/Contents/Versions/18/bin';
+          const source=path.join(process.env.HOME,'elleng-backup-20261029_153839.sql');
+          const expected='e82e5ee20d37afb4839ef3f911f490c243f89e5620f2f4cc4b59c77a344fc5ef';
+          const bytes=fs.readFileSync(source);
+          if(crypto.createHash('sha256').update(bytes).digest('hex')!==expected)throw Error('Backup fingerprint changed');
+          const root=fs.mkdtempSync(path.join(process.env.HOME,'elleng-private-restore-'));
+          fs.chmodSync(root,0o700);
+          const socket=fs.mkdtempSync('/tmp/elleng-restore-');fs.chmodSync(socket,0o700);
+          const data=path.join(root,'data');
+          const env={...process.env,PGHOST:socket,PGPORT:'55439',PGUSER:'postgres',PGDATABASE:'postgres',PGSSLMODE:'disable',PGCONNECT_TIMEOUT:'10'};
+          delete env.PGPASSWORD;delete env.PGSERVICE;delete env.PGSERVICEFILE;delete env.PGOPTIONS;
+          let started=false;
+          function run(tool,args,input){
+           const log=fs.openSync(path.join(root,tool+'.log'),'w',0o600);
+           const r=spawnSync(path.join(bin,tool),args,{env,input,stdio:[input===undefined?'ignore':'pipe',log,log],timeout:180000});
+           fs.closeSync(log);
+           if(r.status!==0){const text=fs.readFileSync(path.join(root,tool+'.log'),'utf8');const kinds=[['duplicate_schema',/schema "[a-z_]+" already exists/],['missing_role',/role "[a-z_]+" does not exist/],['missing_extension',/extension "[a-z_]+" is not available/],['permission_denied',/permission denied/],['missing_relation',/relation "[a-z_.]+" does not exist/],['missing_function',/function .* does not exist/],['missing_schema',/schema .* does not exist/],['vault_reference',/vault/],['library_load',/could not (access|load).*library/]];console.log('RESTORE_DIAGNOSTIC '+JSON.stringify({category:kinds.find(x=>x[1].test(text))?.[0]||'unclassified',sqlstate:text.match(/ERROR:\\s+([0-9A-Z]{5})\\b/)?.[1]||null}));console.log('RESTORE_BLOCKED '+JSON.stringify({tool,exit:r.status,private_logs:true}));throw Error('Private restore step failed; SQL and records not printed');}
+          }
+          try{
+           run('initdb',['-D',data,'-U','postgres','--auth-local=trust','--auth-host=reject']);
+           run('pg_ctl',['-D',data,'-l',path.join(root,'server.log'),'-o',"-c listen_addresses='' -c unix_socket_directories='"+socket+"' -p 55439",'-w','start']);started=true;
+           const roles=['anon','authenticated','authenticator','dashboard_user','service_role','supabase_admin','supabase_auth_admin','supabase_etl_admin','supabase_privileged_role','supabase_read_only_user','supabase_realtime_admin','supabase_replication_admin','supabase_storage_admin'];
+           run('psql',['-X','-v','ON_ERROR_STOP=1','-c',roles.map(x=>'CREATE ROLE "'+x+'" NOLOGIN;').join('\n')]);
+           // Hosted catalog confirms supabase_admin is SUPERUSER; event-trigger ownership requires it.
+          // This applies only to the private socket-only restore cluster.
+          run('psql',['-X','-v','ON_ERROR_STOP=1','-c','ALTER ROLE supabase_admin SUPERUSER;']);
+          const blocks=bytes.toString('utf8').split(/(?=^--\n-- (?:Data for )?Name: )/m);
+           let omitted=0;
+           const kept=blocks.filter(block=>{
+            const header=block.split('\n').slice(0,4).join('\n');
+            const vault=/Schema: vault;/.test(header)||/Name: (?:EXTENSION )?supabase_vault;/.test(header);
+            if(vault)omitted++;
+            return !vault;
+           });
+           if(!omitted)throw Error('Vault sections not recognized; refusing to modify derived copy');
+           const derived=path.join(root,'application-without-vault.sql');
+           fs.writeFileSync(derived,kept.join(''),{mode:0o600});
+           // pg_dump omits cluster roles. Create only missing NOLOGIN placeholders
+          // inside this new, socket-only cluster; never modify hosted roles.
+          let restored=false;
+          for(let attempt=0;attempt<16;attempt++){
+           try{
+            run('psql',['-X','-v','ON_ERROR_STOP=1','--single-transaction','-f',derived]);
+            restored=true;break;
+           }catch(error){
+            const log=fs.readFileSync(path.join(root,'psql.log'),'utf8');
+            const names=[...log.matchAll(/role "([a-z_][a-z0-9_]*)" does not exist/g)];
+            const missing=names.at(-1)?.[1];
+            if(!missing)throw error;
+            const exists=spawnSync(path.join(bin,'psql'),['-X','-At','-c',"SELECT count(*) FROM pg_roles WHERE rolname='"+missing+"';"],{env,encoding:'utf8',timeout:10000});
+            if(exists.status!==0||exists.stdout.trim()!=='0')throw error;
+            run('psql',['-X','-v','ON_ERROR_STOP=1','-c','CREATE ROLE "'+missing+'" NOLOGIN;']);
+            console.log('LOCAL_ROLE_PLACEHOLDER_CREATED');
+           }
+          }
+          if(!restored)throw Error('Role dependency limit reached');
+           // Scope checks deliberately do not claim hosted role equivalence or full recovery.
+           const result=spawnSync(path.join(bin,'psql'),['-X','-At','-v','ON_ERROR_STOP=1','-c',"SELECT count(*) FROM pg_tables WHERE schemaname='public' AND tablename IN ('elleng_team_scores','elleng_pair_hole_scores','elleng_player_hole_scores','elleng_tournaments','elleng_drafts');"],{env,encoding:'utf8',timeout:10000});
+           if(result.status!==0||result.stdout.trim()!=='5')throw Error('Restored scoring table set incomplete');
+           fs.writeFileSync(path.join(root,'result.json'),JSON.stringify({scope:'application_restore_excluding_vault',source_sha256:expected,omitted_vault_sections:omitted,scoring_tables:5,full_project_recovery:false,production_changed:false},null,2),{mode:0o600});
+           console.log('APPLICATION_RESTORE_PASS '+JSON.stringify({omitted_vault_sections:omitted,scoring_tables:5,full_project_recovery:false,production_changed:false}));
+          }finally{
+           if(started)run('pg_ctl',['-D',data,'-m','fast','-w','stop']);
+           fs.rmdirSync(socket);
+          }
           NODE
