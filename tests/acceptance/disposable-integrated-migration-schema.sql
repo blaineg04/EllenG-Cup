@@ -5,7 +5,7 @@ DO $roles$ BEGIN
  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon NOLOGIN; END IF;
  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated NOLOGIN; END IF;
 END $roles$;
-CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT NULL::uuid $$;
+-- Mimic Supabase request JWT identity for isolated role tests; default remains anonymous.\nCREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $ SELECT NULLIF(current_setting('request.jwt.claim.sub',true),'')::uuid $;
 CREATE TABLE public.elleng_drafts(id text PRIMARY KEY, owner_id uuid, state jsonb);
 CREATE TABLE public.elleng_tournaments(id text PRIMARY KEY,draft_id text,status text,team_count integer);
 CREATE TABLE public.elleng_captains(draft_id text,user_id uuid,team_index integer);
