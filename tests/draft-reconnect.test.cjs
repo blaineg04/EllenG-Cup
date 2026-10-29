@@ -31,23 +31,31 @@ const viewerEnd=viewerHtml.indexOf('</script></body></html>',viewerStart);
 assert.ok(viewerStart>0&&viewerEnd>viewerStart,'public draft viewer bootstrap is available');
 const viewerBootstrap=viewerHtml.slice(viewerStart,viewerEnd).replace('(async()=>{','this.viewerReady=(async()=>{');
 async function viewerHarness({failInitial=false,applyInitial=true,failSubscribe=false}={}){
- let reads=0,renders=0,subscriptions=0,clockStarts=0,callback;
+ let reads=0,renders=0,subscriptions=0,clockStarts=0,unsubscriptions=0;
+ const callbacks=[],events={};
  const classes=new Set();
  const connection={textContent:''},onclock={textContent:''},meta={textContent:''};
  const strip={classList:{remove:(...items)=>items.forEach(item=>classes.delete(item)),add:item=>classes.add(item)}};
  const elements={connection,draftStatusStrip:strip,onclock,meta};
  const ctx={
-  document:{getElementById:id=>elements[id]||null},
+  document:{getElementById:id=>elements[id]||null,visibilityState:'visible',addEventListener:(name,cb)=>{events[name]=cb}},
+  navigator:{onLine:true},window:{addEventListener:(name,cb)=>{events[name]=cb}},
   load:async (_guard,onApplied)=>{reads++;if(failInitial)throw Error('transient read outage');if(applyInitial)onApplied()},
   render:()=>{renders++},
-  subscribe:cb=>{subscriptions++;if(failSubscribe)throw Error('channel unavailable');callback=cb},
+  subscribe:cb=>{subscriptions++;if(failSubscribe)throw Error('channel unavailable');callbacks.push(cb);return {unsubscribe:()=>{unsubscriptions++;return Promise.resolve()}}},
   setInterval:()=>{clockStarts++},
   draw:()=>{},
   console:{error:()=>{}}
  };
  vm.createContext(ctx);vm.runInContext(viewerBootstrap,ctx);
  await ctx.viewerReady;
- return {connection,onclock,meta,classes,emit:()=>callback?.(),stats:()=>({reads,renders,subscriptions,clockStarts})};
+ return {connection,onclock,meta,classes,emit:(index=callbacks.length-1)=>callbacks[index]?.(),
+  offline:()=>{ctx.navigator.onLine=false;return events.offline()},
+  online:()=>{ctx.navigator.onLine=true;return events.online()},
+  hidden:()=>{ctx.document.visibilityState='hidden';return events.visibilitychange()},
+  visible:()=>{ctx.document.visibilityState='visible';return events.visibilitychange()},
+  unsubscriptions:()=>unsubscriptions,
+  stats:()=>({reads,renders,subscriptions,clockStarts})};
 }
 test('public viewer retries catch-up after initial draft load failure',async()=>{
  const h=await viewerHarness({failInitial:true});
@@ -69,4 +77,35 @@ test('public viewer keeps subscription setup failures visible and stops its cloc
  assert.equal(h.connection.textContent,'OFFLINE');
  assert.ok(h.classes.has('status-offline'));
  assert.match(h.meta.textContent,/Reload to retry/);
+});
+
+test('public viewer retires stale Realtime callbacks on offline and catches up on reconnect',async()=>{
+ const h=await viewerHarness(),rendered=h.stats().renders;
+ h.offline();
+ assert.equal(h.connection.textContent,'OFFLINE');
+ assert.ok(h.classes.has('status-offline'));
+ assert.equal(h.unsubscriptions(),1,'offline must close the old channel');
+ h.emit(0);
+ assert.equal(h.stats().renders,rendered,'retired callback must not redraw a stale board');
+ h.online();
+ assert.equal(h.connection.textContent,'CONNECTING','reconnect is not LIVE before catch-up');
+ assert.equal(h.stats().subscriptions,2,'reconnect creates a new authoritative subscription');
+ h.emit(0);
+ assert.equal(h.stats().renders,rendered,'old channel remains fenced after reconnect');
+ h.emit(1);
+ assert.equal(h.stats().renders,rendered+1,'new channel can render after catch-up');
+ assert.equal(h.stats().clockStarts,1,'reconnect must not duplicate the clock timer');
+});
+test('hidden public viewer pauses its channel and refreshes on foreground',async()=>{
+ const h=await viewerHarness(),rendered=h.stats().renders;
+ h.hidden();
+ assert.equal(h.connection.textContent,'PAUSED');
+ assert.equal(h.unsubscriptions(),1);
+ h.emit(0);
+ assert.equal(h.stats().renders,rendered);
+ h.visible();
+ assert.equal(h.connection.textContent,'CONNECTING');
+ assert.equal(h.stats().subscriptions,2);
+ h.emit(1);
+ assert.equal(h.stats().renders,rendered+1);
 });
