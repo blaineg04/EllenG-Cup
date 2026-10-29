@@ -186,6 +186,9 @@ jobs:
           END \$rpc_gate\$;" >/dev/null
           # Confirm broad legacy policies are absent after the committed migration.
           test "$(sudo -u postgres psql -X -At -d "$install_db" -c "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename IN ('elleng_team_scores','elleng_pair_hole_scores','elleng_player_hole_scores') AND policyname LIKE 'active live % guard';")" = 0
+          # Disposable fixture does not install hosted SELECT grants; grant the
+          # hosted-equivalent read baseline before verifying migration preserves it.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -c "GRANT SELECT ON public.elleng_team_scores, public.elleng_pair_hole_scores, public.elleng_player_hole_scores TO authenticated;" >/dev/null
           # Confirm authenticated read access remains after write lockdown.
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -c "
           DO \$read_gate\$
