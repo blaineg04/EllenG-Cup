@@ -1,6 +1,6 @@
 # EllenG Cup scoring migration — production approval checklist
 
-**State: NOT APPROVED.** The disposable PostgreSQL RPC role checks passed for Scramble, Shamble and Split-Pair. No hosted deployment or two-device authenticated scoring verification has occurred.
+**State: NOT APPROVED.** The disposable PostgreSQL RPC role checks passed for Scramble, Shamble, Split-Pair and commissioner reset; coordinated migration/security audit passed in CI #877. No hosted deployment or two-device authenticated scoring verification has occurred.
 
 ## Scope for a single transactional migration
 1. Record a verified restore point and export current function definitions, RLS policies, grants, constraints and triggers on the three score tables, drafts and tournaments.
@@ -24,5 +24,5 @@
 ## Unresolved blockers
 - The current migration builder intentionally raises a review-only exception and cannot be deployed.
 - Authorized RPC owner/role grants and hardcoded policies need complete hosted-schema reconciliation.
-- The app's commissioner score-reset path must be migrated before table ACL lockdown.
+- Commissioner score-reset RPC and restricted-role fixture have passed disposable PostgreSQL checks; live compatibility remains unverified.
 - Live authenticated two-device scoring verification remains pending.
