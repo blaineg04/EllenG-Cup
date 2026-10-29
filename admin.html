@@ -353,6 +353,24 @@ db.auth.onAuthStateChange((event,session)=>{
   revokeCommissionerSession();
  }
 });
+// An offline tab must never retain a commissioner session authorized from
+// cached state. Retire pending reads/writes and Realtime before reconnect.
+function markCommissionerOffline(){
+ revokeCommissionerSession();
+ document.getElementById("connection").textContent="OFFLINE";
+ document.getElementById("authMsg").textContent="Connection lost. Commissioner controls are locked until access is reverified.";
+}
+function recheckCommissionerOnReconnect(){
+ if(typeof navigator!=="undefined"&&navigator.onLine===false)return Promise.resolve();
+ if(document.getElementById("connection").textContent!=="OFFLINE")return Promise.resolve();
+ // Supabase retains the browser session; verify identity AND draft ownership
+ // again before restoring any controls. Do not replay unsaved local edits.
+ return openAdmin();
+}
+if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){
+ window.addEventListener("offline",markCommissionerOffline);
+ window.addEventListener("online",recheckCommissionerOnReconnect);
+}
 async function openAdmin(){
  // A new verification supersedes any previous subscription, draft read or save.
  stopCommissionerSubscription();commissionerAuthEpoch++;commissionerUserId=null;

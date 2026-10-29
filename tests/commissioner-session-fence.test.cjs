@@ -16,12 +16,13 @@ const code=source.slice(varsStart,source.indexOf('\n',varsStart)+1)+'\n'+
 function harness(){
  const elements={loginCard:{style:{display:'block'}},adminApp:{style:{display:'none'}},
   authMsg:{textContent:''},connection:{textContent:''}};
- const buttons=[{disabled:false}],authReads=[],draftReads=[],writes=[];
+ const buttons=[{disabled:false}],authReads=[],draftReads=[],writes=[],windowEvents={};
  let authChanged,subscriptions=0,unsubscriptions=0,activeSubscriptions=0,renders=0,invalidations=0,confirmedUserId=null;const callbacks=[];
  const ctx={draftUpdatedAt:null,savingDraft:false,tick:null,liveMode:false,S:{picks:[]},
   fresh:()=>({picks:[]}),cfg:{draftId:'synthetic-only'},
   rsvpPreviewController:{invalidate:()=>{invalidations++}},
   document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons},
+  navigator:{onLine:true},window:{addEventListener:(event,cb)=>{windowEvents[event]=cb}},
   db:{auth:{getUser:()=>confirmedUserId!==null?Promise.resolve({data:{user:{id:confirmedUserId}},error:null}):new Promise(resolve=>authReads.push(resolve)),
    onAuthStateChange:cb=>{authChanged=cb}},
    from:()=>({select:()=>({eq:()=>({maybeSingle:()=>new Promise(resolve=>draftReads.push(resolve))})}),
@@ -35,6 +36,8 @@ function harness(){
  vm.createContext(ctx);vm.runInContext(code,ctx);
  return {ctx,elements,buttons,authReads,draftReads,writes,
   open:()=>{confirmedUserId=null;return ctx.openAdmin()},save:()=>{confirmedUserId=null;return ctx.secureSave()},change:(event,session)=>authChanged(event,session),
+  offline:()=>{ctx.navigator.onLine=false;return windowEvents.offline()},
+  online:()=>{ctx.navigator.onLine=true;confirmedUserId=null;return windowEvents.online()},
   auth:(index,id)=>authReads[index]({data:{user:id?{id}:null},error:null}),
   // After the owner read, Supabase getUser() returns the current account for
   // the second identity check. Saves explicitly switch back to deferred reads
@@ -59,6 +62,44 @@ test('commissioner Realtime read guard is revoked on sign-out',async()=>{
  h.notify(0);
  assert.equal(h.renders(),rendered,'stale listener cannot redraw after sign-out');
  assert.equal(h.elements.connection.textContent,'SIGN IN');
+});
+test('offline commissioner immediately loses controls and reconnect rechecks owner',async()=>{
+ const h=harness(),first=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await first;
+ const oldListener=h.listener(0);
+ assert.equal(h.elements.adminApp.style.display,'block');
+ h.offline();
+ assert.equal(h.elements.connection.textContent,'OFFLINE');
+ assert.equal(h.elements.adminApp.style.display,'none');
+ assert.equal(h.buttons[0].disabled,true);
+ assert.equal(h.unsubscriptions(),1);
+ assert.equal(oldListener.isCurrent(),false);
+ const resumed=h.online();
+ assert.equal(h.elements.connection.textContent,'VERIFYING');
+ assert.equal(h.authReads.length,2,'reconnect requires a fresh auth lookup');
+ h.auth(1,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.draftReads.length,2,'reconnect must reload authoritative ownership');
+ h.draft(1,'commissioner-a');await resumed;
+ assert.equal(h.elements.adminApp.style.display,'block');
+ assert.equal(h.elements.connection.textContent,'READY');
+ assert.equal(h.subscriptions(),2);
+ assert.equal(oldListener.isCurrent(),false,'old channel stays fenced after reconnect');
+});
+test('offline during commissioner owner lookup fences late response and reconnect verifies anew',async()=>{
+ const h=harness(),pending=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.draftReads.length,1);
+ h.offline();
+ h.draft(0,'commissioner-a');await pending;
+ assert.equal(h.elements.connection.textContent,'OFFLINE');
+ assert.equal(h.elements.adminApp.style.display,'none');
+ assert.equal(h.subscriptions(),0);
+ const resumed=h.online();
+ h.auth(1,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(1,'commissioner-a');await resumed;
+ assert.equal(h.elements.connection.textContent,'READY');
+ assert.equal(h.subscriptions(),1);
 });
 test('superseded commissioner listener stays invalid after same-account reauthorization',async()=>{
  const h=harness(),first=h.open();
