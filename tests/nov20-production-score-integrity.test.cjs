@@ -20,7 +20,7 @@ function pendingHoleSave(kind,clear=false){
  };
  const initial=kind==='shamble'?10:1;
  const rows=[];for(const h of [initial,initial+1])for(let i=0;i<(kind==='shamble'?4:2);i++)if(!(clear&&h===initial&&i===0))rows.push({team_index:0,hole:h,golfer_index:i,pair_index:i,score:h===initial?i+4:i+8});
- const context={hole:initial,teams:[{name:'T1'}],db,TOURNAMENT_ID:'test-tournament',user:{id:'test-user'},canEditTeam:()=>true,isSplitPair:()=>true,validStoredPlayerScore:row=>row&&row.score!==null&&row.score!==undefined&&typeof row.score!=="boolean"&&String(row.score).trim()!==""&&Number.isSafeInteger(Number(row.score))&&Number(row.score)>=1&&Number(row.score)<=20,beginScoreSave:()=>true,endScoreSave(){},$:()=>({textContent:''}),loadScores:async()=>{},teamRosterGolfers:()=>[0,1,2,3].map(index=>({index})),playerScores:rows,pairScores:rows,renderAll(){}};
+ const context={hole:initial,teams:[{name:'T1'}],db,TOURNAMENT_ID:'test-tournament',user:{id:'test-user'},canEditTeam:()=>true,isSplitPair:()=>kind==='split-pair',validStoredPlayerScore:row=>row&&row.score!==null&&row.score!==undefined&&typeof row.score!=="boolean"&&String(row.score).trim()!==""&&Number.isSafeInteger(Number(row.score))&&Number(row.score)>=1&&Number(row.score)<=20,beginScoreSave:()=>true,endScoreSave(){},$:()=>({textContent:''}),loadScores:async()=>{},teamRosterGolfers:()=>[0,1,2,3].map(index=>({index})),playerScores:rows,pairScores:rows,renderAll(){}};
  vm.runInNewContext(html.slice(start,end),context);
  return {context,writes,initial,release:()=>release({error:null}),run:()=>kind==='shamble'?context.savePlayerShambleScore(0,0,clear?'':'4'):context.savePairScore(0,0,clear?'':'4')};
 }
