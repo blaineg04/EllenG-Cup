@@ -1022,7 +1022,10 @@ document.getElementById("signin").onclick=async()=>{
     document.getElementById("login").style.display="block";document.getElementById("app").style.display="none";
     if(status)status.textContent="ERROR";
     msg.textContent=e?.message||"Captain sign-in unavailable. Try again.";
-  }finally{button.disabled=false;button.textContent=label;}
+  }finally{
+    // A retired login must not unlock a newer sign-in still awaiting Auth.
+    if(loginEpoch===captainBootstrapEpoch){button.disabled=false;button.textContent=label;}
+  }
 };
 document.getElementById("soundToggle").onclick=enableDraftSound;
 // A changed or revoked auth session must not leave the previous captain's
@@ -1030,6 +1033,10 @@ document.getElementById("soundToggle").onclick=enableDraftSound;
 function revokeCaptainSession(){
  captainAuthEpoch++;
  captainBootstrapEpoch++;
+ // Release a pending login immediately on sign-out; Auth may never resolve
+ // the retired request. Its finally handler is epoch-fenced below.
+ const signInButton=document.getElementById("signin");
+ if(signInButton){signInButton.disabled=false;signInButton.textContent="Sign In";}
  // Release this session's UI lock, but invalidate its pending RPC cleanup.
  pickRequestEpoch++;
  pickInFlight=false;

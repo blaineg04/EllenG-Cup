@@ -813,3 +813,60 @@ test('hidden captain cannot certify delayed post-pick refresh without visibility
  assert.equal(h.ctx.pickSyncFailed,true);
  assert.match(h.alerts.join(' '),/latest draft could not be loaded/);
 });
+
+
+// Exercise the actual captain sign-in and revocation handlers with deferred
+// synthetic Auth responses. No Supabase credentials or live records are used.
+function captainSignInRevocationHarness(){
+ const signInStart=s.indexOf('document.getElementById("signin").onclick=async()=>{');
+ const signInEnd=s.indexOf('document.getElementById("soundToggle").onclick',signInStart);
+ const revokeStart=s.indexOf('function revokeCaptainSession(){',signInEnd);
+ const revokeEnd=s.indexOf('db.auth.onAuthStateChange(',revokeStart);
+ assert.ok(signInStart>=0&&signInEnd>signInStart&&revokeStart>signInEnd&&revokeEnd>revokeStart);
+ const elements={
+  signin:{disabled:false,textContent:'Sign In'},
+  email:{value:'captain@example.test'},pw:{value:'test-password'},
+  msg:{textContent:''},connection:{textContent:''},
+  login:{style:{display:'block'}},app:{style:{display:'none'}}
+ };
+ const pending=[];
+ const ctx={
+  captainUserId:null,captainAuthEpoch:0,captainBootstrapEpoch:0,
+  captainRoleLookupId:0,pickRequestEpoch:0,pickInFlight:false,
+  pickSyncFailed:false,myTeam:null,
+  document:{getElementById:id=>elements[id],querySelectorAll:()=>[]},
+  db:{auth:{signInWithPassword:()=>new Promise(resolve=>pending.push(resolve))}},
+  stopCaptainSubscription:()=>{},stopCaptainDrawTimer:()=>{}
+ };
+ vm.createContext(ctx);
+ vm.runInContext(s.slice(signInStart,signInEnd)+s.slice(revokeStart,revokeEnd),ctx);
+ return {ctx,elements,pending,click:()=>elements.signin.onclick(),
+  revoke:()=>ctx.revokeCaptainSession(),
+  settle:(index)=>pending[index]({error:new Error('synthetic login failure')})};
+}
+test('captain sign-out releases a pending sign-in button without waiting for Auth',async()=>{
+ const h=captainSignInRevocationHarness();
+ const old=h.click();
+ assert.equal(h.pending.length,1);
+ assert.equal(h.elements.signin.disabled,true);
+ h.revoke();
+ assert.equal(h.elements.signin.disabled,false,'retired Auth request cannot trap sign-in');
+ assert.equal(h.elements.signin.textContent,'Sign In');
+ h.settle(0);await old;
+ assert.equal(h.elements.connection.textContent,'SIGN IN');
+});
+test('retired captain sign-in completion cannot unlock a newer pending login',async()=>{
+ const h=captainSignInRevocationHarness();
+ const old=h.click();
+ h.revoke();
+ const current=h.click();
+ assert.equal(h.pending.length,2,'new sign-in can start before old Auth resolves');
+ assert.equal(h.elements.signin.disabled,true);
+ h.settle(0);await old;
+ assert.equal(h.elements.signin.disabled,true,'old finally must not enable newer login');
+ assert.equal(h.elements.signin.textContent,'Signing In…');
+ h.settle(1);await current;
+ assert.equal(h.elements.signin.disabled,false);
+ assert.equal(h.elements.signin.textContent,'Sign In');
+ assert.equal(h.elements.connection.textContent,'ERROR');
+});
