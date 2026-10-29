@@ -12,6 +12,7 @@ const parts=[
  'db/patches/20261028_shamble_dynamic_draft_policies_REVIEW_ONLY.sql',
  'db/patches/20261028_split_pair_atomic_rpc_REVIEW_ONLY.sql',
  'db/patches/20261029_scramble_authorized_rpc_REVIEW_ONLY.sql',
+ 'db/patches/20261029_commissioner_score_reset_rpc_REVIEW_ONLY.sql',
  'tests/acceptance/authorized-shamble-rpc-proposal.sql'
 ];
 const sections=parts.map(p=>{
