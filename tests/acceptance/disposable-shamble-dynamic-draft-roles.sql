@@ -38,6 +38,19 @@ DO $check$ BEGIN
   RAISE EXCEPTION 'FAIL: captain a inserted into another team';
  EXCEPTION WHEN insufficient_privilege THEN NULL; END;
 END $check$;
+-- A captain may edit only their own existing row and cannot reassign it
+-- to an unowned team or an entirely different tournament via UPDATE.
+UPDATE public.elleng_player_hole_scores SET score=6 WHERE tournament_id='event-a' AND team_index=0;
+DO $check$ BEGIN
+ BEGIN
+  UPDATE public.elleng_player_hole_scores SET team_index=1 WHERE tournament_id='event-a' AND team_index=0;
+  RAISE EXCEPTION 'FAIL: captain a moved score to an unauthorized team';
+ EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ BEGIN
+  UPDATE public.elleng_player_hole_scores SET tournament_id='event-b' WHERE tournament_id='event-a' AND team_index=0;
+  RAISE EXCEPTION 'FAIL: captain a moved score to another tournament';
+ EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+END $check$;
 SELECT set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000004',false);
 INSERT INTO public.elleng_player_hole_scores VALUES ('event-b',1,10,5);
 DO $check$ DECLARE n integer; BEGIN
