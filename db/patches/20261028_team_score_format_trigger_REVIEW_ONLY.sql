@@ -6,10 +6,16 @@ CREATE OR REPLACE FUNCTION public.elleng_enforce_team_score_format()
 RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path=''
 AS $guard$
 DECLARE v_format text;
+        v_draft_id text;
 BEGIN
- SELECT coalesce(d.state->>'playFormat','standard') INTO v_format
- FROM public.elleng_tournaments t JOIN public.elleng_drafts d ON d.id=t.draft_id
+ -- Lock the parent draft in SHARE mode before reading its format.
+ -- This conflicts with concurrent UPDATE OF state and prevents a stale
+ -- format read racing with the draft-format change guard.
+ SELECT t.draft_id INTO v_draft_id FROM public.elleng_tournaments t
  WHERE t.id=NEW.tournament_id;
+ IF v_draft_id IS NULL THEN RAISE EXCEPTION 'Tournament missing' USING ERRCODE='23514'; END IF;
+ SELECT coalesce(d.state->>'playFormat','standard') INTO v_format
+ FROM public.elleng_drafts d WHERE d.id=v_draft_id FOR SHARE;
  IF v_format IS NULL OR v_format NOT IN ('standard','elleng','split_pair') THEN
    RAISE EXCEPTION 'Unsupported tournament scoring format' USING ERRCODE='23514';
  END IF;
