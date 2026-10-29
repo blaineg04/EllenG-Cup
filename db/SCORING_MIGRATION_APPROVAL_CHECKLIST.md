@@ -52,3 +52,9 @@
 - **Resolved in isolated CI:** the disposable integrated schema now reads a session-specific JWT subject through `auth.uid()`. Post-install SQL exercises captain, commissioner, unauthorized and missing-identity scenarios; this is still not a hosted two-device test.
 - PostgreSQL acceptance #949 passed installed Scramble, Shamble and Split-Pair scoring behaviors plus commissioner reset checks. These are simulated JWT subjects under disposable PostgreSQL, not actual Supabase Auth sessions.
 - Hosted role/ownership compatibility, actual authenticated multi-device scoring, production recovery and exact SQL approval remain open.
+
+## Hosted read-only security review — 2026-10-29
+- PostgreSQL 17.6; hosted `auth.uid()` is owned by `supabase_auth_admin` and is not SECURITY DEFINER. No proposed `elleng_test_*` scoring RPCs are installed yet.
+- Supabase security advisor flags three existing authenticated-callable SECURITY DEFINER draft RPCs (`elleng_auto_pick`, `elleng_make_pick`, `elleng_save_state_if_fresh`). Confirm their intended privileges and owner/captain checks before production approval; do not revoke blindly because draft functionality depends on them.
+- Advisor also flags RLS with no policies on `elleng_golfer_pins` and `elleng_trash_talk_settings`, plus disabled leaked-password protection. Evaluate separately; none were changed.
+- Isolated role-behavior tests use simulated JWT subjects in a disposable database. They do **not** substitute for running API requests as actual `authenticated` and `anon` roles through hosted Supabase Auth. Review this gap before approval.
