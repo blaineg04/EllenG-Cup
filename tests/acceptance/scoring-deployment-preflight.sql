@@ -66,7 +66,7 @@ BEGIN
   JOIN pg_proc p ON p.oid=to_regprocedure(required.signature)
   WHERE NOT has_function_privilege('authenticated',p.oid,'EXECUTE')
    OR has_function_privilege('anon',p.oid,'EXECUTE')
-   OR has_function_privilege('public',p.oid,'EXECUTE')
+   OR EXISTS (SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) acl WHERE acl.grantee=0 AND acl.privilege_type='EXECUTE')
  ) THEN RAISE EXCEPTION 'Scoring rehearsal blocked: RPC role grants invalid'; END IF;
  IF EXISTS (
   SELECT 1 FROM pg_policies
