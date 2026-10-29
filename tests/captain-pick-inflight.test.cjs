@@ -141,6 +141,36 @@ test('captain reassignment on reconnect revokes old team controls',async()=>{
  assert.equal(h.unsubscriptions(),1);assert.match(h.elements.msg.textContent,/team assignment changed/);
  assert.equal(h.buttons[0].disabled,true);
 });
+test('captain role verification cannot restore LIVE after Realtime disconnect',async()=>{
+ const h=channelHarness();h.start();h.deferRoles(true);
+ const stale=h.callbacks[0]();
+ assert.equal(h.pendingRoles(),1);
+ assert.equal(h.elements.connection.textContent,'VERIFYING');
+ h.elements.connection.textContent='RECONNECTING'; // Shared subscriber reported disconnect.
+ h.resolveRole({data:{team_index:0},error:null});await stale;
+ assert.equal(h.elements.connection.textContent,'RECONNECTING','old verification cannot mask channel loss');
+ assert.equal(h.rolePending(),true,'picks remain fenced until a new sync');
+ assert.equal(h.renders(),0);
+ assert.equal(h.buttons[0].disabled,true);
+ // A subsequent subscribed snapshot and role check may restore controls.
+ const current=h.callbacks[0]();
+ assert.equal(h.pendingRoles(),1);
+ h.resolveRole({data:{team_index:0},error:null});await current;
+ assert.equal(h.elements.connection.textContent,'LIVE');
+ assert.equal(h.rolePending(),false);
+ assert.equal(h.renders(),1);
+});
+test('stale captain role error does not overwrite newer reconnect status',async()=>{
+ const h=channelHarness();h.start();h.deferRoles(true);
+ const stale=h.callbacks[0]();
+ assert.equal(h.pendingRoles(),1);
+ h.elements.connection.textContent='RECONNECTING';
+ h.resolveRole({data:null,error:new Error('synthetic stale role failure')});await stale;
+ assert.equal(h.elements.connection.textContent,'RECONNECTING');
+ assert.equal(h.rolePending(),true);
+ assert.equal(h.renders(),0);
+ assert.equal(h.buttons[0].disabled,true);
+});
 test('captain role refresh freezes picks until permission check completes',async()=>{
  const h=channelHarness();h.start();h.deferRoles(true);
  const refresh=h.callbacks[0]();

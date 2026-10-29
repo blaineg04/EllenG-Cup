@@ -859,8 +859,12 @@ function startCaptainSubscription(){
    }
    if(document.visibilityState==="hidden"){markCaptainSuspended();return;}
    if(typeof navigator!=="undefined"&&navigator.onLine===false){markCaptainOffline();return;}
+   // A channel can disconnect or begin a newer sync while the role/Auth
+   // requests above are in flight. Never promote its old verification to LIVE.
+   // Keep picks locked until the next subscribed snapshot and role check.
+   if(!status||status.textContent!=="VERIFYING")return;
    captainRoleRefreshPending=false;
-   if(status){status.textContent="LIVE";status.className="online"}
+   status.textContent="LIVE";status.className="online";
    render();
   }catch(error){
    // assertCaptainTeamPresent clears the captain ID before throwing. It still
@@ -876,8 +880,11 @@ function startCaptainSubscription(){
     document.getElementById("msg").textContent=error.message;
     return;
    }
+   // Preserve RECONNECTING/SYNCING if the channel changed during this
+   // failed role lookup. A stale error must not overwrite its newer status.
+   if(!status||status.textContent!=="VERIFYING")return;
    captainRoleRefreshPending=false;pickSyncFailed=true;
-   if(status){status.textContent="SYNC ERROR";status.className="offline"}
+   status.textContent="SYNC ERROR";status.className="offline";
    console.error("Captain role refresh failed",error);
   }
  };
