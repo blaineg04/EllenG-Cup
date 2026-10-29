@@ -1,0 +1,34 @@
+{
+  "status": "DEPLOYED_HOSTED_AUTHENTICATED_ACCEPTANCE_PENDING",
+  "source_commit": "a090d2d8c5fbb2d4d3963b7ee3bd9bec22acad7e",
+  "production_url": "https://elleng-cup.vercel.app",
+  "vercel_project": "prj_wpcMGLHuH21jWarwziP1mo85RBcC",
+  "deployment": "dpl_GPFDM1XsBfiqCagREgjg6zpK9XhD",
+  "supabase_project": "xepccqedhbucpbwuykoc",
+  "migration": "elleng_coordinated_scoring_rpc_cutover",
+  "sql_sha256": "049988581409c8cff326fd2a506c4ddd40f43e9a977c8c9e7dd39ef2df63b8b4",
+  "checks": {
+    "production_ready": true,
+    "production_alias_verified": true,
+    "entry_http": 200,
+    "scoring_http": 200,
+    "config_http": 200,
+    "correct_project_config": true,
+    "four_scoring_rpcs": true,
+    "authenticated_execute": true,
+    "anon_execute": false,
+    "direct_api_score_writes": false,
+    "score_triggers": 6,
+    "score_rows_before": 0,
+    "score_rows_after": 0
+  },
+  "recovery_evidence": "https://github.com/blaineg04/EllenG-Cup/actions/runs/40961664529",
+  "previous_app_deployment": "dpl_FbiibvrkEcsYBvT6EojMxxrtNwYs",
+  "rollback_caution": "Previous app requires direct score-table writes; do not roll back app alone while migrated permissions remain. The reversal must reject scores above 20; preserve current scores and use forward repair if this guard blocks.",
+  "remaining": [
+    "Hosted authenticated commissioner/captain two-client save/edit/clear/resume and Realtime tests using an approved disposable tournament.",
+    "Reconcile deployed commit with main before relying on future main-branch automatic deployments.",
+    "Rotate database password that appeared in the user's screenshot if not already rotated."
+  ],
+  "production_test_records_created": false
+}
