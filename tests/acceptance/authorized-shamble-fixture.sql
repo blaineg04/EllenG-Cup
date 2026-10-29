@@ -13,6 +13,20 @@ INSERT INTO public.elleng_drafts VALUES('draft','00000000-0000-4000-8000-0000000
 INSERT INTO public.elleng_captains VALUES('draft','00000000-0000-4000-8000-000000000002',0);
 INSERT INTO public.elleng_tournaments VALUES('fixture','draft','live',2);
 \i tests/acceptance/authorized-shamble-rpc-proposal.sql
+-- A Split-Pair tournament must not accept Shamble scores or derived totals.
+UPDATE public.elleng_drafts SET state=jsonb_set(state,'{playFormat}','"split_pair"'::jsonb,true) WHERE id='draft';
+SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000002',false);
+DO $format$
+DECLARE denied boolean:=false;
+BEGIN
+ BEGIN PERFORM public.elleng_test_authorized_shamble('fixture',0,10,0,7);
+ EXCEPTION WHEN invalid_parameter_value THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Split-Pair accepted Shamble write'; END IF;
+ IF EXISTS(SELECT 1 FROM public.elleng_player_hole_scores WHERE tournament_id='fixture')
+ THEN RAISE EXCEPTION 'Rejected format write altered player scores'; END IF;
+END $format$;
+UPDATE public.elleng_drafts SET state=jsonb_set(state,'{playFormat}','"standard"'::jsonb,true) WHERE id='draft';
+
 SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000002',false);
 DO $check$
 DECLARE v integer; denied boolean;
