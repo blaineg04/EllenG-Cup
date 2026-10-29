@@ -83,7 +83,12 @@ const manifest={
  status:'REVIEW_ONLY_NOT_APPROVED',
  generated_sql_sha256:sha256(sql),
  coordinated_sql_sha256:sha256(sql),
- sources:parts.map(p=>({path:p,sha256:sha256(read(p))}))
+ sources:[...parts,
+ 'db/patches/20261029_scoring_remove_legacy_write_policies_REVIEW_ONLY.sql',
+ 'db/patches/20261029_score_table_dml_lockdown_REVIEW_ONLY.sql',
+ 'db/patches/20261029_scoring_rpc_owner_acl_audit_REVIEW_ONLY.sql'
+ ].map(p=>({path:p,sha256:sha256(read(p))})),
+ manifest_scope:'Coordinated review SQL including cleanup, lockdown and owner/ACL audit; not approved for deployment.'
 };
 const releaseRequested=process.argv.includes('--release');
 if(releaseRequested){
