@@ -28,3 +28,21 @@ test('Shamble refuses unassigned golfer before any scoring RPC',()=>{
  assert.ok(body.indexOf('teamRosterGolfers(teamIndex).some')<body.indexOf('beginScoreSave()'));
  assert.match(body,/db\.rpc\("elleng_test_authorized_shamble"/);
 });
+
+test('Shamble scoring refuses Split-Pair before score-save lock or RPC',async()=>{
+ const vm=require('node:vm');
+ const start=html.indexOf('async function savePlayerShambleScore(');
+ const end=html.indexOf('function renderPairScoring(',start);
+ assert.ok(start>=0&&end>start);
+ let saves=0,rpcs=0;
+ const ctx={
+  hole:10,isSplitPair:()=>true,canEditTeam:()=>true,
+  teamRosterGolfers:()=>[{index:0}],
+  beginScoreSave:()=>{saves++;return true},
+  db:{rpc:()=>{rpcs++;return Promise.resolve({error:null})}}
+ };
+ vm.runInNewContext(html.slice(start,end),ctx);
+ await ctx.savePlayerShambleScore(0,0,4);
+ assert.equal(saves,0);
+ assert.equal(rpcs,0);
+});
