@@ -24,6 +24,9 @@ const sql=[
  'BEGIN;',
  ...sections,
  // Installation statements are included for review and compatibility inspection.
+ 'CREATE TRIGGER elleng_lock_team_parent BEFORE INSERT OR UPDATE ON public.elleng_team_scores FOR EACH ROW EXECUTE FUNCTION public.elleng_lock_parent_for_score_write();',
+ 'CREATE TRIGGER elleng_lock_pair_parent BEFORE INSERT OR UPDATE ON public.elleng_pair_hole_scores FOR EACH ROW EXECUTE FUNCTION public.elleng_lock_parent_for_score_write();',
+ 'CREATE TRIGGER elleng_lock_player_parent BEFORE INSERT OR UPDATE ON public.elleng_player_hole_scores FOR EACH ROW EXECUTE FUNCTION public.elleng_lock_parent_for_score_write();',
  'CREATE TRIGGER elleng_enforce_team_score_format BEFORE INSERT OR UPDATE ON public.elleng_team_scores FOR EACH ROW EXECUTE FUNCTION public.elleng_enforce_team_score_format();',
  'CREATE TRIGGER elleng_prevent_scored_draft_format_change BEFORE UPDATE OF state ON public.elleng_drafts FOR EACH ROW EXECUTE FUNCTION public.elleng_prevent_scored_draft_format_change();',
  'CREATE TRIGGER elleng_guard_scored_tournament_config BEFORE UPDATE OF team_count ON public.elleng_tournaments FOR EACH ROW EXECUTE FUNCTION public.elleng_guard_scored_tournament_config();',
