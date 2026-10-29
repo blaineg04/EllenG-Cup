@@ -398,6 +398,9 @@ if(typeof document.addEventListener==="function")document.addEventListener("visi
 async function openAdmin(){
  // Do not grant controls from a background bootstrap or reconnect.
  if(document.visibilityState==="hidden"){suspendCommissionerForVisibility(true);return;}
+ // An offline bootstrap must not authorize cached credentials or a stale draft.
+ // The online event will initiate a fresh owner and identity check.
+ if(typeof navigator!=="undefined"&&navigator.onLine===false){markCommissionerOffline();return;}
  // A new verification supersedes any previous subscription, draft read or save.
  stopCommissionerSubscription();commissionerAuthEpoch++;commissionerUserId=null;
  if(typeof rsvpPreviewController!=="undefined")rsvpPreviewController.invalidate();
@@ -427,6 +430,9 @@ async function openAdmin(){
   if(confirmationError||confirmedAuth?.user?.id!==user.id){status.textContent="SIGN IN";msg.textContent="Commissioner session changed during verification. Sign in again.";return}
   // An in-flight owner lookup must not restore controls after the tab hides.
   if(document.visibilityState==="hidden"){suspendCommissionerForVisibility(true);return;}
+  // The browser can go offline while Auth/owner reads are pending, even when
+  // the offline event has not fired. Do not grant controls from those results.
+  if(typeof navigator!=="undefined"&&navigator.onLine===false){markCommissionerOffline();return;}
   S={...fresh(),...data.state};draftUpdatedAt=data.updated_at;
   commissionerUserId=user.id;
   loginCard.style.display="none";app.style.display="block";status.textContent="READY";
@@ -435,10 +441,13 @@ async function openAdmin(){
   // Realtime reads, not just before invoking this render callback. Without
   // this guard a disposed commissioner's channel can still replace S.
   const renderForCommissioner=()=>{
-   if(!stillCurrent()||commissionerUserId!==user.id)return;
+   if(!renderForCommissioner.isCurrent())return;
    if(liveMode)liveRender();else setupRender();
   };
-  renderForCommissioner.isCurrent=()=>stillCurrent()&&commissionerUserId===user.id;
+  // Ignore queued Realtime callbacks when browser lifecycle events are late.
+  // Server-side RLS and RPC authorization still protect every write.
+  renderForCommissioner.isCurrent=()=>stillCurrent()&&commissionerUserId===user.id&&
+   document.visibilityState!=="hidden"&&(typeof navigator==="undefined"||navigator.onLine!==false);
   commissionerChannel=subscribe(renderForCommissioner);
   if(!tick)tick=setInterval(()=>{if(liveMode)drawClock()},500);
  }catch(e){
