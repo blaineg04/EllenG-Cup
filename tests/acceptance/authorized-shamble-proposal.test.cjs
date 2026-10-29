@@ -56,7 +56,7 @@ test('team eligibility follows saved tournament team_count, not fixed nine-team 
 });
 
 test('Shamble holds a shared draft lock during format and roster authorization',()=>{
- assert.match(sql,/FOR SHARE OF d/);
+ assert.match(sql,/FOR SHARE OF t,d/);
 });
 
 test('Shamble lock must be acquired before reading draft state and roster',()=>{
