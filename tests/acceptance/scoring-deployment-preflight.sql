@@ -54,6 +54,13 @@ BEGIN
     OR NOT has_function_privilege('authenticated','public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)','EXECUTE')
     OR has_function_privilege('anon','public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)','EXECUTE')
  THEN RAISE EXCEPTION 'Scoring rehearsal blocked: RPC role grants invalid'; END IF;
+ IF EXISTS(
+  SELECT 1 FROM (VALUES
+   ('public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)'),
+   ('public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)')
+  ) AS expected(signature)
+  WHERE has_function_privilege('PUBLIC',expected.signature,'EXECUTE')
+ ) THEN RAISE EXCEPTION 'Scoring rehearsal blocked: RPC executable by PUBLIC'; END IF;
  IF (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
      WHERE n.nspname='public' AND c.relname IN ('elleng_pair_hole_scores','elleng_player_hole_scores','elleng_team_scores')
        AND c.relkind IN ('r','p') AND c.relrowsecurity)<>3
