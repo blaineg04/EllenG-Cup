@@ -1,0 +1,69 @@
+name: MacBook private application restore
+on:
+  push:
+    branches: ['development/nov20-release-reconciliation-20261026']
+    paths: ['.github/workflows/macbook-private-application-restore.yml']
+permissions:
+  contents: read
+concurrency:
+  group: elleng-private-application-restore
+  cancel-in-progress: false
+jobs:
+  application-restore:
+    if: github.repository == 'blaineg04/EllenG-Cup'
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 12
+    steps:
+      - name: Restore fingerprinted backup in private native cluster
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          node <<'NODE'
+          const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+          const {spawnSync}=require('node:child_process');
+          const bin='/Applications/Postgres.app/Contents/Versions/18/bin';
+          const source=path.join(process.env.HOME,'elleng-backup-20261029_153839.sql');
+          const expected='e82e5ee20d37afb4839ef3f911f490c243f89e5620f2f4cc4b59c77a344fc5ef';
+          const bytes=fs.readFileSync(source);
+          if(crypto.createHash('sha256').update(bytes).digest('hex')!==expected)throw Error('Backup fingerprint changed');
+          const root=fs.mkdtempSync(path.join(process.env.HOME,'elleng-private-restore-'));
+          fs.chmodSync(root,0o700);
+          const socket=fs.mkdtempSync('/tmp/elleng-restore-');fs.chmodSync(socket,0o700);
+          const data=path.join(root,'data');
+          const env={...process.env,PGHOST:socket,PGPORT:'55439',PGUSER:'postgres',PGDATABASE:'postgres',PGSSLMODE:'disable',PGCONNECT_TIMEOUT:'10'};
+          delete env.PGPASSWORD;delete env.PGSERVICE;delete env.PGSERVICEFILE;delete env.PGOPTIONS;
+          let started=false;
+          function run(tool,args,input){
+           const log=fs.openSync(path.join(root,tool+'.log'),'a',0o600);
+           const r=spawnSync(path.join(bin,tool),args,{env,input,stdio:[input===undefined?'ignore':'pipe',log,log],timeout:180000});
+           fs.closeSync(log);
+           if(r.status!==0){console.log('RESTORE_BLOCKED '+JSON.stringify({tool,exit:r.status,private_logs:true}));throw Error('Private restore step failed; SQL and records not printed');}
+          }
+          try{
+           run('initdb',['-D',data,'-U','postgres','--auth-local=trust','--auth-host=reject']);
+           run('pg_ctl',['-D',data,'-l',path.join(root,'server.log'),'-o',"-c listen_addresses='' -c unix_socket_directories='"+socket+"' -p 55439",'-w','start']);started=true;
+           const roles=['anon','authenticated','authenticator','dashboard_user','service_role','supabase_admin','supabase_auth_admin','supabase_etl_admin','supabase_privileged_role','supabase_read_only_user','supabase_realtime_admin','supabase_replication_admin','supabase_storage_admin'];
+           run('psql',['-X','-v','ON_ERROR_STOP=1','-c',roles.map(x=>'CREATE ROLE "'+x+'" NOLOGIN;').join('\n')]);
+           const blocks=bytes.toString('utf8').split(/(?=^--\n-- Name: )/m);
+           let omitted=0;
+           const kept=blocks.filter(block=>{
+            const header=block.split('\n').slice(0,4).join('\n');
+            const vault=/Schema: vault;/.test(header)||/Name: (?:EXTENSION )?supabase_vault;/.test(header);
+            if(vault)omitted++;
+            return !vault;
+           });
+           if(!omitted)throw Error('Vault sections not recognized; refusing to modify derived copy');
+           const derived=path.join(root,'application-without-vault.sql');
+           fs.writeFileSync(derived,kept.join(''),{mode:0o600});
+           run('psql',['-X','-v','ON_ERROR_STOP=1','-f',derived]);
+           // Scope checks deliberately do not claim hosted role equivalence or full recovery.
+           const result=spawnSync(path.join(bin,'psql'),['-X','-At','-v','ON_ERROR_STOP=1','-c',"SELECT count(*) FROM pg_tables WHERE schemaname='public' AND tablename IN ('elleng_team_scores','elleng_pair_hole_scores','elleng_player_hole_scores','elleng_tournaments','elleng_drafts');"],{env,encoding:'utf8',timeout:10000});
+           if(result.status!==0||result.stdout.trim()!=='5')throw Error('Restored scoring table set incomplete');
+           fs.writeFileSync(path.join(root,'result.json'),JSON.stringify({scope:'application_restore_excluding_vault',source_sha256:expected,omitted_vault_sections:omitted,scoring_tables:5,full_project_recovery:false,production_changed:false},null,2),{mode:0o600});
+           console.log('APPLICATION_RESTORE_PASS '+JSON.stringify({omitted_vault_sections:omitted,scoring_tables:5,full_project_recovery:false,production_changed:false}));
+          }finally{
+           if(started)run('pg_ctl',['-D',data,'-m','fast','-w','stop']);
+           fs.rmdirSync(socket);
+          }
+          NODE
