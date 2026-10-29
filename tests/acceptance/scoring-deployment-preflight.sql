@@ -59,7 +59,11 @@ BEGIN
    ('public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)'),
    ('public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)')
   ) AS expected(signature)
-  WHERE has_function_privilege('PUBLIC',expected.signature,'EXECUTE')
+  JOIN pg_proc p ON p.oid=to_regprocedure(expected.signature)
+  WHERE EXISTS (
+   SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) acl
+   WHERE acl.grantee=0 AND acl.privilege_type='EXECUTE'
+  )
  ) THEN RAISE EXCEPTION 'Scoring rehearsal blocked: RPC executable by PUBLIC'; END IF;
  IF (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
      WHERE n.nspname='public' AND c.relname IN ('elleng_pair_hole_scores','elleng_player_hole_scores','elleng_team_scores')
