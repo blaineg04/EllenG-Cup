@@ -38,15 +38,17 @@ const channelStart=s.indexOf('let captainChannel=null,captainSubscriptionEpoch=0
 const channelEnd=s.indexOf('let draftSoundEnabled=false',channelStart);
 assert.ok(channelStart>=0&&channelEnd>channelStart,'captain session channel lifecycle exists');
 function channelHarness(){
- let subscriptions=0,unsubscriptions=0,renders=0;
+ let subscriptions=0,unsubscriptions=0,renders=0,draftLoads=0,draftLoadError=null;
  let roleIndex=null,deferRole=false,authUserId=null;const pendingRoles=[];
- const callbacks=[];
+ const callbacks=[],events={},windowEvents={};
  const elements={login:{style:{}},app:{style:{}},connection:{textContent:'LIVE'},msg:{textContent:''}};
  const buttons=[{disabled:false}];
  const ctx={captainUserId:'captain-a',myTeam:0,S:{teams:[{},{}]},
   captainAuthEpoch:0,captainBootstrapEpoch:0,pickRequestEpoch:0,pickInFlight:false,pickSyncFailed:false,
-  document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons},clearInterval:()=>{},
-  render:()=>renders++,console:{error:()=>{}},cfg:{draftId:'isolated-test'},
+  document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons,visibilityState:'hidden',
+   addEventListener:(name,cb)=>{events[name]=cb}},window:{addEventListener:(name,cb)=>{windowEvents[name]=cb}},
+  clearInterval:()=>{},render:()=>renders++,console:{error:()=>{}},cfg:{draftId:'isolated-test'},
+  load:async(guard,onApplied)=>{draftLoads++;if(draftLoadError)throw draftLoadError;if(guard())onApplied?.()},
   db:{auth:{getUser:async()=>({data:{user:{id:authUserId||ctx.captainUserId}},error:null})},
    from:table=>{assert.equal(table,'elleng_captains');return {select:()=>({eq:()=>({eq:()=>({maybeSingle:()=>{
     const response={data:{team_index:roleIndex===null?ctx.myTeam:roleIndex},error:null};
@@ -61,11 +63,18 @@ function channelHarness(){
  const revokeStart=s.indexOf('function revokeCaptainSession(){');
  const revokeEnd=s.indexOf('db.auth.onAuthStateChange(',revokeStart);
  assert.ok(guardStart>=0&&revokeStart>channelEnd&&revokeEnd>revokeStart);
+ const resumeStart=s.indexOf('function recheckCaptainOnResume(){');
+ const resumeEnd=s.indexOf('(async()=>{',resumeStart);
+ assert.ok(resumeStart>revokeEnd&&resumeEnd>resumeStart,'captain resume revalidation is installed');
  vm.createContext(ctx);
  vm.runInContext(s.slice(guardStart,channelStart)+'\n'+s.slice(channelStart,channelEnd)+
-  '\n'+s.slice(revokeStart,revokeEnd)+
+  '\n'+s.slice(revokeStart,revokeEnd)+'\n'+s.slice(resumeStart,resumeEnd)+
   '\nthis.startChannel=startCaptainSubscription;this.stopChannel=stopCaptainSubscription;',ctx);
  return {ctx,callbacks,elements,buttons,start:()=>ctx.startChannel(),stop:()=>ctx.stopChannel(),
+  resumeVisible:()=>{ctx.document.visibilityState='visible';return events.visibilitychange()},
+  resumeHidden:()=>{ctx.document.visibilityState='hidden';return events.visibilitychange()},
+  resumeOnline:()=>windowEvents.online(),draftLoads:()=>draftLoads,
+  failDraftLoad:error=>{draftLoadError=error},
   subscriptions:()=>subscriptions,unsubscriptions:()=>unsubscriptions,renders:()=>renders,
   rolePending:()=>vm.runInContext('captainRoleRefreshPending',ctx),
   setRoleIndex:v=>{roleIndex=v},deferRoles:v=>{deferRole=v},
@@ -154,6 +163,39 @@ test('role lookup error fails closed and disables captain drafting',async()=>{
  h.resolveRole({data:null,error:new Error('network failure')});await refresh;
  assert.equal(h.renders(),0);assert.equal(h.ctx.pickSyncFailed,true);
  assert.equal(h.elements.connection.textContent,'SYNC ERROR');assert.equal(h.buttons[0].disabled,true);
+});
+test('returning to a visible captain tab checks reassignment even without a draft event',async()=>{
+ const h=channelHarness();h.start();h.setRoleIndex(1);
+ await h.resumeHidden();
+ assert.equal(h.renders(),0,'hidden tab must not trigger a role refresh');
+ await h.resumeVisible();
+ assert.equal(h.ctx.captainUserId,null,'old captain access must be revoked');
+ assert.equal(h.unsubscriptions(),1);
+ assert.equal(h.draftLoads(),0,'unauthorized captain must not reload draft as LIVE');
+ assert.equal(h.elements.connection.textContent,'SIGN IN');
+ assert.equal(h.buttons[0].disabled,true);
+});
+test('online resume verifies role and refreshes authoritative draft before enabling picks',async()=>{
+ const h=channelHarness();h.start();
+ h.ctx.pickSyncFailed=true;
+ await h.resumeOnline();
+ assert.equal(h.draftLoads(),1);
+ assert.equal(h.renders(),1);
+ assert.equal(h.ctx.pickSyncFailed,false,'successful authoritative refresh restores safe drafting');
+ assert.equal(h.elements.connection.textContent,'LIVE');
+ h.stop();
+ await h.resumeOnline();
+ assert.equal(h.draftLoads(),1,'disposed session must not issue another read');
+ assert.equal(h.renders(),1);
+});
+test('failed online draft read leaves captain controls disabled',async()=>{
+ const h=channelHarness();h.start();h.failDraftLoad(new Error('offline synthetic read failure'));
+ await h.resumeOnline();
+ assert.equal(h.draftLoads(),1);
+ assert.equal(h.renders(),0);
+ assert.equal(h.ctx.pickSyncFailed,true);
+ assert.equal(h.elements.connection.textContent,'SYNC ERROR');
+ assert.equal(h.buttons[0].disabled,true);
 });
 test('account switch during role refresh revokes captain controls',async()=>{
  const h=channelHarness();h.start();h.setAuthUser('captain-b');

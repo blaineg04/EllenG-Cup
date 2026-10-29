@@ -789,6 +789,7 @@ function assertCaptainTeamPresent(){
  }
 }
 let captainChannel=null,captainSubscriptionEpoch=0;
+let captainRoleRecheck=null;
 let captainRoleRefreshEpoch=0,captainRoleRefreshPending=false;
 let captainDrawTimer=null;
 function stopCaptainDrawTimer(){
@@ -800,6 +801,7 @@ function startCaptainDrawTimer(){
 }
 function stopCaptainSubscription(){
  captainSubscriptionEpoch++;captainRoleRefreshEpoch++;captainRoleRefreshPending=false;
+ captainRoleRecheck=null;
  const channel=captainChannel;captainChannel=null;
  if(!channel)return;
  try{Promise.resolve(channel.unsubscribe()).catch(error=>console.error("Captain draft unsubscribe failed",error));}
@@ -810,7 +812,7 @@ function startCaptainSubscription(){
  stopCaptainSubscription();
  const epoch=captainSubscriptionEpoch,authEpoch=captainAuthEpoch,userId=captainUserId;
  if(!userId)return;
- const renderForSession=async()=>{
+ const renderForSession=async(refreshDraft=false)=>{
   if(!renderForSession.isCurrent())return;
   const roleEpoch=++captainRoleRefreshEpoch;
   captainRoleRefreshPending=true;
@@ -837,6 +839,16 @@ function startCaptainSubscription(){
     return;
    }
    assertCaptainTeamPresent();
+   if(refreshDraft){
+    // Returning from a hidden/offline tab must not certify a stale draft as LIVE.
+    // Recheck the authoritative draft after verifying both role and identity.
+    let applied=false;
+    await load(()=>renderForSession.isCurrent()&&roleEpoch===captainRoleRefreshEpoch,()=>{applied=true});
+    if(!renderForSession.isCurrent()||roleEpoch!==captainRoleRefreshEpoch)return;
+    if(!applied)throw new Error("Captain resume draft refresh was superseded");
+    assertCaptainTeamPresent();
+    pickSyncFailed=false;
+   }
    captainRoleRefreshPending=false;
    if(status){status.textContent="LIVE";status.className="online"}
    render();
@@ -861,6 +873,7 @@ function startCaptainSubscription(){
  };
  // common.js subscribe() uses this guard for queued status callbacks and reads.
  renderForSession.isCurrent=()=>epoch===captainSubscriptionEpoch&&authEpoch===captainAuthEpoch&&captainUserId===userId;
+ captainRoleRecheck=renderForSession;
  captainChannel=subscribe(renderForSession);
 }
 let draftSoundEnabled=false,lastSoundPickCount=null,audioCtx=null;
@@ -995,6 +1008,19 @@ db.auth.onAuthStateChange((event,session)=>{
   revokeCaptainSession();
  }
 });
+// Captain mappings can be revoked while this tab is hidden or disconnected,
+// without any draft-row Realtime event. Revalidate role, identity AND draft on
+// return, even if the old channel still appears subscribed.
+function recheckCaptainOnResume(){
+ const recheck=captainRoleRecheck;
+ if(!recheck||!recheck.isCurrent())return Promise.resolve();
+ return recheck(true);
+}
+if(typeof document.addEventListener==="function")document.addEventListener("visibilitychange",()=>{
+ if(document.visibilityState==="visible")return recheckCaptainOnResume();
+});
+if(typeof window!=="undefined"&&typeof window.addEventListener==="function")
+ window.addEventListener("online",recheckCaptainOnResume);
 (async()=>{
   const bootEpoch=captainBootstrapEpoch;
   const status=document.getElementById("connection");
