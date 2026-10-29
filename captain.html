@@ -1112,7 +1112,19 @@ if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){
  // new subscription must load the latest draft and revalidate captain role
  // and identity before returning to LIVE. Never unlock cached pick controls.
  window.addEventListener("pageshow",event=>{
-  if(!event?.persisted||!captainRoleRecheck?.isCurrent())return;
+  if(!event?.persisted)return;
+  if(!captainRoleRecheck?.isCurrent()){
+   // A cached page can resume during an unfinished sign-in or bootstrap,
+   // before a captain subscription exists. Retire those pre-cache Auth/role
+   // reads instead of allowing their delayed results to unlock the page.
+   const signIn=document.getElementById("signin");
+   const connection=document.getElementById("connection");
+   if(signIn?.disabled||["CONNECTING","VERIFYING"].includes(connection?.textContent)){
+    revokeCaptainSession();
+    document.getElementById("msg").textContent="Captain verification interrupted by browser restore. Sign in again.";
+   }
+   return;
+  }
   markCaptainSuspended();
   // Retire any pick RPC that was in flight when the page was cached. Its
   // eventual response must not apply a stale draft or unlock this session.
