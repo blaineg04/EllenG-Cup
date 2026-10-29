@@ -136,6 +136,17 @@ jobs:
           fi
           test "$(sudo -u postgres psql -X -At -d "$integrated_db" -c "SELECT count(*) FROM pg_proc WHERE proname IN ('elleng_test_authorized_scramble','elleng_test_authorized_shamble','elleng_test_authorized_split_pair','elleng_test_commissioner_clear_scores');")" = 0
           rm -f /tmp/elleng-coordinated-"$GITHUB_RUN_ID".sql
+          # Commit the reviewed coordinated SQL into an isolated database, not hosted Supabase.
+          install_db="${db}_install_trial"
+          sudo -u postgres createdb "$install_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -f tests/acceptance/disposable-integrated-migration-schema.sql >/dev/null
+          ELLENG_DISPOSABLE_PG_TEST=I_UNDERSTAND_ISOLATED_ONLY node scripts/build-scoring-migration-review.cjs --coordinated-review --disposable-install > /tmp/elleng-install-"$GITHUB_RUN_ID".sql
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -f /tmp/elleng-install-"$GITHUB_RUN_ID".sql >/dev/null
+          test "$(sudo -u postgres psql -X -At -d "$install_db" -c "SELECT count(*) FROM pg_proc WHERE proname IN ('elleng_test_authorized_scramble','elleng_test_authorized_shamble','elleng_test_authorized_split_pair','elleng_test_commissioner_clear_scores');")" = 4
+          test "$(sudo -u postgres psql -X -At -d "$install_db" -c "SELECT count(*) FROM pg_trigger WHERE tgname LIKE 'elleng_%' AND NOT tgisinternal;")" -ge 6
+          sudo -u postgres dropdb "$install_db"
+          rm -f /tmp/elleng-install-"$GITHUB_RUN_ID".sql
+          echo 'PASS: coordinated migration committed and verified in disposable PostgreSQL.'
           # Validate the coordinated lockdown independently in disposable Postgres.
           # Production-like grants must be revoked for all three score tables.
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -c "GRANT INSERT,UPDATE,DELETE ON public.elleng_pair_hole_scores, public.elleng_player_hole_scores TO authenticated; GRANT INSERT,UPDATE,DELETE ON public.elleng_team_scores TO anon;" >/dev/null
