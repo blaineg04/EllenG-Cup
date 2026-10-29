@@ -831,7 +831,7 @@ function connectViewer(){
   console.error("Draft subscription error:",e);
   stopViewerSubscription("OFFLINE");
   document.getElementById("onclock").textContent="Draft connection error";
-  document.getElementById("meta").textContent="Unable to subscribe to the live draft. Return online or reload to retry.";
+  document.getElementById("meta").textContent="Unable to subscribe to the live draft. Reload to retry after reconnecting.";
  }
 }
 if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){
