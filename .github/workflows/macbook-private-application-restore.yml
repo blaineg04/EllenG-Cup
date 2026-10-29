@@ -23,7 +23,7 @@ jobs:
           const log=fs.readFileSync(path.join(root,'psql.log'),'utf8');
           const relation=log.match(/relation "([a-zA-Z0-9_.]+)" does not exist/)?.[1]||null;
           const permission=log.match(/permission denied (?:for|to) ([a-zA-Z_ ]+(?: "[a-zA-Z0-9_.]+"| [a-zA-Z0-9_.]+)?)/)?.[1]||null;
-const line=log.match(/application-without-vault.sql:(\d+):/)?.[1]||null;
+          const line=log.match(/application-without-vault.sql:(\d+):/)?.[1]||null;
           const sql=fs.readFileSync(path.join(root,'application-without-vault.sql'),'utf8').split('\n');
           const n=line?Number(line):0;
           const nearby=sql.slice(Math.max(0,n-12),n);
