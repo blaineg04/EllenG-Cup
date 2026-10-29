@@ -26,3 +26,14 @@
 - Authorized RPC owner/role grants and hardcoded policies need complete hosted-schema reconciliation.
 - Commissioner score-reset RPC and restricted-role fixture have passed disposable PostgreSQL checks; live compatibility remains unverified.
 - Live authenticated two-device scoring verification remains pending.
+
+## Verified CI evidence (2026-10-29)
+- Disposable coordinated migration commit plus RLS/ACL post-install check: PostgreSQL acceptance #902.
+- Pre-install dump and independent disposable restore: PostgreSQL acceptance #904.
+- These tests do NOT validate hosted backup retention, point-in-time recovery, or a production restore; verify restore capability and capture a hosted snapshot before approval.
+
+## Approval handoff requirements
+- Provide an exact immutable SQL artifact and checksum, reviewed changes to score policies/ACLs/triggers, SQL owner identity and rollback compatibility.
+- Run the strict four-RPC preflight on a hosted-schema replica; inspect all existing score-write policies (especially hardcoded draft IDs).
+- Record commissioner-approved maintenance window and ensure the matching RPC-based browser client deploys together with the database change.
+- Do not execute the guarded disposable-test SQL or remove its intentional abort and present that as production-approved SQL.
