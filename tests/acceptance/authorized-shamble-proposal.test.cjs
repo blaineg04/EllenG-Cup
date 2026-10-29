@@ -48,3 +48,9 @@ test('shamble scoring enforces captain or owner authority and active tournament 
  assert.match(sql,/c\.user_id=v_uid/);
  assert.match(sql,/p_team_index<t\.team_count/);
 });
+
+test('team eligibility follows saved tournament team_count, not fixed nine-team limit',()=>{
+ assert.match(sql,/p_team_index < 0/);
+ assert.match(sql,/p_team_index<t\.team_count/);
+ assert.doesNotMatch(sql,/p_team_index NOT BETWEEN 0 AND 8/);
+});
