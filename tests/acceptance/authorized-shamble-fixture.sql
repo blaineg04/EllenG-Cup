@@ -174,5 +174,32 @@ BEGIN
  IF NOT blocked THEN RAISE EXCEPTION 'Unauthenticated scoring accepted'; END IF;
  RAISE NOTICE 'PASS: unauthenticated scoring rejected';
 END $anonymous$;
+-- Exercise SECURITY DEFINER through an actual API role after direct DML removal.
+UPDATE public.elleng_drafts
+SET state='{"teams":[{"roster":[0,1]},{"roster":[2,3]}],"playFormat":"standard"}'::jsonb
+WHERE id='draft';
+GRANT USAGE ON SCHEMA public,auth TO authenticated;
+REVOKE INSERT,UPDATE,DELETE ON public.elleng_team_scores,public.elleng_player_hole_scores FROM authenticated;
+SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000002',false);
+SET ROLE authenticated;
+DO $direct_write$
+DECLARE denied boolean:=false;
+BEGIN
+ BEGIN
+  INSERT INTO public.elleng_player_hole_scores(tournament_id,hole,team_index,golfer_index,score)
+  VALUES ('fixture',10,0,0,3);
+ EXCEPTION WHEN insufficient_privilege THEN denied:=true; END;
+ IF NOT denied THEN RAISE EXCEPTION 'Authenticated user bypassed score RPC with direct DML'; END IF;
+END $direct_write$;
+SELECT public.elleng_test_authorized_shamble('fixture',0,10,0,3);
+SELECT public.elleng_test_authorized_shamble('fixture',0,10,1,4);
+RESET ROLE;
+DO $restricted_rpc$
+BEGIN
+ IF (SELECT score FROM public.elleng_team_scores
+     WHERE tournament_id='fixture' AND team_index=0 AND hole=10) <> 3
+ THEN RAISE EXCEPTION 'Restricted API role failed to produce authorized team score'; END IF;
+ RAISE NOTICE 'PASS: authenticated RPC succeeds while direct scoring DML is denied';
+END $restricted_rpc$;
 ROLLBACK;
 
