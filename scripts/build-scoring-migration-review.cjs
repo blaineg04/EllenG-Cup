@@ -2,6 +2,7 @@
 // Compile one REVIEW-ONLY transaction from the checked-in scoring proposals.
 // Never run generated SQL against hosted Supabase before approval and tests.
 const fs=require('node:fs');
+const crypto=require('node:crypto');
 const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 function read(p){return fs.readFileSync(path.join(root,p),'utf8');}
@@ -70,10 +71,20 @@ const disposableSql=disposableInstall
  ? sql.replace(/DO \$block\$ BEGIN RAISE EXCEPTION 'REVIEW-ONLY scoring candidate: direct-DML permissions and trigger owner must be reconciled before deployment'; END \$block\$;/,
    '-- Intentional abort removed for disposable PostgreSQL installation test only.')
  : sql;
+// Reproducible review fingerprint, NOT production approval or a deployment SQL.
+const manifestRequested=process.argv.includes('--review-manifest');
+const sha256=s=>crypto.createHash('sha256').update(s,'utf8').digest('hex');
+const manifest={
+ status:'REVIEW_ONLY_NOT_APPROVED',
+ generated_sql_sha256:sha256(sql),
+ coordinated_sql_sha256:sha256(sql.replace(/DO \$block\$ BEGIN RAISE EXCEPTION 'REVIEW-ONLY scoring candidate: direct-DML permissions and trigger owner must be reconciled before deployment'; END \$block\$;/,'-- disposable install only')),
+ sources:parts.map(p=>({path:p,sha256:sha256(read(p))}))
+};
 const releaseRequested=process.argv.includes('--release');
 if(releaseRequested){
  process.stderr.write('NO-GO: release build disabled; owner, rollback and hosted schema validation pending.\n');
  process.exitCode=3;
-}else if(disposableInstall)process.stdout.write(disposableSql+'\n');
+}else if(manifestRequested)process.stdout.write(JSON.stringify(manifest,null,2)+'\n');
+else if(disposableInstall)process.stdout.write(disposableSql+'\n');
 else if(process.argv.includes('--stdout') || process.argv.includes('--coordinated-review'))process.stdout.write(sql+'\n');
 else {process.stderr.write('Review only. Run with --stdout to inspect; final SQL deliberately aborts.\n');process.exitCode=2;}
