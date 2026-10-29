@@ -391,7 +391,11 @@ function recheckCommissionerOnReconnect(){
  // Browsers can miss an offline event while suspended. An online event must
  // reverify even when the cached UI still says READY; otherwise a commissioner
  // whose ownership changed during the gap can keep stale local controls.
- if(document.getElementById("connection").textContent!=="OFFLINE"&&!commissionerUserId)return Promise.resolve();
+ // A missed offline event can also occur during an unfinished owner lookup.
+ // The online event must retire that pre-disconnect verification rather than
+ // allow its delayed response to authorize commissioner controls.
+ const connectionState=document.getElementById("connection").textContent;
+ if(connectionState!=="OFFLINE"&&connectionState!=="VERIFYING"&&!commissionerUserId)return Promise.resolve();
  // Supabase retains the browser session, but a missed offline event can
  // leave previously enabled controls in the DOM. Retire that session before
  // rechecking identity and draft ownership; do not replay unsaved edits.
