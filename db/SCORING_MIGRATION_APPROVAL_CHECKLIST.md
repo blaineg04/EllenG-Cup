@@ -47,3 +47,8 @@
 - PostgreSQL acceptance #928 PASSED after fixture SELECT-grant correction; verifies coordinated install, four RPC grants, no nine legacy broad policies, and authenticated score-table SELECT grants.
 - MacBook isolated scoring rehearsal #266 PASSED; not equivalent to hosted authenticated two-device testing.
 - Production approval remains blocked pending hosted-schema exact SQL review, backup recovery evidence and role-based end-to-end score writes.
+
+## Test realism gap requiring closure
+- The disposable integrated schema currently defines `auth.uid()` as a constant NULL UUID. Its post-install checks prove SQL installation, grants and policy catalog state, but **cannot** simulate real captain/commissioner identities or demonstrate authorized score writes.
+- Do not interpret a passing isolated installation as authenticated end-to-end scoring. Add session-specific identity fixtures and execute positive and negative score mutations with data assertions before approving deployment.
+- PostgreSQL acceptance #929 passed the existing installation suite, not this missing role-behavior coverage.
