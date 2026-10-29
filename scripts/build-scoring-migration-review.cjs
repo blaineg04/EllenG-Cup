@@ -48,6 +48,7 @@ const sql=[
  'CREATE TRIGGER elleng_enforce_team_score_format BEFORE INSERT OR UPDATE ON public.elleng_team_scores FOR EACH ROW EXECUTE FUNCTION public.elleng_enforce_team_score_format();',
  'CREATE TRIGGER elleng_prevent_scored_draft_format_change BEFORE UPDATE OF state ON public.elleng_drafts FOR EACH ROW EXECUTE FUNCTION public.elleng_prevent_scored_draft_format_change();',
  'CREATE TRIGGER elleng_guard_scored_tournament_config BEFORE UPDATE OF team_count ON public.elleng_tournaments FOR EACH ROW EXECUTE FUNCTION public.elleng_guard_scored_tournament_config();',
+ ...(process.argv.includes('--coordinated-review') ? ['ALTER TABLE public.elleng_team_scores ENABLE ROW LEVEL SECURITY;', 'ALTER TABLE public.elleng_pair_hole_scores ENABLE ROW LEVEL SECURITY;', 'ALTER TABLE public.elleng_player_hole_scores ENABLE ROW LEVEL SECURITY;'] : []),
  ... (process.argv.includes('--coordinated-review') ? [read('db/patches/20261029_score_table_dml_lockdown_REVIEW_ONLY.sql')] : []),
  ...(process.argv.includes('--coordinated-review') ? [read('db/patches/20261029_scoring_rpc_owner_acl_audit_REVIEW_ONLY.sql')] : []),
  'REVOKE ALL ON FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer) FROM PUBLIC, anon;',
