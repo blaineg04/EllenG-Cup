@@ -21,7 +21,7 @@ function harness(){
  const ctx={draftUpdatedAt:null,savingDraft:false,tick:null,liveMode:false,S:{picks:[]},
   fresh:()=>({picks:[]}),cfg:{draftId:'synthetic-only'},
   rsvpPreviewController:{invalidate:()=>{invalidations++}},
-  document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons,visibilityState:'hidden',
+  document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons,visibilityState:'visible',
    addEventListener:(event,cb)=>{documentEvents[event]=cb}},
   navigator:{onLine:true},window:{addEventListener:(event,cb)=>{windowEvents[event]=cb}},
   db:{auth:{getUser:()=>confirmedUserId!==null?Promise.resolve({data:{user:{id:confirmedUserId}},error:null}):new Promise(resolve=>authReads.push(resolve)),
@@ -108,6 +108,62 @@ test('foreground commissioner tab verifies ownership before restoring cached con
  assert.equal(h.elements.adminApp.style.display,'none');
  assert.equal(h.subscriptions(),1,'unauthorized return must not create another listener');
  assert.equal(oldListener.isCurrent(),false);
+});
+test('hidden commissioner tab immediately revokes controls and fences its Realtime listener',async()=>{
+ const h=harness(),opening=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await opening;
+ const listener=h.listener(0);
+ h.hidden();
+ assert.equal(h.elements.connection.textContent,'PAUSED');
+ assert.equal(h.elements.adminApp.style.display,'none');
+ assert.equal(h.buttons[0].disabled,true);
+ assert.equal(h.unsubscriptions(),1);
+ assert.equal(listener.isCurrent(),false);
+ const resumed=h.visible();
+ assert.equal(h.elements.connection.textContent,'VERIFYING');
+ h.auth(1,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(1,'commissioner-a');await resumed;
+ assert.equal(h.elements.adminApp.style.display,'block');
+ assert.equal(h.subscriptions(),2);
+ assert.equal(listener.isCurrent(),false);
+});
+test('hiding during commissioner ownership lookup fences its late response',async()=>{
+ const h=harness(),pending=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.draftReads.length,1);
+ h.hidden();
+ assert.equal(h.elements.connection.textContent,'PAUSED');
+ h.draft(0,'commissioner-a');await pending;
+ assert.equal(h.elements.adminApp.style.display,'none');
+ assert.equal(h.subscriptions(),0);
+ const resumed=h.visible();
+ h.auth(1,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(1,'commissioner-a');await resumed;
+ assert.equal(h.elements.adminApp.style.display,'block');
+ assert.equal(h.subscriptions(),1);
+});
+test('initial background bootstrap waits for foreground authorization',async()=>{
+ const h=harness();
+ h.ctx.document.visibilityState='hidden';
+ await h.open();
+ assert.equal(h.authReads.length,0,'hidden bootstrap must not start authentication');
+ assert.equal(h.elements.connection.textContent,'PAUSED');
+ const resumed=h.visible();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await resumed;
+ assert.equal(h.elements.adminApp.style.display,'block');
+});
+test('signout while commissioner tab is hidden cancels automatic restoration',async()=>{
+ const h=harness(),opening=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await opening;
+ h.hidden();
+ h.change('SIGNED_OUT',null);
+ await h.visible();
+ assert.equal(h.authReads.length,1,'signed-out hidden session must not silently reauthorize');
+ assert.equal(h.elements.adminApp.style.display,'none');
+ assert.equal(h.elements.connection.textContent,'SIGN IN');
 });
 test('signout while foreground owner lookup is pending cannot reopen commissioner controls',async()=>{
  const h=harness(),first=h.open();

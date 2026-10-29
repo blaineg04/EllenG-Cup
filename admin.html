@@ -27,6 +27,7 @@
 let draftUpdatedAt=null;
 let savingDraft=false;
 let commissionerAuthEpoch=0,commissionerOpenId=0,commissionerUserId=null;let commissionerChannel=null;
+let commissionerSuspendedForVisibility=false;
 // Explicitly disabled until event RSVP migration and authenticated RLS rehearsal pass.
 const rsvpPreviewEnabled=cfg.eventRsvpPreviewEnabled===true&&
  typeof cfg.eventRsvpTournamentId==="string"&&!!cfg.eventRsvpTournamentId.trim();
@@ -325,6 +326,7 @@ document.getElementById("resetClock").onclick=()=>saveCommissionerAction(()=>{
 // Invalidate pending commissioner lookups when the account changes. A late
 // getUser/draft response must not restore the old commissioner's controls.
 function revokeCommissionerSession(){
+ commissionerSuspendedForVisibility=false;
  commissionerAuthEpoch++;commissionerOpenId++;commissionerUserId=null;
  if(typeof rsvpPreviewController!=="undefined")rsvpPreviewController.invalidate();
  const rsvpButton=document.getElementById("refreshRsvpPreview");
@@ -371,12 +373,27 @@ if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){
  window.addEventListener("offline",markCommissionerOffline);
  window.addEventListener("online",recheckCommissionerOnReconnect);
 }
-// A backgrounded tab may miss a Realtime owner change without going offline.
-// Retire cached commissioner controls before checking identity and ownership.
+// A hidden tab may miss ownership changes without a Realtime event. Revoke
+// cached commissioner controls immediately, including a pending login check;
+// returning to the foreground must reverify identity and draft ownership.
+function suspendCommissionerForVisibility(force=false){
+ const status=document.getElementById("connection");
+ if(!force&&!commissionerUserId&&status.textContent!=="VERIFYING")return;
+ revokeCommissionerSession();
+ commissionerSuspendedForVisibility=true;
+ status.textContent="PAUSED";
+ document.getElementById("authMsg").textContent="Commissioner controls are locked while this tab is hidden. Return to reverify access.";
+}
 if(typeof document.addEventListener==="function")document.addEventListener("visibilitychange",()=>{
- if(document.visibilityState==="visible"&&commissionerUserId)return openAdmin();
+ if(document.visibilityState==="hidden"){suspendCommissionerForVisibility();return;}
+ if(document.visibilityState==="visible"&&(commissionerSuspendedForVisibility||commissionerUserId)){
+  commissionerSuspendedForVisibility=false;
+  return openAdmin();
+ }
 });
 async function openAdmin(){
+ // Do not grant controls from a background bootstrap or reconnect.
+ if(document.visibilityState==="hidden"){suspendCommissionerForVisibility(true);return;}
  // A new verification supersedes any previous subscription, draft read or save.
  stopCommissionerSubscription();commissionerAuthEpoch++;commissionerUserId=null;
  if(typeof rsvpPreviewController!=="undefined")rsvpPreviewController.invalidate();
@@ -404,6 +421,8 @@ async function openAdmin(){
   const {data:confirmedAuth,error:confirmationError}=await db.auth.getUser();
   if(!stillCurrent())return;
   if(confirmationError||confirmedAuth?.user?.id!==user.id){status.textContent="SIGN IN";msg.textContent="Commissioner session changed during verification. Sign in again.";return}
+  // An in-flight owner lookup must not restore controls after the tab hides.
+  if(document.visibilityState==="hidden"){suspendCommissionerForVisibility(true);return;}
   S={...fresh(),...data.state};draftUpdatedAt=data.updated_at;
   commissionerUserId=user.id;
   loginCard.style.display="none";app.style.display="block";status.textContent="READY";
