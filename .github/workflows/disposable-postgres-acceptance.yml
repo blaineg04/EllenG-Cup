@@ -171,6 +171,19 @@ jobs:
                OR has_table_privilege('anon',c.oid,'DELETE'))
            ) THEN RAISE EXCEPTION 'Post-install RLS or ACL failure'; END IF;
           END \$postinstall\$;" >/dev/null
+          # Verify all four committed RPCs have authenticated-only execution.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -c "
+          DO \$rpc_gate\$
+          DECLARE n integer;
+          BEGIN
+           SELECT count(*) INTO n FROM pg_proc p JOIN pg_namespace ns ON ns.oid=p.pronamespace
+           WHERE ns.nspname='public'
+             AND p.proname IN ('elleng_test_authorized_scramble','elleng_test_authorized_split_pair','elleng_test_authorized_shamble','elleng_test_commissioner_clear_scores')
+             AND has_function_privilege('authenticated',p.oid,'EXECUTE')
+             AND NOT has_function_privilege('anon',p.oid,'EXECUTE')
+             AND NOT EXISTS (SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) acl WHERE acl.grantee=0 AND acl.privilege_type='EXECUTE');
+           IF n <> 4 THEN RAISE EXCEPTION 'Post-install RPC grants invalid: % of 4',n; END IF;
+          END \$rpc_gate\$;" >/dev/null
           sudo -u postgres dropdb "$install_db"
           rm -f /tmp/elleng-install-"$GITHUB_RUN_ID".sql
           echo 'PASS: coordinated migration committed and verified in disposable PostgreSQL.'
