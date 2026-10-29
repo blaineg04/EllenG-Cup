@@ -106,6 +106,14 @@ jobs:
           integrated_db="${db}_integrated"
           sudo -u postgres createdb "$integrated_db"
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -f tests/acceptance/disposable-integrated-migration-schema.sql >/dev/null
+          # Fail at fixture setup, not later in migration, if auth.uid is absent.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -c "
+          DO \$auth_fixture_gate\$
+          BEGIN
+            IF to_regprocedure('auth.uid()') IS NULL THEN
+              RAISE EXCEPTION 'Missing auth.uid() in integrated fixture database';
+            END IF;
+          END \$auth_fixture_gate\$;" >/dev/null
           node scripts/build-scoring-migration-review.cjs --stdout > /tmp/elleng-integrated-"$GITHUB_RUN_ID".sql
           integrated_log="$(mktemp)"
           if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -f /tmp/elleng-integrated-"$GITHUB_RUN_ID".sql >"$integrated_log" 2>&1; then
