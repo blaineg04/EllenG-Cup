@@ -20,6 +20,12 @@ BEGIN
   OR p_hole IS NULL OR p_hole NOT BETWEEN 10 AND 18 OR p_golfer_index IS NULL OR p_golfer_index<0
   OR (p_score IS NOT NULL AND p_score NOT BETWEEN 1 AND 20)
  THEN RAISE EXCEPTION 'Invalid scoring input' USING ERRCODE='22023'; END IF;
+ -- Serialize Shamble requests for this tournament before reading draft state,
+ -- status, roster, or authorization. This prevents two scoring callers from
+ -- deriving totals from stale player-score snapshots.
+ PERFORM pg_catalog.pg_advisory_xact_lock(
+   pg_catalog.hashtextextended('elleng-shamble:' || p_tournament_id, 0)
+ );
  SELECT t.draft_id,d.state INTO v_draft,v_state
  FROM public.elleng_tournaments t
  JOIN public.elleng_drafts d ON d.id=t.draft_id
@@ -48,12 +54,6 @@ BEGIN
     OR cardinality(v_roster)<>(SELECT count(DISTINCT golfer) FROM unnest(v_roster) golfer)
     OR p_golfer_index<>ALL(v_roster)
  THEN RAISE EXCEPTION 'Golfer not assigned to team' USING ERRCODE='42501'; END IF;
- -- Transaction-scoped advisory lock serializes participating scoring RPCs
- -- without giving scorer roles UPDATE privileges on tournament configuration.
- -- A hash collision only causes extra serialization, never an unsafe bypass.
- PERFORM pg_catalog.pg_advisory_xact_lock(
-   pg_catalog.hashtextextended('elleng-shamble:' || p_tournament_id, 0)
- );
  IF p_score IS NULL THEN
   DELETE FROM public.elleng_player_hole_scores
   WHERE tournament_id=p_tournament_id AND team_index=p_team_index AND hole=p_hole AND golfer_index=p_golfer_index;
