@@ -618,3 +618,87 @@ test('captain render cannot enable pick buttons while hidden or offline without 
  assert.ok(start>0&&end>start);
  assert.match(s.slice(start,end),/mine=[^;]+&&captainSessionForegroundOnline\(\)/);
 });
+
+function captainEntryLifecycleHarness(mode){
+ const elements=captainAuthElements();
+ elements.login.style.display='block';elements.app.style.display='none';
+ let finishLoad,loadGuard,subscriptions=0,timers=0,renders=0;
+ const ctx={
+  captainBootstrapEpoch:0,captainRoleLookupId:0,captainUserId:null,myTeam:null,pickSyncFailed:true,
+  S:{teams:[{},{}]},document:{visibilityState:'visible',getElementById:id=>elements[id]},
+  navigator:{onLine:true},
+  db:{auth:{
+   getUser:async()=>({data:{user:{id:'captain-a'}}}),
+   signInWithPassword:async()=>({error:null})
+  }},
+  whoami:async()=>{ctx.captainUserId='captain-a';ctx.myTeam=0;return true},
+  load:guard=>{loadGuard=guard;return new Promise(resolve=>{finishLoad=resolve})},
+  render:()=>renders++,startCaptainSubscription:()=>subscriptions++,
+  startCaptainDrawTimer:()=>timers++,console:{error:()=>{}}
+ };
+ vm.createContext(ctx);
+ const loginStart=s.indexOf('document.getElementById("signin").onclick=async()=>{');
+ const loginEnd=s.indexOf('document.getElementById("soundToggle").onclick=',loginStart);
+ const startup=s.slice(s.lastIndexOf('(async()=>{'),s.lastIndexOf('</script>'));
+ vm.runInContext(captainTeamGuardSource(),ctx);
+ const pending=mode==='bootstrap'?vm.runInContext(startup,ctx):(()=>{
+  vm.runInContext(s.slice(loginStart,loginEnd),ctx);
+  return elements.signin.onclick();
+ })();
+ return {ctx,elements,pending,guard:()=>loadGuard,finish:()=>finishLoad(),
+  subscriptions:()=>subscriptions,timers:()=>timers,renders:()=>renders};
+}
+test('captain role lookup does not trust cached auth while offline',async()=>{
+ let authReads=0,roleReads=0;
+ const ctx={
+  captainAuthEpoch:0,captainRoleLookupId:0,captainUserId:null,myTeam:null,
+  document:{visibilityState:'visible',getElementById:()=>({textContent:''})},
+  navigator:{onLine:false},cfg:{draftId:'isolated-test'},
+  db:{auth:{getUser:async()=>{authReads++;return {data:{user:{id:'captain-a'}}}}},
+   from:()=>{roleReads++;throw Error('offline role lookup must not start')}}
+ };
+ vm.createContext(ctx);
+ const start=s.indexOf('async function whoami(){'),end=s.indexOf('function assertCaptainTeamPresent(){',start);
+ vm.runInContext(s.slice(start,end)+'\nthis.verify=whoami;',ctx);
+ assert.equal(await ctx.verify(),false);
+ assert.equal(authReads,0);assert.equal(roleReads,0);
+ assert.equal(ctx.captainUserId,null);assert.equal(ctx.myTeam,null);
+});
+test('captain role read cannot authorize when tab hides before response',async()=>{
+ let finishRole,authReads=0;
+ const ctx={
+  captainAuthEpoch:0,captainRoleLookupId:0,captainUserId:null,myTeam:null,
+  document:{visibilityState:'visible',getElementById:()=>({textContent:''})},
+  navigator:{onLine:true},cfg:{draftId:'isolated-test'},
+  db:{auth:{getUser:async()=>{authReads++;return {data:{user:{id:'captain-a'}}}}},
+   from:()=>({select:()=>({eq:()=>({eq:()=>({single:()=>new Promise(resolve=>{finishRole=resolve})})})})})}
+ };
+ vm.createContext(ctx);
+ const start=s.indexOf('async function whoami(){'),end=s.indexOf('function assertCaptainTeamPresent(){',start);
+ vm.runInContext(s.slice(start,end)+'\nthis.verify=whoami;',ctx);
+ const pending=ctx.verify();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(typeof finishRole,'function');
+ ctx.document.visibilityState='hidden'; // no visibilitychange event delivered
+ finishRole({data:{team_index:0},error:null});
+ assert.equal(await pending,false);
+ assert.equal(authReads,2,'identity confirmation may finish, but hidden tab must not authorize');
+ assert.equal(ctx.captainUserId,null);assert.equal(ctx.myTeam,null);
+});
+for(const mode of ['bootstrap','interactive']){
+ test('captain '+mode+' entry discards a draft load completed after disconnect',async()=>{
+  const h=captainEntryLifecycleHarness(mode);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(typeof h.guard(),'function');
+  h.ctx.navigator.onLine=false; // offline event has not fired
+  assert.equal(h.guard(),false,'offline draft response must not apply');
+  h.finish();await h.pending;
+  assert.equal(h.ctx.captainUserId,null);
+  assert.equal(h.ctx.myTeam,null);
+  assert.equal(h.ctx.pickSyncFailed,true);
+  assert.equal(h.elements.app.style.display,'none');
+  assert.equal(h.elements.login.style.display,'block');
+  assert.match(h.elements.msg.textContent,/offline or hidden/);
+  assert.equal(h.subscriptions(),0);assert.equal(h.timers(),0);assert.equal(h.renders(),0);
+ });
+}
