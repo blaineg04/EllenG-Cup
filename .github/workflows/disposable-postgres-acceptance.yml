@@ -133,6 +133,12 @@ jobs:
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$scramble_role_db" -f tests/acceptance/authorized-scramble-restricted-role.sql >/dev/null
           sudo -u postgres dropdb "$scramble_role_db"
           echo 'PASS: authorized Scramble survives direct-DML lockdown.'
+          # Verify Split-Pair RPC works as an authenticated caller while direct writes fail.
+          split_role_db="${db}_split_role"
+          sudo -u postgres createdb "$split_role_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$split_role_db" -f tests/acceptance/authorized-split-pair-restricted-role.sql >/dev/null
+          sudo -u postgres dropdb "$split_role_db"
+          echo 'PASS: authorized Split-Pair survives direct-DML lockdown.'
           # Independent role fixture: two drafts, two captains and actual staged Shamble policies.
           shamble_policy_db="${db}_shamble_policy"
           sudo -u postgres createdb "$shamble_policy_db"
