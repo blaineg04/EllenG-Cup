@@ -63,3 +63,8 @@
 - Disposable PostgreSQL acceptance #960 passed after the four-RPC owner, SECURITY DEFINER, explicit search_path and EXECUTE ACL checks were corrected.
 - This validates the disposable install only; the hosted database does not yet contain the new RPCs.
 - **NO-GO until:** freeze generated SQL and hash, verify a production-compatible backup and restore procedure, review hosted privileges/schema drift, approve the exact migration and matching frontend release, then perform authenticated two-device scoring after deployment.
+
+## Manifest provenance acceptance — 2026-10-29
+- Disposable PostgreSQL acceptance #961 passed after the review manifest was expanded to fingerprint all 11 coordinated SQL source files, including policy removal, DML lockdown and RPC owner/ACL audit.
+- The SHA-256 is generated for the review-only candidate. It is **not** an approved immutable deployment artifact; production release generation remains blocked by design.
+- Next required evidence: independent hosted-compatible schema/role review, backup and recovery proof, explicit SQL approval, and authenticated two-device post-install scoring validation.
