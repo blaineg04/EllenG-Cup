@@ -113,6 +113,17 @@ jobs:
           fi
           grep -q 'NO-GO: authenticated direct scoring DML' "$integrated_log"
           test "$(sudo -u postgres psql -X -At -d "$integrated_db" -c "SELECT count(*) FROM pg_proc WHERE proname IN ('elleng_test_authorized_shamble','elleng_test_authorized_split_pair');")" = 0
+          # Validate the coordinated lockdown independently in disposable Postgres.
+          # Production-like grants must be revoked for all three score tables.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -c "GRANT INSERT,UPDATE,DELETE ON public.elleng_pair_hole_scores, public.elleng_player_hole_scores TO authenticated; GRANT INSERT,UPDATE,DELETE ON public.elleng_team_scores TO anon;" >/dev/null
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -f db/patches/20261029_score_table_dml_lockdown_REVIEW_ONLY.sql >/dev/null
+          locked_count="$(sudo -u postgres psql -X -At -d "$integrated_db" -c "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN ('elleng_team_scores','elleng_pair_hole_scores','elleng_player_hole_scores') AND (has_table_privilege('authenticated',c.oid,'INSERT,UPDATE,DELETE,TRUNCATE') OR has_table_privilege('anon',c.oid,'INSERT,UPDATE,DELETE,TRUNCATE'));")"
+          test "$locked_count" = 0
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -c "SET ROLE authenticated; INSERT INTO public.elleng_team_scores(tournament_id,team_index,hole,score) VALUES ('test',0,1,4);" >"$integrated_log" 2>&1; then
+            echo 'FAIL: authenticated direct team score write succeeded after lockdown'; exit 1
+          fi
+          grep -q 'permission denied' "$integrated_log"
+          echo 'PASS: API score-table grants revoked and direct write denied in disposable Postgres.'
           rm -f "$integrated_log" /tmp/elleng-integrated-"$GITHUB_RUN_ID".sql
           sudo -u postgres dropdb "$integrated_db"
           echo 'PASS: integrated migration executes to deliberate stop and rolls back.'
