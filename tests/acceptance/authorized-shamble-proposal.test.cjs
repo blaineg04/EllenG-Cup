@@ -11,11 +11,11 @@ test('staged RPC derives roster from persisted draft, not client input',()=>{
  assert.match(sql,/v_state->'teams'/);
  assert.doesNotMatch(sql,/p_roster/);
 });
-test('staged RPC holds transaction lock and does not grant browser execution',()=>{
+test('staged RPC holds transaction lock and restricts execution to authenticated',()=>{
  assert.match(sql,/pg_advisory_xact_lock/);
  assert.doesNotMatch(sql,/WHERE t\.id=p_tournament_id FOR UPDATE/);
  assert.match(sql,/REVOKE ALL ON FUNCTION/);
- assert.doesNotMatch(sql,/GRANT EXECUTE/);
+ assert.match(sql,/GRANT EXECUTE ON FUNCTION[\s\S]*TO authenticated/);
 });
 
 test('staged RPC rejects a missing hole explicitly',()=>{
@@ -31,9 +31,9 @@ test('staged shamble scoring refuses roster duplication and unassigned golfer',(
  assert.match(sql,/count\(DISTINCT golfer\)/);
  assert.match(sql,/p_golfer_index<>ALL\(v_roster\)/);
 });
-test('staged shamble scoring clears incomplete team totals and does not grant privileges',()=>{
+test('staged shamble scoring clears incomplete team totals using restricted definer privileges',()=>{
  assert.match(sql,/IF v_count<>cardinality\(v_roster\) THEN[\s\S]*?DELETE FROM public\.elleng_team_scores/);
- assert.match(sql,/SECURITY INVOKER/);
+ assert.match(sql,/SECURITY DEFINER SET search_path = ''/);
  assert.doesNotMatch(sql,/GRANT EXECUTE/);
 });
 
