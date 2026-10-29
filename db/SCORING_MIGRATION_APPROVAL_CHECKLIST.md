@@ -42,3 +42,8 @@
 - Disposable PostgreSQL acceptance #921 passed with coordinated removal of nine legacy active-event scoring write policies.
 - This is not a live authorization test. Before approval, verify RPC calls as an authenticated captain and commissioner, reject unauthorized and anonymous writes, and confirm SELECT-based leaderboards remain available.
 - Freeze the new policy-cleanup patch in the exact SQL checksum; prior manifests are superseded by any SQL change.
+
+## Updated isolated evidence — 2026-10-29
+- PostgreSQL acceptance #928 PASSED after fixture SELECT-grant correction; verifies coordinated install, four RPC grants, no nine legacy broad policies, and authenticated score-table SELECT grants.
+- MacBook isolated scoring rehearsal #266 PASSED; not equivalent to hosted authenticated two-device testing.
+- Production approval remains blocked pending hosted-schema exact SQL review, backup recovery evidence and role-based end-to-end score writes.
