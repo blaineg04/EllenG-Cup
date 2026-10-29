@@ -74,6 +74,7 @@ function channelHarness(){
   resumeVisible:()=>{ctx.document.visibilityState='visible';return events.visibilitychange()},
   resumeHidden:()=>{ctx.document.visibilityState='hidden';return events.visibilitychange()},
   resumeOnline:()=>{ctx.navigator.onLine=true;return windowEvents.online()},
+  pageShow:(persisted=true)=>windowEvents.pageshow({persisted}),
   goOffline:()=>{ctx.navigator.onLine=false;return windowEvents.offline()},draftLoads:()=>draftLoads,
   failDraftLoad:error=>{draftLoadError=error},
   subscriptions:()=>subscriptions,unsubscriptions:()=>unsubscriptions,renders:()=>renders,
@@ -869,4 +870,25 @@ test('retired captain sign-in completion cannot unlock a newer pending login',as
  assert.equal(h.elements.signin.disabled,false);
  assert.equal(h.elements.signin.textContent,'Sign In');
  assert.equal(h.elements.connection.textContent,'ERROR');
+});
+
+test('back-forward cache restore replaces captain channel and requires fresh role and draft',async()=>{
+ const h=channelHarness();h.start();
+ await h.callbacks[0]();
+ assert.equal(h.elements.connection.textContent,'LIVE');
+ const oldListener=h.callbacks[0],loadsBefore=h.draftLoads();
+ h.pageShow(false);
+ assert.equal(h.subscriptions(),1,'ordinary page load must not duplicate subscriptions');
+ h.pageShow(true);
+ assert.equal(h.subscriptions(),2,'cache restore must subscribe to a fresh channel');
+ assert.equal(h.unsubscriptions(),1,'old cached channel must be disposed');
+ assert.equal(oldListener.isCurrent(),false,'cached callbacks cannot restore drafting');
+ assert.equal(h.elements.connection.textContent,'PAUSED');
+ assert.equal(h.buttons[0].disabled,true,'pick controls stay locked until fresh verification');
+ await oldListener(true);
+ assert.equal(h.draftLoads(),loadsBefore,'retired channel must not reload a stale snapshot');
+ await h.callbacks[1](true);
+ assert.equal(h.draftLoads(),loadsBefore+1,'restored channel must reload authoritative draft');
+ assert.equal(h.elements.connection.textContent,'LIVE','fresh role and draft can restore controls');
+ assert.equal(h.ctx.captainUserId,'captain-a');
 });
