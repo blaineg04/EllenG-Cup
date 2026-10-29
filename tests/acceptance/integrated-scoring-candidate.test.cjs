@@ -51,5 +51,5 @@ test('coordinated review manifest records reproducible hash without permitting d
  assert.equal(m.status,'REVIEW_ONLY_NOT_APPROVED');
  assert.equal(m.generated_sql_sha256,createHash('sha256').update(run.stdout.slice(0,-1)).digest('hex'));
  assert.equal(m.coordinated_sql_sha256,m.generated_sql_sha256);
- assert.equal(m.sources.length,8);
+ assert.equal(m.sources.length,11);
 });
