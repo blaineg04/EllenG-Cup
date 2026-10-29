@@ -910,3 +910,17 @@ test('cached captain page cannot regain controls after team reassignment',async(
  assert.equal(h.unsubscriptions(),2,'both old and denied replacement channels must close');
  assert.equal(h.callbacks[1].isCurrent(),false,'denied replacement callback remains fenced');
 });
+
+test('cached in-flight captain pick is retired before a fresh subscription',()=>{
+ const h=channelHarness();h.start();
+ h.ctx.pickInFlight=true;h.ctx.pickRequestEpoch=7;
+ const oldAuthEpoch=h.ctx.captainAuthEpoch;
+ h.pageShow(true);
+ assert.equal(h.ctx.captainAuthEpoch,oldAuthEpoch+1,'cached RPC auth epoch must be invalidated');
+ assert.equal(h.ctx.pickRequestEpoch,8,'cached RPC completion must be fenced');
+ assert.equal(h.ctx.pickInFlight,false,'new session must not inherit an unresolved pick lock');
+ assert.equal(h.elements.connection.textContent,'PAUSED');
+ assert.equal(h.buttons[0].disabled,true);
+ assert.equal(h.callbacks[0].isCurrent(),false);
+ assert.equal(h.callbacks[1].isCurrent(),true);
+});
