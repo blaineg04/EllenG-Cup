@@ -58,3 +58,8 @@
 - Supabase security advisor flags three existing authenticated-callable SECURITY DEFINER draft RPCs (`elleng_auto_pick`, `elleng_make_pick`, `elleng_save_state_if_fresh`). Confirm their intended privileges and owner/captain checks before production approval; do not revoke blindly because draft functionality depends on them.
 - Advisor also flags RLS with no policies on `elleng_golfer_pins` and `elleng_trash_talk_settings`, plus disabled leaked-password protection. Evaluate separately; none were changed.
 - Isolated role-behavior tests use simulated JWT subjects in a disposable database. They do **not** substitute for running API requests as actual `authenticated` and `anon` roles through hosted Supabase Auth. Review this gap before approval.
+
+## Latest release gate — 2026-10-29
+- Disposable PostgreSQL acceptance #960 passed after the four-RPC owner, SECURITY DEFINER, explicit search_path and EXECUTE ACL checks were corrected.
+- This validates the disposable install only; the hosted database does not yet contain the new RPCs.
+- **NO-GO until:** freeze generated SQL and hash, verify a production-compatible backup and restore procedure, review hosted privileges/schema drift, approve the exact migration and matching frontend release, then perform authenticated two-device scoring after deployment.
