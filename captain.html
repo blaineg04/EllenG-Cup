@@ -1107,6 +1107,15 @@ function markCaptainOffline(){
 if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){
  window.addEventListener("online",recheckCaptainOnResume);
  window.addEventListener("offline",markCaptainOffline);
+ // A page restored from the back-forward cache may miss visibility/online
+ // events and retain a stale Realtime channel. Reconnect from scratch; the
+ // new subscription must load the latest draft and revalidate captain role
+ // and identity before returning to LIVE. Never unlock cached pick controls.
+ window.addEventListener("pageshow",event=>{
+  if(!event?.persisted||!captainRoleRecheck?.isCurrent())return;
+  markCaptainSuspended();
+  startCaptainSubscription();
+ });
 }
 (async()=>{
   const bootEpoch=captainBootstrapEpoch;
