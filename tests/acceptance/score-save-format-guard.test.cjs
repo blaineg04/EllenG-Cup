@@ -6,11 +6,12 @@ const html=fs.readFileSync(require('node:path').join(__dirname,'../../scoring.ht
 const start=html.indexOf('async function saveScore(teamIndex,val){');
 const end=html.indexOf('\nasync function loadBase(',start);
 const body=html.slice(start,end);
-test('direct team-score write is restricted to standard front-nine scoring',()=>{
+test('front-nine Scramble saves use authorized RPC and never direct score-table writes',()=>{
  assert.ok(start>=0 && end>start,'score-save function must be present');
  const guard=body.indexOf('if(isSplitPair()||hole<1||hole>9)');
- const firstWrite=body.indexOf('db.from("elleng_team_scores")');
- assert.ok(guard>=0 && firstWrite>guard,'format guard must precede any team score write');
+ assert.ok(guard>=0,'format guard must be present');
+ assert.doesNotMatch(body,/db\.from\("elleng_team_scores"\)/);
+ assert.ok(body.indexOf('db.rpc("elleng_test_authorized_scramble"')>guard,'format guard must precede authorized RPC');
  assert.match(body,/score<1\|\|score>20/);
 });
 test('dedicated scoring modes use their RPC endpoints',()=>{
