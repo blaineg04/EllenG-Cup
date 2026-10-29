@@ -54,3 +54,7 @@ test('team eligibility follows saved tournament team_count, not fixed nine-team 
  assert.match(sql,/p_team_index<t\.team_count/);
  assert.doesNotMatch(sql,/p_team_index NOT BETWEEN 0 AND 8/);
 });
+
+test('Shamble holds a shared draft lock during format and roster authorization',()=>{
+ assert.match(sql,/FOR SHARE OF d/);
+});
