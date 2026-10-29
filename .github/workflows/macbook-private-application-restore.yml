@@ -56,7 +56,25 @@ jobs:
            if(!omitted)throw Error('Vault sections not recognized; refusing to modify derived copy');
            const derived=path.join(root,'application-without-vault.sql');
            fs.writeFileSync(derived,kept.join(''),{mode:0o600});
-           run('psql',['-X','-v','ON_ERROR_STOP=1','-f',derived]);
+           // pg_dump omits cluster roles. Create only missing NOLOGIN placeholders
+          // inside this new, socket-only cluster; never modify hosted roles.
+          let restored=false;
+          for(let attempt=0;attempt<16;attempt++){
+           try{
+            run('psql',['-X','-v','ON_ERROR_STOP=1','--single-transaction','-f',derived]);
+            restored=true;break;
+           }catch(error){
+            const log=fs.readFileSync(path.join(root,'psql.log'),'utf8');
+            const names=[...log.matchAll(/role "([a-z_][a-z0-9_]*)" does not exist/g)];
+            const missing=names.at(-1)?.[1];
+            if(!missing)throw error;
+            const exists=spawnSync(path.join(bin,'psql'),['-X','-At','-c',"SELECT count(*) FROM pg_roles WHERE rolname='"+missing+"';"],{env,encoding:'utf8',timeout:10000});
+            if(exists.status!==0||exists.stdout.trim()!=='0')throw error;
+            run('psql',['-X','-v','ON_ERROR_STOP=1','-c','CREATE ROLE "'+missing+'" NOLOGIN;']);
+            console.log('LOCAL_ROLE_PLACEHOLDER_CREATED');
+           }
+          }
+          if(!restored)throw Error('Role dependency limit reached');
            // Scope checks deliberately do not claim hosted role equivalence or full recovery.
            const result=spawnSync(path.join(bin,'psql'),['-X','-At','-v','ON_ERROR_STOP=1','-c',"SELECT count(*) FROM pg_tables WHERE schemaname='public' AND tablename IN ('elleng_team_scores','elleng_pair_hole_scores','elleng_player_hole_scores','elleng_tournaments','elleng_drafts');"],{env,encoding:'utf8',timeout:10000});
            if(result.status!==0||result.stdout.trim()!=='5')throw Error('Restored scoring table set incomplete');
