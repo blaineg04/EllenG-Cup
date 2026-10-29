@@ -114,6 +114,18 @@ jobs:
           fi
           grep -q 'NO-GO: authenticated direct scoring DML' "$integrated_log"
           test "$(sudo -u postgres psql -X -At -d "$integrated_db" -c "SELECT count(*) FROM pg_proc WHERE proname IN ('elleng_test_authorized_shamble','elleng_test_authorized_split_pair');")" = 0
+          # Full coordinated review: install RPCs, triggers and lockdown in one
+          # disposable transaction; the explicit final exception must roll it back.
+          node scripts/build-scoring-migration-review.cjs --coordinated-review > /tmp/elleng-coordinated-"$GITHUB_RUN_ID".sql
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -f /tmp/elleng-coordinated-"$GITHUB_RUN_ID".sql >"$integrated_log" 2>&1; then
+            echo 'FAIL: coordinated review migration unexpectedly committed'; exit 1
+          fi
+          if ! grep -q 'REVIEW-ONLY scoring candidate' "$integrated_log"; then
+            cat "$integrated_log"
+            echo 'FAIL: coordinated review SQL failed before final rollback guard'; exit 1
+          fi
+          test "$(sudo -u postgres psql -X -At -d "$integrated_db" -c "SELECT count(*) FROM pg_proc WHERE proname IN ('elleng_test_authorized_scramble','elleng_test_authorized_shamble','elleng_test_authorized_split_pair','elleng_test_commissioner_clear_scores');")" = 0
+          rm -f /tmp/elleng-coordinated-"$GITHUB_RUN_ID".sql
           # Validate the coordinated lockdown independently in disposable Postgres.
           # Production-like grants must be revoked for all three score tables.
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -c "GRANT INSERT,UPDATE,DELETE ON public.elleng_pair_hole_scores, public.elleng_player_hole_scores TO authenticated; GRANT INSERT,UPDATE,DELETE ON public.elleng_team_scores TO anon;" >/dev/null
