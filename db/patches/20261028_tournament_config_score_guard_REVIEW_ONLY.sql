@@ -24,7 +24,7 @@ END $$;
 -- Verify owners, trigger execution and deadlock order under real Supabase roles.
 CREATE OR REPLACE FUNCTION public.elleng_lock_parent_for_score_write()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
-AS $
+AS $$
 DECLARE v_team_count integer;
 BEGIN
  SELECT t.team_count INTO v_team_count
@@ -33,7 +33,7 @@ BEGIN
   RAISE EXCEPTION 'Scoring team is outside active tournament' USING ERRCODE='23514';
  END IF;
  RETURN NEW;
-END $;
+END $$;
 REVOKE ALL ON FUNCTION public.elleng_lock_parent_for_score_write() FROM PUBLIC, anon, authenticated;
 -- Apply matching BEFORE INSERT OR UPDATE triggers to ALL THREE score tables,
 -- alongside BEFORE UPDATE OF team_count on elleng_tournaments, only in an
