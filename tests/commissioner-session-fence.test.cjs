@@ -89,6 +89,52 @@ test('offline commissioner immediately loses controls and reconnect rechecks own
  assert.equal(h.subscriptions(),2);
  assert.equal(oldListener.isCurrent(),false,'old channel stays fenced after reconnect');
 });
+test('offline commissioner bootstrap cannot authorize cached session before reconnect',async()=>{
+ const h=harness();
+ h.ctx.navigator.onLine=false; // Simulate browser offline before its event arrives.
+ await h.open();
+ assert.equal(h.authReads.length,0,'offline bootstrap must not even start owner verification');
+ assert.equal(h.elements.connection.textContent,'OFFLINE');
+ assert.equal(h.elements.adminApp.style.display,'none');
+ assert.equal(h.subscriptions(),0);
+ const resumed=h.online();
+ assert.equal(h.authReads.length,1,'reconnect must begin fresh auth verification');
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await resumed;
+ assert.equal(h.elements.adminApp.style.display,'block');
+ assert.equal(h.subscriptions(),1);
+});
+test('commissioner goes offline during owner lookup without event and fails closed',async()=>{
+ const h=harness(),pending=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.draftReads.length,1);
+ h.ctx.navigator.onLine=false; // No offline event: the final authorization check must catch it.
+ h.draft(0,'commissioner-a');await pending;
+ assert.equal(h.elements.connection.textContent,'OFFLINE');
+ assert.equal(h.elements.adminApp.style.display,'none');
+ assert.equal(h.subscriptions(),0,'offline owner response cannot start a channel');
+ const resumed=h.online();
+ h.auth(1,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(1,'commissioner-a');await resumed;
+ assert.equal(h.elements.connection.textContent,'READY');
+ assert.equal(h.subscriptions(),1);
+});
+test('commissioner Realtime listener ignores hidden and offline callbacks without lifecycle events',async()=>{
+ const h=harness(),opening=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await opening;
+ const listener=h.listener(0),renders=h.renders();
+ assert.equal(listener.isCurrent(),true);
+ h.ctx.document.visibilityState='hidden';
+ assert.equal(listener.isCurrent(),false,'hidden tab must not accept a queued draft snapshot');
+ h.notify(0);
+ assert.equal(h.renders(),renders);
+ h.ctx.document.visibilityState='visible';
+ h.ctx.navigator.onLine=false;
+ assert.equal(listener.isCurrent(),false,'offline tab must not accept a queued draft snapshot');
+ h.notify(0);
+ assert.equal(h.renders(),renders);
+});
 test('foreground commissioner tab verifies ownership before restoring cached controls',async()=>{
  const h=harness(),first=h.open();
  h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
