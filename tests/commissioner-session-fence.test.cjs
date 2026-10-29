@@ -628,3 +628,48 @@ test('stale commissioner login error cannot overwrite a later sign-out state',as
  assert.equal(h.events.includes('openAdmin'),false);
  assert.equal(h.els.login.disabled,false);
 });
+
+
+test('commissioner save rejects a hidden tab even when visibilitychange is delayed',async()=>{
+ const h=harness(),opened=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await opened;
+ h.ctx.document.visibilityState='hidden'; // Intentionally do not dispatch visibilitychange.
+ await assert.rejects(h.save(),/session must be verified before saving/);
+ assert.deepEqual(h.writes,[],'no draft write may begin from a background tab');
+});
+test('commissioner save rejects offline browser without an offline event',async()=>{
+ const h=harness(),opened=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await opened;
+ h.ctx.navigator.onLine=false; // Simulate a delayed browser lifecycle callback.
+ await assert.rejects(h.save(),/session must be verified before saving/);
+ assert.deepEqual(h.writes,[],'no draft write may begin while offline');
+});
+test('commissioner save aborts when tab hides during pending identity verification',async()=>{
+ const h=harness(),opened=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await opened;
+ const saving=h.save();
+ assert.equal(h.authReads.length,2);
+ h.ctx.document.visibilityState='hidden';
+ h.auth(1,'commissioner-a');
+ await assert.rejects(saving,/session changed while saving/);
+ assert.deepEqual(h.writes,[],'stale identity response cannot trigger a write');
+});
+test('commissioner action guard checks foreground and connectivity without lifecycle events',()=>{
+ const start=source.indexOf('function sameCommissionerAction(');
+ const end=source.indexOf('async function pick(i)',start);
+ assert.ok(start>0&&end>start);
+ const ctx={commissionerAuthEpoch:3,commissionerUserId:'commissioner-a',
+  document:{visibilityState:'visible'},navigator:{onLine:true}};
+ vm.createContext(ctx);
+ vm.runInContext(source.slice(start,end),ctx);
+ assert.equal(ctx.sameCommissionerAction(3,'commissioner-a'),true);
+ ctx.document.visibilityState='hidden';
+ assert.equal(ctx.sameCommissionerAction(3,'commissioner-a'),false);
+ ctx.document.visibilityState='visible';ctx.navigator.onLine=false;
+ assert.equal(ctx.sameCommissionerAction(3,'commissioner-a'),false);
+ ctx.navigator.onLine=true;
+ assert.equal(ctx.sameCommissionerAction(3,'commissioner-b'),false);
+});
