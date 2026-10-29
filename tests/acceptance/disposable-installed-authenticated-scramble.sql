@@ -86,3 +86,31 @@ BEGIN
  IF EXISTS (SELECT 1 FROM public.elleng_team_scores WHERE tournament_id='auth-tournament')
  THEN RAISE EXCEPTION 'Commissioner reset left team scores'; END IF;
 END $test$;
+
+-- Installed Shamble RPC: one-golfer roster is complete after one score.
+SELECT set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',false);
+DO $test$
+DECLARE team_total integer;
+BEGIN
+ team_total:=public.elleng_test_authorized_shamble('auth-tournament',0,10,0,5);
+ IF team_total<>5 THEN RAISE EXCEPTION 'Shamble total mismatch: %',team_total; END IF;
+ IF NOT EXISTS (SELECT 1 FROM public.elleng_player_hole_scores
+ WHERE tournament_id='auth-tournament' AND team_index=0 AND hole=10
+ AND golfer_index=0 AND score=5)
+ THEN RAISE EXCEPTION 'Shamble golfer score not saved'; END IF;
+ IF NOT EXISTS (SELECT 1 FROM public.elleng_team_scores
+ WHERE tournament_id='auth-tournament' AND team_index=0 AND hole=10 AND score=5)
+ THEN RAISE EXCEPTION 'Shamble team total not saved'; END IF;
+END $test$;
+SELECT set_config('request.jwt.claim.sub','33333333-3333-4333-8333-333333333333',false);
+DO $test$
+BEGIN
+ BEGIN
+  PERFORM public.elleng_test_authorized_shamble('auth-tournament',0,11,0,4);
+  RAISE EXCEPTION 'Unauthorized Shamble write accepted';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+ IF EXISTS (SELECT 1 FROM public.elleng_player_hole_scores
+ WHERE tournament_id='auth-tournament' AND hole=11)
+ THEN RAISE EXCEPTION 'Unauthorized Shamble write persisted'; END IF;
+END $test$;
