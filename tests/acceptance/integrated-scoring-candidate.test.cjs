@@ -15,6 +15,10 @@ test('integrated scoring candidate is explicitly nondeployable until database by
  assert.match(s,/elleng_test_commissioner_clear_scores/);
  assert.match(s,/elleng_test_authorized_split_pair/);
  assert.match(s,/elleng_enforce_team_score_format/);
+ const review=spawnSync(process.execPath,[script,'--coordinated-review'],{encoding:'utf8'});
+ assert.equal(review.status,0,review.stderr);
+ for(const table of ['elleng_team_scores','elleng_pair_hole_scores','elleng_player_hole_scores'])assert.ok(review.stdout.includes('ALTER TABLE public.'+table+' ENABLE ROW LEVEL SECURITY;'));
+
  assert.match(s,/elleng_prevent_scored_draft_format_change/);
  for(const table of ['elleng_team_scores','elleng_pair_hole_scores','elleng_player_hole_scores']){
   assert.ok(s.includes('BEFORE INSERT OR UPDATE ON public.'+table+' FOR EACH ROW EXECUTE FUNCTION public.elleng_lock_parent_for_score_write();'),table+' must lock parent');
