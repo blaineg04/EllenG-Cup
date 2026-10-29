@@ -591,3 +591,30 @@ test('valid captain mapping remains authorized for current draft',()=>{
  assert.equal(ctx.captainUserId,'captain-b');
  assert.equal(ctx.myTeam,1);
 });
+
+test('captain direct pick guard rejects hidden and offline browsers even before lifecycle events',()=>{
+ const start=s.indexOf('function captainSessionForegroundOnline(){');
+ const end=s.indexOf('async function pick(i){',start);
+ assert.ok(start>0&&end>start,'foreground guard must precede pick submission');
+ const ctx={
+  S:{golfers:[{name:'Synthetic Golfer',team:null,band:'A'}],picks:[],timerPaused:false},
+  pickSyncFailed:false,captainRoleRefreshPending:false,captainUserId:'captain-test',myTeam:0,
+  document:{visibilityState:'visible',getElementById:()=>({textContent:'LIVE'})},
+  navigator:{onLine:true},
+  totalPicks:()=>1,order:()=>0,canBand:()=>true
+ };
+ vm.createContext(ctx);
+ vm.runInContext(s.slice(start,end)+'\nthis.canSubmit=canSubmitCaptainPick;',ctx);
+ assert.equal(ctx.canSubmit(0),true,'valid foreground/online captain may submit');
+ ctx.document.visibilityState='hidden';
+ assert.equal(ctx.canSubmit(0),false,'hidden tab cannot submit despite cached LIVE status');
+ ctx.document.visibilityState='visible';ctx.navigator.onLine=false;
+ assert.equal(ctx.canSubmit(0),false,'offline browser cannot submit despite cached LIVE status');
+ ctx.navigator.onLine=true;
+ assert.equal(ctx.canSubmit(0),true,'foreground online state restores only this local eligibility gate');
+});
+test('captain render cannot enable pick buttons while hidden or offline without an event',()=>{
+ const start=s.indexOf('function render(){'),end=s.indexOf('function draw(){',start);
+ assert.ok(start>0&&end>start);
+ assert.match(s.slice(start,end),/mine=[^;]+&&captainSessionForegroundOnline\(\)/);
+});
