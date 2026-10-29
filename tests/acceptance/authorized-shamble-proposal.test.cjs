@@ -58,3 +58,10 @@ test('team eligibility follows saved tournament team_count, not fixed nine-team 
 test('Shamble holds a shared draft lock during format and roster authorization',()=>{
  assert.match(sql,/FOR SHARE OF d/);
 });
+
+test('Shamble lock must be acquired before reading draft state and roster',()=>{
+ const draftRead=sql.indexOf('SELECT t.draft_id,d.state INTO v_draft,v_state');
+ const advisory=sql.indexOf('pg_advisory_xact_lock(');
+ assert.ok(draftRead>=0 && advisory>=0);
+ assert.ok(draftRead < advisory,'existing advisory lock is acquired after the draft read: review TOCTOU risk');
+});
