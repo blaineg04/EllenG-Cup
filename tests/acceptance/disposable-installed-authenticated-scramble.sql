@@ -37,3 +37,30 @@ BEGIN
  WHERE tournament_id='auth-tournament' AND team_index=1 AND hole=1 AND score=3)
  THEN RAISE EXCEPTION 'Commissioner score not persisted'; END IF;
 END $test$;
+
+-- A captain cannot write to another captain's team.
+SELECT set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',false);
+DO $test$
+BEGIN
+ BEGIN
+  PERFORM public.elleng_test_authorized_scramble('auth-tournament',1,2,5);
+  RAISE EXCEPTION 'Cross-team captain write accepted';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+ IF EXISTS (SELECT 1 FROM public.elleng_team_scores
+ WHERE tournament_id='auth-tournament' AND team_index=1 AND hole=2)
+ THEN RAISE EXCEPTION 'Cross-team captain write persisted'; END IF;
+END $test$;
+-- Missing JWT subject must not be treated as a privileged user.
+SELECT set_config('request.jwt.claim.sub','',false);
+DO $test$
+BEGIN
+ BEGIN
+  PERFORM public.elleng_test_authorized_scramble('auth-tournament',0,3,5);
+  RAISE EXCEPTION 'Unauthenticated score accepted';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+ IF EXISTS (SELECT 1 FROM public.elleng_team_scores
+ WHERE tournament_id='auth-tournament' AND hole=3)
+ THEN RAISE EXCEPTION 'Unauthenticated score persisted'; END IF;
+END $test$;
