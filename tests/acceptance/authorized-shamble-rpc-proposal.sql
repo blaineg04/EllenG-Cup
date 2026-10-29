@@ -5,7 +5,7 @@ CREATE OR REPLACE FUNCTION public.elleng_test_authorized_shamble(
  p_tournament_id text, p_team_index integer, p_hole integer,
  p_golfer_index integer, p_score integer
 ) RETURNS integer
-LANGUAGE plpgsql SECURITY INVOKER SET search_path = ''
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
 AS $fn$
 DECLARE
  v_uid uuid := auth.uid();
@@ -77,6 +77,7 @@ BEGIN
  DO UPDATE SET score=excluded.score,updated_by=excluded.updated_by,updated_at=excluded.updated_at;
  RETURN v_low;
 END $fn$;
-REVOKE ALL ON FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer) FROM PUBLIC;
--- No GRANT added. RLS must be corrected and authenticated fixture executed before usage.
+REVOKE ALL ON FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer) TO authenticated;
+-- Definer owner and runtime grants must be audited before production installation.
 
