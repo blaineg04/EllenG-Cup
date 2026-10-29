@@ -1,0 +1,46 @@
+name: MacBook hosted backup preflight
+on:
+  push:
+    branches: ['development/nov20-release-reconciliation-20261026']
+    paths: ['.github/workflows/macbook-hosted-backup-preflight.yml']
+permissions:
+  contents: read
+concurrency:
+  group: elleng-hosted-backup-preflight
+  cancel-in-progress: false
+jobs:
+  private-backup-preflight:
+    if: github.repository == 'blaineg04/EllenG-Cup'
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 5
+    steps:
+      - name: Verify private backup and native extension prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          node <<'NODE'
+          const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+          const {execFileSync}=require('node:child_process');
+          // Exact user-created backup only. Never search other personal files.
+          const backup=path.join(process.env.HOME,'elleng-backup-20261029_153839.sql');
+          const bin='/Applications/Postgres.app/Contents/Versions/18/bin';
+          if(!fs.existsSync(backup)){console.log('BLOCKED: expected EllenG backup is not accessible to this runner account.');process.exit(2);}
+          const stat=fs.lstatSync(backup);
+          if(!stat.isFile()||stat.isSymbolicLink()||stat.size!==576992){console.log('BLOCKED: backup identity/size differs from the user-confirmed file.');process.exit(2);}
+          if((stat.mode & 0o077)!==0){console.log('BLOCKED: backup permissions must be private.');process.exit(2);}
+          const sql=fs.readFileSync(backup,'utf8');
+          if(!sql.includes('-- PostgreSQL database dump complete')){console.log('BLOCKED: dump completion marker missing.');process.exit(2);}
+          const digest=crypto.createHash('sha256').update(fs.readFileSync(backup)).digest('hex');
+          console.log('BACKUP_METADATA '+JSON.stringify({bytes:stat.size,sha256:digest,completion_marker:true,private_permissions:true}));
+          for(const command of ['postgres','initdb','pg_ctl','psql','pg_config']){
+            if(!fs.existsSync(path.join(bin,command))){console.log('BLOCKED: native PostgreSQL tool missing: '+command);process.exit(2);}
+          }
+          const share=execFileSync(path.join(bin,'pg_config'),['--sharedir'],{encoding:'utf8'}).trim();
+          const extensions=[...sql.matchAll(/^CREATE EXTENSION IF NOT EXISTS ("[^"]+"|[a-zA-Z0-9_]+)/gm)].map(m=>m[1].replaceAll('"',''));
+          if(!extensions.length){console.log('BLOCKED: no extension definitions recognized; inspect dump format privately.');process.exit(2);}
+          const missing=extensions.filter(name=>!fs.existsSync(path.join(share,'extension',name+'.control')));
+          console.log('RESTORE_PREREQUISITES '+JSON.stringify({extensions,missing_extensions:missing,restore_attempted:false,production_changed:false}));
+          if(missing.length){console.log('BLOCKED: full restore needs the missing extension binaries. Original dump preserved; do not strip extension definitions to claim full recovery.');process.exit(2);}
+          console.log('PREREQUISITES_PRESENT: full isolated restore still required; this job does not establish recovery.');
+          NODE
