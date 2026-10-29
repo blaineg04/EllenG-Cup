@@ -64,3 +64,25 @@ BEGIN
  WHERE tournament_id='auth-tournament' AND hole=3)
  THEN RAISE EXCEPTION 'Unauthenticated score persisted'; END IF;
 END $test$;
+
+-- Only the draft owner can reset the tournament's scores.
+SELECT set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',false);
+DO $test$
+BEGIN
+ BEGIN
+  PERFORM public.elleng_test_commissioner_clear_scores('auth-tournament');
+  RAISE EXCEPTION 'Captain was permitted to reset tournament scores';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+ IF (SELECT count(*) FROM public.elleng_team_scores WHERE tournament_id='auth-tournament')<>2
+ THEN RAISE EXCEPTION 'Rejected captain reset modified scores'; END IF;
+END $test$;
+SELECT set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',false);
+DO $test$
+DECLARE deleted_count integer;
+BEGIN
+ deleted_count:=public.elleng_test_commissioner_clear_scores('auth-tournament');
+ IF deleted_count<>2 THEN RAISE EXCEPTION 'Commissioner reset count incorrect: %',deleted_count; END IF;
+ IF EXISTS (SELECT 1 FROM public.elleng_team_scores WHERE tournament_id='auth-tournament')
+ THEN RAISE EXCEPTION 'Commissioner reset left team scores'; END IF;
+END $test$;
