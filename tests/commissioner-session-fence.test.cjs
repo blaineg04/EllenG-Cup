@@ -39,6 +39,7 @@ function harness(){
   open:()=>{confirmedUserId=null;return ctx.openAdmin()},save:()=>{confirmedUserId=null;return ctx.secureSave()},change:(event,session)=>authChanged(event,session),
   offline:()=>{ctx.navigator.onLine=false;return windowEvents.offline()},
   online:()=>{ctx.navigator.onLine=true;confirmedUserId=null;return windowEvents.online()},
+  pageShow:(persisted=true)=>{confirmedUserId=null;return windowEvents.pageshow({persisted})},
   hidden:()=>{ctx.document.visibilityState='hidden';return documentEvents.visibilitychange()},
   visible:()=>{ctx.document.visibilityState='visible';confirmedUserId=null;return documentEvents.visibilitychange()},
   auth:(index,id)=>authReads[index]({data:{user:id?{id}:null},error:null}),
@@ -884,4 +885,27 @@ test('stale commissioner login completion cannot unlock a newer login',async()=>
  assert.equal(h.els.login.disabled,false);
  assert.equal(h.els.login.textContent,'Sign In');
  assert.deepEqual(h.events.filter(e=>e==='openAdmin'),['openAdmin']);
+});
+
+test('back-forward cache restore locks commissioner controls and rechecks draft ownership',async()=>{
+ const h=harness(),first=h.open();
+ h.auth(0,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ h.draft(0,'commissioner-a');await first;
+ const oldListener=h.listener(0);
+ assert.equal(h.elements.connection.textContent,'READY');
+ h.pageShow(false);
+ assert.equal(h.authReads.length,1,'ordinary page load must not start a duplicate verification');
+ const restored=h.pageShow(true);
+ assert.equal(h.elements.adminApp.style.display,'none','cached commissioner controls must lock immediately');
+ assert.equal(h.elements.connection.textContent,'VERIFYING');
+ assert.equal(h.buttons[0].disabled,true);
+ assert.equal(oldListener.isCurrent(),false,'cached Realtime callbacks must be fenced');
+ assert.equal(h.unsubscriptions(),1,'cached Realtime channel must be disposed');
+ assert.equal(h.authReads.length,2,'restore must request current identity');
+ h.auth(1,'commissioner-a');await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.draftReads.length,2,'restore must request current draft owner');
+ h.draft(1,'commissioner-b');await restored;
+ assert.equal(h.elements.connection.textContent,'NO ACCESS');
+ assert.equal(h.elements.adminApp.style.display,'none');
+ assert.equal(h.subscriptions(),1,'revoked owner must not gain a new Realtime channel');
 });
