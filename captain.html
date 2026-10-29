@@ -1114,6 +1114,9 @@ if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){
  window.addEventListener("pageshow",event=>{
   if(!event?.persisted||!captainRoleRecheck?.isCurrent())return;
   markCaptainSuspended();
+  // Retire any pick RPC that was in flight when the page was cached. Its
+  // eventual response must not apply a stale draft or unlock this session.
+  captainAuthEpoch++;pickRequestEpoch++;pickInFlight=false;
   startCaptainSubscription();
  });
 }
