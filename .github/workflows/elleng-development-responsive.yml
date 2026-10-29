@@ -1,7 +1,7 @@
 name: EllenG current-branch synthetic responsive acceptance
 on:
   push:
-    branches: ['development/disposable-postgres-acceptance-20261022', 'release-candidate/nov20-app-only-20261022']
+    branches: ['development/disposable-postgres-acceptance-20261022', 'release-candidate/nov20-app-only-20261022', 'development/nov20-release-reconciliation-20261026']
     paths:
       - '.github/workflows/elleng-development-responsive.yml'
       - 'index.html'

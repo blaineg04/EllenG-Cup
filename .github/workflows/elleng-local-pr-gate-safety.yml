@@ -1,0 +1,22 @@
+name: EllenG local PR gate safety test
+on:
+  push:
+    branches: ['development/nov20-release-reconciliation-20261026']
+    paths:
+      - 'automation/test-safe-draft-pr-gate.sh'
+      - '.github/workflows/elleng-local-pr-gate-safety.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  no-unsafe-pr:
+    if: github.repository == 'blaineg04/EllenG-Cup'
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Confirm app modifications cannot be auto-submitted
+        shell: bash
+        run: bash automation/test-safe-draft-pr-gate.sh

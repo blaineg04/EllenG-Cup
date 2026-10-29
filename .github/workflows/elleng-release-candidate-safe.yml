@@ -3,14 +3,17 @@ on:
   push:
     branches:
       - release-candidate/nov20-app-only-20261022
+      - development/nov20-release-reconciliation-20261026
     paths:
       - 'tests/**'
       - 'common.js'
       - 'draft.html'
       - 'captain.html'
       - 'scoring.html'
+      - 'Scoring.html'
       - 'admin.html'
       - 'supabase.sql'
+      - 'tests/acceptance/**'
       - '.github/workflows/elleng-release-candidate-safe.yml'
   workflow_dispatch:
 permissions:
@@ -30,7 +33,7 @@ jobs:
         with:
           node-version: '22'
       - name: Run local-only synthetic draft, scoring and reference schema security tests
-        run: node --test tests/*.test.cjs
+        run: node --test tests/*.test.cjs tests/acceptance/*.test.cjs
   visual-matrix:
     runs-on: ubuntu-latest
     timeout-minutes: 20

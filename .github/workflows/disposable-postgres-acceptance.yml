@@ -1,10 +1,10 @@
 name: Disposable PostgreSQL acceptance contract
 on:
   push:
-    branches: ['development/disposable-postgres-acceptance-20261022', 'release-candidate/nov20-app-only-20261022']
-    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', 'tests/disposable-draft-order.sql', 'tests/disposable-realtime-publication.sql', 'tests/disposable-realtime-migration.sql', 'tests/disposable-realtime-negative.sql', 'tests/actual-commissioner-rpc.sql', 'tests/actual-captain-rpc.sql', 'docs/proposed-realtime-publication-migration.sql', 'tests/reference-schema-security.test.cjs', 'tests/realtime-client-reconnect.test.cjs', 'tests/draft-reconnect.test.cjs', 'tests/captain-pick-inflight.test.cjs', 'tests/draft-subscribe-behavior.test.cjs', 'tests/draft-timer-behavior.test.cjs', 'tests/draft-two-client-simulation.test.cjs', 'common.js', 'captain.html', 'scoring.html', 'supabase.sql', '.github/workflows/disposable-postgres-acceptance.yml']
+    branches: ['development/disposable-postgres-acceptance-20261022', 'release-candidate/nov20-app-only-20261022', 'development/nov20-release-reconciliation-20261026']
+    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', 'tests/disposable-draft-order.sql', 'tests/disposable-realtime-publication.sql', 'tests/disposable-realtime-migration.sql', 'tests/disposable-realtime-negative.sql', 'tests/actual-commissioner-rpc.sql', 'tests/actual-captain-rpc.sql', 'tests/scoring-branch-compatibility.test.cjs', 'tests/acceptance/authorized-shamble-rpc-proposal.sql', 'tests/acceptance/authorized-shamble-fixture.sql', 'tests/acceptance/disposable-split-pair-atomic.sql', 'tests/acceptance/disposable-score-format-range-probe.sql', 'tests/acceptance/disposable-staged-format-trigger.sql', 'tests/acceptance/disposable-format-score-concurrent-setup.sql', 'tests/acceptance/disposable-shamble-concurrent-setup.sql', 'tests/acceptance/disposable-tournament-format-score-guard.sql', 'tests/acceptance/disposable-team-count-score-race.sql', 'tests/acceptance/disposable-team-count-concurrent-setup.sql', 'tests/acceptance/disposable-parent-lock-privileges.sql', 'tests/acceptance/disposable-privileged-score-parent-lock.sql', 'db/patches/**', 'scripts/build-scoring-migration-review.cjs', 'tests/acceptance/integrated-scoring-candidate.test.cjs', 'tests/acceptance/disposable-integrated-migration-schema.sql', 'tests/acceptance/disposable-installed-authenticated-scramble.sql', 'tests/acceptance/shamble-dynamic-draft-policies.test.cjs', 'tests/acceptance/disposable-shamble-dynamic-draft-roles.sql', 'tests/acceptance/authorized-shamble-proposal.test.cjs', 'tests/acceptance/score-policy-readonly-audit.sql', 'docs/proposed-scoring-rls-hardening-20261027.sql', 'tests/acceptance/disposable-scoring-rls-roles.sql', 'tests/acceptance/disposable-event-rsvp-schema.sql', 'docs/proposed-event-rsvp-schema-20261027.sql', 'docs/proposed-event-rsvp-commissioner-approval-rpc-20261027.sql', 'docs/proposed-realtime-publication-migration.sql', 'tests/reference-schema-security.test.cjs', 'tests/realtime-client-reconnect.test.cjs', 'tests/draft-reconnect.test.cjs', 'tests/captain-pick-inflight.test.cjs', 'admin.html', 'tests/commissioner-rsvp-preview.test.cjs', 'tests/draft-subscribe-behavior.test.cjs', 'tests/draft-timer-behavior.test.cjs', 'tests/draft-two-client-simulation.test.cjs', 'common.js', 'captain.html', 'scoring.html', 'event-rsvp-eligibility.js', 'event-rsvp-client.js', 'tests/acceptance/event-rsvp-client.test.cjs', 'event-rsvp-rollout.js', 'tests/acceptance/event-rsvp-rollout.test.cjs', 'tests/acceptance/event-rsvp-eligibility.test.cjs', 'supabase.sql', '.github/workflows/disposable-postgres-acceptance.yml']
   pull_request:
-    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', 'tests/disposable-draft-order.sql', 'tests/disposable-realtime-publication.sql', 'tests/disposable-realtime-migration.sql', 'tests/disposable-realtime-negative.sql', 'tests/actual-commissioner-rpc.sql', 'tests/actual-captain-rpc.sql', 'docs/proposed-realtime-publication-migration.sql', 'tests/reference-schema-security.test.cjs', 'tests/realtime-client-reconnect.test.cjs', 'tests/draft-reconnect.test.cjs', 'tests/captain-pick-inflight.test.cjs', 'tests/draft-subscribe-behavior.test.cjs', 'tests/draft-timer-behavior.test.cjs', 'tests/draft-two-client-simulation.test.cjs', 'common.js', 'captain.html', 'scoring.html', 'supabase.sql', '.github/workflows/disposable-postgres-acceptance.yml']
+    paths: ['tests/disposable-postgres-contract.sql', 'tests/disposable-draft-concurrency.sql', 'tests/disposable-draft-order.sql', 'tests/disposable-realtime-publication.sql', 'tests/disposable-realtime-migration.sql', 'tests/disposable-realtime-negative.sql', 'tests/actual-commissioner-rpc.sql', 'tests/actual-captain-rpc.sql', 'tests/scoring-branch-compatibility.test.cjs', 'tests/acceptance/authorized-shamble-rpc-proposal.sql', 'tests/acceptance/authorized-shamble-fixture.sql', 'tests/acceptance/disposable-split-pair-atomic.sql', 'tests/acceptance/disposable-score-format-range-probe.sql', 'tests/acceptance/disposable-staged-format-trigger.sql', 'tests/acceptance/disposable-format-score-concurrent-setup.sql', 'tests/acceptance/disposable-shamble-concurrent-setup.sql', 'tests/acceptance/disposable-tournament-format-score-guard.sql', 'tests/acceptance/disposable-team-count-score-race.sql', 'tests/acceptance/disposable-team-count-concurrent-setup.sql', 'tests/acceptance/disposable-parent-lock-privileges.sql', 'tests/acceptance/disposable-privileged-score-parent-lock.sql', 'db/patches/**', 'scripts/build-scoring-migration-review.cjs', 'tests/acceptance/integrated-scoring-candidate.test.cjs', 'tests/acceptance/disposable-integrated-migration-schema.sql', 'tests/acceptance/shamble-dynamic-draft-policies.test.cjs', 'tests/acceptance/authorized-shamble-proposal.test.cjs', 'tests/acceptance/score-policy-readonly-audit.sql', 'docs/proposed-scoring-rls-hardening-20261027.sql', 'tests/acceptance/disposable-scoring-rls-roles.sql', 'tests/acceptance/disposable-event-rsvp-schema.sql', 'docs/proposed-event-rsvp-schema-20261027.sql', 'docs/proposed-event-rsvp-commissioner-approval-rpc-20261027.sql', 'docs/proposed-realtime-publication-migration.sql', 'tests/reference-schema-security.test.cjs', 'tests/realtime-client-reconnect.test.cjs', 'tests/draft-reconnect.test.cjs', 'tests/captain-pick-inflight.test.cjs', 'admin.html', 'tests/commissioner-rsvp-preview.test.cjs', 'tests/draft-subscribe-behavior.test.cjs', 'tests/draft-timer-behavior.test.cjs', 'tests/draft-two-client-simulation.test.cjs', 'common.js', 'captain.html', 'scoring.html', 'event-rsvp-eligibility.js', 'event-rsvp-client.js', 'tests/acceptance/event-rsvp-client.test.cjs', 'event-rsvp-rollout.js', 'tests/acceptance/event-rsvp-rollout.test.cjs', 'tests/acceptance/event-rsvp-eligibility.test.cjs', 'supabase.sql', '.github/workflows/disposable-postgres-acceptance.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -15,7 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check reference schema RLS and team-size guardrails
-        run: node --test tests/reference-schema-security.test.cjs tests/realtime-client-reconnect.test.cjs tests/draft-reconnect.test.cjs tests/captain-pick-inflight.test.cjs tests/draft-subscribe-behavior.test.cjs tests/draft-timer-behavior.test.cjs tests/draft-two-client-simulation.test.cjs
+        run: node --test tests/acceptance/event-rsvp-rollout.test.cjs tests/acceptance/event-rsvp-client.test.cjs tests/acceptance/event-rsvp-eligibility.test.cjs tests/reference-schema-security.test.cjs tests/realtime-client-reconnect.test.cjs tests/draft-reconnect.test.cjs tests/captain-pick-inflight.test.cjs tests/draft-subscribe-behavior.test.cjs tests/draft-timer-behavior.test.cjs tests/draft-two-client-simulation.test.cjs
+      - name: Verify commissioner authorization and RSVP regressions
+        run: node --test tests/commissioner-rsvp-preview.test.cjs
+      - name: Check scoring preflight contracts
+        run: node --test tests/acceptance/scoring-preflight-contract.test.cjs
       - name: Run disposable native PostgreSQL contract without Docker
         shell: bash
         run: |
@@ -25,10 +29,422 @@ jobs:
           pg_version="$(ls /etc/postgresql | sort -V | tail -1)"
           sudo pg_ctlcluster "$pg_version" main start || sudo pg_ctlcluster "$pg_version" main status
           db="elleng_ci_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
-          cleanup() { sudo -u postgres dropdb --if-exists "$db" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_negative" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_captain" >/dev/null 2>&1 || true; }
+          cleanup() { sudo -u postgres dropdb --if-exists "$db" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_negative" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_captain" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_policy" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_shamble_race" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_integrated" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_format_race" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_format" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_shamble_policy" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_rsvp" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_restore" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_splitpair" >/dev/null 2>&1 || true; }
           trap cleanup EXIT
           sudo -u postgres createdb "$db"
+          # Negative strict-mode proof against a new, empty disposable database.
+          # Expected failure must be the gate's explicit missing-RPC exception.
+          strict_log="$(mktemp)"
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -v REQUIRE_SCORING_READY=1 -d "$db" -f tests/acceptance/scoring-deployment-preflight.sql >"$strict_log" 2>&1; then
+            cat "$strict_log"
+            echo 'FAIL: strict scoring preflight accepted missing RPCs'
+            exit 1
+          fi
+          if ! grep -q 'Scoring rehearsal blocked: required RPC missing' "$strict_log"; then
+            cat "$strict_log"
+            echo 'FAIL: strict preflight failed for an unexpected reason'
+            exit 1
+          fi
+          rm -f "$strict_log"
+          echo 'PASS: strict scoring preflight rejects missing scoring RPCs.'
+          # Positive path: disposable schema with both RPC signatures, strict grants,
+          # and RLS-enabled score tables. This validates the gate only, not app scoring.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" <<'SQL'
+          DO $roles$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon NOLOGIN; END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated NOLOGIN; END IF;
+          END $roles$;
+          CREATE TABLE public.elleng_pair_hole_scores (id integer);
+          CREATE TABLE public.elleng_player_hole_scores (id integer);
+          CREATE TABLE public.elleng_team_scores (id integer);
+          ALTER TABLE public.elleng_pair_hole_scores ENABLE ROW LEVEL SECURITY;
+          ALTER TABLE public.elleng_player_hole_scores ENABLE ROW LEVEL SECURITY;
+          ALTER TABLE public.elleng_team_scores ENABLE ROW LEVEL SECURITY;
+          CREATE FUNCTION public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)
+            RETURNS integer LANGUAGE sql AS 'SELECT 1';
+          CREATE FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)
+            RETURNS integer LANGUAGE sql AS 'SELECT 1';
+          CREATE FUNCTION public.elleng_test_authorized_scramble(text,integer,integer,integer)
+            RETURNS integer LANGUAGE sql AS 'SELECT 1';
+          CREATE FUNCTION public.elleng_test_commissioner_clear_scores(text)
+            RETURNS integer LANGUAGE sql AS 'SELECT 1';
+          REVOKE ALL ON FUNCTION public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer) FROM PUBLIC,anon;
+          REVOKE ALL ON FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer) FROM PUBLIC,anon;
+          REVOKE ALL ON FUNCTION public.elleng_test_authorized_scramble(text,integer,integer,integer) FROM PUBLIC,anon;
+          REVOKE ALL ON FUNCTION public.elleng_test_commissioner_clear_scores(text) FROM PUBLIC,anon;
+          GRANT EXECUTE ON FUNCTION public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer) TO authenticated;
+          GRANT EXECUTE ON FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer) TO authenticated;
+          GRANT EXECUTE ON FUNCTION public.elleng_test_authorized_scramble(text,integer,integer,integer) TO authenticated;
+          GRANT EXECUTE ON FUNCTION public.elleng_test_commissioner_clear_scores(text) TO authenticated;
+          SQL
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -v REQUIRE_SCORING_READY=1 -d "$db" -f tests/acceptance/scoring-deployment-preflight.sql >/dev/null
+          echo 'PASS: strict scoring preflight accepts valid disposable RPC grants and RLS.'
+          # Remove fixture objects so later cluster-wide role reset is not blocked.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" <<'SQL'
+          DROP FUNCTION public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer);
+          DROP FUNCTION public.elleng_test_authorized_shamble(text,integer,integer,integer,integer);
+          DROP FUNCTION public.elleng_test_authorized_scramble(text,integer,integer,integer);
+          DROP FUNCTION public.elleng_test_commissioner_clear_scores(text);
+          DROP TABLE public.elleng_pair_hole_scores;
+          DROP TABLE public.elleng_team_scores;
+          SQL
+
+          # Prove format-scoped scoring ranges in disposable PostgreSQL only.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/acceptance/disposable-score-format-range-probe.sql
+          # Run format-trigger fixture in its own database to prevent table-name collisions.
+          format_db="${db}_format"
+          sudo -u postgres createdb "$format_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$format_db" -f tests/acceptance/disposable-staged-format-trigger.sql
+          sudo -u postgres dropdb "$format_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/acceptance/disposable-tournament-format-score-guard.sql
+          node --test tests/acceptance/shamble-dynamic-draft-policies.test.cjs
+          node --test tests/acceptance/integrated-scoring-candidate.test.cjs
+          node --test tests/acceptance/commissioner-score-reset-rpc.test.cjs
+          # Actually execute the assembled SQL in an isolated PostgreSQL database.
+          # The expected final exception is the deliberate deployment stop; any
+          # earlier SQL failure must fail CI rather than claiming migration readiness.
+          integrated_db="${db}_integrated"
+          sudo -u postgres createdb "$integrated_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -f tests/acceptance/disposable-integrated-migration-schema.sql >/dev/null
+          # Fail at fixture setup, not later in migration, if auth.uid is absent.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -c "
+          DO \$auth_fixture_gate\$
+          BEGIN
+            IF to_regprocedure('auth.uid()') IS NULL THEN
+              RAISE EXCEPTION 'Missing auth.uid() in integrated fixture database';
+            END IF;
+          END \$auth_fixture_gate\$;" >/dev/null
+          node scripts/build-scoring-migration-review.cjs --stdout > /tmp/elleng-integrated-"$GITHUB_RUN_ID".sql
+          integrated_log="$(mktemp)"
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -f /tmp/elleng-integrated-"$GITHUB_RUN_ID".sql >"$integrated_log" 2>&1; then
+            echo 'FAIL: review-only integrated candidate unexpectedly applied'; exit 1
+          fi
+          if ! grep -q 'REVIEW-ONLY scoring candidate: direct-DML permissions' "$integrated_log"; then
+            cat "$integrated_log"
+            echo 'FAIL: integrated candidate failed before its deliberate stop'; exit 1
+          fi
+          test "$(sudo -u postgres psql -X -At -d "$integrated_db" -c "SELECT count(*) FROM pg_proc WHERE proname IN ('elleng_test_authorized_shamble','elleng_test_authorized_split_pair');")" = 0
+          # Negative gate: a production-like authenticated direct-write grant
+          # must stop the candidate BEFORE migration DDL is installed.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -c "GRANT INSERT,UPDATE,DELETE ON public.elleng_team_scores TO authenticated;" >/dev/null
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -f /tmp/elleng-integrated-"$GITHUB_RUN_ID".sql >"$integrated_log" 2>&1; then
+            echo 'FAIL: unsafe direct-write grant did not block migration'; exit 1
+          fi
+          grep -q 'NO-GO: authenticated direct scoring DML' "$integrated_log"
+          test "$(sudo -u postgres psql -X -At -d "$integrated_db" -c "SELECT count(*) FROM pg_proc WHERE proname IN ('elleng_test_authorized_shamble','elleng_test_authorized_split_pair');")" = 0
+          # Full coordinated review: install RPCs, triggers and lockdown in one
+          # disposable transaction; the explicit final exception must roll it back.
+          node scripts/build-scoring-migration-review.cjs --coordinated-review > /tmp/elleng-coordinated-"$GITHUB_RUN_ID".sql
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -f /tmp/elleng-coordinated-"$GITHUB_RUN_ID".sql >"$integrated_log" 2>&1; then
+            echo 'FAIL: coordinated review migration unexpectedly committed'; exit 1
+          fi
+          if ! grep -q 'REVIEW-ONLY scoring candidate' "$integrated_log"; then
+            cat "$integrated_log"
+            echo 'FAIL: coordinated review SQL failed before final rollback guard'; exit 1
+          fi
+          test "$(sudo -u postgres psql -X -At -d "$integrated_db" -c "SELECT count(*) FROM pg_proc WHERE proname IN ('elleng_test_authorized_scramble','elleng_test_authorized_shamble','elleng_test_authorized_split_pair','elleng_test_commissioner_clear_scores');")" = 0
+          rm -f /tmp/elleng-coordinated-"$GITHUB_RUN_ID".sql
+          # Commit the reviewed coordinated SQL into an isolated database, not hosted Supabase.
+          install_db="${db}_install_trial"
+          sudo -u postgres createdb "$install_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -f tests/acceptance/disposable-integrated-migration-schema.sql >/dev/null
+          # Save a pre-install snapshot, then independently restore it into a
+          # second disposable database to prove the recovery artifact is readable.
+          snapshot="/tmp/elleng-preinstall-$GITHUB_RUN_ID.dump"
+          sudo -u postgres pg_dump -Fc -d "$install_db" -f "$snapshot"
+          recovery_db="${db}_install_recovery"
+          sudo -u postgres createdb "$recovery_db"
+          sudo -u postgres pg_restore --exit-on-error -d "$recovery_db" "$snapshot"
+          test "$(sudo -u postgres psql -X -At -d "$recovery_db" -c "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN ('elleng_team_scores','elleng_pair_hole_scores','elleng_player_hole_scores');")" = 3
+          sudo -u postgres dropdb "$recovery_db"
+          sudo -u postgres rm -f "$snapshot"
+          ELLENG_DISPOSABLE_PG_TEST=I_UNDERSTAND_ISOLATED_ONLY node scripts/build-scoring-migration-review.cjs --coordinated-review --disposable-install > /tmp/elleng-install-"$GITHUB_RUN_ID".sql
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -f /tmp/elleng-install-"$GITHUB_RUN_ID".sql >/dev/null
+          test "$(sudo -u postgres psql -X -At -d "$install_db" -c "SELECT count(*) FROM pg_proc WHERE proname IN ('elleng_test_authorized_scramble','elleng_test_authorized_shamble','elleng_test_authorized_split_pair','elleng_test_commissioner_clear_scores');")" = 4
+          test "$(sudo -u postgres psql -X -At -d "$install_db" -c "SELECT count(*) FROM pg_trigger WHERE tgname LIKE 'elleng_%' AND NOT tgisinternal;")" -ge 6
+          # Post-COMMIT validation of actual installed grants and RLS.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -c "
+          DO \$postinstall\$
+          BEGIN
+           IF EXISTS (
+            SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+            WHERE n.nspname='public'
+             AND c.relname IN ('elleng_team_scores','elleng_pair_hole_scores','elleng_player_hole_scores')
+             AND (NOT c.relrowsecurity
+               OR has_table_privilege('authenticated',c.oid,'INSERT')
+               OR has_table_privilege('authenticated',c.oid,'UPDATE')
+               OR has_table_privilege('authenticated',c.oid,'DELETE')
+               OR has_table_privilege('anon',c.oid,'INSERT')
+               OR has_table_privilege('anon',c.oid,'UPDATE')
+               OR has_table_privilege('anon',c.oid,'DELETE'))
+           ) THEN RAISE EXCEPTION 'Post-install RLS or ACL failure'; END IF;
+          END \$postinstall\$;" >/dev/null
+          # Verify all four committed RPCs have authenticated-only execution.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -c "
+          DO \$rpc_gate\$
+          DECLARE n integer;
+          BEGIN
+           SELECT count(*) INTO n FROM pg_proc p JOIN pg_namespace ns ON ns.oid=p.pronamespace
+           WHERE ns.nspname='public'
+             AND p.proname IN ('elleng_test_authorized_scramble','elleng_test_authorized_split_pair','elleng_test_authorized_shamble','elleng_test_commissioner_clear_scores')
+             AND has_function_privilege('authenticated',p.oid,'EXECUTE')
+             AND NOT has_function_privilege('anon',p.oid,'EXECUTE')
+             AND NOT EXISTS (SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) acl WHERE acl.grantee=0 AND acl.privilege_type='EXECUTE');
+           IF n <> 4 THEN RAISE EXCEPTION 'Post-install RPC grants invalid: % of 4',n; END IF;
+          END \$rpc_gate\$;" >/dev/null
+          # Confirm broad legacy policies are absent after the committed migration.
+          test "$(sudo -u postgres psql -X -At -d "$install_db" -c "SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename IN ('elleng_team_scores','elleng_pair_hole_scores','elleng_player_hole_scores') AND policyname LIKE 'active live % guard';")" = 0
+          # Disposable fixture does not install hosted SELECT grants; grant the
+          # hosted-equivalent read baseline before verifying migration preserves it.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -c "GRANT SELECT ON public.elleng_team_scores, public.elleng_pair_hole_scores, public.elleng_player_hole_scores TO authenticated;" >/dev/null
+          # Confirm authenticated read access remains after write lockdown.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -c "
+          DO \$read_gate\$
+          DECLARE n integer;
+          BEGIN
+           SELECT count(*) INTO n FROM pg_class c JOIN pg_namespace ns ON ns.oid=c.relnamespace
+           WHERE ns.nspname='public'
+             AND c.relname IN ('elleng_team_scores','elleng_pair_hole_scores','elleng_player_hole_scores')
+             AND has_table_privilege('authenticated',c.oid,'SELECT');
+           IF n<>3 THEN RAISE EXCEPTION 'Post-install scoring SELECT access missing: % of 3',n; END IF;
+          END \$read_gate\$;" >/dev/null
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -f tests/acceptance/disposable-installed-authenticated-scramble.sql >/dev/null
+          # Exercise actual PostgreSQL API roles (not only simulated JWT claims).
+          # RPCs must reject anon; authenticated may execute but cannot write
+          # score tables directly after coordinated privilege lockdown.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -c "
+          DO \$role_gate\$
+          BEGIN
+            IF has_function_privilege('anon',
+              'public.elleng_test_authorized_scramble(text,integer,integer,integer)', 'EXECUTE')
+            THEN RAISE EXCEPTION 'anon can execute scoring RPC'; END IF;
+            IF NOT has_function_privilege('authenticated',
+              'public.elleng_test_authorized_scramble(text,integer,integer,integer)', 'EXECUTE')
+            THEN RAISE EXCEPTION 'authenticated cannot execute scoring RPC'; END IF;
+          END \$role_gate\$;" >/dev/null
+          # SET ROLE enforces the actual database role; no JWT must fail closed.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -c "
+          SET ROLE authenticated;
+          DO \$role_gate\$
+          BEGIN
+            BEGIN
+              PERFORM public.elleng_test_authorized_scramble('auth-tournament',0,4,5);
+              RAISE EXCEPTION 'Authenticated role without JWT was permitted to score';
+            EXCEPTION WHEN insufficient_privilege THEN NULL;
+            END;
+          END \$role_gate\$;
+          RESET ROLE;" >/dev/null
+          # All four privileged score RPCs require explicit authenticated grants.
+          # Verify function ownership and role ACLs after installation.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$install_db" -c "
+          DO \$rpc_owner_gate\$
+          DECLARE fn regprocedure;
+          BEGIN
+            FOREACH fn IN ARRAY ARRAY[
+              'public.elleng_test_authorized_scramble(text,integer,integer,integer)'::regprocedure,
+              'public.elleng_test_authorized_shamble(text,integer,integer,integer,integer)'::regprocedure,
+              'public.elleng_test_authorized_split_pair(text,integer,integer,integer,integer)'::regprocedure,
+              'public.elleng_test_commissioner_clear_scores(text)'::regprocedure
+            ] LOOP
+              IF has_function_privilege('anon',fn,'EXECUTE')
+                OR EXISTS (SELECT 1 FROM pg_proc p, aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) acl WHERE p.oid=fn AND acl.grantee=0 AND acl.privilege_type='EXECUTE')
+                OR NOT has_function_privilege('authenticated',fn,'EXECUTE')
+              THEN RAISE EXCEPTION 'Invalid RPC execute ACL: %',fn; END IF;
+              IF NOT EXISTS (SELECT 1 FROM pg_proc p WHERE p.oid=fn
+                AND p.prosecdef AND p.proowner='postgres'::regrole
+                AND EXISTS (SELECT 1 FROM unnest(coalesce(p.proconfig,ARRAY[]::text[])) setting WHERE setting LIKE 'search_path=%'))
+              THEN RAISE EXCEPTION 'RPC owner/definer/search_path mismatch: %',fn; END IF;
+            END LOOP;
+          END \$rpc_owner_gate\$;" >/dev/null
+          sudo -u postgres dropdb "$install_db"
+          rm -f /tmp/elleng-install-"$GITHUB_RUN_ID".sql
+          echo 'PASS: coordinated migration committed and verified in disposable PostgreSQL.'
+          # Validate the coordinated lockdown independently in disposable Postgres.
+          # Production-like grants must be revoked for all three score tables.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -c "GRANT INSERT,UPDATE,DELETE ON public.elleng_pair_hole_scores, public.elleng_player_hole_scores TO authenticated; GRANT INSERT,UPDATE,DELETE ON public.elleng_team_scores TO anon;" >/dev/null
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -f db/patches/20261029_score_table_dml_lockdown_REVIEW_ONLY.sql >/dev/null
+          locked_count="$(sudo -u postgres psql -X -At -d "$integrated_db" -c "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN ('elleng_team_scores','elleng_pair_hole_scores','elleng_player_hole_scores') AND (has_table_privilege('authenticated',c.oid,'INSERT,UPDATE,DELETE,TRUNCATE') OR has_table_privilege('anon',c.oid,'INSERT,UPDATE,DELETE,TRUNCATE'));")"
+          test "$locked_count" = 0
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$integrated_db" -c "SET ROLE authenticated; INSERT INTO public.elleng_team_scores(tournament_id,team_index,hole,score) VALUES ('test',0,1,4);" >"$integrated_log" 2>&1; then
+            echo 'FAIL: authenticated direct team score write succeeded after lockdown'; exit 1
+          fi
+          grep -q 'permission denied' "$integrated_log"
+          echo 'PASS: API score-table grants revoked and direct write denied in disposable Postgres.'
+          rm -f "$integrated_log" /tmp/elleng-integrated-"$GITHUB_RUN_ID".sql
+          sudo -u postgres dropdb "$integrated_db"
+          echo 'PASS: integrated migration executes to deliberate stop and rolls back.'
+          # Exercise standard Scramble through the authenticated API role under lockdown.
+          scramble_role_db="${db}_scramble_role"
+          sudo -u postgres createdb "$scramble_role_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$scramble_role_db" -f tests/acceptance/authorized-scramble-restricted-role.sql >/dev/null
+          sudo -u postgres dropdb "$scramble_role_db"
+          echo 'PASS: authorized Scramble survives direct-DML lockdown.'
+          # Verify Split-Pair RPC works as an authenticated caller while direct writes fail.
+          split_role_db="${db}_split_role"
+          sudo -u postgres createdb "$split_role_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$split_role_db" -f tests/acceptance/authorized-split-pair-restricted-role.sql >/dev/null
+          sudo -u postgres dropdb "$split_role_db"
+          echo 'PASS: authorized Split-Pair survives direct-DML lockdown.'
+          reset_role_db="${db}_reset_role"
+          sudo -u postgres createdb "$reset_role_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$reset_role_db" -f tests/acceptance/commissioner-reset-restricted-role.sql >/dev/null
+          sudo -u postgres dropdb "$reset_role_db"
+          echo 'PASS: commissioner-only reset operates with direct score DML disabled.'
+          # Independent role fixture: two drafts, two captains and actual staged Shamble policies.
+          shamble_policy_db="${db}_shamble_policy"
+          sudo -u postgres createdb "$shamble_policy_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$shamble_policy_db" -f tests/acceptance/disposable-shamble-dynamic-draft-roles.sql
+          sudo -u postgres dropdb "$shamble_policy_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/acceptance/disposable-team-count-score-race.sql
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/acceptance/disposable-parent-lock-privileges.sql
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/acceptance/disposable-privileged-score-parent-lock.sql
+
+          race_db="elleng_race_${GITHUB_RUN_ID}"
+          sudo -u postgres createdb "$race_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$race_db" -f tests/acceptance/disposable-team-count-concurrent-setup.sql >/dev/null
+          score_log="$(mktemp)"
+          config_log="$(mktemp)"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$race_db" -c "BEGIN; INSERT INTO race_scores VALUES ('event',3,5); SELECT pg_sleep(2); COMMIT;" > "$score_log" 2>&1 &
+          score_pid=$!
+          sleep 0.4
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$race_db" -c "UPDATE race_tournaments SET team_count=2 WHERE id='event';" > "$config_log" 2>&1; then
+            echo 'FAIL: concurrent reduction succeeded after score write'; exit 1
+          fi
+          wait "$score_pid"
+          grep -q 'Existing score blocks team-count change' "$config_log"
+          test "$(sudo -u postgres psql -X -At -d "$race_db" -c "SELECT team_count FROM race_tournaments WHERE id='event';")" = 4
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$race_db" -c "DELETE FROM race_scores;" >/dev/null
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$race_db" -c "BEGIN; UPDATE race_tournaments SET team_count=2 WHERE id='event'; SELECT pg_sleep(2); COMMIT;" > "$config_log" 2>&1 &
+          config_pid=$!
+          sleep 0.4
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$race_db" -c "INSERT INTO race_scores VALUES ('event',3,5);" > "$score_log" 2>&1; then
+            echo 'FAIL: removed team scored after concurrent team reduction'; exit 1
+          fi
+          wait "$config_pid"
+          grep -q 'Inactive team score' "$score_log"
+          test "$(sudo -u postgres psql -X -At -d "$race_db" -c "SELECT count(*) FROM race_scores;")" = 0
+          rm -f "$score_log" "$config_log"
+          sudo -u postgres dropdb "$race_db"
+          echo 'PASS: both transaction orderings serialize score writes and team-count changes.'
+
+          # Two-session concurrency checks using the actual staged format triggers.
+          format_race_db="${db}_format_race"
+          sudo -u postgres createdb "$format_race_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$format_race_db" -f tests/acceptance/disposable-format-score-concurrent-setup.sql >/dev/null
+          score_log="$(mktemp)"
+          config_log="$(mktemp)"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$format_race_db" -c "BEGIN; INSERT INTO public.elleng_team_scores VALUES ('event',0,1,5); SELECT pg_sleep(2); COMMIT;" >"$score_log" 2>&1 &
+          score_pid=$!
+          sleep 0.4
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$format_race_db" -c "UPDATE public.elleng_drafts SET state='{\"playFormat\":\"split_pair\"}'::jsonb WHERE id='draft';" >"$config_log" 2>&1; then
+            echo 'FAIL: format changed after concurrent score'; exit 1
+          fi
+          wait "$score_pid"
+          grep -q 'Cannot change format after tournament scoring begins' "$config_log"
+          test "$(sudo -u postgres psql -X -At -d "$format_race_db" -c "SELECT state->>'playFormat' FROM public.elleng_drafts WHERE id='draft';")" = standard
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$format_race_db" -c "DELETE FROM public.elleng_team_scores;" >/dev/null
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$format_race_db" -c "BEGIN; UPDATE public.elleng_drafts SET state='{\"playFormat\":\"split_pair\"}'::jsonb WHERE id='draft'; SELECT pg_sleep(2); COMMIT;" >"$config_log" 2>&1 &
+          config_pid=$!
+          sleep 0.4
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$format_race_db" -c "INSERT INTO public.elleng_team_scores VALUES ('event',0,2,1);" >"$score_log" 2>&1; then
+            echo 'FAIL: standard-only score accepted after concurrent format change'; exit 1
+          fi
+          wait "$config_pid"
+          grep -q 'Team score outside tournament format range' "$score_log"
+          test "$(sudo -u postgres psql -X -At -d "$format_race_db" -c "SELECT count(*) FROM public.elleng_team_scores;")" = 0
+          rm -f "$score_log" "$config_log"
+          sudo -u postgres dropdb "$format_race_db"
+          echo 'PASS: both transaction orderings serialize format change and scoring.'
+
+          # Concurrent Shamble saves on separate PostgreSQL sessions, same hole.
+          shamble_race_db="${db}_shamble_race"
+          sudo -u postgres createdb "$shamble_race_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$shamble_race_db" -f tests/acceptance/disposable-shamble-concurrent-setup.sql >/dev/null
+          shamble_a="$(mktemp)"
+          shamble_b="$(mktemp)"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$shamble_race_db" -c "BEGIN; SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000002',true); SELECT public.elleng_test_authorized_shamble('fixture',0,10,0,5); SELECT pg_sleep(2); COMMIT;" >"$shamble_a" 2>&1 &
+          shamble_pid=$!
+          sleep 0.4
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$shamble_race_db" -c "BEGIN; SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000002',true); SELECT public.elleng_test_authorized_shamble('fixture',0,10,1,4); COMMIT;" >"$shamble_b" 2>&1
+          wait "$shamble_pid"
+          test "$(sudo -u postgres psql -X -At -d "$shamble_race_db" -c "SELECT count(*) FROM public.elleng_player_hole_scores WHERE tournament_id='fixture' AND hole=10;")" = 2
+          test "$(sudo -u postgres psql -X -At -d "$shamble_race_db" -c "SELECT score FROM public.elleng_team_scores WHERE tournament_id='fixture' AND hole=10;")" = 4
+          # A subsequent clear must remove the derived official total,
+          # rather than leaving the earlier complete-team total visible.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$shamble_race_db" -c "BEGIN; SELECT set_config('elleng.test_uid','00000000-0000-4000-8000-000000000002',true); SELECT public.elleng_test_authorized_shamble('fixture',0,10,1,NULL); COMMIT;" >"$shamble_b" 2>&1
+          test "$(sudo -u postgres psql -X -At -d "$shamble_race_db" -c "SELECT count(*) FROM public.elleng_player_hole_scores WHERE tournament_id='fixture' AND hole=10;")" = 1
+          test "$(sudo -u postgres psql -X -At -d "$shamble_race_db" -c "SELECT count(*) FROM public.elleng_team_scores WHERE tournament_id='fixture' AND hole=10;")" = 0
+          rm -f "$shamble_a" "$shamble_b"
+          sudo -u postgres dropdb "$shamble_race_db"
+          echo 'PASS: concurrent Shamble golfer updates derive the correct final team total.'
+
+          # Event RSVP migration is validated only against an isolated fixture database.
+          rsvp_db="${db}_rsvp"
+          sudo -u postgres createdb "$rsvp_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$rsvp_db" -f tests/acceptance/disposable-event-rsvp-schema.sql
+          sudo -u postgres dropdb "$rsvp_db"
+          # Roles are cluster-wide; the isolated RSVP fixture creates Supabase roles.
+          # Remove them before the existing policy fixture creates authenticated.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d postgres -c "drop role if exists anon; drop role if exists authenticated;"
+          # Verify the read-only scoring release gate rejects a broad permissive
+          # policy and accepts the same status guard when restrictive.
+          policy_db="${db}_policy"
+          sudo -u postgres createdb "$policy_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -c "create table public.elleng_team_scores(tournament_id text,team_index integer); alter table public.elleng_team_scores enable row level security; create policy \"active live team insert guard\" on public.elleng_team_scores for insert to public with check (team_index >= 0);"
+          if sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -f tests/acceptance/score-policy-readonly-audit.sql > /tmp/elleng-policy-"$GITHUB_RUN_ID".log 2>&1; then
+            echo 'FAIL: broad permissive score write policy escaped release gate'
+            exit 1
+          fi
+          grep -q 'Scoring RLS release gate failed' /tmp/elleng-policy-"$GITHUB_RUN_ID".log
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -c "drop policy \"active live team insert guard\" on public.elleng_team_scores; create policy \"active live team insert guard\" on public.elleng_team_scores as restrictive for insert to public with check (team_index >= 0);"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -f tests/acceptance/score-policy-readonly-audit.sql
+          # Apply the exact proposed migration to disposable schema replicas,
+          # then verify every intended guard is restrictive.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -c "create role authenticated nologin; create table public.elleng_tournaments(id text primary key, team_count integer, status text); alter table public.elleng_team_scores add column score integer; create table public.elleng_player_hole_scores(tournament_id text,team_index integer); create table public.elleng_pair_hole_scores(tournament_id text,team_index integer); alter table public.elleng_player_hole_scores enable row level security; alter table public.elleng_pair_hole_scores enable row level security;"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -f docs/proposed-scoring-rls-hardening-20261027.sql
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -f tests/acceptance/score-policy-readonly-audit.sql
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$policy_db" -f tests/acceptance/disposable-scoring-rls-roles.sql
+          test "$(sudo -u postgres psql -X -At -d "$policy_db" -c "select count(*) from pg_policies where schemaname='public' and tablename in ('elleng_team_scores','elleng_player_hole_scores','elleng_pair_hole_scores') and policyname like 'active live % guard' and permissive='RESTRICTIVE';")" = 9
+          sudo -u postgres dropdb "$policy_db"
+          rm -f /tmp/elleng-policy-"$GITHUB_RUN_ID".log
+          echo 'PASS: scoring RLS gate rejects permissive guard and accepts restrictive guard.'
+          # The strict preflight creates minimalist score tables; remove only those
+          # disposable placeholders before Shamble builds its independent schema.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -c "DROP TABLE IF EXISTS public.elleng_player_hole_scores, public.elleng_pair_hole_scores, public.elleng_team_scores;" >/dev/null
+          # Exercise the staged Shamble RPC and invalid-hole case inside a rolled-back disposable fixture.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/acceptance/authorized-shamble-fixture.sql
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-postgres-contract.sql
+          # Rehearse a database backup and restore using only disposable CI records.
+          # This validates tooling and data recovery without touching hosted Supabase.
+          restore_db="${db}_restore"
+          sudo -u postgres createdb "$restore_db"
+          backup_file="$(sudo -u postgres mktemp /tmp/elleng-ci-backup.XXXXXX)"
+          sudo -u postgres pg_dump -Fc -d "$db" -f "$backup_file"
+          sudo -u postgres pg_restore --exit-on-error -d "$restore_db" "$backup_file"
+          source_tables="$(sudo -u postgres psql -X -At -d "$db" -c "select count(*) from pg_tables where schemaname='acceptance';")"
+          restored_tables="$(sudo -u postgres psql -X -At -d "$restore_db" -c "select count(*) from pg_tables where schemaname='acceptance';")"
+          test "$source_tables" -gt 0
+          test "$source_tables" = "$restored_tables"
+          # Compare deterministic catalog metadata; pg_dump text can differ by database name.
+          catalog_query="select table_name || ':' || column_name || ':' || data_type || ':' || is_nullable || ':' || coalesce(column_default,'') from information_schema.columns where table_schema='acceptance' order by table_name,ordinal_position;"
+          source_columns="$(sudo -u postgres psql -X -At -d "$db" -c "$catalog_query")"
+          restored_columns="$(sudo -u postgres psql -X -At -d "$restore_db" -c "$catalog_query")"
+          test -n "$source_columns"
+          test "$source_columns" = "$restored_columns"
+          # Verify actual row data survives, not only schema definitions.
+          source_rows="$(sudo -u postgres psql -X -At -d "$db" -c "select count(*) from acceptance.drafts;")"
+          restored_rows="$(sudo -u postgres psql -X -At -d "$restore_db" -c "select count(*) from acceptance.drafts;")"
+          test "$source_rows" -gt 0
+          test "$source_rows" = "$restored_rows"
+          # Compare the recovered draft payload and ownership, not merely row counts.
+          draft_query="select id || ':' || owner_id::text || ':' || state::text || ':' || updated_at::text from acceptance.drafts order by id;"
+          source_drafts="$(sudo -u postgres psql -X -At -d "$db" -c "$draft_query")"
+          restored_drafts="$(sudo -u postgres psql -X -At -d "$restore_db" -c "$draft_query")"
+          test -n "$source_drafts"
+          test "$source_drafts" = "$restored_drafts"
+          sudo -u postgres dropdb "$restore_db"
+          sudo -u postgres rm -f "$backup_file"
+          echo 'PASS: disposable database backup and isolated restore preserved acceptance tables.'
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-draft-concurrency.sql
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-draft-order.sql
           sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/disposable-realtime-publication.sql
@@ -125,4 +541,40 @@ jobs:
 
           rm -f /tmp/elleng-first-"$GITHUB_RUN_ID" /tmp/elleng-second-"$GITHUB_RUN_ID"
           echo 'PASS: one accepted pick, conflicting attempt rejected, one durable row.'
+          # Run the exact staged Split-Pair SQL against a disposable native PostgreSQL instance.
+          splitpair_db="${db}_splitpair"
+          sudo -u postgres createdb "$splitpair_db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$splitpair_db" -f tests/acceptance/disposable-split-pair-atomic.sql
+          # Two genuine database sessions compete for the same tournament row lock.
+          # Hold the first transaction after committing the first pair write, while
+          # the second attempts to post the other pair.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$splitpair_db" -c "select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false); delete from public.elleng_pair_hole_scores; delete from public.elleng_team_scores;" >/dev/null
+          first_pair="$(mktemp)"
+          second_pair="$(mktemp)"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$splitpair_db" -c "begin; select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false); select public.elleng_test_authorized_split_pair('tournament-qa',0,13,0,18); select pg_sleep(2); commit;" > "$first_pair" 2>&1 &
+          first_pair_pid=$!
+          sleep 0.4
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$splitpair_db" -c "select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false); select public.elleng_test_authorized_split_pair('tournament-qa',0,13,1,19);" > "$second_pair" 2>&1
+          wait "$first_pair_pid"
+          test "$(sudo -u postgres psql -X -At -d "$splitpair_db" -c "select score from public.elleng_team_scores where tournament_id='tournament-qa' and team_index=0 and hole=13;")" = 37
+          test "$(sudo -u postgres psql -X -At -d "$splitpair_db" -c "select count(*) from public.elleng_pair_hole_scores where tournament_id='tournament-qa' and hole=13;")" = 2
+          rm -f "$first_pair" "$second_pair"
+          echo 'PASS: concurrent independent pair submissions produce one consistent team total.'
+          # Competing update and clear: the final team total must reflect the
+          # surviving pair records, never an intermediate stale sum.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$splitpair_db" -c "select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false); select public.elleng_test_authorized_split_pair('tournament-qa',0,14,0,9); select public.elleng_test_authorized_split_pair('tournament-qa',0,14,1,8);" >/dev/null
+          update_pair="$(mktemp)"
+          clear_pair="$(mktemp)"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$splitpair_db" -c "begin; select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false); select public.elleng_test_authorized_split_pair('tournament-qa',0,14,0,12); select pg_sleep(2); commit;" > "$update_pair" 2>&1 &
+          update_pair_pid=$!
+          sleep 0.4
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$splitpair_db" -c "select set_config('elleng.test_actor','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',false); select public.elleng_test_authorized_split_pair('tournament-qa',0,14,1,NULL);" > "$clear_pair" 2>&1
+          wait "$update_pair_pid"
+          test "$(sudo -u postgres psql -X -At -d "$splitpair_db" -c "select score from public.elleng_pair_hole_scores where tournament_id='tournament-qa' and hole=14 and pair_index=0;")" = 12
+          test "$(sudo -u postgres psql -X -At -d "$splitpair_db" -c "select count(*) from public.elleng_pair_hole_scores where tournament_id='tournament-qa' and hole=14 and pair_index=1;")" = 0
+          test "$(sudo -u postgres psql -X -At -d "$splitpair_db" -c "select count(*) from public.elleng_team_scores where tournament_id='tournament-qa' and hole=14;")" = 0
+          rm -f "$update_pair" "$clear_pair"
+          echo 'PASS: concurrent update and clear leave no stale team total.'
+          sudo -u postgres dropdb "$splitpair_db"
+          echo 'PASS: staged Split-Pair RPC completed, cleared, and denied an unauthorized actor.'
           echo 'Full Supabase Auth/RLS and two-device checks remain pending.'

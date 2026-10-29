@@ -1,0 +1,200 @@
+'use strict';
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+// Exercise actual load + subscribe code with an isolated synthetic server.
+const src=fs.readFileSync('common.js','utf8');
+const a=src.indexOf('let latestLoadRequest=0;'),b=src.indexOf('async function save()',a);
+const c=src.indexOf('function subscribe(cb)'),d=src.indexOf('function remaining()',c);
+assert.ok(a>=0&&b>a&&c>b&&d>c);
+const code=src.slice(a,b)+'\n'+src.slice(c,d)+'\nthis.connect=subscribe;this.state=()=>S;';
+const fresh=()=>({picks:[],teams:[],golfers:[],timerPaused:true});
+function start(server,sessionIsCurrent=()=>true){
+ let status,change,rendered=0,delay=false;
+ const pending=[],indicator={textContent:'',className:''},buttons=[{disabled:false}];
+ const strip={classList:{add:()=>{},remove:()=>{}}};
+ const channel={on(_kind,_filter,fn){change=fn;return this},subscribe(fn){status=fn;return this}};
+ const db={channel:()=>channel,from:()=>({select:()=>({eq:()=>({single:()=>{
+  const response={data:{state:structuredClone(server.state)},error:null};
+  return delay?new Promise(resolve=>pending.push(()=>resolve(response))):Promise.resolve(response);
+ }})})})};
+ const ctx={db,cfg:{draftId:'synthetic-only'},S:fresh(),fresh,console:{error:()=>{}},
+  document:{getElementById:id=>id==='connection'?indicator:id==='draftStatusStrip'?strip:null,
+   querySelectorAll:()=>buttons}};
+ vm.createContext(ctx);vm.runInContext(code,ctx);
+ const onRender=()=>rendered++;onRender.isCurrent=sessionIsCurrent;ctx.connect(onRender);
+ return {emit:s=>status(s),change:()=>change(),state:()=>ctx.state(),defer:x=>delay=x,
+  resolve:()=>{const next=pending.shift();assert.ok(next);next()},
+  pending:()=>pending.length,rendered:()=>rendered,indicator,buttons};
+}
+test('in-flight realtime change cannot overwrite state after disconnect',async()=>{
+ const server={state:fresh()},h=start(server);
+ await h.emit('SUBSCRIBED');
+ h.defer(true);server.state.picks.push({golfer:0,team:0});
+ const old=h.change();assert.equal(h.pending(),1);
+ await h.emit('TIMED_OUT');h.resolve();await old;
+ assert.equal(h.state().picks.length,0,'stale response must not mutate state');
+ assert.equal(h.indicator.textContent,'RECONNECTING');
+ assert.equal(h.rendered(),1);assert.equal(h.buttons[0].disabled,true,'disconnect must disable picks even if an older refresh resolves');
+ h.defer(false);await h.emit('SUBSCRIBED');
+ assert.equal(h.state().picks.length,1,'reconnect must catch up');
+ assert.equal(h.indicator.textContent,'LIVE');assert.equal(h.rendered(),2);
+});
+test('in-flight subscription catch-up cannot mutate state after disconnect',async()=>{
+ const server={state:fresh()},h=start(server);
+ server.state.picks.push({golfer:0,team:0});h.defer(true);
+ const old=h.emit('SUBSCRIBED');assert.equal(h.pending(),1);
+ await h.emit('CLOSED');h.resolve();await old;
+ assert.equal(h.state().picks.length,0,'stale catch-up must not mutate state');
+ assert.equal(h.indicator.textContent,'RECONNECTING');assert.equal(h.rendered(),0);
+ h.defer(false);server.state.picks.push({golfer:1,team:1});
+ await h.emit('SUBSCRIBED');
+ assert.equal(h.state().picks.length,2);assert.equal(h.rendered(),1);
+ assert.equal(h.indicator.textContent,'LIVE');
+});
+
+test('superseded Realtime refresh never renders an older draft response',async()=>{
+ const server={state:fresh()},h=start(server);
+ await h.emit('SUBSCRIBED');
+ h.defer(true);server.state.picks.push({golfer:0,team:0});
+ const old=h.change(),latest=h.change();
+ assert.equal(h.pending(),2);
+ h.resolve();await old;
+ assert.equal(h.rendered(),1,'superseded response must not render');
+ assert.equal(h.state().picks.length,0);
+ h.resolve();await latest;
+ assert.equal(h.rendered(),2);
+ assert.equal(h.state().picks.length,1);
+});
+
+test('superseded subscription catch-up cannot announce LIVE before a newer read',async()=>{
+ const server={state:fresh()},h=start(server);
+ h.defer(true);
+ const catchup=h.emit('SUBSCRIBED'),latest=h.change();
+ assert.equal(h.pending(),2);
+ h.resolve();await catchup;
+ assert.equal(h.indicator.textContent,'SYNCING');
+ assert.equal(h.rendered(),0);
+ h.resolve();await latest;
+ assert.equal(h.indicator.textContent,'LIVE');
+ assert.equal(h.rendered(),1);
+});
+
+test('stale refresh from prior connection cannot overwrite recovered snapshot',async()=>{
+ const server={state:fresh()},h=start(server);
+ await h.emit('SUBSCRIBED');
+ h.defer(true);
+ server.state.picks.push({golfer:0,team:0});
+ const stale=h.change();
+ assert.equal(h.pending(),1);
+ await h.emit('CHANNEL_ERROR');
+ h.defer(false);
+ server.state.picks.push({golfer:1,team:1});
+ await h.emit('SUBSCRIBED');
+ assert.equal(h.state().picks.length,2);
+ assert.equal(h.indicator.textContent,'LIVE');
+ h.resolve();await stale;
+ assert.equal(h.state().picks.length,2,'old connection response must not replace recovered state');
+ assert.equal(h.indicator.textContent,'LIVE');
+});
+
+test('failed prior-connection catch-up cannot change a newer LIVE snapshot',async()=>{
+ const server={state:fresh()},h=start(server);
+ h.defer(true);
+ server.state.picks.push({golfer:0,team:0});
+ const stale=h.emit('SUBSCRIBED');
+ assert.equal(h.pending(),1);
+ await h.emit('TIMED_OUT');
+ h.defer(false);
+ server.state.picks.push({golfer:1,team:1});
+ await h.emit('SUBSCRIBED');
+ assert.equal(h.state().picks.length,2);
+ assert.equal(h.indicator.textContent,'LIVE');
+ h.resolve();await stale;
+ assert.equal(h.state().picks.length,2);
+ assert.equal(h.indicator.textContent,'LIVE');
+});
+
+test('out-of-order refreshes after reconnect keep the newest snapshot',async()=>{
+ const server={state:fresh()},h=start(server);
+ await h.emit('SUBSCRIBED');
+ await h.emit('CHANNEL_ERROR');
+ h.defer(true);
+ server.state.picks.push({golfer:0,team:0});
+ const older=h.emit('SUBSCRIBED');
+ assert.equal(h.pending(),1);
+ server.state.picks.push({golfer:1,team:1});
+ const newer=h.change();
+ assert.equal(h.pending(),2);
+ h.resolve();await older;
+ assert.equal(h.state().picks.length,0,'superseded reconnect read cannot render');
+ assert.equal(h.indicator.textContent,'SYNCING');
+ h.resolve();await newer;
+ assert.equal(h.state().picks.length,2);
+ assert.equal(h.indicator.textContent,'LIVE');
+});
+
+test('captain session revocation fences a queued realtime read and later status events',async()=>{
+ const authorized={value:true},server={state:fresh()};
+ const h=start(server,()=>authorized.value);
+ await h.emit('SUBSCRIBED');
+ assert.equal(h.rendered(),1);
+ h.defer(true);
+ server.state.picks.push({golfer:0,team:0});
+ const stale=h.change();
+ assert.equal(h.pending(),1);
+ authorized.value=false;
+ h.indicator.textContent='SIGN IN'; // Captain revocation owns the visible status.
+ h.resolve();await stale;
+ assert.equal(h.state().picks.length,0,'revoked session must not apply an in-flight read');
+ assert.equal(h.rendered(),1,'revoked session must not render');
+ assert.equal(h.indicator.textContent,'SIGN IN','revoked status must not return to LIVE');
+ await h.emit('SUBSCRIBED');
+ await h.change();
+ assert.equal(h.pending(),0,'disposed subscription must not request more draft data');
+ assert.equal(h.indicator.textContent,'SIGN IN');
+});
+
+test('SUBSCRIBED keeps captain pick controls disabled until catch-up applies',async()=>{
+ const server={state:fresh()},h=start(server);
+ h.defer(true);
+ const connecting=h.emit('SUBSCRIBED');
+ assert.equal(h.pending(),1);
+ assert.equal(h.indicator.textContent,'SYNCING');
+ assert.equal(h.buttons[0].disabled,true,'a stale pick must not be possible during catch-up');
+ assert.equal(h.rendered(),0);
+ h.resolve();await connecting;
+ assert.equal(h.indicator.textContent,'LIVE');
+ assert.equal(h.rendered(),1,'authoritative refresh must trigger normal pick-control render');
+});
+test('reconnect disables previously enabled captain picks before catch-up completes',async()=>{
+ const server={state:fresh()},h=start(server);
+ await h.emit('SUBSCRIBED');
+ h.buttons[0].disabled=false; // A legal pick was enabled by the prior LIVE render.
+ await h.emit('CHANNEL_ERROR');
+ h.defer(true);
+ const reconnecting=h.emit('SUBSCRIBED');
+ assert.equal(h.indicator.textContent,'SYNCING');
+ assert.equal(h.buttons[0].disabled,true);
+ h.resolve();await reconnecting;
+ assert.equal(h.indicator.textContent,'LIVE');
+});
+
+test('overlapping remote picks keep captain controls frozen until newest snapshot',async()=>{
+ const server={state:fresh()},h=start(server);
+ await h.emit('SUBSCRIBED');
+ h.defer(true);
+ server.state.picks.push({golfer:0,team:0});
+ const first=h.change();
+ assert.equal(h.buttons[0].disabled,true,'first remote pick must freeze old choices');
+ server.state.picks.push({golfer:1,team:1});
+ const second=h.change();
+ assert.equal(h.pending(),2);
+ h.resolve();await first;
+ assert.equal(h.rendered(),1,'stale first response must not redraw');
+ assert.equal(h.buttons[0].disabled,true,'superseded response must not reopen stale choices');
+ h.resolve();await second;
+ assert.equal(h.state().picks.length,2,'newest authoritative state must win');
+ assert.equal(h.rendered(),2);
+});

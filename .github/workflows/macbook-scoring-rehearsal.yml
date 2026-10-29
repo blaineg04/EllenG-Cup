@@ -1,0 +1,74 @@
+name: MacBook isolated scoring rehearsal
+on:
+  push:
+    branches: ['development/nov20-release-reconciliation-20261026']
+    paths:
+      - '.github/workflows/macbook-scoring-rehearsal.yml'
+      - 'tests/visual/**'
+      - 'tests/nov20-production-score-integrity.test.cjs'
+      - 'tests/alternate-scoring-validation.test.cjs'
+      - 'tests/split-pair-atomic-contract.test.cjs'
+      - 'tests/gator-hole-variable-teams.test.cjs'
+      - 'tests/cross-page-points-parity.test.cjs'
+      - 'tests/stored-score-completion.test.cjs'
+      - 'tests/acceptance/score-save-format-guard.test.cjs'
+      - 'tests/acceptance/commissioner-format-change-guard.test.cjs'
+      - 'tests/acceptance/broadcast-fullscreen-race.test.cjs'
+      - 'tests/draft-two-client-simulation.test.cjs'
+      - 'tests/realtime-client-reconnect.test.cjs'
+      - 'tests/draft-reconnect.test.cjs'
+      - 'tests/integration/isolated-auth-scoring-safety.test.cjs'
+      - 'scoring.html'
+  pull_request:
+    paths:
+      - '.github/workflows/macbook-scoring-rehearsal.yml'
+      - 'tests/visual/**'
+      - 'tests/nov20-production-score-integrity.test.cjs'
+      - 'tests/alternate-scoring-validation.test.cjs'
+      - 'scoring.html'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: elleng-mac-scoring-rehearsal
+  cancel-in-progress: false
+jobs:
+  isolated-macbook-scoring:
+    if: >-
+      github.repository == 'blaineg04/EllenG-Cup' &&
+      ((github.event_name != 'pull_request' && github.ref == 'refs/heads/development/nov20-release-reconciliation-20261026') ||
+       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'development/nov20-release-reconciliation-20261026'))
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify isolated runner and Node
+        run: |
+          node --version
+          uname -s
+          test "$(uname -s)" = Darwin
+      - name: Install pinned Playwright dependencies
+        run: npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
+      - name: Run scoring and visual safety contracts
+        run: node --test tests/nov20-production-score-integrity.test.cjs tests/alternate-scoring-validation.test.cjs tests/gator-hole-variable-teams.test.cjs tests/cross-page-points-parity.test.cjs tests/stored-score-completion.test.cjs tests/split-pair-atomic-contract.test.cjs tests/draft-two-client-simulation.test.cjs tests/realtime-client-reconnect.test.cjs tests/draft-reconnect.test.cjs tests/integration/isolated-auth-scoring-safety.test.cjs tests/visual/safety.test.cjs tests/acceptance/score-save-format-guard.test.cjs tests/acceptance/commissioner-format-change-guard.test.cjs tests/acceptance/broadcast-fullscreen-race.test.cjs
+      - name: Install Chromium without Docker
+        run: tests/visual/node_modules/.bin/playwright install chromium
+      - name: Run local-only isolated seven-width browser rehearsal
+        timeout-minutes: 10
+        env:
+          CI: 'true'
+        run: node tests/visual/run.cjs
+      - name: Verify browser report represents real isolated captures
+        if: success()
+        run: |
+          node -e 'const fs=require("node:fs");const r=JSON.parse(fs.readFileSync("visual-results/report.json","utf8"));if(r.mode!=="isolated-fixture"||r.checks.length<7||r.errors.length||r.checks.some(x=>x.horizontalOverflow||x.outsideControls?.length||x.overlappingControls?.length||x.clippedText?.length))process.exit(1);console.log("Verified isolated browser report:",r.checks.length,"views, 0 errors");'
+      - name: Save isolated browser rehearsal report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: elleng-macbook-isolated-scoring-${{ github.sha }}
+          path: visual-results/
+          retention-days: 2
+          if-no-files-found: warn

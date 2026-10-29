@@ -1,0 +1,268 @@
+name: EllenG scoring branch reconciliation checks
+on:
+  push:
+    branches: ['development/nov20-release-reconciliation-20261026']
+    paths:
+      - 'tests/**'
+      - 'scoring.html'
+      - 'admin.html'
+      - 'captain.html'
+      - 'common.js'
+      - 'config.js'
+      - 'event-rsvp-client.js'
+      - 'event-rsvp-eligibility.js'
+      - 'commissioner-rsvp-preview.js'
+      - '.github/workflows/elleng-reconciliation-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  existing-release-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve existing scoring and Shamble format
+        run: |
+          node --test tests/nov20-production-score-integrity.test.cjs tests/shamble-format-characterization.test.cjs tests/shamble-single-device-save-lock.test.cjs tests/atomic-shamble-prototype-safety.test.cjs
+  incoming-scoring-compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Report incoming individual-points specification conflicts (advisory only)
+        # The incoming suite assumes individual points are summed in Shamble, while EllenG Cup
+        # uses the lowest completed golfer score as the team's official score.
+        # Keep results visible; do not rewrite product rules just to clear this diagnostic.
+        continue-on-error: true
+        run: node --test tests/scoring-branch-compatibility.test.cjs
+  cross-device-race-characterization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Block integration when concurrent Shamble saves corrupt derived team totals
+        run: node --test tests/shamble-cross-device-race-characterization.test.cjs
+  atomic-prototype-fixture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: isolated-test-only
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Exercise synthetic atomic prototype and roll back everything
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/acceptance/atomic-shamble-fixture.sql
+  atomic-concurrency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify transaction serialization across independent database clients
+        run: bash tests/acceptance/atomic-shamble-concurrent-sessions.sh
+  atomic-client-adapter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify single-call fail-closed Shamble RPC adapter
+        run: node --test tests/acceptance/atomic-shamble-client-adapter.test.cjs
+
+  atomic-auth-security-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Block unsafe atomic RPC promotion without authenticated ownership and server-side roster
+        run: node --test tests/acceptance/atomic-shamble-auth-security.test.cjs
+
+  authorized-proposal-static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate staged authorization proposal without database access
+        run: node --test tests/acceptance/authorized-shamble-proposal.test.cjs
+  authorized-sql-fixture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: isolated-test-only
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Exercise authorized RPC using synthetic identities in disposable PostgreSQL
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/acceptance/authorized-shamble-fixture.sql
+  atomic-browser-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require single browser atomic RPC and no unsafe fallback
+        run: node --test tests/acceptance/shamble-browser-atomic-contract.test.cjs
+  atomic-real-role-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: isolated-test-only
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Execute atomic RPC under actual PostgreSQL roles and RLS
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/acceptance/authorized-shamble-role-rls-fixture.sql
+
+  draft-rehearsal-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail closed on reconnect, verify shared draft state and captain pick safety
+        run: |
+          node --test tests/draft-reconnect.test.cjs tests/draft-subscribe-behavior.test.cjs tests/draft-two-client-simulation.test.cjs tests/draft-disconnect-state-fence.test.cjs tests/draft-timer-behavior.test.cjs tests/captain-pick-inflight.test.cjs tests/captain-pick-live-eligibility.test.cjs tests/realtime-client-reconnect.test.cjs tests/commissioner-session-fence.test.cjs tests/commissioner-setup-preview.test.cjs tests/draft-roster-plan.test.cjs tests/rsvp-draft-reconciliation.test.cjs tests/event-rsvp-roster.test.cjs tests/commissioner-rsvp-preview.test.cjs tests/acceptance/scoring-script-load-order.test.cjs tests/rsvp-session-read-fence.test.cjs
+
+  release-readiness-summary:
+    name: Nonproduction readiness summary
+    if: ${{ always() }}
+    needs: [existing-release-regressions, cross-device-race-characterization, atomic-prototype-fixture, atomic-concurrency, atomic-client-adapter, authorized-proposal-static, atomic-auth-security-gate, authorized-sql-fixture, atomic-browser-contract, atomic-real-role-rls, draft-rehearsal-regressions]
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      J0: ${{ needs.existing-release-regressions.result }}
+      J1: ${{ needs.cross-device-race-characterization.result }}
+      J2: ${{ needs.atomic-prototype-fixture.result }}
+      J3: ${{ needs.atomic-concurrency.result }}
+      J4: ${{ needs.atomic-client-adapter.result }}
+      J5: ${{ needs.authorized-proposal-static.result }}
+      J6: ${{ needs.atomic-auth-security-gate.result }}
+      J7: ${{ needs.authorized-sql-fixture.result }}
+      J8: ${{ needs.atomic-browser-contract.result }}
+      J9: ${{ needs.atomic-real-role-rls.result }}
+      J10: ${{ needs.draft-rehearsal-regressions.result }}
+    steps:
+      - name: Publish readiness evidence and outstanding gates
+        shell: bash
+        run: |
+          {
+            echo "## EllenG Cup — isolated scoring readiness"
+            echo ""
+            echo "Commit: \`$GITHUB_SHA\`"
+            echo ""
+            echo "| Required check | Result |"
+            echo "|---|---|"
+            echo "| existing-release-regressions | $J0 |"
+            echo "| cross-device-race-characterization | $J1 |"
+            echo "| atomic-prototype-fixture | $J2 |"
+            echo "| atomic-concurrency | $J3 |"
+            echo "| atomic-client-adapter | $J4 |"
+            echo "| authorized-proposal-static | $J5 |"
+            echo "| atomic-auth-security-gate | $J6 |"
+            echo "| authorized-sql-fixture | $J7 |"
+            echo "| atomic-browser-contract | $J8 |"
+            echo "| atomic-real-role-rls | $J9 |"
+            echo "| draft-rehearsal-regressions | $J10 |"
+            echo ""
+            echo "### Still required before any production approval"
+            echo "- Authenticated Supabase/PostgREST testing against a separate nonproduction environment"
+            echo "- Confirm existing production-equivalent RLS and grants are appropriate"
+            echo "- Verify genuine two-device score sync and draft/score integration"
+            echo "- Backup, rollback, UI acceptance and explicit owner deployment approval"
+            echo ""
+            echo "**This job does not deploy, merge, access Supabase or change production.**"
+          } >> "$GITHUB_STEP_SUMMARY"

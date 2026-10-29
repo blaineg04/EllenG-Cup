@@ -708,6 +708,9 @@ input,select,textarea{
 .slot:last-child,.roster-slot:last-child{
   border-bottom:0!important;
 }
+.team .slot{
+  background:#fffdfa!important;
+}
 .slot strong,.roster-slot strong{
   color:#102a3b!important;
 }
@@ -795,14 +798,69 @@ function setDraftConnectionStatus(state,label){
   if(conn) conn.textContent=label;
 }
 
-(async()=>{
- try{
-   await load();setDraftConnectionStatus("connecting","CONNECTING");render();subscribe(render);setInterval(draw,500);
- }catch(e){
-   console.error("Draft load error:",e);
-   setDraftConnectionStatus("offline","OFFLINE");
-   document.getElementById("onclock").textContent="Draft connection error";
-   document.getElementById("meta").textContent=e?.message||"Unable to load the live draft.";
+// Retire spectator subscriptions while offline or hidden. A fresh SUBSCRIBED
+// channel must fetch the authoritative draft before advertising LIVE.
+let viewerChannel=null,viewerEpoch=0,viewerClockStarted=false;
+function viewerMaySync(){
+ return document.visibilityState!=="hidden"&&
+  (typeof navigator==="undefined"||navigator.onLine!==false);
+}
+function stopViewerSubscription(label){
+ viewerEpoch++;
+ const old=viewerChannel;viewerChannel=null;
+ if(old&&typeof old.unsubscribe==="function"){
+  try{Promise.resolve(old.unsubscribe()).catch(e=>console.error("Draft viewer unsubscribe failed",e));}
+  catch(e){console.error("Draft viewer unsubscribe failed",e)}
  }
+ setDraftConnectionStatus("offline",label);
+}
+function connectViewer(){
+ if(!viewerMaySync()){
+  stopViewerSubscription(document.visibilityState==="hidden"?"PAUSED":"OFFLINE");
+  return;
+ }
+ if(viewerChannel)return;
+ const epoch=++viewerEpoch;
+ const renderForViewer=()=>{if(renderForViewer.isCurrent())render()};
+ renderForViewer.isCurrent=()=>epoch===viewerEpoch&&viewerMaySync();
+ try{
+  setDraftConnectionStatus("connecting","CONNECTING");
+  viewerChannel=subscribe(renderForViewer);
+  if(!viewerClockStarted){viewerClockStarted=true;setInterval(draw,500);}
+ }catch(e){
+  console.error("Draft subscription error:",e);
+  stopViewerSubscription("OFFLINE");
+  document.getElementById("onclock").textContent="Draft connection error";
+  document.getElementById("meta").textContent="Unable to subscribe to the live draft. Reload to retry after reconnecting.";
+ }
+}
+if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){
+ window.addEventListener("offline",()=>stopViewerSubscription("OFFLINE"));
+ window.addEventListener("online",connectViewer);
+}
+if(typeof document.addEventListener==="function"){
+ document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="hidden")stopViewerSubscription("PAUSED");
+  else connectViewer();
+ });
+}
+(async()=>{
+ // A transient first-read failure must not strand the viewer: Realtime catch-up retries.
+ if(viewerMaySync()){
+  const initialEpoch=viewerEpoch;
+  try{
+   let applied=false;
+   await load(()=>initialEpoch===viewerEpoch&&viewerMaySync(),()=>{applied=true});
+   if(applied&&initialEpoch===viewerEpoch&&viewerMaySync())render();
+  }catch(e){
+   if(initialEpoch===viewerEpoch&&viewerMaySync()){
+    console.error("Draft load error:",e);
+    setDraftConnectionStatus("offline","SYNC ERROR");
+    document.getElementById("onclock").textContent="Draft connection error";
+    document.getElementById("meta").textContent=e?.message||"Unable to load the live draft.";
+   }
+  }
+ }
+ connectViewer();
 })();
 </script></body></html>

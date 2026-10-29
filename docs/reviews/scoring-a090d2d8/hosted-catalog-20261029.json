@@ -1,0 +1,678 @@
+{
+  "tables": [
+    {
+      "acl": "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,anon=arwd/postgres,authenticated=arwd/postgres}",
+      "rls": true,
+      "name": "elleng_drafts",
+      "owner": "postgres",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "name": "owner_id",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "name": "state",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "not_null": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "not_null": true
+        },
+        {
+          "name": "tournament_name",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "name": "tournament_date",
+          "type": "date",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "default": "'setup'::text",
+          "not_null": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "not_null": true
+        }
+      ],
+      "policies": [
+        {
+          "cmd": "INSERT",
+          "name": "elleng_owner_insert",
+          "qual": null,
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": "(( SELECT auth.uid() AS uid) = owner_id)"
+        },
+        {
+          "cmd": "INSERT",
+          "name": "authenticated insert",
+          "qual": null,
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": "(( SELECT auth.uid() AS uid) = owner_id)"
+        },
+        {
+          "cmd": "UPDATE",
+          "name": "elleng_owner_update",
+          "qual": "(( SELECT auth.uid() AS uid) = owner_id)",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": "(( SELECT auth.uid() AS uid) = owner_id)"
+        },
+        {
+          "cmd": "SELECT",
+          "name": "authenticated can read draft",
+          "qual": "true",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": null
+        }
+      ],
+      "triggers": null,
+      "force_rls": false,
+      "constraints": [
+        {
+          "name": "elleng_drafts_owner_id_fkey",
+          "definition": "FOREIGN KEY (owner_id) REFERENCES auth.users(id)"
+        },
+        {
+          "name": "elleng_drafts_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "elleng_drafts_status_check",
+          "definition": "CHECK ((status = ANY (ARRAY['setup'::text, 'live'::text, 'complete'::text, 'archived'::text])))"
+        }
+      ]
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+      "rls": true,
+      "name": "elleng_pair_hole_scores",
+      "owner": "postgres",
+      "columns": [
+        {
+          "name": "tournament_id",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "name": "hole",
+          "type": "integer",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "name": "team_index",
+          "type": "integer",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "name": "pair_index",
+          "type": "integer",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "name": "score",
+          "type": "integer",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "name": "updated_by",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "not_null": true
+        }
+      ],
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "name": "pair_authenticated_read",
+          "qual": "true",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": null
+        },
+        {
+          "cmd": "INSERT",
+          "name": "pair_team_insert",
+          "qual": null,
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": "((EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_drafts d ON ((d.id = t.draft_id)))\n  WHERE ((t.id = elleng_pair_hole_scores.tournament_id) AND (d.owner_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_captains c ON ((c.draft_id = t.draft_id)))\n  WHERE ((t.id = elleng_pair_hole_scores.tournament_id) AND (c.user_id = auth.uid()) AND (c.team_index = elleng_pair_hole_scores.team_index)))))"
+        },
+        {
+          "cmd": "UPDATE",
+          "name": "pair_team_update",
+          "qual": "((EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_drafts d ON ((d.id = t.draft_id)))\n  WHERE ((t.id = elleng_pair_hole_scores.tournament_id) AND (d.owner_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_captains c ON ((c.draft_id = t.draft_id)))\n  WHERE ((t.id = elleng_pair_hole_scores.tournament_id) AND (c.user_id = auth.uid()) AND (c.team_index = elleng_pair_hole_scores.team_index)))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": "((EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_drafts d ON ((d.id = t.draft_id)))\n  WHERE ((t.id = elleng_pair_hole_scores.tournament_id) AND (d.owner_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_captains c ON ((c.draft_id = t.draft_id)))\n  WHERE ((t.id = elleng_pair_hole_scores.tournament_id) AND (c.user_id = auth.uid()) AND (c.team_index = elleng_pair_hole_scores.team_index)))))"
+        },
+        {
+          "cmd": "DELETE",
+          "name": "pair_team_delete",
+          "qual": "((EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_drafts d ON ((d.id = t.draft_id)))\n  WHERE ((t.id = elleng_pair_hole_scores.tournament_id) AND (d.owner_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_captains c ON ((c.draft_id = t.draft_id)))\n  WHERE ((t.id = elleng_pair_hole_scores.tournament_id) AND (c.user_id = auth.uid()) AND (c.team_index = elleng_pair_hole_scores.team_index)))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": null
+        },
+        {
+          "cmd": "INSERT",
+          "name": "active live pair scores insert guard",
+          "qual": null,
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "RESTRICTIVE",
+          "with_check": "(EXISTS ( SELECT 1\n   FROM elleng_tournaments t\n  WHERE ((t.id = elleng_pair_hole_scores.tournament_id) AND (elleng_pair_hole_scores.team_index >= 0) AND (elleng_pair_hole_scores.team_index < t.team_count) AND (t.status = ANY (ARRAY['setup'::text, 'live'::text])))))"
+        },
+        {
+          "cmd": "UPDATE",
+          "name": "active live pair scores update guard",
+          "qual": "(EXISTS ( SELECT 1\n   FROM elleng_tournaments t\n  WHERE ((t.id = elleng_pair_hole_scores.tournament_id) AND (elleng_pair_hole_scores.team_index >= 0) AND (elleng_pair_hole_scores.team_index < t.team_count) AND (t.status = ANY (ARRAY['setup'::text, 'live'::text])))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "RESTRICTIVE",
+          "with_check": "(EXISTS ( SELECT 1\n   FROM elleng_tournaments t\n  WHERE ((t.id = elleng_pair_hole_scores.tournament_id) AND (elleng_pair_hole_scores.team_index >= 0) AND (elleng_pair_hole_scores.team_index < t.team_count) AND (t.status = ANY (ARRAY['setup'::text, 'live'::text])))))"
+        },
+        {
+          "cmd": "DELETE",
+          "name": "active live pair scores delete guard",
+          "qual": "(EXISTS ( SELECT 1\n   FROM elleng_tournaments t\n  WHERE ((t.id = elleng_pair_hole_scores.tournament_id) AND (elleng_pair_hole_scores.team_index >= 0) AND (elleng_pair_hole_scores.team_index < t.team_count) AND (t.status = ANY (ARRAY['setup'::text, 'live'::text])))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "RESTRICTIVE",
+          "with_check": null
+        }
+      ],
+      "triggers": null,
+      "force_rls": false,
+      "constraints": [
+        {
+          "name": "elleng_pair_hole_scores_hole_check",
+          "definition": "CHECK (((hole >= 1) AND (hole <= 18)))"
+        },
+        {
+          "name": "elleng_pair_hole_scores_pair_index_check",
+          "definition": "CHECK ((pair_index = ANY (ARRAY[0, 1])))"
+        },
+        {
+          "name": "elleng_pair_hole_scores_pkey",
+          "definition": "PRIMARY KEY (tournament_id, hole, team_index, pair_index)"
+        },
+        {
+          "name": "elleng_pair_hole_scores_score_check",
+          "definition": "CHECK (((score >= 1) AND (score <= 20)))"
+        },
+        {
+          "name": "elleng_pair_hole_scores_team_index_check",
+          "definition": "CHECK (((team_index >= 0) AND (team_index <= 8)))"
+        }
+      ]
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+      "rls": true,
+      "name": "elleng_player_hole_scores",
+      "owner": "postgres",
+      "columns": [
+        {
+          "name": "tournament_id",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "name": "hole",
+          "type": "integer",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "name": "team_index",
+          "type": "integer",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "name": "golfer_index",
+          "type": "integer",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "name": "score",
+          "type": "integer",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "name": "updated_by",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "not_null": true
+        }
+      ],
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "name": "shamble_authenticated_read",
+          "qual": "true",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": null
+        },
+        {
+          "cmd": "INSERT",
+          "name": "shamble_team_insert",
+          "qual": null,
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": "((EXISTS ( SELECT 1\n   FROM elleng_drafts d\n  WHERE ((d.id = 'elleng-cup'::text) AND (d.owner_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM elleng_captains c\n  WHERE ((c.draft_id = 'elleng-cup'::text) AND (c.user_id = auth.uid()) AND (c.team_index = elleng_player_hole_scores.team_index)))))"
+        },
+        {
+          "cmd": "UPDATE",
+          "name": "shamble_team_update",
+          "qual": "((EXISTS ( SELECT 1\n   FROM elleng_drafts d\n  WHERE ((d.id = 'elleng-cup'::text) AND (d.owner_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM elleng_captains c\n  WHERE ((c.draft_id = 'elleng-cup'::text) AND (c.user_id = auth.uid()) AND (c.team_index = elleng_player_hole_scores.team_index)))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": "((EXISTS ( SELECT 1\n   FROM elleng_drafts d\n  WHERE ((d.id = 'elleng-cup'::text) AND (d.owner_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM elleng_captains c\n  WHERE ((c.draft_id = 'elleng-cup'::text) AND (c.user_id = auth.uid()) AND (c.team_index = elleng_player_hole_scores.team_index)))))"
+        },
+        {
+          "cmd": "DELETE",
+          "name": "shamble_team_delete",
+          "qual": "((EXISTS ( SELECT 1\n   FROM elleng_drafts d\n  WHERE ((d.id = 'elleng-cup'::text) AND (d.owner_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM elleng_captains c\n  WHERE ((c.draft_id = 'elleng-cup'::text) AND (c.user_id = auth.uid()) AND (c.team_index = elleng_player_hole_scores.team_index)))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": null
+        },
+        {
+          "cmd": "INSERT",
+          "name": "active live player scores insert guard",
+          "qual": null,
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "RESTRICTIVE",
+          "with_check": "(EXISTS ( SELECT 1\n   FROM elleng_tournaments t\n  WHERE ((t.id = elleng_player_hole_scores.tournament_id) AND (elleng_player_hole_scores.team_index >= 0) AND (elleng_player_hole_scores.team_index < t.team_count) AND (t.status = ANY (ARRAY['setup'::text, 'live'::text])))))"
+        },
+        {
+          "cmd": "UPDATE",
+          "name": "active live player scores update guard",
+          "qual": "(EXISTS ( SELECT 1\n   FROM elleng_tournaments t\n  WHERE ((t.id = elleng_player_hole_scores.tournament_id) AND (elleng_player_hole_scores.team_index >= 0) AND (elleng_player_hole_scores.team_index < t.team_count) AND (t.status = ANY (ARRAY['setup'::text, 'live'::text])))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "RESTRICTIVE",
+          "with_check": "(EXISTS ( SELECT 1\n   FROM elleng_tournaments t\n  WHERE ((t.id = elleng_player_hole_scores.tournament_id) AND (elleng_player_hole_scores.team_index >= 0) AND (elleng_player_hole_scores.team_index < t.team_count) AND (t.status = ANY (ARRAY['setup'::text, 'live'::text])))))"
+        },
+        {
+          "cmd": "DELETE",
+          "name": "active live player scores delete guard",
+          "qual": "(EXISTS ( SELECT 1\n   FROM elleng_tournaments t\n  WHERE ((t.id = elleng_player_hole_scores.tournament_id) AND (elleng_player_hole_scores.team_index >= 0) AND (elleng_player_hole_scores.team_index < t.team_count) AND (t.status = ANY (ARRAY['setup'::text, 'live'::text])))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "RESTRICTIVE",
+          "with_check": null
+        }
+      ],
+      "triggers": null,
+      "force_rls": false,
+      "constraints": [
+        {
+          "name": "elleng_player_hole_scores_hole_check",
+          "definition": "CHECK (((hole >= 1) AND (hole <= 18)))"
+        },
+        {
+          "name": "elleng_player_hole_scores_pkey",
+          "definition": "PRIMARY KEY (tournament_id, hole, team_index, golfer_index)"
+        },
+        {
+          "name": "elleng_player_hole_scores_score_check",
+          "definition": "CHECK (((score >= 1) AND (score <= 20)))"
+        }
+      ]
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+      "rls": true,
+      "name": "elleng_team_scores",
+      "owner": "postgres",
+      "columns": [
+        {
+          "name": "tournament_id",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "name": "team_index",
+          "type": "integer",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "name": "hole",
+          "type": "integer",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "name": "score",
+          "type": "integer",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "name": "updated_by",
+          "type": "uuid",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "not_null": true
+        }
+      ],
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "name": "authenticated can read all scores",
+          "qual": "true",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": null
+        },
+        {
+          "cmd": "INSERT",
+          "name": "captain or commissioner inserts own team scores",
+          "qual": null,
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": "((EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_drafts d ON ((d.id = t.draft_id)))\n  WHERE ((t.id = elleng_team_scores.tournament_id) AND (d.owner_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_captains c ON ((c.draft_id = t.draft_id)))\n  WHERE ((t.id = elleng_team_scores.tournament_id) AND (c.user_id = auth.uid()) AND (c.team_index = elleng_team_scores.team_index)))))"
+        },
+        {
+          "cmd": "UPDATE",
+          "name": "captain or commissioner updates own team scores",
+          "qual": "((EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_drafts d ON ((d.id = t.draft_id)))\n  WHERE ((t.id = elleng_team_scores.tournament_id) AND (d.owner_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_captains c ON ((c.draft_id = t.draft_id)))\n  WHERE ((t.id = elleng_team_scores.tournament_id) AND (c.user_id = auth.uid()) AND (c.team_index = elleng_team_scores.team_index)))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": "((EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_drafts d ON ((d.id = t.draft_id)))\n  WHERE ((t.id = elleng_team_scores.tournament_id) AND (d.owner_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_captains c ON ((c.draft_id = t.draft_id)))\n  WHERE ((t.id = elleng_team_scores.tournament_id) AND (c.user_id = auth.uid()) AND (c.team_index = elleng_team_scores.team_index)))))"
+        },
+        {
+          "cmd": "DELETE",
+          "name": "captain or commissioner deletes own team scores",
+          "qual": "((EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_drafts d ON ((d.id = t.draft_id)))\n  WHERE ((t.id = elleng_team_scores.tournament_id) AND (d.owner_id = auth.uid())))) OR (EXISTS ( SELECT 1\n   FROM (elleng_tournaments t\n     JOIN elleng_captains c ON ((c.draft_id = t.draft_id)))\n  WHERE ((t.id = elleng_team_scores.tournament_id) AND (c.user_id = auth.uid()) AND (c.team_index = elleng_team_scores.team_index)))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": null
+        },
+        {
+          "cmd": "INSERT",
+          "name": "active live team insert guard",
+          "qual": null,
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "RESTRICTIVE",
+          "with_check": "(EXISTS ( SELECT 1\n   FROM elleng_tournaments t\n  WHERE ((t.id = elleng_team_scores.tournament_id) AND (elleng_team_scores.team_index >= 0) AND (elleng_team_scores.team_index < t.team_count) AND (t.status = ANY (ARRAY['setup'::text, 'live'::text])))))"
+        },
+        {
+          "cmd": "UPDATE",
+          "name": "active live team update guard",
+          "qual": "(EXISTS ( SELECT 1\n   FROM elleng_tournaments t\n  WHERE ((t.id = elleng_team_scores.tournament_id) AND (elleng_team_scores.team_index >= 0) AND (elleng_team_scores.team_index < t.team_count) AND (t.status = ANY (ARRAY['setup'::text, 'live'::text])))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "RESTRICTIVE",
+          "with_check": "(EXISTS ( SELECT 1\n   FROM elleng_tournaments t\n  WHERE ((t.id = elleng_team_scores.tournament_id) AND (elleng_team_scores.team_index >= 0) AND (elleng_team_scores.team_index < t.team_count) AND (t.status = ANY (ARRAY['setup'::text, 'live'::text])))))"
+        },
+        {
+          "cmd": "DELETE",
+          "name": "active live team delete guard",
+          "qual": "(EXISTS ( SELECT 1\n   FROM elleng_tournaments t\n  WHERE ((t.id = elleng_team_scores.tournament_id) AND (elleng_team_scores.team_index >= 0) AND (elleng_team_scores.team_index < t.team_count) AND (t.status = ANY (ARRAY['setup'::text, 'live'::text])))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "RESTRICTIVE",
+          "with_check": null
+        }
+      ],
+      "triggers": null,
+      "force_rls": false,
+      "constraints": [
+        {
+          "name": "elleng_team_scores_hole_check",
+          "definition": "CHECK (((hole >= 1) AND (hole <= 18)))"
+        },
+        {
+          "name": "elleng_team_scores_pkey",
+          "definition": "PRIMARY KEY (tournament_id, team_index, hole)"
+        },
+        {
+          "name": "elleng_team_scores_score_check",
+          "definition": "CHECK (((score >= 1) AND (score <= 20)))"
+        },
+        {
+          "name": "elleng_team_scores_team_index_check",
+          "definition": "CHECK (((team_index >= 0) AND (team_index <= 8)))"
+        },
+        {
+          "name": "elleng_team_scores_tournament_id_fkey",
+          "definition": "FOREIGN KEY (tournament_id) REFERENCES elleng_tournaments(id) ON DELETE CASCADE"
+        },
+        {
+          "name": "elleng_team_scores_updated_by_fkey",
+          "definition": "FOREIGN KEY (updated_by) REFERENCES auth.users(id)"
+        }
+      ]
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+      "rls": true,
+      "name": "elleng_tournaments",
+      "owner": "postgres",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "default": null,
+          "not_null": true
+        },
+        {
+          "name": "draft_id",
+          "type": "text",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "default": "'EllenG Cup'::text",
+          "not_null": true
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "default": "'setup'::text",
+          "not_null": true
+        },
+        {
+          "name": "gator_hole",
+          "type": "integer",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "name": "gator_revealed",
+          "type": "boolean",
+          "default": "false",
+          "not_null": true
+        },
+        {
+          "name": "final_cargo_team",
+          "type": "integer",
+          "default": null,
+          "not_null": false
+        },
+        {
+          "name": "final_cargo_points",
+          "type": "numeric",
+          "default": "6",
+          "not_null": true
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "not_null": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "not_null": true
+        },
+        {
+          "name": "team_count",
+          "type": "integer",
+          "default": "6",
+          "not_null": true
+        },
+        {
+          "name": "hole_pars",
+          "type": "jsonb",
+          "default": "'[4, 4, 3, 4, 5, 4, 3, 4, 5, 4, 4, 3, 5, 4, 4, 3, 5, 4]'::jsonb",
+          "not_null": true
+        }
+      ],
+      "policies": [
+        {
+          "cmd": "SELECT",
+          "name": "authenticated can read tournaments",
+          "qual": "true",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": null
+        },
+        {
+          "cmd": "ALL",
+          "name": "draft owner manages tournaments",
+          "qual": "(EXISTS ( SELECT 1\n   FROM elleng_drafts d\n  WHERE ((d.id = elleng_tournaments.draft_id) AND (d.owner_id = auth.uid()))))",
+          "roles": [
+            "authenticated"
+          ],
+          "permissive": "PERMISSIVE",
+          "with_check": "(EXISTS ( SELECT 1\n   FROM elleng_drafts d\n  WHERE ((d.id = elleng_tournaments.draft_id) AND (d.owner_id = auth.uid()))))"
+        }
+      ],
+      "triggers": null,
+      "force_rls": false,
+      "constraints": [
+        {
+          "name": "elleng_tournaments_draft_id_fkey",
+          "definition": "FOREIGN KEY (draft_id) REFERENCES elleng_drafts(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "elleng_tournaments_final_cargo_team_check",
+          "definition": "CHECK (((final_cargo_team IS NULL) OR ((final_cargo_team >= 0) AND (final_cargo_team <= 8))))"
+        },
+        {
+          "name": "elleng_tournaments_gator_hole_check",
+          "definition": "CHECK (((gator_hole IS NULL) OR ((gator_hole >= 1) AND (gator_hole <= 18))))"
+        },
+        {
+          "name": "elleng_tournaments_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "elleng_tournaments_status_check",
+          "definition": "CHECK ((status = ANY (ARRAY['setup'::text, 'live'::text, 'complete'::text, 'archived'::text])))"
+        },
+        {
+          "name": "elleng_tournaments_team_count_check",
+          "definition": "CHECK (((team_count >= 2) AND (team_count <= 9)))"
+        }
+      ]
+    }
+  ],
+  "captured_at": "2026-10-29T20:22:50.262979+00:00",
+  "database_version": "17.6"
+}

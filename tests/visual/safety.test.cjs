@@ -29,7 +29,7 @@ function adminAccess({user={id:'owner'},data={owner_id:'owner',state:{}},error=n
  const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{style:{display:id==='adminApp'?'none':'block'},textContent:''});return nodes.get(id)};
  let rendered=0;
  const query={select(){return this},eq(){return this},maybeSingle:async()=>{if(rejectLookup)throw new Error("Network request rejected");return {data,error}}};
- const context={db:{auth:{getUser:async()=>({data:{user},error:authError})},from:()=>query},cfg:{draftId:'test'},document:{getElementById:node},alert(){},fresh:()=>({}),S:{},setupRender(){rendered++},subscribe(){},tick:1};
+ const context={db:{auth:{getUser:async()=>({data:{user},error:authError})},from:()=>query},cfg:{draftId:'test'},document:{getElementById:node},alert(){},fresh:()=>({}),S:{},setupRender(){rendered++},subscribe(){},stopCommissionerSubscription(){},commissionerAuthEpoch:0,commissionerOpenId:0,commissionerUserId:null,commissionerChannel:null,tick:1};
  vm.runInNewContext(html.slice(start,end),context);
  return {run:()=>context.openAdmin(),node,rendered:()=>rendered};
 }
@@ -52,7 +52,7 @@ function captainAccess(data){
  const start=html.indexOf('async function whoami(){'),end=html.indexOf('let draftSoundEnabled',start);
  const message={textContent:''};
  const query={select(){return this},eq(){return this},single:async()=>({data,error:null})};
- const context={db:{auth:{getUser:async()=>({data:{user:{id:'player'}}})},from:()=>query},cfg:{draftId:'test'},document:{getElementById:()=>message},myTeam:null};
+ const context={db:{auth:{getUser:async()=>({data:{user:{id:'player'}}})},from:()=>query},cfg:{draftId:'test'},document:{getElementById:()=>message},myTeam:null,captainAuthEpoch:0,captainRoleLookupId:0,captainUserId:null};
  vm.runInNewContext(html.slice(start,end),context);return {run:()=>context.whoami(),message};
 }
 test('missing or malformed captain assignments show guidance without opening draft controls',async()=>{
@@ -82,7 +82,7 @@ function signInPage(kind,{email='visual@example.invalid',password='test-only-pas
  const start=html.indexOf(`document.getElementById("${buttonId}").onclick=`),end=html.indexOf(kind==='admin'?'(async()=>':'document.getElementById("soundToggle").onclick',start);
  const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{value:id==='email'?email:id===passwordId?password:'',textContent:id===buttonId?'Sign In':'',disabled:false,style:{}});return nodes.get(id)};
  let requests=0,opened=0;
- const context={document:{getElementById:node},db:{auth:{signInWithPassword:async args=>{requests++;return authenticate(args)}}},openAdmin:async()=>{opened++},whoami:async()=>true,load:async()=>{},render(){opened++},subscribe(){},setInterval(){},draw(){},console:{error(){}}};
+ const context={document:{getElementById:node},db:{auth:{signInWithPassword:async args=>{requests++;return authenticate(args)}}},openAdmin:async()=>{opened++},whoami:async()=>{context.captainUserId='visual-captain';return true},load:async(guard,onApplied)=>{if(guard())onApplied?.()},render(){opened++},assertCaptainTeamPresent(){},startCaptainDrawTimer(){},subscribe(){},startCaptainSubscription(){},setInterval(){},draw(){},commissionerAuthEpoch:0,commissionerOpenId:0,captainAuthEpoch:0,captainBootstrapEpoch:0,captainRoleLookupId:0,commissionerUserId:null,captainUserId:null,console:{error(){}}};
  vm.runInNewContext(html.slice(start,end),context);
  return {click:()=>node(buttonId).onclick(),button:()=>node(buttonId),password:()=>node(passwordId),message:()=>node(messageId),requests:()=>requests,opened:()=>opened};
 }
@@ -117,7 +117,7 @@ function signOutPage(authenticate){
  const start=html.indexOf('async function signOutFromHub(){'),end=html.indexOf('function openHubView(',start);
  const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{disabled:false,textContent:'Sign Out',classList:{add(){}}});return nodes.get(id)};
  let requests=0,viewer=0,cleared=0;
- const context={user:{id:'signed-in'},captainTeam:0,isCommissioner:true,currentGolferIndex:0,currentUsername:'visual',mustChangePassword:false,
+ const context={user:{id:'signed-in'},rsvpLoadRequest:0,rsvps:[{user_id:'signed-in'}],eventRsvpCounts:{playing:1},captainTeam:0,isCommissioner:true,currentGolferIndex:0,currentUsername:'visual',mustChangePassword:false,
   $:node,db:{auth:{signOut:async()=>{requests++;return authenticate()}}},sessionStorage:{removeItem(){cleared++}},document:{body:{classList:{add(){}}}},setMobileNavVisible(){},enterViewer:async()=>{viewer++},console:{warn(){}}};
  vm.runInNewContext(html.slice(start,end),context);
  return {run:()=>context.signOutFromHub(),context,node,requests:()=>requests,viewer:()=>viewer,cleared:()=>cleared};
@@ -129,7 +129,7 @@ test('failed sign-out keeps the signed-in screen and offers retry guidance',asyn
  }
 });
 test('successful sign-out clears local app identity after the auth request succeeds',async()=>{
- const page=signOutPage(async()=>({error:null}));await page.run();assert.equal(page.context.user,null);assert.equal(page.context.isCommissioner,false);assert.equal(page.context.captainTeam,null);assert.equal(page.viewer(),1);assert.equal(page.cleared(),1);
+ const page=signOutPage(async()=>({error:null}));await page.run();assert.equal(page.context.user,null);assert.equal(page.context.isCommissioner,false);assert.equal(page.context.captainTeam,null);assert.equal(page.context.rsvpLoadRequest,1);assert.equal(page.context.rsvps.length,0);assert.equal(page.context.eventRsvpCounts,null);assert.equal(page.viewer(),1);assert.equal(page.cleared(),1);
 });
 test('sign-out ignores another click while the auth request is pending',async()=>{
  let resolve;const pending=new Promise(r=>{resolve=r});const page=signOutPage(()=>pending);
@@ -198,23 +198,28 @@ test('commissioner saves use version checked RPC and reject a stale write',async
  const start=html.indexOf('let draftUpdatedAt=null;');
  const end=html.indexOf('let liveMode=false',start);
  assert.ok(start>=0&&end>start,'Commissioner versioned save functions missing');
- let calls=0;
+ let calls=0,previewInvalidations=0;
  const captured=[];
  const ctx=vm.createContext({
   cfg:{draftId:'elleng-cup'},
+  EllenGCommissionerRsvpPreview:{create:()=>({invalidate(){previewInvalidations++},refresh(){},enabled:false})},
+  hasPendingRosterEdits:()=>false,
+  EllenGEventRsvp:{},EllenGRsvpEligibility:{},
   S:{picks:[{golfer:1,team:0}]},
+  document:{visibilityState:'visible'},navigator:{onLine:true},
   fresh:()=>({}),
   alert:()=>{},
   db:{auth:{getUser:async()=>({data:{user:{id:'commissioner'}},error:null})},
    rpc:async(name,args)=>{calls++;captured.push({name,args});return {data:null,error:{message:'Concurrent draft update'}}}}
  });
  vm.runInContext(html.slice(start,end),ctx);
- vm.runInContext("draftUpdatedAt='2026-10-22T10:00:00.000Z'",ctx);
+ vm.runInContext("draftUpdatedAt='2026-10-22T10:00:00.000Z';commissionerUserId='commissioner'",ctx);
  await assert.rejects(vm.runInContext('secureSave()',ctx),error=>error?.message==='Concurrent draft update');
  assert.equal(calls,1);
  assert.equal(captured[0].name,'elleng_save_state_if_fresh');
  assert.equal(captured[0].args.p_expected_updated_at,'2026-10-22T10:00:00.000Z');
  assert.equal(ctx.S.picks.length,1);
+ assert.equal(previewInvalidations,1,'failed versioned save must revoke stale RSVP readiness');
  assert.equal(vm.runInContext('savingDraft',ctx),false);
 });
 
@@ -222,21 +227,27 @@ test('commissioner refuses overlapping saves until the first finishes',async()=>
  const html=fs.readFileSync(path.join(__dirname,'../../admin.html'),'utf8');
  const start=html.indexOf('let draftUpdatedAt=null;');
  const end=html.indexOf('let liveMode=false',start);
- let release,called=0;
+ let release,called=0,previewInvalidations=0;
  const pending=new Promise(resolve=>{release=resolve});
  const ctx=vm.createContext({
   cfg:{draftId:'elleng-cup'},
+  EllenGCommissionerRsvpPreview:{create:()=>({invalidate(){previewInvalidations++},refresh(){},enabled:false})},
+  hasPendingRosterEdits:()=>false,
+  EllenGEventRsvp:{},EllenGRsvpEligibility:{},
   S:{picks:[]},fresh:()=>({}),alert:()=>{},
+  document:{visibilityState:'visible'},navigator:{onLine:true},
   db:{auth:{getUser:async()=>({data:{user:{id:'commissioner'}},error:null})},
    rpc:async()=>{called++;return pending}}
  });
  vm.runInContext(html.slice(start,end),ctx);
- vm.runInContext("draftUpdatedAt='2026-10-22T10:00:00.000Z'",ctx);
+ vm.runInContext("draftUpdatedAt='2026-10-22T10:00:00.000Z';commissionerUserId='commissioner'",ctx);
  const first=vm.runInContext('secureSave()',ctx);
  await assert.rejects(vm.runInContext('secureSave()',ctx),/already in progress/);
+ assert.equal(previewInvalidations,1,'in-flight save must clear readiness; duplicate save must not re-invalidate');
  release({data:{updated_at:'2026-10-22T10:00:01.000Z'},error:null});
  await first;
  assert.equal(called,1);
+ assert.equal(previewInvalidations,2,'confirmed save retains readiness invalidation');
  assert.equal(vm.runInContext('savingDraft',ctx),false);
  assert.equal(vm.runInContext('draftUpdatedAt',ctx),'2026-10-22T10:00:01.000Z');
 });

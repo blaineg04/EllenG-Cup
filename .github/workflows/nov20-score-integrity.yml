@@ -2,10 +2,11 @@ name: November 20 score integrity
 on:
   push:
     branches: ['release/nov20-score-integrity-20261020']
-    paths: ['scoring.html', 'draft.html', 'captain.html', 'admin.html', 'style.css', 'common.js', 'config.js', 'tests/**', '.github/workflows/nov20-score-integrity.yml']
+    paths: ['scoring.html', 'Scoring.html', 'draft.html', 'captain.html', 'admin.html', 'style.css', 'common.js', 'config.js', 'tests/**', '.github/workflows/nov20-score-integrity.yml']
   pull_request:
     paths:
       - 'scoring.html'
+      - 'Scoring.html'
       - 'tests/nov20-production-score-integrity.test.cjs'
       - 'tests/visual/**'
       - 'draft.html'
@@ -19,7 +20,7 @@ on:
 # Avoid duplicate captures competing for the same MacBook.
 concurrency:
   group: nov20-validation-${{ github.head_ref || github.ref_name }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   scoring-regression:
     runs-on: [self-hosted, macOS]
@@ -29,14 +30,16 @@ jobs:
       - name: Verify Node is installed
         run: node --version
       - name: Run isolated scoring regression tests
-        run: node --test tests/nov20-production-score-integrity.test.cjs
+        run: node --test tests/nov20-production-score-integrity.test.cjs tests/gator-hole-variable-teams.test.cjs tests/alternate-scoring-validation.test.cjs tests/cross-page-points-parity.test.cjs tests/auto-pick-balance.test.cjs tests/draft-turn-order.test.cjs tests/draft-scoring-roster-handoff.test.cjs tests/stored-score-completion.test.cjs
+      - name: Verify commissioner RSVP snapshot safety
+        run: node --test tests/commissioner-rsvp-preview.test.cjs
 
   responsive-layout:
     # Only same-repository authorized release/fix branches can use the MacBook runner; never run fork code on it.
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/release/nov20-score-integrity-20261020') ||
       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/release/nov20-score-integrity-20261020') ||
-      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (github.event.pull_request.head.ref == 'release/nov20-score-integrity-20261020' || github.event.pull_request.head.ref == 'fix/nov20-commissioner-test-fixture-20261022'))
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (github.event.pull_request.head.ref == 'release/nov20-score-integrity-20261020' || github.event.pull_request.head.ref == 'fix/nov20-commissioner-test-fixture-20261022' || github.event.pull_request.head.ref == 'fix/draft-roster-contrast-20261027'))
     runs-on: [self-hosted, macOS]
     permissions:
       contents: read

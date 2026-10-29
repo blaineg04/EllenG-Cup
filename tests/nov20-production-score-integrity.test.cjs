@@ -9,19 +9,33 @@ const html=fs.readFileSync(path.join(__dirname,'..','scoring.html'),'utf8');
 function pendingHoleSave(kind,clear=false){
  const start=html.indexOf('async function '+(kind==='shamble'?'savePlayerShambleScore':'savePairScore')+'(');
  const end=html.indexOf(kind==='shamble'?'function renderPairScoring(':'function renderScoring(',start);
- let release;const pending=new Promise(resolve=>{release=resolve});let first=true;const writes=[];
+ let release;const pending=new Promise(resolve=>release=resolve);let first=true;const writes=[];
  const finish=()=>{if(first){first=false;return pending}return Promise.resolve({error:null})};
- const db={from(table){return {upsert(row){writes.push({table,hole:row.hole,score:row.score,operation:'upsert'});return finish()},delete(){const filters={};return {eq(key,value){filters[key]=value;return this},then(resolve,reject){writes.push({table,hole:filters.hole,operation:'delete'});return finish().then(resolve,reject)}}}}}};
+ const db={
+  rpc(name,payload){writes.push({table:'rpc',hole:payload.p_hole,score:payload.p_score,operation:name});return finish()},
+  from(table){if(kind==='shamble')throw Error('Unsafe raw Shamble table write');return {
+   upsert(row){writes.push({table,hole:row.hole,score:row.score,operation:'upsert'});return finish()},
+   delete(){const filters={};return {eq(key,value){filters[key]=value;return this},then(resolve,reject){writes.push({table,hole:filters.hole,operation:'delete'});return finish().then(resolve,reject)}}}
+  }}
+ };
  const initial=kind==='shamble'?10:1;
  const rows=[];for(const h of [initial,initial+1])for(let i=0;i<(kind==='shamble'?4:2);i++)if(!(clear&&h===initial&&i===0))rows.push({team_index:0,hole:h,golfer_index:i,pair_index:i,score:h===initial?i+4:i+8});
- const context={hole:initial,db,TOURNAMENT_ID:'test-tournament',user:{id:'test-user'},canEditTeam:()=>true,isSplitPair:()=>true,beginScoreSave:()=>true,endScoreSave(){},$:()=>({textContent:''}),loadScores:async()=>{},teamRosterGolfers:()=>[0,1,2,3].map(index=>({index})),playerScores:rows,pairScores:rows,renderAll(){}};
+ const context={hole:initial,teams:[{name:'T1'}],db,TOURNAMENT_ID:'test-tournament',user:{id:'test-user'},canEditTeam:()=>true,isSplitPair:()=>kind==='split-pair',validStoredPlayerScore:row=>row&&row.score!==null&&row.score!==undefined&&typeof row.score!=="boolean"&&String(row.score).trim()!==""&&Number.isSafeInteger(Number(row.score))&&Number(row.score)>=1&&Number(row.score)<=20,beginScoreSave:()=>true,endScoreSave(){},$:()=>({textContent:''}),loadScores:async()=>{},teamRosterGolfers:()=>[0,1,2,3].map(index=>({index})),playerScores:rows,pairScores:rows,renderAll(){}};
  vm.runInNewContext(html.slice(start,end),context);
  return {context,writes,initial,release:()=>release({error:null}),run:()=>kind==='shamble'?context.savePlayerShambleScore(0,0,clear?'':'4'):context.savePairScore(0,0,clear?'':'4')};
 }
 for(const kind of ['shamble','split-pair'])for(const clear of [false,true])test(`${kind} ${clear?'clear':'save'} keeps the original hole after navigation during a pending request`,async()=>{
- const page=pendingHoleSave(kind,clear);const operation=page.run();await Promise.resolve();page.context.hole=page.initial+1;page.release();await operation;
- assert.equal(page.writes.length,2);assert.ok(page.writes.every(write=>write.hole===page.initial),JSON.stringify(page.writes));
- const team=page.writes[1];assert.equal(team.table,'elleng_team_scores');assert.equal(team.operation,clear?'delete':'upsert');if(!clear)assert.equal(team.score,kind==='shamble'?4:9);
+ const page=pendingHoleSave(kind,clear),operation=page.run();await Promise.resolve();page.context.hole=page.initial+1;page.release();await operation;
+ const expectedCount=1;
+ assert.equal(page.writes.length,expectedCount);assert.ok(page.writes.every(write=>write.hole===page.initial),JSON.stringify(page.writes));
+ if(kind==='shamble'){
+  assert.equal(page.writes[0].operation,'elleng_test_authorized_shamble');
+  assert.equal(page.writes[0].score,clear?null:4);
+ }else{
+  assert.equal(page.writes[0].table,'rpc');
+  assert.equal(page.writes[0].operation,'elleng_test_authorized_split_pair');
+  assert.equal(page.writes[0].score,clear?null:4);
+ }
 });
 const from=html.indexOf('function normalPoints(values){');
 const to=html.indexOf('function totals(){',from);
@@ -39,7 +53,7 @@ function points(scores,{gator=false,splitPair=false}={}){
 }
 test('Gator Hole cannot award points when any team score is empty',()=>{
  assert.deepEqual(points([4,'',6],{gator:true}),[null,null,null]);
- assert.deepEqual(points([4,4,5],{gator:true}),[6,6,0]);
+ assert.deepEqual(points([4,4,5],{gator:true}),[3,3,0]);
 });
 test('standard score limits do not reject valid combined Split-Pair scores',()=>{
  assert.deepEqual(points([24,25],{splitPair:true}),[2,1]);
@@ -58,10 +72,14 @@ test('standard tied teams share their rank points',()=>{
  assert.deepEqual(points([4,5,5,6]),[4,2.5,2.5,1]);
  assert.deepEqual(points([4,4,4]),[2,2,2]);
 });
-test('Gator Hole distributes twelve points across all tied winners',()=>{
- assert.deepEqual(points([3,3,3,4],{gator:true}),[4,4,4,0]);
- assert.deepEqual(points([5,5],{gator:true}),[6,6]);
+test('Gator Hole doubles first-place points for actual team count and splits ties',()=>{
+ assert.deepEqual(points([3,3,3,4],{gator:true}),[8/3,8/3,8/3,0]);
+ assert.deepEqual(points([5,5],{gator:true}),[2,2]);
  assert.deepEqual(points([3,4,5,6,7,8],{gator:true}),[12,0,0,0,0,0]);
+ for(const n of [2,3,4,6,7,9,12]){
+  const scores=Array.from({length:n},(_,i)=>i+3);
+  assert.deepEqual(points(scores,{gator:true}),[2*n,...Array(n-1).fill(0)]);
+ }
 });
 test('no leaderboard points until every team submits a valid score',()=>{
  for(const invalid of ['',null,undefined,0,-1,1.5,'abc',21]){
@@ -278,7 +296,7 @@ test('unset Gator Hole always uses standard points',()=>{
   assert.deepEqual(Array.from(ctx.pointsForHole(4)),[2,1],String(unset));
  }
  ctx.tournament.gator_hole=4;
- assert.deepEqual(Array.from(ctx.pointsForHole(4)),[12,0]);
+ assert.deepEqual(Array.from(ctx.pointsForHole(4)),[4,0]);
 });
 
 test('broadcast ignores empty and boolean team identifiers',()=>{
@@ -452,4 +470,14 @@ test('completed personal clear preserves a newer entry after hole navigation',as
 });
 test('personal clear removes an acknowledged current entry and keeps local-only clearing available',async()=>{
  for(const options of [{},{assigned:false},{linked:false}]){const page=personalClear(options);await page.run();assert.equal(page.node('selfScoreInput').value,'');assert.equal(page.requests(),options.assigned===false||options.linked===false?0:1);}
+});
+
+test('scoring page inline scripts remain syntactically valid before RSVP rollout',()=>{
+ const scripts=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)]
+  .filter(([,attributes,source])=>!/\bsrc\s*=/.test(attributes)&&source.trim());
+ assert.ok(scripts.length>=2,'Expected executable inline scoring scripts');
+ for(const [, ,source] of scripts){
+  assert.doesNotThrow(()=>new vm.Script(source,{filename:'scoring.html:inline-script'}));
+ }
+ assert.match(html,/const EVENT_RSVP_MODE=false;/,'Event RSVP rollout must remain disabled');
 });

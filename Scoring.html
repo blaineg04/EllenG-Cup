@@ -1916,7 +1916,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div style="margin-top:12px"><label><small>Choose team</small><select id="digitalScorecardTeam" style="max-width:360px"></select></label></div>
   <div id="digitalScorecard" class="scorecard-wrap"></div><div class="row" style="margin-top:12px"><button id="shareTeamScorecard" class="secondary" type="button">📤 Share Team Scorecard</button><span id="shareScorecardMsg" class="status"></span></div>
 </div>
-<div class="card note"><strong>Special scoring:</strong> The Gator Hole awards 12 points to the lowest team, split equally only if the low score is tied. Final Cargo adds 6 points to the winning team.</div>
+<div class="card note"><strong>Special scoring:</strong> The Gator Hole awards double the normal first-place points to the lowest team (2 × the number of teams), split equally if the low score is tied. Final Cargo adds 6 points to the winning team.</div>
 </section>
 
 <section id="teamsView" class="view hidden">
@@ -2506,14 +2506,19 @@ function normalPoints(values){
  }
  return out;
 }
+function validHoleScore(score){
+ return score!==null&&score!==undefined&&typeof score!=="boolean"&&String(score).trim()!==""&&Number.isSafeInteger(Number(score))&&Number(score)>=1&&Number(score)<=(isSplitPair()?40:20);
+}
 function pointsForHole(h){
- const vals=teams.map((_,i)=>{const r=scores.find(x=>x.team_index===i&&x.hole===h);return r&&r.score!=null?Number(r.score):NaN});
  const n=teams.length;
- if(vals.filter(Number.isFinite).length<n)return Array(n).fill(null);
- if(tournament&&Number(tournament.gator_hole)===h){
+ if(h===null||h===undefined||typeof h==="boolean"||String(h).trim()===""||!Number.isInteger(Number(h))||Number(h)<1||Number(h)>18)return Array(n).fill(null);
+ h=Number(h);
+ const vals=teams.map((_,i)=>{const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validHoleScore(x.score));return r?Number(r.score):NaN});
+ if(!n||vals.filter(Number.isFinite).length<n)return Array(n).fill(null);
+ if(tournament&&tournament.gator_hole!=null&&typeof tournament.gator_hole!=="boolean"&&String(tournament.gator_hole).trim()!==""&&Number.isInteger(Number(tournament.gator_hole))&&Number(tournament.gator_hole)>=1&&Number(tournament.gator_hole)<=18&&Number(tournament.gator_hole)===h){
    const out=Array(n).fill(null), valid=vals.filter(Number.isFinite); if(!valid.length)return out;
    const low=Math.min(...valid), winners=[];vals.forEach((v,i)=>{if(v===low)winners.push(i)});
-   winners.forEach(i=>out[i]=12/winners.length);
+   winners.forEach(i=>out[i]=(2*n)/winners.length);
    vals.forEach((v,i)=>{if(Number.isFinite(v)&&out[i]===null)out[i]=0});
    return out;
  }
@@ -4001,7 +4006,7 @@ function checkBigMoments(){
  lastBigMomentLeader=leaderKey||lastBigMomentLeader;
  const gh=Number(tournament?.gator_hole)||0;
  const gComplete=!!(tournament?.gator_revealed&&gh&&teams.length&&teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===gh&&x.score!=null)));
- if(gComplete&&!lastBigMomentGator){const hp=pointsForHole(gh)||[],mx=Math.max(...hp),wins=teams.map((t,i)=>({t,i,p:Number(hp[i]||0)})).filter(x=>x.p===mx&&mx>0).map(x=>x.t?.name||`Team ${x.i+1}`);showBigMoment("🐊","GATOR HOLE",wins.length?`${wins.join(" & ")} STRIKE`:"GATOR HOLE COMPLETE",`Hole ${gh} • ${wins.length>1?"points split":"12-point showdown"}`)}
+ if(gComplete&&!lastBigMomentGator){const hp=pointsForHole(gh)||[],mx=Math.max(...hp),wins=teams.map((t,i)=>({t,i,p:Number(hp[i]||0)})).filter(x=>x.p===mx&&mx>0).map(x=>x.t?.name||`Team ${x.i+1}`);showBigMoment("🐊","GATOR HOLE",wins.length?`${wins.join(" & ")} STRIKE`:"GATOR HOLE COMPLETE",`Hole ${gh} • ${wins.length>1?"points split":`${2*teams.length}-point showdown`}`)}
  lastBigMomentGator=gComplete;
  const cargo=tournament?.final_cargo_team;
  if(cargo!==null&&cargo!==undefined&&cargo!==""&&String(cargo)!==String(lastBigMomentCargo)){const ti=Number(cargo);showBigMoment("🚢","FINAL CARGO",`${teams[ti]?.name||`Team ${ti+1}`} GETS THE CARGO`,`+${Number(tournament?.final_cargo_points||6)} Cup points`);lastBigMomentCargo=cargo}
