@@ -1041,6 +1041,19 @@ db.auth.onAuthStateChange((event,session)=>{
  if(event==="SIGNED_OUT"||
    (captainUserId&&["SIGNED_IN","TOKEN_REFRESHED","USER_UPDATED"].includes(event)&&session?.user?.id!==captainUserId)){
   revokeCaptainSession();
+  return;
+ }
+ if(captainUserId&&["SIGNED_IN","TOKEN_REFRESHED","USER_UPDATED"].includes(event)){
+  // A valid token for the same account does not prove its captain assignment
+  // is unchanged. Freeze cached picks until role, identity and draft refresh.
+  const userId=captainUserId,authEpoch=captainAuthEpoch;
+  markCaptainSuspended();
+  // Supabase auth callbacks must not synchronously call back into auth APIs.
+  // A later sign-out/account switch invalidates this deferred verification.
+  setTimeout(()=>{
+   if(authEpoch===captainAuthEpoch&&captainUserId===userId)
+    return recheckCaptainOnResume();
+  },0);
  }
 });
 // Captain mappings can be revoked while this tab is hidden or disconnected,

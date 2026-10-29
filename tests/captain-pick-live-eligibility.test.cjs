@@ -68,9 +68,10 @@ function authHarness(){
  const elements={login:{style:{display:'none'}},app:{style:{display:'block'}},
   connection:{textContent:'LIVE'},msg:{textContent:''}};
  const buttons=[{disabled:false}];
- let callback;
+ let callback;const deferredChecks=[];
  const ctx={myTeam:0,captainUserId:'captain-a',captainAuthEpoch:0,captainBootstrapEpoch:0,pickSyncFailed:false,pickInFlight:true,pickRequestEpoch:0,
   document:{getElementById:id=>elements[id],querySelectorAll:()=>buttons},
+  setTimeout:callback=>{deferredChecks.push(callback);return deferredChecks.length},
   db:{auth:{onAuthStateChange:cb=>{callback=cb}}}};
  const start=source.indexOf('function revokeCaptainSession()');
  const end=source.indexOf('(async()=>{',start);
@@ -81,7 +82,9 @@ function authHarness(){
  vm.createContext(ctx);
  vm.runInContext(source.slice(helpersStart,helpersEnd)+'\n'+source.slice(start,end),ctx);
  assert.equal(typeof callback,'function');
- return {ctx,elements,buttons,change:(event,session)=>callback(event,session)};
+ return {ctx,elements,buttons,change:(event,session)=>callback(event,session),
+  pendingChecks:()=>deferredChecks.length,
+  flushChecks:async()=>{while(deferredChecks.length)await deferredChecks.shift()()}};
 }
 test('captain signout immediately revokes draft controls',()=>{
  const h=authHarness();h.change('SIGNED_OUT',null);
@@ -100,12 +103,31 @@ test('switching to a different signed-in user revokes prior captain access',()=>
  assert.equal(h.ctx.pickSyncFailed,true);
  assert.match(h.elements.msg.textContent,/Sign in again/);
 });
-test('same-user token refresh retains captain controls',()=>{
- const h=authHarness();h.change('TOKEN_REFRESHED',{user:{id:'captain-a'}});
+test('same-user token refresh freezes captain picks pending role and draft recheck',async()=>{
+ const h=authHarness();h.ctx.rechecks=[];
+ vm.runInContext('captainRoleRecheck=async refresh=>{rechecks.push(refresh)};captainRoleRecheck.isCurrent=()=>true;',h.ctx);
+ h.change('TOKEN_REFRESHED',{user:{id:'captain-a'}});
  assert.equal(h.ctx.captainUserId,'captain-a');
- assert.equal(h.ctx.pickSyncFailed,false);
+ assert.equal(h.ctx.pickSyncFailed,true);
  assert.equal(h.elements.app.style.display,'block');
- assert.equal(h.buttons[0].disabled,false);
+ assert.equal(h.elements.connection.textContent,'PAUSED');
+ assert.equal(h.buttons[0].disabled,true);
+ assert.equal(h.pendingChecks(),1,'verification must be deferred outside Supabase auth callback');
+ await h.flushChecks();
+ assert.equal(h.ctx.rechecks.length,1);
+ assert.equal(h.ctx.rechecks[0],true,'same-user token refresh must reload role and draft');
+});
+test('queued same-user token recheck cannot run after captain sign-out',async()=>{
+ const h=authHarness();h.ctx.rechecks=[];
+ vm.runInContext('captainRoleRecheck=async refresh=>{rechecks.push(refresh)};captainRoleRecheck.isCurrent=()=>true;',h.ctx);
+ h.change('TOKEN_REFRESHED',{user:{id:'captain-a'}});
+ assert.equal(h.pendingChecks(),1);
+ h.change('SIGNED_OUT',null);
+ await h.flushChecks();
+ assert.equal(h.ctx.rechecks.length,0,'revoked session must not launch delayed authorization reads');
+ assert.equal(h.ctx.captainUserId,null);
+ assert.equal(h.elements.connection.textContent,'SIGN IN');
+ assert.equal(h.buttons[0].disabled,true);
 });
 test('token refresh without a verified user fails closed',()=>{
  const h=authHarness();h.change('TOKEN_REFRESHED',null);
