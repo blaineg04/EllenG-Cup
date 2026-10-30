@@ -2921,6 +2921,10 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
  #rankingsView .ranking-name-chip{font-size:8.5px!important;padding:3px 3px!important}
 }
 </style>
+<style>
+/* Show the selected profile in place of the directory for every account role. */
+#playersView:has(#playerProfileCardsSection:not(.hidden)) > .card:first-child{display:none!important}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
