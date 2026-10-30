@@ -8,7 +8,7 @@ test('one-device scoring lock rejects second RPC while first is pending',async()
  const deferred=new Promise(r=>resolveWrite=r);
  const nodes=new Map(),node=id=>{if(!nodes.has(id))nodes.set(id,{textContent:''});return nodes.get(id)};
  const ctx={scoreSaveBusy:false,hole:10,user:{id:'synthetic'},TOURNAMENT_ID:'synthetic',
- canEditTeam:()=>true,$:node,setSyncStatus:()=>{},loadScores:async()=>{},renderAll:()=>{},
+ isSplitPair:()=>false,teamRosterGolfers:()=>[{index:0}],canEditTeam:()=>true,$:node,setSyncStatus:()=>{},loadScores:async()=>{},renderAll:()=>{},
  db:{rpc(){writeCount++;return deferred},from(){throw Error('Unsafe table write')}}};
  vm.runInNewContext(source.slice(start,end),ctx);
  const first=ctx.savePlayerShambleScore(0,0,'4');
@@ -18,3 +18,4 @@ test('one-device scoring lock rejects second RPC while first is pending',async()
  resolveWrite({error:null});await Promise.all([first,second]);
  assert.equal(ctx.scoreSaveBusy,false);
 });
+
