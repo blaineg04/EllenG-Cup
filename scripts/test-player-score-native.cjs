@@ -27,6 +27,10 @@ let started=false;
  invoke(A,'standard',1,4);assert.equal(value("SELECT score FROM elleng_player_hole_scores WHERE tournament_id='player-standard' AND golfer_index=0"),'4');
  assert.equal(value("SELECT count(*) FROM elleng_team_scores WHERE tournament_id='player-standard'"),'0');
  invoke(A,'standard',1,null);assert.equal(value("SELECT count(*) FROM elleng_player_hole_scores WHERE tournament_id='player-standard'"),'0');
+ for(let h=1;h<=18;h++)invoke(A,'standard',h,4);
+ assert.equal(value("SELECT count(*) FROM elleng_player_hole_scores WHERE tournament_id='player-standard' AND golfer_index=0 AND score=4"),'18');
+ assert.equal(value("SELECT count(*) FROM elleng_team_scores WHERE tournament_id='player-standard'"),'0');
+ for(let h=1;h<=18;h++)invoke(A,'standard',h,null);
  invoke(A,'split',1,18);assert.equal(value("SELECT count(*) FROM elleng_team_scores WHERE tournament_id='player-split'"),'0');
  invoke(B,'split',1,19);assert.equal(value("SELECT score FROM elleng_team_scores WHERE tournament_id='player-split' AND hole=1"),'37');
  invoke(A,'split',1,null);assert.equal(value("SELECT count(*) FROM elleng_team_scores WHERE tournament_id='player-split' AND hole=1"),'0');
@@ -34,6 +38,14 @@ let started=false;
  reject(own('99999999-9999-4999-8999-999999999999',call('split',1,4)));
  reject("SET ROLE anon;"+call('split',1,4));reject("SET ROLE authenticated;"+call('split',1,4));
  reject(own(A,"SELECT public.elleng_save_own_score_atomic('player-test-standard','player-split',1,4);"));
+ reject(own(A,"SELECT elleng_test_authorized_split_pair('player-split',0,1,0,4);"));
+ reject(own(A,"SELECT elleng_test_authorized_scramble('player-standard',0,1,4);"));
+ reject(own(A,"SELECT elleng_test_authorized_shamble('player-standard',0,10,0,4);"));
+ for(const roster of ['[0,0,2,3]','[0,"bad",2,3]','[0,1,2]']){
+  sql(`UPDATE elleng_drafts SET state=jsonb_set(state,'{teams,0,roster}','${roster}'::jsonb) WHERE id='player-test-split_pair';`);
+  reject(own(A,call('split',2,4)));
+  sql("UPDATE elleng_drafts SET state=jsonb_set(state,'{teams,0,roster}','[0,1,2,3]'::jsonb) WHERE id='player-test-split_pair';");
+ }
  reject(own(A,"INSERT INTO elleng_pair_hole_scores(tournament_id,team_index,hole,pair_index,score) VALUES('player-split',1,1,0,2);"));
  sql("UPDATE elleng_tournaments SET status='archived' WHERE id='player-split';");reject(own(A,call('split',1,4)));sql("UPDATE elleng_tournaments SET status='setup' WHERE id='player-split';");
  sql("UPDATE elleng_player_accounts SET golfer_index=99 WHERE user_id='"+A+"' AND draft_id='player-test-standard';");reject(own(A,call('standard',1,4)));sql("UPDATE elleng_player_accounts SET golfer_index=0 WHERE user_id='"+A+"' AND draft_id='player-test-standard';");
