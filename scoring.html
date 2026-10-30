@@ -7555,4 +7555,7 @@ body:not(.login-mode) #myScoreEntryCard #selfScoreMsg{display:block!important;fo
 /* Let saved-score feedback and both actions define the card size. */
 body:not(.login-mode) #leaderboardView #myScoreEntryCard{flex:0 0 auto!important;height:auto!important;min-height:max-content!important;max-height:none!important;overflow:visible!important}
 body:not(.login-mode) #leaderboardView:not(.hidden){overflow-y:auto!important;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
+
+body:not(.login-mode) #leaderboardView:not(.hidden){scroll-padding-block:128px 80px!important}
+body:not(.login-mode) #leaderboardView #saveSelfScore,body:not(.login-mode) #leaderboardView #clearSelfScore{scroll-margin-block:80px!important}
 </style>
