@@ -3460,6 +3460,8 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   </div>
 </div>
 
+<div class="card admin-card" id="commissionerDiagnosticsCard"><h2>Recent App Issues</h2><button id="checkAppDiagnostics" class="secondary" type="button">Check Recent Issues</button><div id="appDiagnosticsSummary" class="status" role="status" style="margin-top:8px">Check issues reported by signed-in users.</div></div>
+
 <div class="card admin-card" id="adminGroups">
   <div class="row between"><div><div class="premium-label">TEE SHEET</div><h2 style="margin:3px 0 0">Groups & Starting Assignments</h2><div class="status">Assign tee times, starting holes, groups and carts.</div></div><span class="badge">COMMISSIONER</span></div>
   <div id="adminGroupAssignments" class="admin-group-list"></div>
@@ -3609,6 +3611,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
+<script src="client-health.js"></script>
 <script src="event-rsvp-client.js"></script>
 <div id="broadcastOverlay" class="broadcast-overlay" aria-hidden="true">
   <div class="broadcast-shell">
@@ -3692,6 +3695,7 @@ const cfg=window.ELLENG_CONFIG;
 const supabaseKey=cfg?.supabasePublishableKey||cfg?.supabaseAnonKey;
 if(!cfg?.supabaseUrl||!supabaseKey){connection("EllenG configuration did not load.");return}
 const db=window.supabase.createClient(cfg.supabaseUrl,supabaseKey);
+globalThis.EllenGHealth?.attach(db);
 connection("✓ App connected — live scoring ready.",true);
 const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
 let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, draftUpdatedAt=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", mustChangePassword=false, hole=1;
@@ -3715,6 +3719,17 @@ function syncedLabel(){
 }
 setInterval(()=>{const el=$("syncStatusChip");if(el&&el.classList.contains("saved"))el.textContent=syncedLabel()},10000);
 
+async function loadAppDiagnostics(){
+ if(!isCommissioner)return;
+ const el=$("appDiagnosticsSummary");el.textContent="Checking…";
+ try{
+  const {data,error}=await db.from("elleng_client_events").select("event_code,route,created_at").order("created_at",{ascending:false}).limit(10);
+  if(error)throw error;
+  el.textContent=(data||[]).length?(data||[]).map(row=>new Date(row.created_at).toLocaleString()+" • "+row.route+" • "+row.event_code).join("\n"):"No recent app issues have been reported.";
+  el.style.whiteSpace="pre-line";
+ }catch(_){el.textContent="App diagnostics are temporarily unavailable."}
+}
+$("checkAppDiagnostics")?.addEventListener("click",loadAppDiagnostics);
 function renderCommissionerSystemStatus(){
  if(!isCommissioner)return;
  const versionEl=$("commissionerSystemVersion"),connectionEl=$("commissionerSystemConnection"),syncEl=$("commissionerSystemSync"),roleEl=$("commissionerSystemRole"),badge=$("commissionerSystemBadge"),build=$("commissionerBuildInfo");
@@ -4274,7 +4289,7 @@ async function loadRsvps(){
  }
  const {data,error}=await db.from("elleng_rsvps").select("*").eq("draft_id",DRAFT_ID);
  if(!isCurrent())return;
- if(error){console.warn("RSVP load failed",error);rsvps=[];return}rsvps=data||[];
+ if(error){globalThis.EllenGHealth?.report("rsvp_load_failed");console.warn("RSVP load failed",error);rsvps=[];return}rsvps=data||[];
 }
 async function loadGroupAssignments(){
  if(!user){groupAssignments=[];return}
@@ -4610,7 +4625,7 @@ async function savePlayerShambleScore(teamIndex,golferIndex,val){
    await loadScores();
    el.textContent="Score saved and team low score updated.";
    renderAll();
- }catch(e){el.textContent=e?.message||"Unable to save shamble score.";endScoreSave(false);return}
+ }catch(e){globalThis.EllenGHealth?.report("score_save_failed");el.textContent=e?.message||"Unable to save shamble score.";endScoreSave(false);return}
  endScoreSave(true);
 }
 function renderPairScoring(par,pts){
@@ -4659,7 +4674,7 @@ async function savePairScore(teamIndex,pairIndex,val){
    await loadScores();
    el.textContent="Pair score saved; official team total synchronized.";
    renderAll();
- }catch(e){el.textContent=e?.message||"Unable to save pair score.";endScoreSave(false);return}
+ }catch(e){globalThis.EllenGHealth?.report("score_save_failed");el.textContent=e?.message||"Unable to save pair score.";endScoreSave(false);return}
  endScoreSave(true);
 }
 function renderScoring(){
@@ -4737,7 +4752,7 @@ async function saveScore(teamIndex,val){
      p_tournament_id:TOURNAMENT_ID,p_team_index:teamIndex,p_hole:hole,p_score:score
    });if(error)throw error;
    await loadScores();el.textContent="Saved.";renderAll();endScoreSave(true);
- }catch(e){el.textContent=e?.message||"Unable to save score.";endScoreSave(false)}
+ }catch(e){globalThis.EllenGHealth?.report("score_save_failed");el.textContent=e?.message||"Unable to save score.";endScoreSave(false)}
 }
 async function loadBase(){
  const tournamentSource="elleng_tournaments";
@@ -5229,6 +5244,7 @@ async function saveSelfScore(clear=false){
    }
    setSyncStatus("saved","Saved ✓");
  }catch(e){
+   globalThis.EllenGHealth?.report(scoreAccepted?"score_refresh_failed":"score_save_failed");
    if(scoreAccepted){
      msg.textContent=`${clear?"Score cleared":"Score saved"} for Hole ${h}, but the display could not refresh. Refresh to see the latest scores.`;
      setSyncStatus("error","Refresh needed");
@@ -7559,3 +7575,4 @@ body:not(.login-mode) #leaderboardView:not(.hidden){overflow-y:auto!important;ov
 body:not(.login-mode) #leaderboardView:not(.hidden){scroll-padding-block:128px 80px!important}
 body:not(.login-mode) #leaderboardView #saveSelfScore,body:not(.login-mode) #leaderboardView #clearSelfScore{scroll-margin-block:80px!important}
 </style>
+
