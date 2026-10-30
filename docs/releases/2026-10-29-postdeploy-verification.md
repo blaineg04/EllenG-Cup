@@ -15,7 +15,7 @@ Test-only corrections supply the real preconditions, require one atomic RPC, and
 These harness simulations are not real authenticated two-device evidence.
 
 ## Player scoring finding — subsequently fixed
-The finding below was resolved by the additive atomic player-scoring RPC and deployed golfer-handicap v13. See db/releases/player-score-atomic/release-receipt.json for native acceptance, exact hashes and remaining hosted-browser verification limits.
+The finding below was resolved by the additive atomic player-scoring RPC and deployed golfer-handicap v14. See db/releases/player-score-atomic/release-receipt.json for native acceptance, exact hashes and remaining hosted-browser verification limits.
 
 ### Original finding
 Inspected deployed golfer-handicap Edge Function v12, SHA256 66fb1a3605a10b2ff7144492a70472c17630aacad96ba902e82b7df07c83607c.
