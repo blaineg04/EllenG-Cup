@@ -15,11 +15,12 @@ for (const [query, format] of [['', 'standard'], ['?format=split', 'split'], ['?
 assert(!html.includes('elleng-cup-live'));
 assert(html.includes('OFFLINE_SCORE_KEY="elleng_acceptance_offline_v1"'));
 assert(html.includes('SCORING TEST — SYNTHETIC EVENT'));
-const edgeStart = html.indexOf('db.functions.invoke=async()=>');
+assert(!html.includes('db.functions.invoke'));
+const edgeStart = html.indexOf('const acceptanceBlockedInvoke=async()=>');
 const edgeEnd = html.indexOf('\n', edgeStart);
-const context = {db: {functions: {}}};
-vm.runInNewContext(html.slice(edgeStart, edgeEnd), context);
-context.db.functions.invoke('captain-admin', {body: {action: 'reset_tournament'}}).then(result => {
+const context = {};
+const blockedInvoke = vm.runInNewContext(html.slice(edgeStart, edgeEnd) + '\nacceptanceBlockedInvoke', context);
+blockedInvoke('captain-admin', {body: {action: 'reset_tournament'}}).then(result => {
   assert(result.error);
   console.log('PASS: fixed test IDs for four query variants; separate queue; account/ancillary mutations blocked; visible test banner');
 });
