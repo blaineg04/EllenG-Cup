@@ -9,7 +9,7 @@ test('two browser clients invoke serialized atomic RPC; stale snapshots cannot o
  const scores=new Map([[0,5],[1,5]]);let teamScore=5,queue=Promise.resolve(),calls=0;
  let releaseFirst,signalFirst;const firstPending=new Promise(r=>releaseFirst=r),firstEntered=new Promise(r=>signalFirst=r);
  function client(id){
-  const ctx={hole:10,TOURNAMENT_ID:'synthetic',canEditTeam:()=>true,beginScoreSave:()=>true,endScoreSave:()=>{},$:()=>({textContent:''}),
+  const ctx={hole:10,TOURNAMENT_ID:'synthetic',isSplitPair:()=>false,teamRosterGolfers:()=>[0,1].map(index=>({index})),canEditTeam:()=>true,beginScoreSave:()=>true,endScoreSave:()=>{},$:()=>({textContent:''}),
    loadScores:async()=>{},renderAll:()=>{},
    db:{from(){throw Error('Direct score table writes prohibited')},
     rpc(name,payload){
@@ -33,3 +33,4 @@ test('two browser clients invoke serialized atomic RPC; stale snapshots cannot o
  await Promise.all([aTask,bTask]);
  assert.equal(calls,2);assert.equal(teamScore,2);
 });
+
