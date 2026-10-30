@@ -2,6 +2,7 @@ const cfg=window.ELLENG_CONFIG;
 const supabaseKey=cfg?.supabasePublishableKey||cfg?.supabaseAnonKey;
 if(!cfg?.supabaseUrl||!supabaseKey)throw new Error("EllenG Supabase configuration is missing.");
 const db=window.supabase.createClient(cfg.supabaseUrl,supabaseKey);
+globalThis.EllenGHealth?.attach(db);
 const bands=["A","B","C","D"];
 const bandRanges={A:"0–9",B:"10–17",C:"18–25",D:"26+"};
 function bandRange(b){return bandRanges[b]||"—"}
@@ -98,7 +99,7 @@ function subscribe(cb){
     if(strip){strip.classList.remove("status-connecting","status-offline");strip.classList.add("status-live")}
     cb()}catch(e){
     if(epoch!==connectionEpoch||!connected||!isCurrent())return;
-    console.error("Draft realtime refresh failed",e);
+    globalThis.EllenGHealth?.report("draft_sync_failed");console.error("Draft realtime refresh failed",e);
     const indicator=document.getElementById("connection");
     if(indicator){indicator.textContent="SYNC ERROR";indicator.className="offline"}
     document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
@@ -133,7 +134,7 @@ function subscribe(cb){
      cb()
     }catch(e){
      if(epoch!==connectionEpoch||!connected||!isCurrent())return;
-     console.error("Draft resubscription refresh failed",e);
+     globalThis.EllenGHealth?.report("draft_sync_failed");console.error("Draft resubscription refresh failed",e);
      if(el){el.textContent="SYNC ERROR";el.className="offline"}
      document.querySelectorAll("[data-p]").forEach(button=>button.disabled=true);
      if(strip){strip.classList.remove("status-live","status-connecting");strip.classList.add("status-offline")}
@@ -144,3 +145,4 @@ function subscribe(cb){
 }
 function remaining(){if(S.timerPaused||!S.timerEndsAt)return S.timerLength;return Math.max(0,Math.ceil((new Date(S.timerEndsAt)-Date.now())/1000))}
 function esc(x){return String(x??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+
