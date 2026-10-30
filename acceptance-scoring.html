@@ -3698,7 +3698,7 @@ const acceptanceSplit=new URLSearchParams(location.search).get("format")==="spli
 const TOURNAMENT_ID=acceptanceSplit?"elleng-acceptance-split-20261029":"elleng-acceptance-standard-20261029";
 const DRAFT_ID=acceptanceSplit?"elleng-acceptance-split-draft-20261029":"elleng-acceptance-standard-draft-20261029";
 // This generated page is restricted to fixed synthetic event IDs.
-db.functions.invoke=async()=>({data:null,error:new Error("Account and ancillary actions are disabled during scoring acceptance.")});
+const acceptanceBlockedInvoke=async()=>({data:null,error:new Error("Account and ancillary actions are disabled during scoring acceptance.")});
 let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, draftUpdatedAt=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", mustChangePassword=false, hole=1;
 let scoreSaveBusy=false, lastSuccessfulSyncAt=null;
 let tournamentArchives=[], trashReactions=[];
@@ -3757,11 +3757,11 @@ async function ensureAutomaticPlayerAccounts(statusEl=null){
    const username=nextUniqueUsername(g.name,used);
    try{
      if(statusEl)statusEl.textContent=`Creating ${username}…`;
-     const {data,error}=await db.functions.invoke("player-admin",{body:{action:"create_or_update",draft_id:DRAFT_ID,golfer_index:i,username,password:TEMP_PLAYER_PASSWORD}});
+     const {data,error}=await acceptanceBlockedInvoke("player-admin",{body:{action:"create_or_update",draft_id:DRAFT_ID,golfer_index:i,username,password:TEMP_PLAYER_PASSWORD}});
      if(error)throw error;if(data?.error)throw new Error(data.error);created++;
    }catch(e){failed.push({name:String(g.name||`Player ${i+1}`),message:e?.message||"Unable to create login"});}
  }
- const {data:listData,error:listError}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});
+ const {data:listData,error:listError}=await acceptanceBlockedInvoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});
  if(!listError&&!listData?.error)playerAccounts=listData?.accounts||[];
  if(statusEl){
    statusEl.textContent=failed.length?`${created} login${created===1?"":"s"} created. ${failed.length} failed: ${failed.map(x=>x.name).join(", ")}.`:`${created} missing login${created===1?"":"s"} created. All current golfers now have accounts.`;
@@ -4329,7 +4329,7 @@ async function postTrashTalk(){
  if(!message){msgEl.textContent="Type a message first.";return}
  btn.disabled=true; btn.textContent="Posting…"; msgEl.textContent="";
  try{
-  const {data,error}=await db.functions.invoke("trash-talk",{body:{action:"post",tournament_id:TOURNAMENT_ID,message}});
+  const {data,error}=await acceptanceBlockedInvoke("trash-talk",{body:{action:"post",tournament_id:TOURNAMENT_ID,message}});
   if(error)throw error; if(data?.error)throw new Error(data.error);
   $("trashMessage").value=""; msgEl.textContent="Posted.";
   if(data?.message?.id){
@@ -4343,11 +4343,11 @@ async function postTrashTalk(){
 }
 async function deleteTrashTalk(id){
  if(!isCommissioner)return; if(!confirm("Delete this trash talk message?"))return;
- try{const {data,error}=await db.functions.invoke("trash-talk",{body:{action:"delete",tournament_id:TOURNAMENT_ID,id}});if(error)throw error;if(data?.error)throw new Error(data.error);await loadTrashTalk();renderTrashTalk()}catch(e){alert(e?.message||"Unable to delete message.")}
+ try{const {data,error}=await acceptanceBlockedInvoke("trash-talk",{body:{action:"delete",tournament_id:TOURNAMENT_ID,id}});if(error)throw error;if(data?.error)throw new Error(data.error);await loadTrashTalk();renderTrashTalk()}catch(e){alert(e?.message||"Unable to delete message.")}
 }
 async function clearTrashTalkFeed(){
  if(!isCommissioner)return;if(!confirm("Clear every Trash Talk message for this tournament?"))return;const el=$("adminTrashMsg");el.textContent="Clearing…";
- try{const {data,error}=await db.functions.invoke("trash-talk",{body:{action:"clear_all",tournament_id:TOURNAMENT_ID}});if(error)throw error;if(data?.error)throw new Error(data.error);trashMessages=[];renderTrashTalk();el.textContent="Trash Talk feed cleared."}catch(e){el.textContent=e?.message||"Unable to clear feed."}
+ try{const {data,error}=await acceptanceBlockedInvoke("trash-talk",{body:{action:"clear_all",tournament_id:TOURNAMENT_ID}});if(error)throw error;if(data?.error)throw new Error(data.error);trashMessages=[];renderTrashTalk();el.textContent="Trash Talk feed cleared."}catch(e){el.textContent=e?.message||"Unable to clear feed."}
 }
 function renderHolebar(){
  $("holebar").innerHTML=Array.from({length:18},(_,i)=>{
@@ -4443,7 +4443,7 @@ function renderOfflineState(){const b=$("offlineBanner"),q=offlineQueue();if(!b)
 function queueOfflineScore(payload){const q=offlineQueue();q.push({...payload,queued_at:new Date().toISOString()});setOfflineQueue(q)}
 async function flushOfflineScores(){
  if(!navigator.onLine||!user)return;let q=offlineQueue();if(!q.length){renderOfflineState();return}
- const keep=[];for(const item of q){try{const {data,error}=await db.functions.invoke("golfer-handicap",{body:item});if(error||data?.error)throw error||new Error(data.error)}catch(e){keep.push(item)}}
+ const keep=[];for(const item of q){try{const {data,error}=await acceptanceBlockedInvoke("golfer-handicap",{body:item});if(error||data?.error)throw error||new Error(data.error)}catch(e){keep.push(item)}}
  setOfflineQueue(keep);if(!keep.length){await loadScores();renderAll();pushInAppAlert("Offline scores synced","All queued scores reached the server.")}
 }
 function renderTeams(){
@@ -4840,7 +4840,7 @@ async function saveCaptainLogin(i){
  if(password.length<6){if(msg)msg.textContent="Password must be at least 6 characters.";return}
  if(msg)msg.textContent="Creating captain login…";
  try{
-  const {data,error}=await db.functions.invoke("captain-admin",{body:{action:"create_or_update",draft_id:DRAFT_ID,team_index:i,email,password,captain_name:captainName}});
+  const {data,error}=await acceptanceBlockedInvoke("captain-admin",{body:{action:"create_or_update",draft_id:DRAFT_ID,team_index:i,email,password,captain_name:captainName}});
   if(error)throw error; if(data?.error)throw new Error(data.error);
   ensureDraftShape(); draftState.teams[i].captain=captainName; draftState.teams[i].captainEmail=email;
   await saveDraftState();
@@ -4854,7 +4854,7 @@ async function removeCaptainLogin(i){
  if(!confirm(`Remove the login assignment for ${draftState.teams[i]?.name||`Team ${i+1}`}?`))return;
  if(msg)msg.textContent="Removing login assignment…";
  try{
-  const {data,error}=await db.functions.invoke("captain-admin",{body:{action:"remove_assignment",draft_id:DRAFT_ID,team_index:i}});
+  const {data,error}=await acceptanceBlockedInvoke("captain-admin",{body:{action:"remove_assignment",draft_id:DRAFT_ID,team_index:i}});
   if(error)throw error; if(data?.error)throw new Error(data.error);
   if(msg)msg.textContent="Login assignment removed. The user account itself was not deleted.";
  }catch(e){if(msg)msg.textContent=e?.message||"Unable to remove captain login."}
@@ -4906,7 +4906,7 @@ async function uploadMyProfilePhoto(){
    const {data:urlData}=db.storage.from("player-photos").getPublicUrl(path);
    const photoUrl=String(urlData?.publicUrl||"");
    if(!photoUrl)throw new Error("Photo uploaded, but the image URL could not be created.");
-   const {data,error}=await db.functions.invoke("player-profile",{body:{action:"update_photo",draft_id:DRAFT_ID,photo_url:photoUrl}});
+   const {data,error}=await acceptanceBlockedInvoke("player-profile",{body:{action:"update_photo",draft_id:DRAFT_ID,photo_url:photoUrl}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
    if(draftState?.golfers?.[currentGolferIndex])draftState.golfers[currentGolferIndex].photo_url=photoUrl;
    if(input)input.value="";updateSelfPhotoFileName();
@@ -4945,7 +4945,7 @@ async function uploadExistingPlayerPhoto(i){
  if(btn)btn.disabled=true;if(msg)msg.textContent="Uploading photo…";
  try{
    const url=await uploadPlayerPhotoFile(file,i,g.name);
-   const {data,error}=await db.functions.invoke("player-profile",{body:{action:"commissioner_update_photo",draft_id:DRAFT_ID,golfer_index:i,photo_url:url}});
+   const {data,error}=await acceptanceBlockedInvoke("player-profile",{body:{action:"commissioner_update_photo",draft_id:DRAFT_ID,golfer_index:i,photo_url:url}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
    await loadBase();renderAll();setSyncStatus("saved","Saved ✓");
    if(msg)msg.textContent="✓ Player photo uploaded and saved.";
@@ -4996,7 +4996,7 @@ async function savePlayerName(i){
  if(name===String(g.name||"").trim()){if(msg)msg.textContent="No change needed.";return}
  if(btn)btn.disabled=true;if(msg)msg.textContent="Saving name…";setSyncStatus("saving","Saving…");
  try{
-   const {data,error}=await db.functions.invoke("player-admin",{body:{action:"patch_players",draft_id:DRAFT_ID,patches:[{index:i,patch:{name}}]}});
+   const {data,error}=await acceptanceBlockedInvoke("player-admin",{body:{action:"patch_players",draft_id:DRAFT_ID,patches:[{index:i,patch:{name}}]}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
    await loadBase();renderAll();setSyncStatus("saved","Saved ✓");
    const fresh=document.querySelector(`[data-player-name-msg="${i}"]`);if(fresh)fresh.textContent="✓ Name updated";
@@ -5014,7 +5014,7 @@ async function savePlayerLogin(i){
  if(password.length<6){if(msg)msg.textContent="Enter a password with at least 6 characters.";return}
  if(btn)btn.disabled=true;if(msg)msg.textContent="Saving player login…";
  try{
-   const {data,error}=await db.functions.invoke("player-admin",{body:{action:"create_or_update",draft_id:DRAFT_ID,golfer_index:i,username,password}});
+   const {data,error}=await acceptanceBlockedInvoke("player-admin",{body:{action:"create_or_update",draft_id:DRAFT_ID,golfer_index:i,username,password}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
    const pw=document.querySelector(`[data-player-login-password="${i}"]`);if(pw)pw.value="";
    await loadBase();renderAll();
@@ -5028,7 +5028,7 @@ async function unlinkPlayerLogin(i){
  if(!confirm(`Unlink ${g.name}'s player login? The Auth account will remain, but it will no longer control this golfer profile.`))return;
  const msg=document.querySelector(`[data-player-login-msg="${i}"]`);if(msg)msg.textContent="Unlinking…";
  try{
-   const {data,error}=await db.functions.invoke("player-admin",{body:{action:"unlink",draft_id:DRAFT_ID,golfer_index:i}});
+   const {data,error}=await acceptanceBlockedInvoke("player-admin",{body:{action:"unlink",draft_id:DRAFT_ID,golfer_index:i}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
    await loadBase();renderAll();
  }catch(e){if(msg)msg.textContent=e?.message||"Unable to unlink player login."}
@@ -5171,9 +5171,9 @@ async function saveSelfHandicap(){
  if(exactBand){band=exactBand;$("selfBandSelect").value=exactBand;$("selfBandSelect").disabled=true}
  btn.disabled=true;btn.textContent="Saving…";msg.textContent="";setSyncStatus("saving","Saving…");
  try{
-   const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"update_handicap",draft_id:DRAFT_ID,band,handicap}});
+   const {data,error}=await acceptanceBlockedInvoke("golfer-handicap",{body:{action:"update_handicap",draft_id:DRAFT_ID,band,handicap}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
-   const {data:rankData,error:rankError}=await db.functions.invoke("player-self-rank",{body:{draft_id:DRAFT_ID}});
+   const {data:rankData,error:rankError}=await acceptanceBlockedInvoke("player-self-rank",{body:{draft_id:DRAFT_ID}});
    if(rankError)throw rankError;if(rankData?.error)throw new Error(rankData.error);
    await loadBase();
    selfHandicapEditing=false;selfHandicapDraftValue="";
@@ -5195,7 +5195,7 @@ async function saveSelfScore(clear=false){
  let scoreAccepted=false;
  btn.disabled=true;scoreSaveBusy=true;setSyncStatus("saving",clear?"Clearing…":"Saving…");msg.textContent=clear?"Clearing…":"Saving…";
  try{
-   const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"update_score",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,hole:h,score}});
+   const {data,error}=await acceptanceBlockedInvoke("golfer-handicap",{body:{action:"update_score",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,hole:h,score}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
    scoreAccepted=true;
    await loadBase();await loadScores();renderAll();
@@ -5287,7 +5287,7 @@ async function removePlayer(idx){
 }
 async function resetCaptainAssignments(){
  for(let i=0;i<activeTeamCount();i++){
-  try{await db.functions.invoke("captain-admin",{body:{action:"remove_assignment",draft_id:DRAFT_ID,team_index:i}})}catch(e){console.warn("Captain assignment reset failed for team",i,e)}
+  try{await acceptanceBlockedInvoke("captain-admin",{body:{action:"remove_assignment",draft_id:DRAFT_ID,team_index:i}})}catch(e){console.warn("Captain assignment reset failed for team",i,e)}
  }
 }
 async function clearScoresOnly(){
@@ -5331,7 +5331,7 @@ async function archiveAndStartNew(){
   if(playerResetError)throw playerResetError;
   const {error:pairResetError}=await db.from("elleng_pair_hole_scores").delete().eq("tournament_id",TOURNAMENT_ID);
   if(pairResetError)throw pairResetError;
-  const {data:resetData,error:resetError}=await db.functions.invoke("captain-admin",{body:{action:"reset_tournament",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,tournament_name:name,tournament_date:date}});
+  const {data:resetData,error:resetError}=await acceptanceBlockedInvoke("captain-admin",{body:{action:"reset_tournament",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,tournament_name:name,tournament_date:date}});
   if(resetError)throw resetError;
   if(resetData?.error)throw new Error(resetData.error);
   await loadBase(); await loadScores(); renderAll();
@@ -5684,9 +5684,9 @@ async function syncLive(){
    draftUpdatedAt=d.updated_at||draftUpdatedAt;
   }
   if(user){
-   const {data:profile}=await db.functions.invoke("player-profile",{body:{draft_id:DRAFT_ID}});
+   const {data:profile}=await acceptanceBlockedInvoke("player-profile",{body:{draft_id:DRAFT_ID}});
    currentGolferIndex=profile?.linked?Number(profile.golfer_index):null;currentUsername=profile?.linked?String(profile.username||""):"";mustChangePassword=!!profile?.must_change_password;
-   if(isCommissioner){const {data:listData}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});playerAccounts=listData?.accounts||[];}else playerAccounts=[];
+   if(isCommissioner){const {data:listData}=await acceptanceBlockedInvoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});playerAccounts=listData?.accounts||[];}else playerAccounts=[];
   }else {playerAccounts=[];currentGolferIndex=null;currentUsername="";mustChangePassword=false;}
   if(Array.isArray(d?.state?.teams)){
    const golfers=Array.isArray(d.state?.golfers)?d.state.golfers:[];
@@ -5903,7 +5903,7 @@ $("changeAccountPasswordBtn").addEventListener("click",async()=>{
  btn.disabled=true;msg.textContent="Saving your new password…";
  try{
    const {error}=await db.auth.updateUser({password:p1});if(error)throw error;
-   const {data,error:profileError}=await db.functions.invoke("player-profile",{body:{action:"password_changed",draft_id:DRAFT_ID}});if(profileError)throw profileError;if(data?.error)throw new Error(data.error);
+   const {data,error:profileError}=await acceptanceBlockedInvoke("player-profile",{body:{action:"password_changed",draft_id:DRAFT_ID}});if(profileError)throw profileError;if(data?.error)throw new Error(data.error);
    mustChangePassword=false;$("newAccountPassword").value="";$("confirmAccountPassword").value="";$("passwordChangeCard").classList.add("hidden");$("app").classList.remove("hidden");setMobileNavVisible(true);renderAll();forceSignedInHome();subscribeLive();if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;openAppHub();
  }catch(e){msg.textContent=e?.message||"Unable to change password."}
  finally{btn.disabled=false}
@@ -6119,7 +6119,7 @@ $("saveAdmin").addEventListener("click",async()=>{
   if(newCount<oldCount){
    const affected=(draftState.golfers||[]).filter(g=>g.team!=null&&Number(g.team)>=newCount).length;
    if(affected&&!confirm(`${affected} golfer(s) are assigned to teams being removed. They will become unassigned. Continue?`)){ $("adminMsg").textContent="Team count change canceled.";return }
-   for(let i=newCount;i<oldCount;i++){try{await db.functions.invoke("captain-admin",{body:{action:"remove_assignment",draft_id:DRAFT_ID,team_index:i}})}catch(e){}}
+   for(let i=newCount;i<oldCount;i++){try{await acceptanceBlockedInvoke("captain-admin",{body:{action:"remove_assignment",draft_id:DRAFT_ID,team_index:i}})}catch(e){}}
    (draftState.golfers||[]).forEach(g=>{if(g.team!=null&&Number(g.team)>=newCount)g.team=null});
   }
   while(draftState.teams.length<newCount)draftState.teams.push({name:`Team ${draftState.teams.length+1}`,captain:"",captainEmail:"",roster:[]});
@@ -6220,7 +6220,7 @@ $("savePlayers").addEventListener("click",async()=>{
        photo_url:p?p.value.trim():String(g.photo_url||"").trim()
      }};
    });
-   const {data,error}=await db.functions.invoke("player-admin",{body:{action:"patch_players",draft_id:DRAFT_ID,patches}});
+   const {data,error}=await acceptanceBlockedInvoke("player-admin",{body:{action:"patch_players",draft_id:DRAFT_ID,patches}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
    await loadBase();renderAll();setSyncStatus("saved","Saved ✓");
    if(msg)msg.textContent="Saved — player changes were merged safely with the latest live data.";
