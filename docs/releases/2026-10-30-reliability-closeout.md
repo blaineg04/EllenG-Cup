@@ -13,3 +13,9 @@ Exact pending migration: db/releases/client-health/install.sql.
 
 Remaining acceptance: authenticated hosted draft and RSVP flows, plus confirmation the exposed database password has been rotated. Automated regressions do not replace those authenticated checks.
 Hourly EllenG automations remain paused. No paid services added.
+
+## Follow-up verified
+Diagnostics migration elleng_private_client_diagnostics applied successfully. Hosted readback confirms RLS enabled, anonymous read/report denied, direct authenticated insert denied, authenticated RPC allowed. Signed-in commissioner UI displayed "No recent app issues have been reported."
+Authenticated bguy RSVP: Playing saved and survived page reload; Maybe update reached database and displayed count 1; Clear RSVP restored original zero rows (readback verified).
+Signed-in draft viewer connected LIVE with 34 available golfers and no picks. Live draft picks were not mutated: commissioner/captain pick-and-sync acceptance is still not established by this read-only check.
+Database password rotation still requires user completion/confirmation; no credential values were accessed.
