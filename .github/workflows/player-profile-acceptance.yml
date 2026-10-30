@@ -11,6 +11,6 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - run: npm ci
+      - run: npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
       - run: node tests/visual/player-profile-navigation.cjs
       - run: node --test tests/*.test.cjs
