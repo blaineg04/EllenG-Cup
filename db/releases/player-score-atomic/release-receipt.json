@@ -1,0 +1,52 @@
+{
+  "status": "DEPLOYED_NATIVE_ACCEPTANCE_PASSED",
+  "date": "2026-10-29",
+  "timezone": "America/Chicago",
+  "repository": "blaineg04/EllenG-Cup",
+  "supabase_project": "xepccqedhbucpbwuykoc",
+  "tested_commit": "266c59de640473fe5803fb91dd95af8b5920d394",
+  "native_acceptance": "https://github.com/blaineg04/EllenG-Cup/actions/runs/40982789784",
+  "root_regression_tests": {
+    "passed": 465,
+    "failed": 0
+  },
+  "migration": "elleng_player_owned_atomic_scoring",
+  "rpc": "elleng_save_own_score_atomic(text,text,integer,integer)",
+  "sql_sha256": "28b66d83ba839f77cc0d26cb5f7852221278d5f8fbcb4a16c714698f94a757ad",
+  "installed_body_md5": "557fbd4dbd6151d3fe2f699e48287e3d",
+  "edge_function": "golfer-handicap",
+  "edge_version": 13,
+  "edge_source_sha256": "13d079f104af5bb6ba80a3ddc8a4cc5226e51c3db8445452c69c49cbb1b78c61",
+  "deployed_bundle_sha256": "eb98e3a7759b1e4e7af900c02424ba30fc12b98cb2297b61e65bd34f12d2e6a3",
+  "checks": {
+    "deployed_source_matches_tested": true,
+    "jwt_verification": true,
+    "authenticated_execute": true,
+    "anon_execute": false,
+    "service_role_execute": false,
+    "empty_search_path": true,
+    "owner": "postgres",
+    "live_status": "setup",
+    "live_score_rows": 0
+  },
+  "native_cases": [
+    "all 18 standard holes preserve independent golfer scores",
+    "own-score clear",
+    "Split-Pair total 37",
+    "partial-pair clear removes team total",
+    "unlinked and anonymous callers denied",
+    "closed or mismatched tournament denied",
+    "malformed, duplicate and undersized rosters denied",
+    "ordinary player cannot call captain scoring RPCs",
+    "direct score-table writes denied",
+    "derived-total failure rolls back pair write",
+    "five concurrent player races",
+    "captain/player simultaneous saves"
+  ],
+  "review": "Independent code review: no Critical or Important issues; expanded missing test cases then passed native CI.",
+  "limits": [
+    "Not a new authenticated hosted player browser test.",
+    "Native fixture tests application PostgreSQL behavior, not full Supabase platform recovery."
+  ],
+  "recovery": "Previous Edge v12 source retained in previous-golfer-handicap.ts. If a regression occurs, prefer forward repair or disable player scoring. Restoring v12 reintroduces the multi-write race; do not blindly restore it or remove the RPC while v13 calls it. Additive SQL changes no existing score tables, records, or captain RPC permissions."
+}
