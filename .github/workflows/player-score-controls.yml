@@ -1,0 +1,20 @@
+name: Player score control accessibility
+on:
+  push:
+    branches: ['fix/player-score-controls-20261029']
+    paths: ['.github/workflows/player-score-controls.yml','scoring.html','player-scoring-test.html','tests/visual/player-score-controls.cjs']
+permissions:
+  contents: read
+jobs:
+  reachable-controls:
+    if: github.repository == 'blaineg04/EllenG-Cup'
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - run: node --test tests/*.test.cjs
+      - run: npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
+      - run: tests/visual/node_modules/.bin/playwright install chromium
+      - run: node tests/visual/player-score-controls.cjs
