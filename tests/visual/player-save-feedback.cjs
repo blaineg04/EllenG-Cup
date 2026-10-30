@@ -7,8 +7,10 @@ const result=await page.evaluate(()=>{
  document.querySelectorAll('.app-hub,.login-overlay,#loginOverlay,#appHub').forEach(e=>e.style.setProperty('display','none','important'));
  const view=document.getElementById('leaderboardView');view.classList.remove('hidden');view.style.display='block';
  const card=document.getElementById('myScoreEntryCard');card.classList.remove('hidden');
+ for(let p=card.parentElement;p&&p!==document.body;p=p.parentElement){p.classList.remove('hidden');p.style.setProperty('display','block','important');}
+ 
  const msg=document.getElementById('selfScoreMsg');msg.textContent='Saved your personal score for Hole 1: 4 strokes (E).';
  const a=msg.getBoundingClientRect(),b=card.getBoundingClientRect(),style=getComputedStyle(msg);
  return {display:style.display,width:a.width,height:a.height,inside:a.top>=b.top&&a.bottom<=b.bottom,cardWidth:b.width};
-});assert.notEqual(result.display,'none');assert(result.width>0&&result.height>0);assert(result.inside);console.log('PASS feedback visible within card at width',width,JSON.stringify(result));await page.close();
+});assert.notEqual(result.display,'none');assert(result.width>0&&result.height>0,JSON.stringify(result));assert(result.inside);console.log('PASS feedback visible within card at width',width,JSON.stringify(result));await page.close();
 }}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});
