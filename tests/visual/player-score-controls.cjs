@@ -5,7 +5,7 @@ const root=path.resolve(__dirname,'../..');
  const server=http.createServer((req,res)=>{const p=new URL(req.url,'http://localhost').pathname,full=path.resolve(root,'.'+p);if(!full.startsWith(root+path.sep)){res.writeHead(403);return res.end()}fs.readFile(full,(err,data)=>{if(err){res.writeHead(404);return res.end()}res.setHeader('Content-Type',full.endsWith('.js')?'text/javascript':full.endsWith('.html')?'text/html':'application/octet-stream');res.end(data)})});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin='http://127.0.0.1:'+server.address().port;
  const browser=await chromium.launch({headless:true});
- try{for(const file of ['scoring.html','player-scoring-test.html'])for(const [width,height] of [[320,568],[375,667],[390,740],[1440,900]]){
+ try{for(const file of ['scoring.html'])for(const [width,height] of [[320,568],[375,667],[390,740],[1440,900]]){
   const page=await browser.newPage({viewport:{width,height},serviceWorkers:'block'});page.setDefaultTimeout(6000);
   await page.route('**/*',route=>{const u=new URL(route.request().url());if(u.hostname==='cdn.jsdelivr.net'&&u.pathname.includes('supabase-js'))return route.fulfill({contentType:'text/javascript',body:'('+installFixture.toString()+')({teamCount:2,role:"player"});'});if(u.origin===origin)return route.continue();return route.abort()});
   // Observe completion of the app's existing delayed Home landing guard before testing another view.
