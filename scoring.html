@@ -2123,7 +2123,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   #leaderboardView:not(.hidden) > .card:nth-of-type(2) button{
     min-height:31px!important;height:31px!important;padding:4px 8px!important;font-size:10px!important;
   }
-  #leaderboardView:not(.hidden) #selfScoreMsg{display:none!important}
+
 
   #leaderboardView:not(.hidden) > .card:nth-of-type(3){
     flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;
@@ -2218,8 +2218,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   body:not(.login-mode) #myScoreEntryCard .self-score-box small{font-size:8px!important;margin:0!important}
   body:not(.login-mode) #myScoreEntryCard .self-score-box strong{font-size:20px!important;line-height:1!important;margin:0!important}
   body:not(.login-mode) #myScoreEntryCard .self-score-box .term{font-size:9px!important;line-height:1!important;text-align:right!important;margin:0!important}
-  body:not(.login-mode) #myScoreEntryCard > .note:not(#selfScoreContext),
-  body:not(.login-mode) #selfScoreMsg{display:none!important}
+  body:not(.login-mode) #myScoreEntryCard > .note:not(#selfScoreContext){display:none!important}
   body:not(.login-mode) #myScoreEntryCard > .row:last-of-type{
     margin:5px 0 0!important;gap:5px!important;display:grid!important;grid-template-columns:1fr 1fr!important;
   }
@@ -3200,8 +3199,9 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
     <div class="self-score-box"><small>Golf Score</small><strong id="selfScoreRelative">—</strong><div id="selfScoreTerm" class="term">Enter strokes</div></div>
   </div>
   <div class="note" style="margin-top:10px">Standard EllenG: any golfer on the team can update the Front 9 scramble team score. On the Back 9 shamble, each golfer can update only their own individual score. Split-Pair: each golfer can update only their own 2-man pair score.</div>
+  <div id="selfScoreMsg" role="status" aria-live="polite" class="status" style="margin-top:5px"></div>
   <div class="row" style="margin-top:12px"><button id="saveSelfScore" class="primary" type="button">Save My Score</button><button id="clearSelfScore" class="secondary" type="button">Clear This Score</button></div>
-  <div id="selfScoreMsg" class="status" style="margin-top:9px"></div>
+  
 </div>
 
 
@@ -5089,7 +5089,25 @@ function renderSelfGolfScore(){
  if(rel)rel.textContent=golfRelativeLabel(diff);
  if(term)term.textContent=golfScoreTerm(diff,strokes,par);
 }
+function syncSelfScoreFromSaved(){
+ const input=$("selfScoreInput");if(!input)return;
+ const idx=currentGolferIndex,h=Number($("selfScoreHole")?.value||1),ti=idx==null?null:selfGolferTeamIndex(idx);
+ let row=null;
+ if(ti!=null&&isSplitPair()){
+  const roster=draftState?.teams?.[ti]?.roster||[];
+  const pos=roster.findIndex(r=>Number(typeof r==="object"?r?.golferIndex:r)===idx);
+  const pair=pos>=0&&pos<2?0:pos>=2&&pos<4?1:null;
+  row=pair==null?null:pairScores.find(r=>Number(r.team_index)===ti&&Number(r.hole)===h&&Number(r.pair_index)===pair);
+ }else if(ti!=null){
+  row=playerScores.find(r=>Number(r.team_index)===ti&&Number(r.hole)===h&&Number(r.golfer_index)===idx);
+ }
+ const saved=row?.score==null?"":String(row.score);
+ const key=[user?.id||"",TOURNAMENT_ID,idx,h].join(":");
+ if(input.dataset.savedScoreContext!==key||input.value===input.dataset.savedScoreValue)input.value=saved;
+ input.dataset.savedScoreContext=key;input.dataset.savedScoreValue=saved;
+}
 function renderSelfScoreContext(){
+ syncSelfScoreFromSaved();renderSelfGolfScore();
  const box=$("selfScoreContext");if(!box||!draftState)return;
  const idx=currentGolferIndex;
  const h=Number($("selfScoreHole")?.value||1);
@@ -7530,4 +7548,7 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
  .admin-jumps a{padding:9px 5px;font-size:12px}
  .score-grid .head{overflow-wrap:anywhere}
 }
+
+body:not(.login-mode) #myScoreEntryCard{min-height:min-content!important;height:auto!important;overflow:visible!important}
+body:not(.login-mode) #myScoreEntryCard #selfScoreMsg{display:block!important;font-size:12px!important;line-height:1.25!important;margin:5px 0!important;color:var(--ink)!important}
 </style>
