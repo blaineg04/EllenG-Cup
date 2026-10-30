@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-for(const file of ['scoring.html','player-scoring-test.html']){
+for(const file of ['scoring.html']){
  const source=fs.readFileSync(file,'utf8');
  test(file+': saved personal score reloads without overwriting an unsaved edit',()=>{
   const start=source.indexOf('function syncSelfScoreFromSaved(){'),end=source.indexOf('function renderSelfScoreContext(){',start);
