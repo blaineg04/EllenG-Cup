@@ -14,7 +14,10 @@ An initial incomplete workspace produced missing-fixture errors, resolved by fet
 Test-only corrections supply the real preconditions, require one atomic RPC, and prohibit direct table writes in the navigation-race test. The production application and backend were not changed.
 These harness simulations are not real authenticated two-device evidence.
 
-## Deployed player scoring: unresolved consistency risk
+## Player scoring finding — subsequently fixed
+The finding below was resolved by the additive atomic player-scoring RPC and deployed golfer-handicap v13. See db/releases/player-score-atomic/release-receipt.json for native acceptance, exact hashes and remaining hosted-browser verification limits.
+
+### Original finding
 Inspected deployed golfer-handicap Edge Function v12, SHA256 66fb1a3605a10b2ff7144492a70472c17630aacad96ba902e82b7df07c83607c.
 It validates the caller using auth.getUser, resolves the caller's golfer link server-side, verifies finalized team roster and tournament/draft match, and permits scoring only for setup/live status.
 However, its update_score Split-Pair branch uses separate service-role requests to write/delete a pair, read pair values, and write/delete the derived team total.
