@@ -15,9 +15,9 @@
   "sql_sha256": "28b66d83ba839f77cc0d26cb5f7852221278d5f8fbcb4a16c714698f94a757ad",
   "installed_body_md5": "557fbd4dbd6151d3fe2f699e48287e3d",
   "edge_function": "golfer-handicap",
-  "edge_version": 13,
+  "edge_version": 14,
   "edge_source_sha256": "13d079f104af5bb6ba80a3ddc8a4cc5226e51c3db8445452c69c49cbb1b78c61",
-  "deployed_bundle_sha256": "eb98e3a7759b1e4e7af900c02424ba30fc12b98cb2297b61e65bd34f12d2e6a3",
+  "deployed_bundle_sha256": "348fc9f53dc0e398c1b691d9c75ac9f86b4c0af1fa346028486d46de9e35bc12",
   "checks": {
     "deployed_source_matches_tested": true,
     "jwt_verification": true,
@@ -48,5 +48,6 @@
     "Not a new authenticated hosted player browser test.",
     "Native fixture tests application PostgreSQL behavior, not full Supabase platform recovery."
   ],
-  "recovery": "Previous Edge v12 source retained in previous-golfer-handicap.ts. If a regression occurs, prefer forward repair or disable player scoring. Restoring v12 reintroduces the multi-write race; do not blindly restore it or remove the RPC while v13 calls it. Additive SQL changes no existing score tables, records, or captain RPC permissions."
+  "recovery": "Previous Edge v12 source retained in previous-golfer-handicap.ts. If a regression occurs, prefer forward repair or disable player scoring. Restoring v12 reintroduces the multi-write race; do not blindly restore it or remove the RPC while v14 calls it. Additive SQL changes no existing score tables, records, or captain RPC permissions.",
+  "exact_source_note": "Version 14 preserves the exact terminal newline of the tested source; behavior is unchanged from v13."
 }
