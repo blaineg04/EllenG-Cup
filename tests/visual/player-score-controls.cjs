@@ -16,7 +16,7 @@ const root=path.resolve(__dirname,'../..');
   assert.equal(constraints.maxHeight,'none','Score entry must not have a fixed height cap that clips controls');
   assert.equal(constraints.flexBasis,'auto');
   for(const id of ['saveSelfScore','clearSelfScore']){
-   const button=page.locator('#'+id);await button.click({trial:true});
+   const button=page.locator('#'+id);try{await button.click({trial:true})}catch(error){console.log('CONTROL_DIAGNOSTIC',JSON.stringify(await button.evaluate(el=>{const rows=[];for(let p=el;p;p=p.parentElement){const r=p.getBoundingClientRect(),s=getComputedStyle(p);rows.push({id:p.id,tag:p.tagName,cls:p.className,display:s.display,visibility:s.visibility,overflow:s.overflowY,scroll:p.scrollTop,h:r.height,top:r.top,bottom:r.bottom})}return rows})));throw error}
    const result=await button.evaluate(el=>{const a=el.getBoundingClientRect(),hit=document.elementFromPoint(a.left+a.width/2,a.top+a.height/2),clipped=[];for(let p=el.parentElement;p&&p!==document.body;p=p.parentElement){const s=getComputedStyle(p),b=p.getBoundingClientRect();if(/hidden|clip/.test(s.overflowY)&&(a.top<b.top-1||a.bottom>b.bottom+1))clipped.push(p.id||p.className)}return {height:a.height,hit:el===hit||el.contains(hit),clipped}});
    assert(result.hit&&result.height>=27&&result.clipped.length===0,JSON.stringify({file,width,id,...result}));
   }
