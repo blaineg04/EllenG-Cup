@@ -10,7 +10,7 @@ const root=path.resolve(__dirname,'../..');
  const page=await browser.newPage({viewport:{width,height:800},serviceWorkers:'block'});
  await page.route('**/*',route=>{const u=new URL(route.request().url());if(u.hostname==='cdn.jsdelivr.net'&&u.pathname.includes('supabase-js'))return route.fulfill({contentType:'text/javascript',body:'('+installFixture.toString()+')('+JSON.stringify({teamCount:9,role})+');'});if(u.origin===origin)return route.continue();return route.abort()});
  await page.addInitScript(()=>{const original=window.setTimeout.bind(window);window.setTimeout=(fn,delay,...args)=>original(typeof fn==='function'&&fn.name==='goHome'&&delay===450?()=>{fn(...args);window.__playerLandingGuardComplete=true}:fn,delay,...args)});
- await page.goto(origin+'/scoring.html#hub');await page.locator('#hubScoring').click();await page.locator('#appHub').waitFor({state:'hidden'});await page.waitForFunction(()=>window.__playerLandingGuardComplete===true);
+ await page.goto(origin+'/scoring.html#hub');await page.locator('#hubScoring').click();await page.locator('#appHub').waitFor({state:'hidden'});if(role==='player')await page.waitForFunction(()=>window.__playerLandingGuardComplete===true);
  await page.locator(width<700?'[data-mobile-view="players"]':'.tab[data-view="players"]').click();
  await page.locator('[data-player-profile]').first().click();
  const profile=page.locator('#playerProfileCardsSection');
