@@ -16,19 +16,21 @@ function pendingHoleSave(kind,clear=false){
  db.rpc=(name,args)=>{writes.push({table:name,hole:args.p_hole,score:args.p_score,operation:args.p_score===null?'delete':'upsert'});return finish()};
  const initial=kind==='shamble'?10:1;
  const rows=[];for(const h of [initial,initial+1])for(let i=0;i<(kind==='shamble'?4:2);i++)if(!(clear&&h===initial&&i===0))rows.push({team_index:0,hole:h,golfer_index:i,pair_index:i,score:h===initial?i+4:i+8});
- const context={hole:initial,db,TOURNAMENT_ID:'test-tournament',user:{id:'test-user'},canEditTeam:()=>true,isSplitPair:()=>true,beginScoreSave:()=>true,endScoreSave(){},$:()=>({textContent:''}),loadScores:async()=>{},teamRosterGolfers:()=>[0,1,2,3].map(index=>({index})),playerScores:rows,pairScores:rows,renderAll(){}};
+ db.from=()=>{throw Error('Direct score-table writes prohibited')};
+ const context={hole:initial,db,teams:[{}],TOURNAMENT_ID:'test-tournament',user:{id:'test-user'},canEditTeam:()=>true,isSplitPair:()=>kind==='split-pair',beginScoreSave:()=>true,endScoreSave(){},$:()=>({textContent:''}),loadScores:async()=>{},teamRosterGolfers:()=>[0,1,2,3].map(index=>({index})),playerScores:rows,pairScores:rows,renderAll(){}};
  vm.runInNewContext(html.slice(start,end),context);
  return {context,writes,initial,release:()=>release({error:null}),run:()=>kind==='shamble'?context.savePlayerShambleScore(0,0,clear?'':'4'):context.savePairScore(0,0,clear?'':'4')};
 }
 for(const kind of ['shamble','split-pair'])for(const clear of [false,true])test(`${kind} ${clear?'clear':'save'} keeps the original hole after navigation during a pending request`,async()=>{
  const page=pendingHoleSave(kind,clear);const operation=page.run();await Promise.resolve();page.context.hole=page.initial+1;page.release();await operation;
- assert.equal(page.writes.length,kind==='shamble'?1:2);assert.ok(page.writes.every(write=>write.hole===page.initial),JSON.stringify(page.writes));
+ assert.equal(page.writes.length,1);assert.ok(page.writes.every(write=>write.hole===page.initial),JSON.stringify(page.writes));
  if(kind==='shamble'){
   assert.equal(page.writes[0].table,'elleng_test_authorized_shamble','Shamble must use the atomic authorized server RPC');
   assert.equal(page.writes[0].operation,clear?'delete':'upsert');
  }else{
-  const team=page.writes[1];assert.equal(team.table,'elleng_team_scores');
-  assert.equal(team.operation,clear?'delete':'upsert');if(!clear)assert.equal(team.score,9);
+  assert.equal(page.writes[0].table,'elleng_test_authorized_split_pair','Split-Pair must use one authorized atomic server RPC');
+  assert.equal(page.writes[0].operation,clear?'delete':'upsert');
+  assert.equal(page.writes[0].score,clear?null:4);
  }
 });
 const from=html.indexOf('function normalPoints(values){');
@@ -362,3 +364,4 @@ test('completed personal clear preserves a newer entry after hole navigation',as
 test('personal clear removes an acknowledged current entry and keeps local-only clearing available',async()=>{
  for(const options of [{},{assigned:false},{linked:false}]){const page=personalClear(options);await page.run();assert.equal(page.node('selfScoreInput').value,'');assert.equal(page.requests(),options.assigned===false||options.linked===false?0:1);}
 });
+
