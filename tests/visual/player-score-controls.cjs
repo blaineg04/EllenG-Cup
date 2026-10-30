@@ -8,7 +8,9 @@ const root=path.resolve(__dirname,'../..');
  try{for(const file of ['scoring.html','player-scoring-test.html'])for(const [width,height] of [[320,568],[375,667],[390,740],[1440,900]]){
   const page=await browser.newPage({viewport:{width,height},serviceWorkers:'block'});page.setDefaultTimeout(6000);
   await page.route('**/*',route=>{const u=new URL(route.request().url());if(u.hostname==='cdn.jsdelivr.net'&&u.pathname.includes('supabase-js'))return route.fulfill({contentType:'text/javascript',body:'('+installFixture.toString()+')({teamCount:2,role:"player"});'});if(u.origin===origin)return route.continue();return route.abort()});
-  await page.goto(origin+'/'+file+'#hub');await page.locator('#hubScoring').click();await page.locator('#appHub').waitFor({state:'hidden'});
+  // Observe completion of the app's existing delayed Home landing guard before testing another view.
+  await page.addInitScript(()=>{const original=window.setTimeout.bind(window);window.setTimeout=(fn,delay,...args)=>original(typeof fn==='function'&&fn.name==='goHome'&&delay===450?()=>{fn(...args);window.__playerLandingGuardComplete=true}:fn,delay,...args)});
+  await page.goto(origin+'/'+file+'#hub');await page.locator('#hubScoring').click();await page.locator('#appHub').waitFor({state:'hidden'});await page.waitForFunction(()=>window.__playerLandingGuardComplete===true);
   await page.locator(width<700?'[data-mobile-view="leaderboard"]':'.tab[data-view="leaderboard"]').click();
   await page.evaluate(()=>{document.getElementById('selfScoreMsg').textContent='Saved your Pair 1 score for Hole 1: 18 strokes (+14 • +14 Over Par).';});
   const scrolling=await page.locator('#leaderboardView').evaluate(el=>{el.scrollTop=el.scrollHeight;return {overflow:getComputedStyle(el).overflowY,needed:el.scrollHeight>el.clientHeight+1,scrolled:el.scrollTop>0}});assert.equal(scrolling.overflow,'auto');assert(!scrolling.needed||scrolling.scrolled);
