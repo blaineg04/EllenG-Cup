@@ -11,6 +11,9 @@ const root=path.resolve(__dirname,'../..');
   await page.goto(origin+'/'+file+'#hub');await page.locator('#hubScoring').click();await page.locator('#appHub').waitFor({state:'hidden'});
   await page.locator(width<700?'[data-mobile-view="leaderboard"]':'.tab[data-view="leaderboard"]').click();
   await page.evaluate(()=>{document.getElementById('selfScoreMsg').textContent='Saved your Pair 1 score for Hole 1: 18 strokes (+14 • +14 Over Par).';});
+  const constraints=await page.locator('#myScoreEntryCard').evaluate(el=>({maxHeight:getComputedStyle(el).maxHeight,flexBasis:getComputedStyle(el).flexBasis}));
+  assert.equal(constraints.maxHeight,'none','Score entry must not have a fixed height cap that clips controls');
+  assert.equal(constraints.flexBasis,'auto');
   for(const id of ['saveSelfScore','clearSelfScore']){
    const button=page.locator('#'+id);await button.click({trial:true});
    const result=await button.evaluate(el=>{const a=el.getBoundingClientRect(),hit=document.elementFromPoint(a.left+a.width/2,a.top+a.height/2),clipped=[];for(let p=el.parentElement;p&&p!==document.body;p=p.parentElement){const s=getComputedStyle(p),b=p.getBoundingClientRect();if(/hidden|clip/.test(s.overflowY)&&(a.top<b.top-1||a.bottom>b.bottom+1))clipped.push(p.id||p.className)}return {height:a.height,hit:el===hit||el.contains(hit),clipped}});
