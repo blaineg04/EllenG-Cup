@@ -1,0 +1,16 @@
+name: Player profile navigation acceptance
+on:
+  push:
+    branches: [fix/player-profile-navigation-20261030]
+    paths: [scoring.html, tests/visual/player-profile-navigation.cjs, .github/workflows/player-profile-acceptance.yml]
+permissions:
+  contents: read
+jobs:
+  profile:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - run: npm ci
+      - run: node tests/visual/player-profile-navigation.cjs
+      - run: node --test tests/*.test.cjs
