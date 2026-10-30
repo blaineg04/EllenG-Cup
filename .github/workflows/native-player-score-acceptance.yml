@@ -1,0 +1,29 @@
+name: Native atomic player score acceptance
+on:
+  push:
+    branches: ['fix/atomic-player-score-20261029']
+    paths:
+      - '.github/workflows/native-player-score-acceptance.yml'
+      - 'db/releases/player-score-atomic/**'
+      - 'supabase/functions/golfer-handicap/**'
+      - 'scripts/test-player-score-native.cjs'
+      - 'tests/player-score-edge-atomic.test.cjs'
+      - 'tests/acceptance/player-score-*.sql'
+permissions:
+  contents: read
+concurrency:
+  group: elleng-native-player-score-acceptance
+  cancel-in-progress: false
+jobs:
+  native-player-score:
+    if: github.repository == 'blaineg04/EllenG-Cup' && github.ref == 'refs/heads/fix/atomic-player-score-20261029'
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Test existing application regressions and player Edge Function
+        run: node --test tests/*.test.cjs
+      - name: Verify atomic player saves in private disposable native PostgreSQL
+        run: node scripts/test-player-score-native.cjs
