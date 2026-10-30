@@ -1,0 +1,17 @@
+name: App diagnostics acceptance
+on:
+  push:
+    branches: [fix/app-diagnostics-20261029]
+    paths: [.github/workflows/app-diagnostics-acceptance.yml]
+permissions:
+  contents: read
+jobs:
+  diagnostics:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: App regressions
+        run: node --test tests/*.test.cjs
+      - name: Native PostgreSQL permissions and concurrency
+        run: node scripts/test-player-score-native.cjs
