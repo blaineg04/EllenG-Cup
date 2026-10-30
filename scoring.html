@@ -4525,7 +4525,7 @@ function renderPlayersDirectory(){
  const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q));
  const rowHtml=g=>{const band=playerBandLabel(g);const bandChip=band==="—"?"":`<span class="player-roster-band" title="Handicap band ${esc(band)}">${esc(band)}</span>`;return `<div class="player-row-public player-roster-only" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}<div class="player-team-inline">${esc(g.teamName)}</div></div>${bandChip}<div class="player-open-arrow">›</div></div>`};
  if(!rows.length){root.innerHTML='<div class="note">No matching players found.</div>';return}
- const sorted=rows.sort((a,b)=>a.name.localeCompare(b.name));
+ const sorted=rows.sort((a,b)=>{const ap=a.name.trim().split(/\s+/),bp=b.name.trim().split(/\s+/);return ap.at(-1).localeCompare(bp.at(-1),undefined,{sensitivity:"base"})||ap.slice(0,-1).join(" ").localeCompare(bp.slice(0,-1).join(" "),undefined,{sensitivity:"base"})||a.index-b.index;});
  root.innerHTML=`<div class="player-directory-flat">${sorted.map(rowHtml).join("")}</div>`;
 }
 
