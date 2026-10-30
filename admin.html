@@ -23,7 +23,8 @@
 <p id="draftSetupPreview" class="muted" role="status" aria-live="polite"></p>
 <div style="overflow:auto"><table><thead><tr><th>#</th><th>Golfer</th><th>HCP</th><th>Band</th></tr></thead><tbody id="grows"></tbody></table></div><h3>Teams</h3><table><tbody id="trows"></tbody></table><div class="actions" style="margin-top:10px"><select id="dtype"><option value="snake">Snake Draft</option><option value="straight">Straight Draft</option></select><select id="tlen"><option>30</option><option>45</option><option selected>60</option><option>90</option><option>120</option></select><button id="saveSetup" class="gold">Save Setup & Go Live</button></div></section>
 <section id="live" class="grid" style="display:none"><div class="card"><h2>Available Golfers</h2><div id="pool"></div></div><div class="card"><div class="bar"><div><strong id="onclock"></strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div class="muted">Pick clock</div></div></div><div id="teams" class="teams"></div></div></section></div></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="common.js"></script><script src="draft-setup-config.js"></script><script src="event-rsvp-client.js"></script><script src="event-rsvp-eligibility.js"></script><script src="commissioner-rsvp-preview.js"></script><script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="client-health.js"></script>
+<script src="common.js"></script><script src="draft-setup-config.js"></script><script src="event-rsvp-client.js"></script><script src="event-rsvp-eligibility.js"></script><script src="commissioner-rsvp-preview.js"></script><script>
 let draftUpdatedAt=null;
 let savingDraft=false;
 let commissionerAuthEpoch=0,commissionerOpenId=0,commissionerUserId=null;let commissionerChannel=null;
