@@ -1317,6 +1317,10 @@ html.broadcast-active,body.broadcast-active{overflow:hidden!important;height:100
   #rankingsView .rankings-board{gap:6px!important;}
   #rankingsView{padding-bottom:86px!important;}
 }
+/* Independent in-app hub return: not tied to the legacy global menu visibility. */
+#appHubReturnFixed{position:fixed;top:calc(env(safe-area-inset-top, 0px) + 12px);right:12px;z-index:2147483000;background:#08253b;color:#fff;border:2px solid #d5a72c;border-radius:999px;padding:11px 14px;font-size:14px;font-weight:900;box-shadow:0 5px 18px #0005;cursor:pointer}
+#app.hidden #appHubReturnFixed,#appHub:not(.hidden)~#app #appHubReturnFixed{display:none!important}
+@media(min-width:761px){#appHubReturnFixed{top:16px;right:16px}}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -5952,7 +5956,7 @@ document.body.classList.remove("login-mode");setGlobalMenuVisible(false);setMobi
  }
 }
 
-function closeAppHub(){const h=$("appHub");if(h)h.classList.add("hidden");setGlobalMenuVisible(true)}
+if($("appHubReturnFixed"))$("appHubReturnFixed").addEventListener("click",()=>openAppHub());\nfunction closeAppHub(){const h=$("appHub");if(h)h.classList.add("hidden");setGlobalMenuVisible(true)}
 if($("returnToHubBtn"))$("returnToHubBtn").addEventListener("click",()=>openAppHub());
 function openAppHub(){
  if(!user){enterViewer();return}
