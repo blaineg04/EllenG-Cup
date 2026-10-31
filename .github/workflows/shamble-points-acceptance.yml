@@ -1,0 +1,17 @@
+name: Two-team shamble points acceptance
+on:
+  push:
+    branches: [feature/two-team-shamble-points-20261030]
+    paths: [scoring.html, shamble-points.js, db/releases/shamble-points/install.sql, scripts/test-player-score-native.cjs, tests/visual/shamble-points.cjs, tests/visual/shamble-fixture.cjs, .github/workflows/shamble-points-acceptance.yml]
+permissions:
+  contents: read
+jobs:
+  shamble:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - run: node --test tests/*.test.cjs
+      - run: node scripts/test-player-score-native.cjs
+      - run: npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
+      - run: node tests/visual/shamble-points.cjs
