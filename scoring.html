@@ -4349,7 +4349,7 @@ function renderTournamentRecap(){
  }
  const medals=["🥇","🥈","🥉"],pod=ranking.slice(0,3).map((x,i)=>`<div class="recap-place team-accent" style="--team-accent:${teamAccent(x.team)}"><span class="medal">${medals[i]}</span><strong>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div class="status" style="margin-top:4px">${x.pts.toFixed(x.pts%1?1:0)} Cup pts • Thru ${x.thru||0}</div></div>`).join("");
  let best=null;teams.forEach((_,ti)=>{let s=0,p=0,c=0;for(let h=1;h<=18;h++){const r=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null);if(r){s+=Number(r.score);p+=parForHole(h);c++}}if(c&&(!best||((s-p)<best.rel)||((s-p)===best.rel&&c>best.c)))best={ti,rel:s-p,c}});
- const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Hole ${Number(tournament.gator_hole)}`:"Secret / not revealed";const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""?(teams[Number(tournament.final_cargo_team)]?.name||`Team ${Number(tournament.final_cargo_team)+1}`):"Not awarded";const bestText=best?`${teams[best.ti]?.name||`Team ${best.ti+1}`} ${best.rel===0?'E':best.rel>0?'+'+best.rel:'−'+Math.abs(best.rel)} (${best.c} holes)`:"—";
+ const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Hole ${Number(tournament.gator_hole)}`:"Secret / not revealed";const bestText=best?`${teams[best.ti]?.name||`Team ${best.ti+1}`} ${best.rel===0?'E':best.rel>0?'+'+best.rel:'−'+Math.abs(best.rel)} (${best.c} holes)`:"—";
  root.innerHTML=`<div class="recap-podium">${pod}</div><div class="recap-stats"><div class="recap-stat"><span class="status">BEST TO PAR</span><strong>${esc(bestText)}</strong></div><div class="recap-stat"><span class="status">GATOR HOLE</span><strong>${esc(gator)}</strong></div></div>`;
 }
 function renderTournamentHealth(){
@@ -5571,7 +5571,7 @@ function checkLiveAlerts(){
  if(gComplete&&!lastAlertGatorComplete)pushInAppAlert("🐊 Gator Hole complete",`Hole ${gh} points are official`);
  lastAlertGatorComplete=gComplete;
  const cargo=null;
- if(cargo!==null&&cargo!==undefined&&cargo!==""&&String(cargo)!==String(lastAlertCargo)){pushInAppAlert("🚢 Final Cargo Shot awarded",`${teams[Number(cargo)]?.name||`Team ${Number(cargo)+1}`} +${Number(tournament?.final_cargo_points||6)} points`);lastAlertCargo=cargo}
+
 }
 
 function renderLeaderSpotlight(){
@@ -5658,7 +5658,7 @@ function checkBigMoments(){
  if(gComplete&&!lastBigMomentGator){const hp=pointsForHole(gh)||[],mx=Math.max(...hp),wins=teams.map((t,i)=>({t,i,p:Number(hp[i]||0)})).filter(x=>x.p===mx&&mx>0).map(x=>x.t?.name||`Team ${x.i+1}`);showBigMoment("🐊","GATOR HOLE",wins.length?`${wins.join(" & ")} STRIKE`:"GATOR HOLE COMPLETE",`Hole ${gh} • ${wins.length>1?"points split":`${2*teams.length}-point showdown`}`)}
  lastBigMomentGator=gComplete;
  const cargo=null;
- if(cargo!==null&&cargo!==undefined&&cargo!==""&&String(cargo)!==String(lastBigMomentCargo)){const ti=Number(cargo);showBigMoment("🚢","FINAL CARGO SHOT",`${teams[ti]?.name||`Team ${ti+1}`} GETS THE CARGO`,`+${Number(tournament?.final_cargo_points||6)} Cup points`);lastBigMomentCargo=cargo}
+ 
 }
 function applyPlayerSimplicity(){
  const simple=!!user&&!isCommissioner;
