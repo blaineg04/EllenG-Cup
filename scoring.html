@@ -4973,6 +4973,14 @@ function renderSelfProfilePhoto(){
  if(btn)btn.disabled=false;
  if(input)input.disabled=false;
  nameEl.textContent=g.name||"My Player Profile";
+ // Live data refreshes must not replace a locally selected, unsaved photo.
+ if(pendingProfilePhotoUrl&&input?.files?.[0]){
+   if(!preview.querySelector('img[src="'+pendingProfilePhotoUrl+'"]')){
+     preview.replaceChildren();const selected=document.createElement("img");selected.src=pendingProfilePhotoUrl;selected.alt="Selected photo preview (not uploaded yet)";preview.appendChild(selected);
+   }
+   if(msg&&!msg.dataset.busy)msg.textContent="Preview only — tap Upload My Photo to save this picture.";
+   return;
+ }
  const photo=String(g.photo_url||g.photo||"").trim();
  if(photo){
    preview.innerHTML=`<img src="${esc(photo)}" alt="${esc(g.name||"Player")}">`;
