@@ -1,6 +1,10 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const webcrypto=require('node:crypto').webcrypto;
+test('recovery settings link remains in the visible My Golf header above the compact mobile crop',()=>{
+ const html=require('node:fs').readFileSync(require('node:path').join(__dirname,'../scoring.html'),'utf8');
+ assert.match(html,/<h2[^>]*>My Golf <a href="\.\/account-recovery.html\?mode=manage"[^>]*>Recovery email<\/a><\/h2>/);
+});
 async function fixture(overrides={}) {
  const {createRecoveryHandler}=await import('../supabase/functions/account-recovery/core.mjs');
  const calls={mail:[],links:[],pending:[],password:[]};
