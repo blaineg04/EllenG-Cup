@@ -5957,7 +5957,8 @@ document.body.classList.remove("login-mode");setGlobalMenuVisible(false);setMobi
  }
 }
 
-if($("appHubReturnFixed"))$("appHubReturnFixed").addEventListener("click",()=>openAppHub());\nfunction closeAppHub(){const h=$("appHub");if(h)h.classList.add("hidden");setGlobalMenuVisible(true)}
+if($("appHubReturnFixed"))$("appHubReturnFixed").addEventListener("click",()=>openAppHub());
+function closeAppHub(){const h=$("appHub");if(h)h.classList.add("hidden");setGlobalMenuVisible(true)}
 if($("returnToHubBtn"))$("returnToHubBtn").addEventListener("click",()=>openAppHub());
 function openAppHub(){
  if(!user){enterViewer();return}
