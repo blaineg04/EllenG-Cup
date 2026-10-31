@@ -3957,7 +3957,7 @@ function renderPointsEntry(){
 }
 function renderPointsExtras(){
  const x=shambleSummary(),set=(id,value)=>{const el=$(id);if(el)el.textContent=value;};
- set("homeHolesComplete",x.completeHoles+" / 18");set("broadcastHoles",x.completeHoles+" / 18");set("homeSpecialText","All individual points count. Eagle or better 5 • Birdie 4 • Par 3 • Bogey 2 • Double 1 • Triple or worse 0.");
+ set("homeHolesComplete",x.completeHoles+" / 18");set("broadcastHoles",x.completeHoles+" / 18");set("homeSpecialText","Gator Hole: Secret until the Commissioner reveals it. Double first-place points go to the lowest-scoring team, shared among ties. Final Cargo Shot: 6 bonus points to the winning team.");
  set("broadcastSpecial","18-hole shamble • Every golfer counts");
  const chosen=$("teamRosterSelect")?.value||"all";$("teamCards").innerHTML=teams.map((t,ti)=>({t,ti})).filter(({ti})=>chosen==="all"||String(ti)===chosen).map(({t,ti})=>`<div class="card"><h3>${esc(t.name)} • ${x.totals[ti].pts} pts</h3>${teamRosterGolfers(ti).map(g=>`<div class="row between" style="padding:8px 0"><span>${esc(g.name)}</span><strong>${x.players[g.index].points} pts</strong><span>${x.players[g.index].holes}/18 holes</span></div>`).join("")||"No golfers assigned yet."}</div>`).join("");
  const ranked=x.players.filter(p=>p.holes).sort((a,b)=>b.points-a.points||a.index-b.index);
