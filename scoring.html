@@ -1323,6 +1323,13 @@ body:has(#appHub:not(.hidden)) #simpleHubBackBtn{display:none!important}
  #holebar .holebtn{min-width:0;width:100%;padding:8px 2px;line-height:1.15;white-space:normal}
  #holebar .holebtn strong{font-size:15px}
 }
+
+/* Keep the shamble points badge comfortably separated from each team name. */
+.shamble-team > .badge{margin-left:12px;margin-top:5px;vertical-align:middle}
+
+/* Keep leader rank circular and centered even beside long spotlight text. */
+#leaderSpotlightRank.leader-rank{flex:0 0 56px;width:56px;min-width:56px;height:56px;aspect-ratio:1;border-radius:50%;display:grid;place-items:center;line-height:1;text-align:center;white-space:nowrap;padding:0}
+#leaderSpotlightCard .row.between > div:first-child{min-width:0}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
