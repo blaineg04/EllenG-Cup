@@ -4941,11 +4941,23 @@ async function removeCaptainLogin(i){
 }
 
 
+let pendingProfilePhotoUrl=null;
+function clearPendingProfilePhoto(){
+ if(pendingProfilePhotoUrl){URL.revokeObjectURL(pendingProfilePhotoUrl);pendingProfilePhotoUrl=null}
+}
 function updateSelfPhotoFileName(){
- const input=$("selfPhotoFile"),name=$("selfPhotoFileName");
- if(!name)return;
+ const input=$("selfPhotoFile"),name=$("selfPhotoFileName"),preview=$("selfPhotoPreview"),msg=$("selfPhotoMsg");
  const f=input?.files?.[0];
- name.textContent=f?f.name:"No photo selected";
+ clearPendingProfilePhoto();
+ if(name)name.textContent=f?f.name:"No photo selected";
+ if(f&&f.type.startsWith("image/")&&f.size<=5*1024*1024){
+   pendingProfilePhotoUrl=URL.createObjectURL(f);
+   if(preview){preview.replaceChildren();const img=document.createElement("img");img.src=pendingProfilePhotoUrl;img.alt="Selected photo preview (not uploaded yet)";preview.appendChild(img)}
+   if(msg){msg.textContent="Preview only — tap Upload My Photo to save this picture."}
+ }else{
+   renderSelfProfilePhoto();
+   if(f&&msg)msg.textContent=f.size>5*1024*1024?"Photo must be 5 MB or smaller.":"Please choose an image file.";
+ }
 }
 function renderSelfProfilePhoto(){
  const preview=$("selfPhotoPreview"),nameEl=$("selfPhotoPlayerName"),btn=$("uploadSelfPhoto"),input=$("selfPhotoFile"),msg=$("selfPhotoMsg");
@@ -4989,7 +5001,7 @@ async function uploadMyProfilePhoto(){
    const {data,error}=await db.functions.invoke("player-profile",{body:{action:"update_photo",draft_id:DRAFT_ID,photo_url:photoUrl}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
    if(draftState?.golfers?.[currentGolferIndex])draftState.golfers[currentGolferIndex].photo_url=photoUrl;
-   if(input)input.value="";updateSelfPhotoFileName();
+   if(input)input.value="";clearPendingProfilePhoto();updateSelfPhotoFileName();
    if(msg)msg.textContent="✓ Your profile photo has been updated.";
    renderSelfProfilePhoto();
    try{await syncLive()}catch(e){console.warn("Photo refresh skipped",e)}
