@@ -1333,6 +1333,16 @@ body:has(#appHub:not(.hidden)) #simpleHubBackBtn{display:none!important}
 
 /* Separate the special-scoring card from the dashboard tiles above. */
 #homeView #homeSpecialCard{margin-top:14px!important}
+.course-table-mobile{display:none}
+@media(max-width:760px){
+ #courseScorecard.course-table-wrap{overflow-x:hidden;min-width:0}
+ #courseScorecard .course-table-desktop{display:none}
+ #courseScorecard .course-table-mobile{display:table;width:100%;table-layout:fixed;border-collapse:collapse;margin-top:12px;font-size:12px}
+ #courseScorecard .course-table-mobile th,#courseScorecard .course-table-mobile td{padding:8px 2px;text-align:center;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+ #courseScorecard .course-table-mobile thead th{background:var(--navy);color:#fff;font-size:11px}
+ #courseScorecard .course-table-mobile tbody th{font-weight:800;background:#f3f6f7}
+}
+
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -3895,7 +3905,9 @@ function renderCourse(){
    const row=(label,vals)=>`<tr><td><strong>${label}</strong></td>${vals.map(v=>`<td>${v}</td>`).join("")}<td><strong>${vals.reduce((a,b)=>a+Number(b||0),0)}</strong></td></tr>`;
    const teeRows=(c.tees||[]).map(t=>row(t.label,r[t.key]||[])).join("");
    const handicapRow=Array.isArray(r.handicap)?`<tr><td><strong>Handicap</strong></td>${r.handicap.map(v=>`<td>${v}</td>`).join("")}<td>—</td></tr>`:"";
-   $("courseScorecard").innerHTML=`<table class="course-table"><thead><tr><th>Tee / Hole</th>${holes.map(h=>`<th>${h}</th>`).join("")}<th>Total</th></tr></thead><tbody>${row("Par",r.par)}${teeRows}${handicapRow}</tbody></table>`;
+   const mobileRows=holes.map((h,i)=>`<tr><th scope="row">${h}</th><td>${r.par[i]??"—"}</td>${(c.tees||[]).map(t=>`<td>${r[t.key]?.[i]??"—"}</td>`).join("")}${Array.isArray(r.handicap)?`<td>${r.handicap[i]??"—"}</td>`:""}</tr>`).join("");
+   const mobileTotal=`<tr><th scope="row">Total</th><td>${r.par.reduce((a,b)=>a+Number(b||0),0)}</td>${(c.tees||[]).map(t=>`<td>${(r[t.key]||[]).reduce((a,b)=>a+Number(b||0),0)}</td>`).join("")}${Array.isArray(r.handicap)?"<td>—</td>":""}</tr>`;
+   $("courseScorecard").innerHTML=`<table class="course-table course-table-desktop"><thead><tr><th>Tee / Hole</th>${holes.map(h=>`<th>${h}</th>`).join("")}<th>Total</th></tr></thead><tbody>${row("Par",r.par)}${teeRows}${handicapRow}</tbody></table><table class="course-table-mobile"><thead><tr><th>Hole</th><th>Par</th>${(c.tees||[]).map(t=>`<th>${t.label}</th>`).join("")}${Array.isArray(r.handicap)?"<th>HCP</th>":""}</tr></thead><tbody>${mobileRows}${mobileTotal}</tbody></table>`;
  }
 }
 
