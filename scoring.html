@@ -2925,6 +2925,25 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 /* Show the selected profile in place of the directory for every account role. */
 #playersView:has(#playerProfileCardsSection:not(.hidden)) > .card:first-child{display:none!important}
 </style>
+
+<style id="my-profile-mobile-visibility-fix">
+@media(max-width:650px){
+ body.my-profile-open:not(.login-mode) #leaderboardView:not(.hidden){display:flex!important;flex-direction:column!important;overflow-y:auto!important;height:100%!important;gap:10px!important;padding-bottom:24px!important}
+ body.my-profile-open:not(.login-mode) #leaderboardView:not(.hidden) > #myProfilePhotoCard{display:block!important;flex:0 0 auto!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;order:-2!important}
+ body.my-profile-open:not(.login-mode) #leaderboardView:not(.hidden) > #myHandicapCard{display:block!important;flex:0 0 auto!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;order:-1!important;padding:12px!important}
+ body.my-profile-open:not(.login-mode) #leaderboardView:not(.hidden) > #myScoreEntryCard,
+ body.my-profile-open:not(.login-mode) #leaderboardView:not(.hidden) > #myScoreLeaderboardCard{display:none!important}
+ body.my-profile-open:not(.login-mode) #myProfilePhotoCard .self-photo-wrap{display:grid!important}
+}
+</style>
+
+<style id="my-profile-photo-contrast-fix">
+body.my-profile-open #myProfilePhotoCard{background:#fffdf7!important;color:#10202c!important}
+body.my-profile-open #myProfilePhotoCard summary strong{color:#10202c!important;font-size:18px!important;opacity:1!important;-webkit-text-fill-color:#10202c!important}
+body.my-profile-open #myProfilePhotoCard #selfPhotoPlayerName{color:#10202c!important;opacity:1!important}
+body.my-profile-open #myProfilePhotoCard .self-photo-choose{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-height:48px!important;background:#edf2f5!important;border:2px solid #607787!important;color:#10202c!important;-webkit-text-fill-color:#10202c!important;font-size:16px!important;font-weight:900!important;opacity:1!important;visibility:visible!important}
+body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!important}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -3600,6 +3619,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div class="more-sheet" role="dialog" aria-modal="true" aria-label="More options">
     <div class="more-sheet-head"><h3>More</h3><button id="moreMenuClose" class="more-sheet-close" type="button">Close</button></div>
     <div class="more-menu-grid">
+      <button class="more-menu-btn" type="button" id="moreMyProfileBtn"><span>👤</span>My Profile</button>
             <button class="more-menu-btn" type="button" data-more-view="course"><span>⛳</span>Course</button>
       <button class="more-menu-btn" type="button" data-more-view="rankings"><span>🏷️</span>Player Rankings</button>
       <button class="more-menu-btn" type="button" data-more-view="extras"><span>🏆</span>Tournament Extras</button>
@@ -4921,11 +4941,23 @@ async function removeCaptainLogin(i){
 }
 
 
+let pendingProfilePhotoUrl=null;
+function clearPendingProfilePhoto(){
+ if(pendingProfilePhotoUrl){URL.revokeObjectURL(pendingProfilePhotoUrl);pendingProfilePhotoUrl=null}
+}
 function updateSelfPhotoFileName(){
- const input=$("selfPhotoFile"),name=$("selfPhotoFileName");
- if(!name)return;
+ const input=$("selfPhotoFile"),name=$("selfPhotoFileName"),preview=$("selfPhotoPreview"),msg=$("selfPhotoMsg");
  const f=input?.files?.[0];
- name.textContent=f?f.name:"No photo selected";
+ clearPendingProfilePhoto();
+ if(name)name.textContent=f?f.name:"No photo selected";
+ if(f&&f.type.startsWith("image/")&&f.size<=5*1024*1024){
+   pendingProfilePhotoUrl=URL.createObjectURL(f);
+   if(preview){preview.replaceChildren();const img=document.createElement("img");img.src=pendingProfilePhotoUrl;img.alt="Selected photo preview (not uploaded yet)";preview.appendChild(img)}
+   if(msg){msg.textContent="Preview only — tap Upload My Photo to save this picture."}
+ }else{
+   renderSelfProfilePhoto();
+   if(f&&msg)msg.textContent=f.size>5*1024*1024?"Photo must be 5 MB or smaller.":"Please choose an image file.";
+ }
 }
 function renderSelfProfilePhoto(){
  const preview=$("selfPhotoPreview"),nameEl=$("selfPhotoPlayerName"),btn=$("uploadSelfPhoto"),input=$("selfPhotoFile"),msg=$("selfPhotoMsg");
@@ -4941,6 +4973,14 @@ function renderSelfProfilePhoto(){
  if(btn)btn.disabled=false;
  if(input)input.disabled=false;
  nameEl.textContent=g.name||"My Player Profile";
+ // Live data refreshes must not replace a locally selected, unsaved photo.
+ if(pendingProfilePhotoUrl&&input?.files?.[0]){
+   if(!preview.querySelector('img[src="'+pendingProfilePhotoUrl+'"]')){
+     preview.replaceChildren();const selected=document.createElement("img");selected.src=pendingProfilePhotoUrl;selected.alt="Selected photo preview (not uploaded yet)";preview.appendChild(selected);
+   }
+   if(msg&&!msg.dataset.busy)msg.textContent="Preview only — tap Upload My Photo to save this picture.";
+   return;
+ }
  const photo=String(g.photo_url||g.photo||"").trim();
  if(photo){
    preview.innerHTML=`<img src="${esc(photo)}" alt="${esc(g.name||"Player")}">`;
@@ -4969,7 +5009,7 @@ async function uploadMyProfilePhoto(){
    const {data,error}=await db.functions.invoke("player-profile",{body:{action:"update_photo",draft_id:DRAFT_ID,photo_url:photoUrl}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
    if(draftState?.golfers?.[currentGolferIndex])draftState.golfers[currentGolferIndex].photo_url=photoUrl;
-   if(input)input.value="";updateSelfPhotoFileName();
+   if(input)input.value="";clearPendingProfilePhoto();updateSelfPhotoFileName();
    if(msg)msg.textContent="✓ Your profile photo has been updated.";
    renderSelfProfilePhoto();
    try{await syncLive()}catch(e){console.warn("Photo refresh skipped",e)}
@@ -5948,6 +5988,7 @@ function openHubView(view){
  if(view==="scoring"){showView("home");return}
 }
 function showView(name){
+ if(name!=="leaderboard")document.body.classList.remove("my-profile-open");
  if(!user){enterViewer();return}
  if(name==="scoring"&&!(isCommissioner||captainTeam!=null))name="handicap";
  if(name==="admin"&&!isCommissioner)name=user?"handicap":"home";
@@ -6041,6 +6082,7 @@ if($("trashBackBtn"))$("trashBackBtn").addEventListener("click",()=>{showView("h
 
 if(moreBackdrop)moreBackdrop.addEventListener("click",e=>{if(e.target===moreBackdrop)closeMoreMenu()});
 document.querySelectorAll("[data-more-view]").forEach(b=>b.addEventListener("click",()=>{closeMoreMenu();showView(b.dataset.moreView)}));
+if($("moreMyProfileBtn"))$("moreMyProfileBtn").addEventListener("click",()=>{closeMoreMenu();showView("leaderboard");document.body.classList.add("my-profile-open");const panel=$("myProfilePhotoCard");if(panel){panel.open=true;panel.scrollIntoView({behavior:"instant",block:"start"})}});
 if($("playerDirectory"))$("playerDirectory").addEventListener("click",e=>{
  const row=e.target.closest("[data-player-profile]");if(!row)return;
  selectedPlayerProfileIndex=Number(row.dataset.playerProfile);renderPlayerProfileCards();
