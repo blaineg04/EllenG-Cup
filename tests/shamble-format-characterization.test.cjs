@@ -7,8 +7,8 @@ test('Shamble writes exactly once through authorized atomic RPC, never direct ta
  assert.match(source,/db\.rpc\("elleng_test_authorized_shamble"/);
  assert.doesNotMatch(source,/db\.from\("elleng_(player_hole|team)_scores"\)/);
 });
-test('Shamble restricts entry to back nine and snapshots hole',()=>{
- assert.match(source,/hole<10\|\|hole>18/);assert.match(source,/const scoreHole=hole/);
+test('Standard shamble restricts entry to back nine; points format supports all 18 and snapshots hole',()=>{
+ assert.match(source,/hole<\(typeof isShamblePoints==="function"&&isShamblePoints\(\)\?1:10\)\|\|hole>18/);assert.match(source,/const scoreHole=hole/);
 });
 test('clearing a golfer submits null atomically for server-side team score recalculation',()=>{
  assert.match(source,/String\(val\?\?""\)\.trim\(\)===""\?null:Number\(val\)/);
@@ -19,3 +19,4 @@ test('split-pair blank entries remain clearable',()=>{
  assert.ok(a>=0&&b>a);
  assert.match(html.slice(a,b),/String\(val\?\?""\)\.trim\(\)===""\?null:Number\(val\)/);
 });
+
