@@ -7679,6 +7679,34 @@ body:not(.login-mode) #leaderboardView #saveSelfScore,body:not(.login-mode) #lea
  #rankingsView .ranking-band-compact{grid-template-columns:max-content minmax(0,1fr)!important}
  #rankingsView .ranking-band-compact-head{min-width:max-content!important}
 }
+
+/* Let Home summary text wrap instead of silently truncating it. */
+body #homeView .home-hero .status,
+body #homeView .home-grid .home-tile .status,
+body #homeView .home-grid .home-tile strong.big,
+body #homeView #homeSpecialCard #homeSpecialText{
+ white-space:normal!important;
+ overflow:visible!important;
+ text-overflow:clip!important;
+ overflow-wrap:anywhere;
+ height:auto!important;
+ max-height:none!important;
+ line-height:1.25!important;
+}
+body.player-simple-home #homeView{
+ overflow-y:auto!important;
+ overflow-x:hidden!important;
+ -webkit-overflow-scrolling:touch;
+}
+body.player-simple-home #homeView .home-grid,
+body.player-simple-home #homeView #homeSpecialCard{flex:0 0 auto!important;min-height:min-content!important}
+@media(max-width:650px){
+ body.player-simple-home #homeView .home-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ body.player-simple-home #homeView .home-grid .home-tile .status{font-size:11px!important}
+ body.player-simple-home #homeView #homeFormat{font-size:15px!important}
+ body.player-simple-home #homeView #homeSpecialCard #homeSpecialText{font-size:12px!important}
+}
+body.player-simple-home #homeView #leaderSpotlightBody{max-height:none!important;height:auto!important;overflow:visible!important}
 </style>
 
 
