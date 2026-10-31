@@ -2,7 +2,7 @@ name: Two-team shamble points acceptance
 on:
   push:
     branches: [feature/two-team-shamble-points-20261030]
-    paths: [scoring.html, shamble-points.js, db/releases/shamble-points/install.sql, scripts/test-player-score-native.cjs, tests/visual/shamble-points.cjs, tests/visual/shamble-fixture.cjs, .github/workflows/shamble-points-acceptance.yml]
+    paths: ['tests/**', scoring.html, shamble-points.js, db/releases/shamble-points/install.sql, scripts/test-player-score-native.cjs, tests/visual/shamble-points.cjs, tests/visual/shamble-fixture.cjs, .github/workflows/shamble-points-acceptance.yml]
 permissions:
   contents: read
 jobs:
