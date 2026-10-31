@@ -1314,7 +1314,7 @@ html.broadcast-active,body.broadcast-active{overflow:hidden!important;height:100
   #rankingsView{padding-bottom:86px!important;}
 }
 
-#simpleHubBackBtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;z-index:99999;background:#08253b;color:#fff;border:2px solid #d5a72c;border-radius:24px;padding:10px 14px;font-size:14px;font-weight:800;cursor:pointer}
+#simpleHubBackBtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:8px;z-index:99999;background:#08253b;color:#fff;border:1px solid #d5a72c;border-radius:999px;padding:6px 9px;font-size:11px;line-height:1.2;font-weight:700;min-width:0;min-height:0;width:auto;height:auto;box-shadow:0 2px 7px #0003;cursor:pointer}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -3031,7 +3031,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 </section>
 
 <section id="app" class="hidden">
-<button id="simpleHubBackBtn" type="button" onclick="openAppHub()" aria-label="Return to welcome screen">← Main Menu</button>
+<button id="simpleHubBackBtn" type="button" aria-label="Return to welcome screen">← Main Menu</button>
 <div class="card row between">
 <div class="top-account-wrap">
   <div id="topAccountAvatar" class="top-account-avatar">—</div>
@@ -5952,6 +5952,7 @@ document.body.classList.remove("login-mode");setGlobalMenuVisible(false);setMobi
 }
 
 function closeAppHub(){const h=$("appHub");if(h)h.classList.add("hidden");setGlobalMenuVisible(true)}
+if($("simpleHubBackBtn"))$("simpleHubBackBtn").addEventListener("click",()=>openAppHub());
 function openAppHub(){
  if(!user){enterViewer();return}
  if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;
