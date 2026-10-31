@@ -5993,6 +5993,8 @@ function openHubView(view){
  if(view==="scoring"){showView("home");return}
 }
 function showView(name){
+ // Navigation into Live Scoring or Clubhouse must always expose the return control.
+ setGlobalMenuVisible(true);
  if(name!=="leaderboard")document.body.classList.remove("my-profile-open");
  if(!user){enterViewer();return}
  if(name==="scoring"&&!(isCommissioner||captainTeam!=null))name="handicap";
