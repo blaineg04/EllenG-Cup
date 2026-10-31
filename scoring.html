@@ -3014,7 +3014,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
         <span class="tour-chevron">›</span>
       </button>
 
-      <button type="button" class="app-hub-btn tour-card" id="hubRulebook" onclick="closeAppHub();showView('rules')"><span class="tour-icon">📘</span><span class="tour-copy"><small class="tour-kicker">PLAYER REFERENCE</small><strong>Tournament Rules</strong><em>Format, scoring, bonuses, drops and disputes</em></span><span class="tour-chevron">›</span></button>
+      <button type="button" class="app-hub-btn tour-card" id="hubRulebook"><span class="tour-icon">📘</span><span class="tour-copy"><small class="tour-kicker">PLAYER REFERENCE</small><strong>Tournament Rules</strong><em>Format, scoring, bonuses, drops and disputes</em></span><span class="tour-chevron">›</span></button>
       <button type="button" class="app-hub-btn tour-card" id="hubClubhouse">
         <span class="tour-icon">⚑</span>
         <span class="tour-copy"><small class="tour-kicker">CLUBHOUSE</small><strong>Clubhouse</strong><em>RSVP, tee times, profiles, course and recaps</em></span>
@@ -6073,6 +6073,15 @@ function openHubView(view){
  if(view==="clubhouse"){showView("clubhouse");return}
  if(view==="scoring"){showView("home");return}
 }
+// Bind the rulebook navigation in script, rather than relying on inline onclick.
+// Keep the menu closed and display the rules view in one deterministic action.
+const rulesHubButton=$("hubRulebook");
+if(rulesHubButton)rulesHubButton.addEventListener("click",function(event){
+ event.preventDefault();
+ event.stopPropagation();
+ closeAppHub();
+ showView("rules");
+});
 function showView(name){
  if(name!=="leaderboard")document.body.classList.remove("my-profile-open");
  if(!user){enterViewer();return}
