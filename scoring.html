@@ -1343,6 +1343,21 @@ body:has(#appHub:not(.hidden)) #simpleHubBackBtn{display:none!important}
  #courseScorecard .course-table-mobile tbody th{font-weight:800;background:#f3f6f7}
 }
 
+
+/* Compact original-grid scoring: preserve the 18-hole selector and score-entry layout. */
+@media(max-width:700px){
+ #scoringView>.card:first-child{padding:14px!important}
+ #scoringView #entryHint{font-size:12px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:3px}
+ #scoringView #holebar{margin-top:10px!important;gap:5px!important}
+ #scoringView #holebar .holebtn{min-height:62px!important}
+ #scoringView #mobileHoleGuide{display:none!important}
+ #scoringView .scoring-pars-collapsible{margin-top:10px;border-top:1px solid var(--line);padding-top:9px}
+ #scoringView .scoring-pars-collapsible summary{cursor:pointer;font-weight:800;font-size:13px}
+ #scoringView .scoring-pars-collapsible summary span{font-size:11px;font-weight:400;color:#687781;margin-left:8px}
+ #scoringView .scoring-pars-collapsible[open]{max-height:250px;overflow:auto}
+ #scoringView #holeFormat{font-size:11px}
+ #scoringView>.card+.card{margin-top:10px!important}
+}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -3500,10 +3515,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 </div></div>
 <div id="holebar" class="holebar" style="margin-top:14px"></div>
 <div id="mobileHoleGuide" class="mobile-hole-guide"></div>
-<div style="margin-top:16px">
-  <div class="row between"><div><strong>Course Pars</strong><div class="status">View-only for captains. The Commissioner controls these settings.</div></div><span class="badge">READ ONLY</span></div>
-  <div id="captainParView" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(72px,1fr));gap:7px;margin-top:10px"></div>
-</div>
+<details id="scoringCoursePars" class="scoring-pars-collapsible"><summary>Course Pars <span>Tap to view all 18 holes</span></summary><div class="status" style="margin-top:7px">View-only for captains. The Commissioner controls these settings.</div><div id="captainParView" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(72px,1fr));gap:7px;margin-top:10px"></div></details>
 </div>
 <div class="card">
 <div id="frontNineScoreGrid" class="score-grid">
