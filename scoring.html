@@ -3592,7 +3592,8 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
     <label><small>Gator Hole visibility</small><select id="gatorReveal"><option value="false">Keep Secret</option><option value="true">Reveal Gator Hole</option></select></label>
     
   </div>
-  <div id="teamBuildSummary" class="note" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb"></div>
+  <select id="cargoTeam" hidden aria-hidden="true"><option value="">Not awarded</option></select>
+   <div id="teamBuildSummary" class="note" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb"></div>
   <div class="note" style="margin-top:7px">Number of teams and Number of golfers stay blank until you choose a new value. Leaving either blank keeps the current saved setting.</div>
   <div style="margin-top:16px">
     <div class="row between"><div><strong>Hole Pars</strong><div class="status">Set each hole as a Par 3, 4 or 5. Live scoring automatically shows − / + and Birdie, Par, Bogey, etc.</div></div><span class="badge">PAR 3–5</span></div>
@@ -4257,8 +4258,7 @@ function renderTournamentAwards(){
   ['BEST BACK 9',back?teams[back.ti]?.name:'—',back?`${back.rel===0?'E':back.rel>0?'+'+back.rel:'−'+Math.abs(back.rel)} through ${back.count} holes`:'Waiting on scores',back?.ti],
   ['BIRDIE LEADER',birds&&birds.value?teams[birds.ti]?.name:'—',birds&&birds.value?`${birds.value} birdie${birds.value===1?'':'s'}`:'No birdies yet',birds?.ti],
   ['EAGLE WATCH',eagles&&eagles.value?teams[eagles.ti]?.name:'—',eagles&&eagles.value?`${eagles.value} eagle${eagles.value===1?'':'s'}`:'No eagles yet',eagles?.ti],
-  ['GATOR KILLER',gatorWinner?gatorWinner.names:'—',gatorWinner?`Hole ${gatorHole} • ${gatorWinner.score} strokes`:(tournament?.gator_revealed?'Waiting on all teams':'Gator Hole still secret'),null],
-  ['CARGO KING',tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?(teams[Number(tournament.final_cargo_team)]?.name||'—'):'—',tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`+${finalCargoBonus()} Final Cargo Shot points`:'Not awarded yet',Number(tournament?.final_cargo_team)]
+  ['GATOR KILLER',gatorWinner?gatorWinner.names:'—',gatorWinner?`Hole ${gatorHole} • ${gatorWinner.score} strokes`:(tournament?.gator_revealed?'Waiting on all teams':'Gator Hole still secret'),null]
  ];
  root.innerHTML=cards.map(c=>`<div class="award-card" style="--accent:${Number.isInteger(c[3])?teamAccent(c[3]):'var(--gold)'}"><div class="award-kicker">${esc(c[0])}</div><strong>${esc(c[1]||'—')}</strong><span>${esc(c[2])}</span></div>`).join('');
  if($("awardsStatus"))$("awardsStatus").textContent=String(tournament?.status||'setup').toUpperCase()==='COMPLETE'?'FINAL':'LIVE';
@@ -4350,7 +4350,7 @@ function renderTournamentRecap(){
  const medals=["🥇","🥈","🥉"],pod=ranking.slice(0,3).map((x,i)=>`<div class="recap-place team-accent" style="--team-accent:${teamAccent(x.team)}"><span class="medal">${medals[i]}</span><strong>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div class="status" style="margin-top:4px">${x.pts.toFixed(x.pts%1?1:0)} Cup pts • Thru ${x.thru||0}</div></div>`).join("");
  let best=null;teams.forEach((_,ti)=>{let s=0,p=0,c=0;for(let h=1;h<=18;h++){const r=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null);if(r){s+=Number(r.score);p+=parForHole(h);c++}}if(c&&(!best||((s-p)<best.rel)||((s-p)===best.rel&&c>best.c)))best={ti,rel:s-p,c}});
  const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Hole ${Number(tournament.gator_hole)}`:"Secret / not revealed";const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""?(teams[Number(tournament.final_cargo_team)]?.name||`Team ${Number(tournament.final_cargo_team)+1}`):"Not awarded";const bestText=best?`${teams[best.ti]?.name||`Team ${best.ti+1}`} ${best.rel===0?'E':best.rel>0?'+'+best.rel:'−'+Math.abs(best.rel)} (${best.c} holes)`:"—";
- root.innerHTML=`<div class="recap-podium">${pod}</div><div class="recap-stats"><div class="recap-stat"><span class="status">BEST TO PAR</span><strong>${esc(bestText)}</strong></div><div class="recap-stat"><span class="status">GATOR HOLE</span><strong>${esc(gator)}</strong></div><div class="recap-stat"><span class="status">FINAL CARGO SHOT</span><strong>${esc(cargo)}</strong></div></div>`;
+ root.innerHTML=`<div class="recap-podium">${pod}</div><div class="recap-stats"><div class="recap-stat"><span class="status">BEST TO PAR</span><strong>${esc(bestText)}</strong></div><div class="recap-stat"><span class="status">GATOR HOLE</span><strong>${esc(gator)}</strong></div></div>`;
 }
 function renderTournamentHealth(){
  if(!isCommissioner||!draftState)return;let incomplete=0,missing=0;const next=[];for(let h=1;h<=18;h++){const miss=teams.map((t,ti)=>(typeof isShamblePoints==="function"&&isShamblePoints()?shambleSummary().holes[h-1]?.[ti]?.complete:scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null))?null:t.name).filter(Boolean);if(miss.length){incomplete++;missing+=miss.length;if(next.length<4)next.push(`Hole ${h}: ${miss.join(', ')}`)}}
@@ -4365,7 +4365,7 @@ function renderLeaderboard(){
  const arr=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
  const board=$("leaderboard");
  if(board) board.dataset.teamCount=String(arr.length);
- board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${isShamblePoints()?` <span class="badge">+${(shambleSummary().bonuses.gator[x.team]+shambleSummary().bonuses.cargo[x.team])} special</span>`:isFinalCargoTeam(x.team)?` <span class="badge">+${finalCargoBonus()} Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
+ board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${isShamblePoints()?` <span class="badge">+${(shambleSummary().bonuses.gator[x.team])} special</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
  renderLiveHoleScores();
 }
 function trashTime(ts){
