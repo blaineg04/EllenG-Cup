@@ -3600,6 +3600,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div class="more-sheet" role="dialog" aria-modal="true" aria-label="More options">
     <div class="more-sheet-head"><h3>More</h3><button id="moreMenuClose" class="more-sheet-close" type="button">Close</button></div>
     <div class="more-menu-grid">
+      <button class="more-menu-btn" type="button" id="moreMyProfileBtn"><span>👤</span>My Profile</button>
             <button class="more-menu-btn" type="button" data-more-view="course"><span>⛳</span>Course</button>
       <button class="more-menu-btn" type="button" data-more-view="rankings"><span>🏷️</span>Player Rankings</button>
       <button class="more-menu-btn" type="button" data-more-view="extras"><span>🏆</span>Tournament Extras</button>
@@ -6041,6 +6042,7 @@ if($("trashBackBtn"))$("trashBackBtn").addEventListener("click",()=>{showView("h
 
 if(moreBackdrop)moreBackdrop.addEventListener("click",e=>{if(e.target===moreBackdrop)closeMoreMenu()});
 document.querySelectorAll("[data-more-view]").forEach(b=>b.addEventListener("click",()=>{closeMoreMenu();showView(b.dataset.moreView)}));
+if($("moreMyProfileBtn"))$("moreMyProfileBtn").addEventListener("click",()=>{closeMoreMenu();showView("leaderboard");const panel=$("myProfilePhotoCard");if(panel){panel.open=true;panel.scrollIntoView({behavior:"smooth",block:"start"})}});
 if($("playerDirectory"))$("playerDirectory").addEventListener("click",e=>{
  const row=e.target.closest("[data-player-profile]");if(!row)return;
  selectedPlayerProfileIndex=Number(row.dataset.playerProfile);renderPlayerProfileCards();
