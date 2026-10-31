@@ -2936,6 +2936,14 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
  body.my-profile-open:not(.login-mode) #myProfilePhotoCard .self-photo-wrap{display:grid!important}
 }
 </style>
+
+<style id="my-profile-photo-contrast-fix">
+body.my-profile-open #myProfilePhotoCard{background:#fffdf7!important;color:#10202c!important}
+body.my-profile-open #myProfilePhotoCard summary strong{color:#10202c!important;font-size:18px!important;opacity:1!important;-webkit-text-fill-color:#10202c!important}
+body.my-profile-open #myProfilePhotoCard #selfPhotoPlayerName{color:#10202c!important;opacity:1!important}
+body.my-profile-open #myProfilePhotoCard .self-photo-choose{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-height:48px!important;background:#edf2f5!important;border:2px solid #607787!important;color:#10202c!important;-webkit-text-fill-color:#10202c!important;font-size:16px!important;font-weight:900!important;opacity:1!important;visibility:visible!important}
+body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!important}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
