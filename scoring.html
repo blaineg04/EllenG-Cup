@@ -6405,7 +6405,10 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
  // Let the SDK refresh an expired token before deciding whether sign-in is needed.
  try{
    setSyncStatus("saving","Restoring…");
-   const result=await db.auth.getSession();
+   const result=await Promise.race([
+     db.auth.getSession(),
+     new Promise((_,reject)=>setTimeout(()=>reject(new Error("Session restore timed out")),8000))
+   ]);
    clearInternalMenuFlag();
    const session=result?.data?.session;
    if(result?.error)throw result.error;
