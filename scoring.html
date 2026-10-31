@@ -1343,6 +1343,30 @@ body:has(#appHub:not(.hidden)) #simpleHubBackBtn{display:none!important}
  #courseScorecard .course-table-mobile tbody th{font-weight:800;background:#f3f6f7}
 }
 
+
+/* Mobile scoring: fixed shell, compact hole controls and independently scrollable roster. */
+.mobile-hole-picker{display:none}
+@media(max-width:700px){
+ body:has(#scoringView:not(.hidden)){overflow:hidden!important}
+ body:has(#scoringView:not(.hidden)) #scoringView{height:calc(100dvh - 255px);min-height:280px;overflow:hidden;display:flex;flex-direction:column;gap:8px;padding-bottom:0}
+ #scoringView>.card{margin:0!important;flex-shrink:0;padding:12px!important}
+ #scoringView>.mobile-scoring-roster{flex:1 1 0;min-height:100px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+ #scoringView #holebar{display:none!important}
+ #scoringView #mobileHoleGuide{display:none!important}
+ #scoringView #entryHint{display:none!important}
+ #scoringView #holeFormat{font-size:10px;white-space:normal}
+ #scoringView .mobile-hole-picker{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px;padding:6px;border-radius:12px;background:#edf1f4}
+ #scoringView .mobile-hole-picker button{width:48px;height:42px;flex:none;border-radius:9px;font-size:28px;font-weight:700;background:#12394c;color:#fff}
+ #scoringView .mobile-hole-picker button:disabled{opacity:.35}
+ #scoringView .mobile-hole-current{text-align:center;display:flex;flex-direction:column;gap:1px;color:#12394c}
+ #scoringView .mobile-hole-current span{font-size:12px}
+ #scoringView .mobile-par-details{margin-top:8px;border-top:1px solid #d9e1e7;padding-top:7px}
+ #scoringView .mobile-par-details summary{cursor:pointer;font-weight:700;font-size:13px}
+ #scoringView .mobile-par-details summary span{font-size:11px;font-weight:400;color:#657582;margin-left:8px}
+ #scoringView .mobile-par-details[open]{max-height:170px;overflow:auto}
+ #scoringView .shamble-team{margin-bottom:10px}
+ #scoringView .shamble-player{min-width:0}
+}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -3498,14 +3522,16 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
  <strong>🐊 Gator Hole</strong><p class="status">Secret until the Commissioner reveals it. Double first-place points go to the lowest-scoring team, shared among ties.</p>
  
 </div></div>
+<div id="mobileHolePicker" class="mobile-hole-picker"><button type="button" id="mobilePrevHole" aria-label="Previous hole">‹</button><div class="mobile-hole-current"><strong id="mobileHoleNumber">Hole 1 of 18</strong><span id="mobileHolePar">Par 5</span></div><button type="button" id="mobileNextHole" aria-label="Next hole">›</button></div>
 <div id="holebar" class="holebar" style="margin-top:14px"></div>
 <div id="mobileHoleGuide" class="mobile-hole-guide"></div>
-<div style="margin-top:16px">
+<details class="mobile-par-details"><summary>Course Pars <span>View course details</span></summary><div style="margin-top:12px">
   <div class="row between"><div><strong>Course Pars</strong><div class="status">View-only for captains. The Commissioner controls these settings.</div></div><span class="badge">READ ONLY</span></div>
   <div id="captainParView" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(72px,1fr));gap:7px;margin-top:10px"></div>
 </div>
+</details>
 </div>
-<div class="card">
+<div class="card mobile-scoring-roster">
 <div id="frontNineScoreGrid" class="score-grid">
 <div class="head">TEAM</div><div class="head" style="text-align:center"><span class="desktop-only">STROKES</span><span class="mobile-only">GOLF SCORE</span></div><div class="head" style="text-align:center">CUP PTS</div>
 <div id="scoreRows" style="display:contents"></div>
@@ -4484,7 +4510,19 @@ async function clearTrashTalkFeed(){
  if(!isCommissioner)return;if(!confirm("Clear every Trash Talk message for this tournament?"))return;const el=$("adminTrashMsg");el.textContent="Clearing…";
  try{const {data,error}=await db.functions.invoke("trash-talk",{body:{action:"clear_all",tournament_id:TOURNAMENT_ID}});if(error)throw error;if(data?.error)throw new Error(data.error);trashMessages=[];renderTrashTalk();el.textContent="Trash Talk feed cleared."}catch(e){el.textContent=e?.message||"Unable to clear feed."}
 }
+function updateMobileHolePicker(){
+ const n=document.getElementById("mobileHoleNumber"),p=document.getElementById("mobileHolePar");
+ if(n)n.textContent="Hole "+hole+" of 18";
+ if(p)p.textContent="Par "+parForHole(hole);
+ const prev=document.getElementById("mobilePrevHole"),next=document.getElementById("mobileNextHole");
+ if(prev)prev.disabled=hole<=1;
+ if(next)next.disabled=hole>=18;
+}
+function changeMobileHole(delta){hole=Math.max(1,Math.min(18,hole+delta));renderScoring()}
+document.getElementById("mobilePrevHole")?.addEventListener("click",()=>changeMobileHole(-1));
+document.getElementById("mobileNextHole")?.addEventListener("click",()=>changeMobileHole(1));
 function renderHolebar(){
+ updateMobileHolePicker();
  $("holebar").innerHTML=Array.from({length:18},(_,i)=>{
   let h=i+1,g=tournament&&tournament.gator_revealed&&Number(tournament.gator_hole)===h;
   return `<button class="holebtn ${h===hole?"active":""} ${g?"gator":""}" data-hole="${h}"><strong>${h}${g?" 🐊":""}</strong><br><span style="font-size:10px">P${parForHole(h)}</span></button>`
