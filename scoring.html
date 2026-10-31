@@ -3372,6 +3372,17 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 
 
 <section id="clubhouseView" class="view hidden">
+<div class="card" style="margin-top:16px">
+ <div class="row between"><h2 style="margin:0">📖 How Scoring Works</h2><span class="badge">PLAYER GUIDE</span></div>
+ <p class="status">18-hole individual shamble. Every golfer's points count toward the team total.</p>
+ <div style="display:grid;grid-template-columns:1fr auto;gap:9px 18px;margin-top:14px">
+ <span>Eagle or better</span><strong>5 pts</strong><span>Birdie</span><strong>4 pts</strong>
+ <span>Par</span><strong>3 pts</strong><span>Bogey</span><strong>2 pts</strong>
+ <span>Double Bogey</span><strong>1 pt</strong><span>Triple Bogey or worse</span><strong>0 pts</strong>
+ </div><hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+ <strong>🐊 Gator Hole</strong><p class="status">Secret until the Commissioner reveals it. Double first-place points go to the lowest-scoring team, shared among ties.</p>
+ <strong>🏁 Final Cargo Shot</strong><p class="status">6 bonus points to the winning team.</p>
+</div>
 <div class="card clubhouse-hero">
   <div class="home-kicker">ELLENG CUP • CLUBHOUSE</div>
   <h2 style="margin:5px 0">Tournament Legacy & Extras</h2>
@@ -3465,6 +3476,17 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 <section id="scoringView" class="view hidden">
 <div class="card">
 <div class="row between"><div><h2 style="margin:0">Score Entry</h2><div id="entryHint" class="status"></div></div><span id="holeFormat" class="badge"></span></div>
+<button type="button" class="secondary" style="margin-top:10px" onclick="document.getElementById('scoreGuideInline').hidden=!document.getElementById('scoreGuideInline').hidden">ⓘ Scoring Rules</button><div id="scoreGuideInline" hidden><div class="card" style="margin-top:16px">
+ <div class="row between"><h2 style="margin:0">📖 How Scoring Works</h2><span class="badge">PLAYER GUIDE</span></div>
+ <p class="status">18-hole individual shamble. Every golfer's points count toward the team total.</p>
+ <div style="display:grid;grid-template-columns:1fr auto;gap:9px 18px;margin-top:14px">
+ <span>Eagle or better</span><strong>5 pts</strong><span>Birdie</span><strong>4 pts</strong>
+ <span>Par</span><strong>3 pts</strong><span>Bogey</span><strong>2 pts</strong>
+ <span>Double Bogey</span><strong>1 pt</strong><span>Triple Bogey or worse</span><strong>0 pts</strong>
+ </div><hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+ <strong>🐊 Gator Hole</strong><p class="status">Secret until the Commissioner reveals it. Double first-place points go to the lowest-scoring team, shared among ties.</p>
+ <strong>🏁 Final Cargo Shot</strong><p class="status">6 bonus points to the winning team.</p>
+</div></div>
 <div id="holebar" class="holebar" style="margin-top:14px"></div>
 <div id="mobileHoleGuide" class="mobile-hole-guide"></div>
 <div style="margin-top:16px">
@@ -3957,7 +3979,7 @@ function renderPointsEntry(){
 }
 function renderPointsExtras(){
  const x=shambleSummary(),set=(id,value)=>{const el=$(id);if(el)el.textContent=value;};
- set("homeHolesComplete",x.completeHoles+" / 18");set("broadcastHoles",x.completeHoles+" / 18");set("homeSpecialText","All individual points count. Eagle or better 5 • Birdie 4 • Par 3 • Bogey 2 • Double 1 • Triple or worse 0.");
+ set("homeHolesComplete",x.completeHoles+" / 18");set("broadcastHoles",x.completeHoles+" / 18");set("homeSpecialText","Gator Hole: Secret until the Commissioner reveals it. Double first-place points go to the lowest-scoring team, shared among ties. Final Cargo Shot: 6 bonus points to the winning team.");
  set("broadcastSpecial","18-hole shamble • Every golfer counts");
  const chosen=$("teamRosterSelect")?.value||"all";$("teamCards").innerHTML=teams.map((t,ti)=>({t,ti})).filter(({ti})=>chosen==="all"||String(ti)===chosen).map(({t,ti})=>`<div class="card"><h3>${esc(t.name)} • ${x.totals[ti].pts} pts</h3>${teamRosterGolfers(ti).map(g=>`<div class="row between" style="padding:8px 0"><span>${esc(g.name)}</span><strong>${x.players[g.index].points} pts</strong><span>${x.players[g.index].holes}/18 holes</span></div>`).join("")||"No golfers assigned yet."}</div>`).join("");
  const ranked=x.players.filter(p=>p.holes).sort((a,b)=>b.points-a.points||a.index-b.index);
