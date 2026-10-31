@@ -5166,6 +5166,7 @@ function renderSelfScoreContext(){
  const box=$("selfScoreContext");if(!box||!draftState)return;
  const idx=currentGolferIndex;
  const h=Number($("selfScoreHole")?.value||1);
+ if($("selfScoreParSelect"))$("selfScoreParSelect").disabled=isShamblePoints();
  if(idx==null){box.textContent="Your login is not linked to a golfer profile yet. Ask the Commissioner to create/link your player login.";return}
  const g=draftState?.golfers?.[idx];
  const ti=selfGolferTeamIndex(idx);
@@ -6205,6 +6206,7 @@ $("saveAdmin").addEventListener("click",async()=>{
    for(let i=newCount;i<oldCount;i++){try{await db.functions.invoke("captain-admin",{body:{action:"remove_assignment",draft_id:DRAFT_ID,team_index:i}})}catch(e){}}
    (draftState.golfers||[]).forEach(g=>{if(g.team!=null&&Number(g.team)>=newCount)g.team=null});
   }
+  if(pointsMode)draftState.teams=draftState.teams.slice(0,2);
   while(draftState.teams.length<newCount)draftState.teams.push({name:`Team ${draftState.teams.length+1}`,captain:"",captainEmail:"",roster:[]});
   const selectedCourse=COURSE_LIBRARY[draftState.courseId];
   const selectedRoute=selectedCourse?.routes?.[draftState.courseRoute];
@@ -6217,7 +6219,7 @@ $("saveAdmin").addEventListener("click",async()=>{
   const {error:dateError}=await db.from("elleng_drafts").update({tournament_date:tournamentDate}).eq("id",DRAFT_ID);
   if(dateError)throw dateError;
   await loadBase(); await loadScores(); renderAll();
-  $("adminMsg").textContent=`Tournament controls saved. ${tournamentDate?"Tournament date: "+formatTournamentDate(tournamentDate)+". ":""}${isSplitPair()?"Split-Pair Scramble":draftTeamSize()+"-man Standard EllenG"} format, ${teams.length} teams and ${draftGolferCount()} golfers active.`;
+  $("adminMsg").textContent=`Tournament controls saved. ${tournamentDate?"Tournament date: "+formatTournamentDate(tournamentDate)+". ":""}${isShamblePoints()?"18-hole Shamble Points":isSplitPair()?"Split-Pair Scramble":draftTeamSize()+"-man Standard EllenG"} format, ${teams.length} teams and ${draftGolferCount()} golfers active.`;
  }catch(e){$("adminMsg").textContent=e?.message||"Unable to save tournament controls."}
 });
 $("reloadAdmin").addEventListener("click",async()=>{if(!isCommissioner)return;$("adminMsg").textContent="Reloading…";try{await loadBase();await loadScores();renderAll();$("adminMsg").textContent="Current data reloaded."}catch(e){$("adminMsg").textContent=e.message}});
