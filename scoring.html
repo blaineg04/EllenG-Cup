@@ -4572,6 +4572,7 @@ function renderRankingsDirectory(){
 }
 
 function renderProgress(){
+ $("progressView").classList.toggle("shamble-progress",typeof isShamblePoints==="function"&&isShamblePoints());
  if(typeof isShamblePoints==="function"&&isShamblePoints()){const x=shambleSummary();$("progressSummary").innerHTML=`<span class="badge">${x.completeHoles}/18 holes complete</span>`;$("progressGrid").innerHTML=pointsHoleCards(true);return}
  let complete=0;
  const cards=Array.from({length:18},(_,i)=>{
@@ -7411,6 +7412,53 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
   }
   body:not(.login-mode) #progressGrid > div .badge{
     font-size:8px!important;line-height:1!important;padding:2px 5px!important;min-height:0!important;white-space:nowrap!important;
+  }
+
+  /* Shamble cards include a row per team; let content set their height. */
+  body:not(.login-mode) #progressView.shamble-progress > .card{
+    overflow-y:auto!important;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  body:not(.login-mode) #progressView.shamble-progress > .card > .row:first-child{
+    display:flex!important;
+    flex:0 0 auto;
+  }
+  body:not(.login-mode) #progressView.shamble-progress #progressSummary{display:flex!important;flex:0 0 auto;}
+  body:not(.login-mode) #progressView.shamble-progress #progressGrid{
+    flex:0 0 auto!important;
+    height:auto!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:none!important;
+    grid-auto-rows:auto!important;
+    gap:8px!important;
+    overflow:visible!important;
+    margin-top:8px!important;
+  }
+  body:not(.login-mode) #progressView.shamble-progress #progressGrid > div{
+    height:auto!important;
+    min-height:min-content!important;
+    margin:0!important;
+    padding:10px!important;
+    justify-content:flex-start!important;
+    overflow:visible!important;
+  }
+  body:not(.login-mode) #progressView.shamble-progress #progressGrid > div .row{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    gap:4px 8px!important;
+    border-top:1px solid var(--line);
+    margin-top:7px;
+    font-size:14px!important;
+    line-height:1.3!important;
+  }
+  body:not(.login-mode) #progressView.shamble-progress #progressGrid > div .row > span:first-child{overflow-wrap:anywhere;}
+  body:not(.login-mode) #progressView.shamble-progress #progressGrid > div .row > span:last-child{grid-column:1/-1;color:var(--muted);font-size:12px!important;}
+  body:not(.login-mode) #progressView.shamble-progress #progressGrid > div strong{
+    font-size:14px!important;
+    line-height:1.3!important;
+    white-space:normal!important;
+    overflow:visible!important;
   }
 
   /* PLAYERS: keep the app shell fixed, but let the roster itself scroll so Available / Unassigned players are reachable. */
