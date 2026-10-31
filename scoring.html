@@ -497,6 +497,10 @@ label small{display:block;color:var(--muted);margin-bottom:5px}
   min-height:auto;
 }
 .global-main-menu-bar.hidden{display:none}
+@media(max-width:760px){
+ .global-main-menu-bar:not(.hidden){position:fixed;top:calc(env(safe-area-inset-top, 0px) + 8px);right:10px;left:auto;z-index:9999;padding:0;background:transparent}
+ .global-main-menu-btn{min-width:0;min-height:42px;padding:9px 14px;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.24)}
+}
 .global-main-menu-btn{
   display:inline-flex;
   align-items:center;
@@ -3002,7 +3006,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 <div><h1>EllenG Cup</h1><p id="tournamentSubtitle">LIVE TOURNAMENT SCORING • 18 HOLES</p></div>
 </div></header>
 <div id="globalMainMenuBar" class="global-main-menu-bar hidden">
-  <a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a>
+  <button class="global-main-menu-btn" id="returnToHubBtn" type="button">← Main Menu</button>
 </div>
 <div class="app-version-bar"><span id="syncStatusChip" class="sync-status-chip">Connecting…</span><span id="appVersionChip" class="app-version-chip">EllenG Live v2.7.53</span></div>
 <div id="updateBanner" class="update-banner hidden" role="status" aria-live="polite"><div class="update-inner"><div><strong>Update available</strong><div class="status" id="updateText">A newer EllenG Cup app version is available.</div></div><button id="refreshAppBtn" type="button">Refresh App</button></div></div>
@@ -5949,6 +5953,7 @@ document.body.classList.remove("login-mode");setGlobalMenuVisible(false);setMobi
 }
 
 function closeAppHub(){const h=$("appHub");if(h)h.classList.add("hidden");setGlobalMenuVisible(true)}
+if($("returnToHubBtn"))$("returnToHubBtn").addEventListener("click",()=>openAppHub());
 function openAppHub(){
  if(!user){enterViewer();return}
  if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;
