@@ -7674,5 +7674,11 @@ body:not(.login-mode) #leaderboardView:not(.hidden){overflow-y:auto!important;ov
 
 body:not(.login-mode) #leaderboardView:not(.hidden){scroll-padding-block:128px 80px!important}
 body:not(.login-mode) #leaderboardView #saveSelfScore,body:not(.login-mode) #leaderboardView #clearSelfScore{scroll-margin-block:80px!important}
+/* Size the band column to its icon and full label, including Unranked. */
+@media(max-width:650px){
+ #rankingsView .ranking-band-compact{grid-template-columns:max-content minmax(0,1fr)!important}
+ #rankingsView .ranking-band-compact-head{min-width:max-content!important}
+}
 </style>
+
 
