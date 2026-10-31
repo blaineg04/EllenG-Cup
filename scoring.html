@@ -1313,6 +1313,8 @@ html.broadcast-active,body.broadcast-active{overflow:hidden!important;height:100
   #rankingsView .rankings-board{gap:6px!important;}
   #rankingsView{padding-bottom:86px!important;}
 }
+
+#simpleHubBackBtn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;z-index:99999;background:#08253b;color:#fff;border:2px solid #d5a72c;border-radius:24px;padding:10px 14px;font-size:14px;font-weight:800;cursor:pointer}
 </style>
 
 <link rel="manifest" href="manifest.webmanifest">
@@ -3029,6 +3031,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 </section>
 
 <section id="app" class="hidden">
+<button id="simpleHubBackBtn" type="button" onclick="openAppHub()" aria-label="Return to welcome screen">← Main Menu</button>
 <div class="card row between">
 <div class="top-account-wrap">
   <div id="topAccountAvatar" class="top-account-avatar">—</div>
