@@ -1,5 +1,8 @@
 (async function(){
  'use strict';
+ // Opening another email link in this tab may be a fragment-only navigation.
+ // Reload so the new credential is read and removed by the same startup flow.
+ addEventListener('hashchange',()=>{if(location.hash)location.reload()});
  const $=id=>document.getElementById(id),show=id=>$(id).classList.remove('hidden'),hide=id=>$(id).classList.add('hidden');
  const result=text=>{$('resultText').textContent=text;show('result');$('result').scrollIntoView({block:'nearest',behavior:'smooth'})};
  const cfg=window.ELLENG_CONFIG;
