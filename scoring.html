@@ -6343,22 +6343,11 @@ $("resetCurrentLeader").addEventListener("click",()=>{
 $("resetScoringOnly").addEventListener("click",clearScoresOnly);
 if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps);
 (async()=>{
- const internal=enteredFromInternalMenu();
-
- // Normal link/app launch: render Sign In immediately with no restore screen.
- if(!internal){
-   clearInternalMenuFlag();
-   user=null;
-   await enterViewer();
-   return;
- }
-
- // Main Menu return path: try to reuse the active session.
- // Keep the hub/loading state hidden while checking, but never show Sign In unless restore fails.
+ // Every launch, including refresh, restores the SDK's persisted session.
+ // Let the SDK refresh an expired token before deciding whether sign-in is needed.
  try{
    setSyncStatus("saving","Restoring…");
-   const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("Session restore timed out")),2500));
-   const result=await Promise.race([db.auth.getSession(),timeout]);
+   const result=await db.auth.getSession();
    clearInternalMenuFlag();
    const session=result?.data?.session;
    if(result?.error)throw result.error;
