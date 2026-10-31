@@ -8,6 +8,11 @@ test('all stroke outcomes award 5–4–3–2–1–0 with five-point maximum',(
  const {points}=require('../shamble-points.js');assert.deepEqual([1,2,3,4,5,6,7,20].map(s=>points(s,4)),[5,5,4,3,2,1,0,0]);
  for(const bad of [null,undefined,'',true,0,-1,1.5,21])assert.equal(points(bad,4),null);
 });
+test('60 golfers completing all 18 holes contribute exactly once to their two teams',()=>{
+ const {summarize}=require('../shamble-points.js');const golfers=Array.from({length:60},(_,i)=>({name:'Golfer '+i,team:i%2}));const state={golfers,teams:[{roster:golfers.map((_,i)=>i).filter(i=>i%2===0)},{roster:golfers.map((_,i)=>i).filter(i=>i%2===1)}]};
+ const rows=golfers.flatMap((g,i)=>Array.from({length:18},(_,j)=>({golfer_index:i,team_index:g.team,hole:j+1,score:4})));
+ const x=summarize(state,rows,Array(18).fill(4));assert.deepEqual(x.totals.map(t=>t.pts),[1620,1620]);assert.equal(x.completeHoles,18);assert(x.players.every(p=>p.points===54&&p.holes===18));
+});
 test('every golfer counts across all 18 holes, unequal rosters and clears',()=>{
  const {summarize}=require('../shamble-points.js');const golfers=Array.from({length:7},(_,i)=>({name:'Player '+i,team:i<4?0:1}));
  const state={golfers,teams:[{roster:[0,1,2,3]},{roster:[4,5,6]}]};
