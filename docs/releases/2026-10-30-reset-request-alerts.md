@@ -1,0 +1,9 @@
+# Commissioner-managed password reset requests
+
+User approved both dashboard and closed-app phone alerts; no domain purchase, email provider, paid service, new project, or recurring development run. Implement native Web Push on existing HTTPS origin, existing service worker and manifest. iPhone requires Home Screen install plus notification permission after an explicit button tap.
+
+Forgot password submits a username, receives a generic response, and never changes a password. Service-only atomic SQL resolves the real linked golfer, deduplicates pending requests, rate limits submissions, and retains a private queue. Only the server-validated current `elleng-cup` draft owner can list, reset, dismiss or register push devices. A request is unverified; commissioner must confirm identity before sharing a temporary password. Reset uses the existing linked Auth user ID, does not recreate accounts or change aliases, and requires password change on next sign-in.
+
+Push uses persistent server-generated VAPID keys in a service-only RLS table, not frontend code or logs. Subscription endpoints and encryption keys are private, owner-scoped, capped, and restricted to production browser push service hosts to prevent SSRF. Requests stay visible if push fails or no phone is enrolled. Delivery is best effort; provider acceptance does not prove a phone displayed an alert. OS notification, connectivity and Focus settings still apply.
+
+Acceptance: Node handler/authorization/endpoint tests, disposable native PostgreSQL permissions and concurrency tests, and mobile/desktop browser fixtures. No real password is reset or push permission granted during automated tests. Production activation still requires the commissioner to press Enable Phone Alerts on the intended device and confirm receipt of a test notification.

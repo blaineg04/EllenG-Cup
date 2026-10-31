@@ -1,20 +1,25 @@
-const {chromium}=require('playwright'),http=require('node:http'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const{chromium}=require('playwright'),http=require('node:http'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'../..');
-const sdk=`window.supabase={createClient:(url,key,opts)=>({auth:{getSession:async()=>({data:{session:{access_token:'fixture-session'}}}),verifyOtp:async(x)=>{window.fixtureOtp=x;return {data:{session:{access_token:'fixture-reset'}}}},updateUser:async(x)=>{window.fixturePasswordChanged=x.password.length;return {error:null}},signOut:async()=>({})},functions:{invoke:async()=>({data:{ok:true}})}})};`;
-(async()=>{let browser;const server=http.createServer((req,res)=>{const file=path.resolve(root,'.'+req.url.split('?')[0]);if(!file.startsWith(root+path.sep)||!fs.existsSync(file)){res.writeHead(404);res.end();return}res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':'text/html');res.end(fs.readFileSync(file))});await new Promise(r=>server.listen(0,'127.0.0.1',r));
-try{
- browser=await chromium.launch({headless:true});
- for(const width of [390,1440]){
-  const page=await browser.newPage({viewport:{width,height:844}});let enabled=false,calls=[];
-  await page.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({contentType:'text/javascript',body:sdk}));
-  await page.route('https://xepccqedhbucpbwuykoc.supabase.co/functions/v1/account-recovery',r=>{const body=r.request().postDataJSON();calls.push(body);const data=body.action==='capabilities'?{enabled}:body.action==='status'?{verified_email:'mine@example.com',pending_email:null}:{message:'Check your email.'};return r.fulfill({contentType:'application/json',body:JSON.stringify(data)})});
-  const base='http://127.0.0.1:'+server.address().port+'/account-recovery.html';
-  await page.goto(base);await page.locator('#unavailable').waitFor({state:'visible'});assert.equal(calls.some(x=>x.action==='request'),false);
-  enabled=true;calls=[];await page.goto(base+'?mode=manage');await page.locator('#managePanel').waitFor({state:'visible'});assert.match(await page.locator('#emailStatus').innerText(),/mine@example.com/);
-  await page.locator('#recoveryEmail').fill('new@example.com');await page.locator('#currentPassword').fill('fixture password');await page.locator('#enrollForm button').click();await page.locator('#resultText').getByText('Check your email.').waitFor();assert.equal(await page.locator('#currentPassword').inputValue(),'');assert.equal(calls.find(x=>x.action==='enroll').email,'new@example.com');
-  calls=[];await page.goto(base+'#verify='+'a'.repeat(64));await page.locator('#verifyPanel').waitFor({state:'visible'});assert.equal(new URL(page.url()).hash,'');assert.equal(calls.some(x=>x.action==='confirm'),false,'Opening email cannot auto-consume token');await page.locator('#verifyButton').click();await page.locator('#resultText').getByText('Check your email.').waitFor();assert.equal(calls.filter(x=>x.action==='confirm').length,1);
-  await page.goto(base+'#recovery=fixture-native-token');await page.locator('#resetStart').waitFor({state:'visible'});assert.equal(new URL(page.url()).hash,'');await page.locator('#continueButton').click();await page.locator('#resetPanel').waitFor({state:'visible'});await page.locator('#newPassword').fill('New password example');await page.locator('#confirmPassword').fill('New password example');await page.locator('#resetForm button').click();await page.locator('#resultText').getByText(/Password updated/).waitFor();assert.equal(await page.evaluate(()=>window.fixturePasswordChanged),20);assert.deepEqual(await page.evaluate(()=>window.fixtureOtp),{type:'recovery',token_hash:'fixture-native-token'});
-  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');await page.close();
- }
- console.log('PASS: recovery disabled state, signed-in enrollment, cleared password, explicit confirmation, token fragment removal, native recovery verify/update, mobile/desktop layout');
+const sdk=`window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:{access_token:'fixture-owner'}}})}})};`;
+(async()=>{let browser;const server=http.createServer((req,res)=>{const p=path.resolve(root,'.'+req.url.split('?')[0]);if(!p.startsWith(root+path.sep)||!fs.existsSync(p)){res.writeHead(404);res.end();return}res.setHeader('Content-Type',p.endsWith('.js')?'text/javascript':'text/html');res.end(fs.readFileSync(p))});await new Promise(r=>server.listen(0,'127.0.0.1',r));
+try{browser=await chromium.launch({headless:true});for(const width of [390,1440]){
+ const page=await browser.newPage({viewport:{width,height:844}});let closed=false,pushFail=true,owner=true,calls=[],lists=0;
+ await page.addInitScript(()=>{const original=setInterval;window.setInterval=(fn,ms)=>original(fn,Math.min(ms,60))});
+ await page.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({contentType:'text/javascript',body:sdk}));
+ await page.route('https://xepccqedhbucpbwuykoc.supabase.co/functions/v1/reset-requests',r=>{
+  const b=r.request().postDataJSON();calls.push(b);if(b.action==='list')lists++;
+  if(b.action!=='request'&&!owner)return r.fulfill({status:403,contentType:'application/json',body:JSON.stringify({error:'Commissioner access required.'})});
+  if(b.action==='push_status'&&pushFail)return r.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Push unavailable'})});
+  if(b.action==='reset')closed=true;
+  const x=b.action==='list'?{requests:closed?[]:[{id:'fixture-id',name:'Bobby Burt',username:'bburt',created_at:new Date().toISOString(),status:'processing',retry_after:new Date(Date.now()-10000).toISOString()}]}:b.action==='request'?{message:'If that username belongs to an EllenG golfer account, your request is now in the commissioner’s reset list.'}:{message:'Password reset. Share the temporary password privately.'};
+  return r.fulfill({contentType:'application/json',body:JSON.stringify(x)});
+ });
+ const base='http://127.0.0.1:'+server.address().port;
+ await page.goto(base+'/account-recovery.html');await page.getByLabel('Golfer username').fill('BBURT');await page.getByRole('button',{name:'Request Password Reset',exact:true}).click();await page.locator('#resultText').getByText(/commissioner/).waitFor();assert.equal(calls.find(x=>x.action==='request').username,'bburt');
+ await page.goto(base+'/commissioner-reset-requests.html');await page.getByText('Bobby Burt',{exact:true}).waitFor();await page.locator('#pushStatus').getByText(/could not be initialized/).waitFor();assert(await page.locator('#content').isVisible(),'Push failure cannot hide queue');assert(await page.getByRole('button',{name:'Reset Password',exact:true}).isVisible(),'Expired claim retry is visible');
+ await page.getByRole('button',{name:'Reset Password',exact:true}).click();await page.getByLabel(/Temporary password/).fill('Fixture password');const before=lists;await page.waitForTimeout(180);assert.equal(lists,before,'Polling pauses while editing');assert.equal(await page.getByLabel(/Temporary password/).inputValue(),'Fixture password');
+ await page.getByRole('button',{name:'Confirm Reset',exact:true}).click();await page.getByText('No pending password reset requests.',{exact:true}).waitFor();assert.equal(calls.find(x=>x.action==='reset').id,'fixture-id');assert(!('user_id'in calls.find(x=>x.action==='reset')));
+ owner=false;await page.reload();await page.locator('#denied').waitFor({state:'visible'});assert(!await page.locator('#content').isVisible());
+ assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'No horizontal overflow');await page.close();
+}console.log('PASS: mobile/desktop username request, queue/identity, expired lease retry, push-setup failure isolation, edit-preserving poll, explicit reset and non-owner denial');
 }finally{if(browser)await browser.close();await new Promise(r=>server.close(r))}})().catch(e=>{console.error(e);process.exitCode=1});

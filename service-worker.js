@@ -54,3 +54,8 @@ self.addEventListener("fetch",event=>{
     );
   }
 });
+
+// Visible, commissioner-only Web Push; never trust a payload to choose an external URL.
+self.addEventListener('push',event=>{let data={};try{data=event.data?.json()||{}}catch{}event.waitUntil(self.registration.showNotification(String(data.title||'EllenG Cup').slice(0,120),{body:String(data.body||'Open your commissioner reset list.').slice(0,300),icon:'/app-icon-192.png',badge:'/app-icon-192.png',tag:'elleng-password-reset',data:{url:'/commissioner-reset-requests'}}))});
+self.addEventListener('notificationclick',event=>{event.notification.close();event.waitUntil((async()=>{const url=new URL('/commissioner-reset-requests',self.location.origin).href;const tabs=await self.clients.matchAll({type:'window',includeUncontrolled:true});const existing=tabs.find(tab=>new URL(tab.url).pathname==='/commissioner-reset-requests');if(existing)return existing.focus();return self.clients.openWindow(url)})())});
+

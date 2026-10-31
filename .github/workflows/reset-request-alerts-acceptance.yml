@@ -1,0 +1,33 @@
+name: Reset request and phone alert acceptance
+on:
+  push:
+    branches: [feature/reset-request-alerts-20261030]
+    paths:
+      - '.github/workflows/reset-request-alerts-acceptance.yml'
+      - 'supabase/functions/reset-requests/**'
+      - 'db/releases/reset-requests/**'
+      - 'commissioner-reset-requests.*'
+      - 'reset-request-badge.js'
+      - 'account-recovery.*'
+      - 'service-worker.js'
+      - 'tests/reset*.test.cjs'
+      - 'tests/visual/account-recovery.cjs'
+      - 'scripts/test-reset-requests-native.cjs'
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Root regression tests
+        run: node --test tests/*.test.cjs
+      - name: Native private queue and claim concurrency acceptance
+        run: node scripts/test-reset-requests-native.cjs
+      - name: Browser dependencies
+        run: npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
+      - name: Mobile and desktop reset request acceptance
+        run: node tests/visual/account-recovery.cjs

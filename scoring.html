@@ -3163,7 +3163,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 <section id="leaderboardView" class="view hidden">
 <div id="myHandicapCard" class="card">
-  <div class="row between"><div><h2 style="margin:0">My Golf <a href="./account-recovery.html?mode=manage" style="font:600 12px system-ui;margin-left:8px">Recovery email</a></h2><div class="status">Your account is linked to your player profile. No PIN or name selection is required.</div></div><span class="badge">PLAYER ACCOUNT</span></div>
+  <div class="row between"><div><h2 style="margin:0">My Golf</h2><div class="status">Your account is linked to your player profile. No PIN or name selection is required.</div></div><span class="badge">PLAYER ACCOUNT</span></div>
   <div id="selfPlayerIdentity" class="note" style="margin-top:12px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb">Loading your player profile…</div>
   <select id="selfGolferSelect" class="hidden"><option value="">Player</option></select>
   <div class="admin-grid" style="margin-top:14px">
@@ -3448,6 +3448,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
     <div class="admin-stat"><strong id="commissionerAssignedCount">0</strong><span>ASSIGNED</span></div>
   </div>
   <div class="admin-jumps">
+<a id="resetRequestsLink" class="secondary hidden" href="./commissioner-reset-requests.html" style="text-decoration:none;padding:12px;border-radius:10px">Password Reset Requests · <span id="resetRequestsCount">Checking…</span></a>
     <a href="#adminTournament">Tournament & Course</a><a href="#adminTeams">Teams & Captains</a><a href="#adminAddGolfer">Add Golfer</a><a href="#adminPlayers">Players</a><a href="#adminTrashTalk">Trash Talk</a><a href="#adminNewTournament">New Tournament</a>
   </div>
 </div>
@@ -3615,6 +3616,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./reset-request-badge.js"></script>
 <script src="config.js"></script>
 <script src="client-health.js"></script><script src="shamble-points.js"></script>
 <script src="event-rsvp-client.js"></script>
@@ -3700,6 +3702,7 @@ const cfg=window.ELLENG_CONFIG;
 const supabaseKey=cfg?.supabasePublishableKey||cfg?.supabaseAnonKey;
 if(!cfg?.supabaseUrl||!supabaseKey){connection("EllenG configuration did not load.");return}
 const db=window.supabase.createClient(cfg.supabaseUrl,supabaseKey);
+window.EllenGResetRequests?.init(db);
 globalThis.EllenGHealth?.attach(db);
 connection("✓ App connected — live scoring ready.",true);
 const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
