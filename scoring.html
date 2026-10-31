@@ -3073,7 +3073,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 <div class="card home-hero">
   <h2 id="homeHeadline">Tournament Day</h2>
   <div id="homeSubline" class="status">Live standings, teams, players and course information in one place.</div>
-  <div class="row" style="margin-top:13px"><span id="homeStatusBadge" class="badge" style="background:#d5a72c;color:#10202c">SETUP</span><span id="homeCourseBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">Course</span><span id="homeDateBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">DATE TBD</span></div>
+  <div class="row" style="margin-top:13px"><span id="homeStatusBadge" class="badge" style="background:#d5a72c;color:#10202c">PRE-TOURNAMENT</span><span id="homeCourseBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">Course</span><span id="homeDateBadge" class="badge" style="background:rgba(255,255,255,.92);color:#10202c">DATE TBD</span></div>
 
 </div>
 
@@ -5604,7 +5604,7 @@ function applyPlayerSimplicity(){
 function renderHome(){
  if(!draftState||!tournament)return;
  const status=String(tournament?.status||"setup").toUpperCase();
- if($("homeStatusBadge"))$("homeStatusBadge").textContent=status;
+ if($("homeStatusBadge"))$("homeStatusBadge").textContent=status==="SETUP"?"PRE-TOURNAMENT":status;
  if($("homeCourseBadge"))$("homeCourseBadge").textContent=tournamentCourseLabel()||"—";
  const eventDate=draftState?.tournamentDate||null;
  if($("homeDateBadge"))$("homeDateBadge").textContent=eventDate?formatTournamentDate(eventDate):"DATE TBD";
