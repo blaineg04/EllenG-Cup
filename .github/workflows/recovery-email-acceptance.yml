@@ -1,0 +1,30 @@
+name: Verified recovery email acceptance
+on:
+  push:
+    branches: [feature/verified-recovery-email-20261030]
+    paths:
+      - '.github/workflows/recovery-email-acceptance.yml'
+      - 'account-recovery.*'
+      - 'supabase/functions/account-recovery/**'
+      - 'db/releases/account-recovery/**'
+      - 'tests/account-recovery.test.cjs'
+      - 'tests/visual/account-recovery.cjs'
+      - 'scripts/test-account-recovery-native.cjs'
+permissions:
+  contents: read
+jobs:
+  recovery:
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Root regression tests
+        run: node --test tests/*.test.cjs
+      - name: Private native PostgreSQL acceptance
+        run: node scripts/test-account-recovery-native.cjs
+      - name: Browser dependencies
+        run: npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
+      - name: Mobile and desktop recovery acceptance
+        run: node tests/visual/account-recovery.cjs
