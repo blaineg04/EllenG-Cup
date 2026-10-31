@@ -3911,7 +3911,7 @@ function renderPointsExtras(){
  if($("pointsGolferCountLabel"))$("pointsGolferCountLabel").classList.toggle("hidden",false);
 }
 
-function pointScaleText(){if(typeof isShamblePoints==="function"&&isShamblePoints())return "Eagle 5 · Birdie 4 · Par 3 · Bogey 2 · Double 1";return Array.from({length:teams.length},(_,i)=>teams.length-i).join("–")}
+function pointScaleText(){if(typeof isShamblePoints==="function"&&isShamblePoints())return "5–4–3–2–1–0";return Array.from({length:teams.length},(_,i)=>teams.length-i).join("–")}
 function normalPoints(values){
  const n=teams.length, out=Array(n).fill(null);
  const entered=values.map((v,i)=>({v,i})).filter(x=>Number.isFinite(x.v)).sort((a,b)=>a.v-b.v);
