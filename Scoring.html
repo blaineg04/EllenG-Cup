@@ -3197,17 +3197,14 @@ function renderShambleScoring(par,pts){
      return `<div class="shamble-team"><div class="row between"><strong>${esc(t.name)}</strong><span class="badge">SHAMBLE</span></div><div class="note" style="margin-top:8px">No drafted golfers are on this team yet.</div></div>`;
    }
    const entered=roster.map(g=>playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===hole&&Number(x.golfer_index)===g.index));
-   const complete=entered.every(Boolean);
-   const low=complete?Math.min(...entered.map(x=>Number(x.score))):null;
-   const lowGolf=low==null?null:relativeGolf(low,par);
    const rows=roster.map(g=>{
      const row=playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===hole&&Number(x.golfer_index)===g.index);
      const v=row?.score??"";
      const rg=v===""?null:relativeGolf(Number(v),par);
      return `<div class="shamble-player"><div><strong>${esc(g.name)}</strong></div><div><input class="shamble-player-score" type="number" min="1" max="20" step="1" inputmode="numeric" data-team="${teamIndex}" data-golfer="${g.index}" value="${v}" ${canEditTeam(teamIndex)?"":"disabled"}></div><div style="text-align:right">${v===""?'<span class="status">—</span>':`<strong>${esc(rg.rel)}</strong><div class="status">${esc(rg.label)}</div>`}</div></div>`;
    }).join("");
-   const pointText=pts[teamIndex]==null?"—":pts[teamIndex].toFixed(pts[teamIndex]%1?1:0);
-   const summary=`${entered.filter(Boolean).length}/${roster.length} individual scores entered. November 20 team points must be calculated from every golfer’s points across all 18 holes; legacy lowest-score Cup points shown elsewhere are not valid for this format.`;
+   const individual=nov20Summary()?.holes?.[hole-1]?.[teamIndex];
+   const summary=`${entered.filter(Boolean).length}/${roster.length} individual scores entered • ${individual?.points??0} individual points earned on this hole${individual?.complete?" • Complete":""}.`;
    return `<div class="shamble-team"><div class="row between"><div><strong>${esc(t.name)}</strong><div class="status">Par 3: own ball throughout. Par 4: best drive, then own ball. Par 5: best drive and best second shot, then own ball from stroke three. Every golfer’s points count.</div></div><span class="badge">INDIVIDUAL SCORES</span></div>${rows}<div class="shamble-low">${summary}</div></div>`;
  }).join("");
  document.querySelectorAll(".shamble-player-score:not([disabled])").forEach(inp=>inp.addEventListener("change",()=>savePlayerShambleScore(Number(inp.dataset.team),Number(inp.dataset.golfer),inp.value)));
