@@ -24,6 +24,16 @@ function pendingHoleSave(kind,clear=false){
  vm.runInNewContext(html.slice(start,end),context);
  return {context,writes,initial,release:()=>release({error:null}),run:()=>kind==='shamble'?context.savePlayerShambleScore(0,0,clear?'':'4'):context.savePairScore(0,0,clear?'':'4')};
 }
+test('shamble score saving rejects unauthorized teams and stale roster ownership before RPC',async()=>{
+ const page=pendingHoleSave('shamble');
+ page.context.teamRosterGolfers=()=>[];
+ await page.run();
+ assert.equal(page.writes.length,0,'No RPC when golfer is not on team roster');
+ const other=pendingHoleSave('shamble');
+ other.context.canEditTeam=()=>false;
+ await other.run();
+ assert.equal(other.writes.length,0,'No RPC when current user lacks team permission');
+});
 for(const kind of ['shamble','split-pair'])for(const clear of [false,true])test(`${kind} ${clear?'clear':'save'} keeps the original hole after navigation during a pending request`,async()=>{
  const page=pendingHoleSave(kind,clear),operation=page.run();await Promise.resolve();page.context.hole=page.initial+1;page.release();await operation;
  const expectedCount=1;
