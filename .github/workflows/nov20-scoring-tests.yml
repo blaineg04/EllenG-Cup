@@ -1,0 +1,30 @@
+name: November 20 scoring regression
+on:
+  push:
+    branches:
+      - development/nov20-hole-format-rules
+    paths:
+      - scoring.html
+      - shamble-points.js
+      - tests/**
+      - .github/workflows/nov20-scoring-tests.yml
+  pull_request:
+    paths:
+      - scoring.html
+      - shamble-points.js
+      - tests/**
+      - .github/workflows/nov20-scoring-tests.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  scoring-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run individual points and November 20 score integrity tests
+        run: node --test tests/shamble-points.test.cjs tests/nov20-production-score-integrity.test.cjs
