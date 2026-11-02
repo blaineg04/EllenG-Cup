@@ -4259,7 +4259,7 @@ function renderClubhouse(){
 function renderTournamentAwards(){
  const root=$("tournamentAwards");if(!root)return;
  if(isShamblePoints()){
-  const summary=shambleSummary(),gh=Number(tournament?.gator_hole);
+  const summary=shambleSummary(),rawGator=tournament?.gator_hole,gh=rawGator==null||typeof rawGator==="boolean"||String(rawGator).trim()===""?NaN:Number(rawGator);
   const valid=Number.isInteger(gh)&&gh>=1&&gh<=18;
   const holeResult=valid?summary.holes[gh-1]:null;
   const complete=holeResult?.length===2&&holeResult.every(v=>v.complete);
