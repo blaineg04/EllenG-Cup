@@ -249,7 +249,7 @@ async function main() {
             await page.waitForFunction(id=>document.getElementById(id)?.textContent.includes('try again'),target==='hub'?'hubSignedInAs':'userLabel');
             if(await page.locator('#loginCard').isVisible()||!await button.isEnabled())throw new Error('Failed sign-out incorrectly left the signed-in view');
             await capture(role+'-'+target+'-sign-out-error');
-            await button.click();await page.locator('#loginCard').waitFor({state:'visible'});
+            await button.click();await page.locator('#loginCard').waitFor({state:'visible',timeout:5000}).catch(async error=>{const state=await page.evaluate(()=>({loginClass:document.getElementById('loginCard')?.className,loginDisplay:getComputedStyle(document.getElementById('loginCard')).display,hubClass:document.getElementById('appHub')?.className,appClass:document.getElementById('app')?.className,bodyClass:document.body.className,buttonDisabled:document.getElementById('hubSignOutBtn')?.disabled,hubStatus:document.getElementById('hubSignedInAs')?.textContent,userStatus:document.getElementById('userLabel')?.textContent}));throw new Error('Sign-out state mismatch: '+JSON.stringify(state)+'; '+error.message.split('\n')[0]);});
             if(await page.locator('#appHub').isVisible()||await page.locator('#app').isVisible())throw new Error('Successful sign-out left private content visible');
           }
           for(const role of ['signedout','player'])for(const name of ['captain','admin']){
