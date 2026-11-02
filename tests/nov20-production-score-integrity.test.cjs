@@ -45,6 +45,15 @@ test('shamble score entry rejects invalid hole and golfer identifiers before RPC
   assert.equal(page.writes.length,0,'Invalid golfer must not submit');
  }
 });
+test('shamble score entry rejects invalid team and split-pair mode before RPC',async()=>{
+ for(const team of [-1,1.5,1]){
+  const page=pendingHoleSave('shamble');
+  await page.context.savePlayerShambleScore(team,0,'4');
+  assert.equal(page.writes.length,0,'Invalid team must not submit');
+ }
+ const page=pendingHoleSave('shamble');page.context.isSplitPair=()=>true;
+ await page.run();assert.equal(page.writes.length,0,'Split-pair mode must not submit shamble score');
+});
 for(const kind of ['shamble','split-pair'])for(const clear of [false,true])test(`${kind} ${clear?'clear':'save'} keeps the original hole after navigation during a pending request`,async()=>{
  const page=pendingHoleSave(kind,clear),operation=page.run();await Promise.resolve();page.context.hole=page.initial+1;page.release();await operation;
  const expectedCount=1;
