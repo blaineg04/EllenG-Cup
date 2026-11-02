@@ -3160,7 +3160,7 @@ function teamRosterGolfers(teamIndex){
 function renderShambleScoring(par,pts){
  const area=$("shambleScoreArea"), front=$("frontNineScoreGrid");
  if(!area||!front)return;
- if(hole<=9){area.classList.add("hidden");front.classList.remove("hidden");return}
+ if(false){area.classList.add("hidden");front.classList.remove("hidden");return}
  front.classList.add("hidden");area.classList.remove("hidden");
  area.innerHTML=teams.map((t,teamIndex)=>{
    const roster=teamRosterGolfers(teamIndex);
@@ -3191,7 +3191,7 @@ function endScoreSave(ok=true){
  scoreSaveBusy=false;setSyncStatus(ok?"saved":"error",ok?"Saved ✓":"Save failed");
 }
 async function savePlayerShambleScore(teamIndex,golferIndex,val){
- if(hole<10||hole>18||!canEditTeam(teamIndex))return;if(!beginScoreSave())return;
+ if(hole<1||hole>18||!canEditTeam(teamIndex))return;if(!beginScoreSave())return;
  const el=$("saveMsg"); el.textContent="Saving shamble score…";
  const score=val===""?null:Number(val);
  try{
@@ -3302,7 +3302,7 @@ function renderScoring(){
    return;
  }
  renderShambleScoring(par,pts);
- if(hole>9){
+ if(hole>=1){
    $("scoreRows").innerHTML="";
    $("entryHint").textContent=isCommissioner?`Back 9 Shamble: enter each golfer's individual score. The app uses the lowest score as the official team score.`:captainTeam!=null?`Back 9 Shamble: enter every golfer's score for ${teams[captainTeam]?.name||"your team"}. The lowest score automatically becomes the team score.`:"Scores are view-only.";
    return;
