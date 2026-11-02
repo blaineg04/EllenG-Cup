@@ -41,6 +41,13 @@ test('shamble score RPC receives the intended tournament, team, golfer and hole'
  assert.equal(page.writes[0].operation,'elleng_test_authorized_shamble');
  assert.equal(JSON.stringify(page.writes[0].payload),JSON.stringify({p_tournament_id:'test-tournament',p_team_index:0,p_hole:10,p_golfer_index:0,p_score:4}));
 });
+test('shamble score entry never writes directly to player or team score tables',async()=>{
+ const page=pendingHoleSave('shamble');
+ const operation=page.run();await Promise.resolve();page.release();await operation;
+ assert.equal(page.writes.length,1);
+ assert.equal(page.writes[0].table,'rpc');
+ assert.equal(page.writes[0].operation,'elleng_test_authorized_shamble');
+});
 test('shamble score entry rejects invalid hole and golfer identifiers before RPC',async()=>{
  for(const invalidHole of [0,19]){
   const page=pendingHoleSave('shamble');page.context.hole=invalidHole;
