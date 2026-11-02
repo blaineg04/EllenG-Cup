@@ -171,6 +171,7 @@ test('November 20 leaderboard omits obsolete Final Cargo badge',()=>{
   teams:[{name:'Gators'},{name:'Herons'}],
   tournament:{final_cargo_team:0,final_cargo_points:9},
   totals:()=>[{team:0,pts:12,thru:18},{team:1,pts:4,thru:18}],
+  isShamblePoints:()=>false,
   finalCargoBonus:()=>9,
   isFinalCargoTeam:i=>i===0,
   pointScaleText:()=> '2–1',
