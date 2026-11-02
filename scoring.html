@@ -4037,8 +4037,20 @@ function pointsForHole(h){
 function finalCargoBonus(){const raw=tournament?.final_cargo_points;const n=Number(raw);return raw===null||raw===undefined||typeof raw==="boolean"||String(raw).trim()===""||!Number.isSafeInteger(n)||n<0?6:n}
 function isFinalCargoTeam(i){const raw=tournament?.final_cargo_team;return raw!==null&&raw!==undefined&&typeof raw!=="boolean"&&String(raw).trim()!==""&&Number.isInteger(Number(raw))&&Number(raw)>=0&&Number(raw)<teams.length&&Number(raw)===i}
 function totals(){
- if(typeof isShamblePoints==="function"&&isShamblePoints())return shambleSummary().totals;
- return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));if(r)thru=Math.max(thru,h)}return{team:i,pts,thru}})
+ if(typeof isShamblePoints==="function"&&isShamblePoints()){
+  const result=shambleSummary(),out=result.totals.map(t=>({...t}));
+  const raw=tournament?.gator_hole;
+  const gh=raw==null||typeof raw==="boolean"||String(raw).trim()===""?NaN:Number(raw);
+  if(out.length===2&&Number.isInteger(gh)&&gh>=1&&gh<=18){
+   const holeResult=result.holes[gh-1];
+   if(holeResult.length===2&&holeResult.every(t=>t.complete)){
+    if(holeResult[0].points===holeResult[1].points){out[0].pts+=5;out[1].pts+=5;}
+    else out[holeResult[0].points>holeResult[1].points?0:1].pts+=10;
+   }
+  }
+  return out;
+ }
+ return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));if(r)thru=Math.max(thru,h)}if(isFinalCargoTeam(i))pts+=finalCargoBonus();return{team:i,pts,thru}})
 }
 function renderLiveHoleScores(){
  if(typeof isShamblePoints==="function"&&isShamblePoints()){$("liveHoleScores").innerHTML=pointsHoleCards();return}
@@ -4059,6 +4071,11 @@ function renderLiveHoleScores(){
 
 function scoreClass(rel){if(!rel||rel==="—")return "";if(rel==="0")return "score-even";return rel.startsWith("−")?"score-good":"score-bad"}
 function projectedTotals(){
+ if(typeof isShamblePoints==="function"&&isShamblePoints()){
+  const official=totals(),summary=shambleSummary();
+  return teams.map((_,i)=>({team:i,official:official[i]?.pts||0,projected:official[i]?.pts||0,thru:official[i]?.thru||0,provisionalHoles:summary.holes.filter(h=>h[i]?.entered>0&&!h[i]?.complete).length})).sort((a,b)=>b.projected-a.projected||b.thru-a.thru||a.team-b.team);
+ }
+
  const official=totals();
  const out=teams.map((_,i)=>({team:i,official:official[i]?.pts||0,projected:official[i]?.pts||0,thru:official[i]?.thru||0,provisionalHoles:0}));
  for(let h=1;h<=18;h++){
@@ -4692,7 +4709,7 @@ function teamRosterGolfers(teamIndex){
    const idx=Number(raw);
    if(!Number.isSafeInteger(idx)||idx<0||idx>=golfers.length||seen.has(idx))return null;
    const golfer=golfers[idx];
-   if(!golfer||!String(golfer.name||"").trim())return null;
+   if(!golfer||!String(golfer.name||"").trim()||(golfer.team!=null&&String(golfer.team)!==String(teamIndex)))return null;
    seen.add(idx);
    return {index:idx,name:String(golfer.name).trim()};
  }).filter(Boolean);
