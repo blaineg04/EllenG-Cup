@@ -517,3 +517,13 @@ test('shamble digital scorecard uses official Gator-adjusted team total',()=>{
  assert.match(source,/totals\(\)\[ti\]\?\.pts\?\?0/);
  assert.doesNotMatch(source,/Team total: \$\{x\.totals\[ti\]\.pts\}/);
 });
+
+test('shamble award display does not coerce an unset Gator Hole into a valid hole',()=>{
+ const start=html.indexOf('function renderTournamentAwards(){');
+ const end=html.indexOf('function ',start+10);
+ assert.ok(start>=0&&end>start,'Missing tournament award display');
+ const source=html.slice(start,end);
+ assert.match(source,/rawGator==null/);
+ assert.match(source,/String\(rawGator\)\.trim\(\)===""/);
+ assert.match(source,/Number\.isInteger\(gh\)&&gh>=1&&gh<=18/);
+});
