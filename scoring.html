@@ -3124,8 +3124,8 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 </div>
 
 <div id="homeSpecialCard" class="card home-highlight">
-  <div class="row between"><strong>🐊 Gator Hole & Final Cargo Shot</strong><span class="badge">SPECIAL SCORING</span></div>
-  <div id="homeSpecialText" class="note" style="margin-top:8px">The Gator Hole is secret until the Commissioner reveals it. Final Cargo Shot adds 6 points to the winning team.</div>
+  <div class="row between"><strong>🐊 Gator Hole</strong><span class="badge">SPECIAL SCORING</span></div>
+  <div id="homeSpecialText" class="note" style="margin-top:8px">The Commissioner selects the Gator Hole. The team earning more individual points on that hole receives 10 bonus points; a tie awards 5 points to each team.</div>
 </div>
 
 
@@ -4058,6 +4058,11 @@ function renderLiveHoleScores(){
 
 function scoreClass(rel){if(!rel||rel==="—")return "";if(rel==="0")return "score-even";return rel.startsWith("−")?"score-good":"score-bad"}
 function projectedTotals(){
+ if(typeof isShamblePoints==="function"&&isShamblePoints()){
+  const official=totals(),summary=shambleSummary();
+  return teams.map((_,i)=>({team:i,official:official[i]?.pts||0,projected:official[i]?.pts||0,thru:official[i]?.thru||0,provisionalHoles:summary.holes.filter(h=>h[i]?.entered>0&&!h[i]?.complete).length})).sort((a,b)=>b.projected-a.projected||b.thru-a.thru||a.team-b.team);
+ }
+
  const official=totals();
  const out=teams.map((_,i)=>({team:i,official:official[i]?.pts||0,projected:official[i]?.pts||0,thru:official[i]?.thru||0,provisionalHoles:0}));
  for(let h=1;h<=18;h++){
