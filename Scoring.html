@@ -3328,7 +3328,7 @@ function renderScoring(){
  renderShambleScoring(par,pts);
  if(hole>=1){
    $("scoreRows").innerHTML="";
-   $("entryHint").textContent=isCommissioner?`Back 9 Shamble: enter each golfer's individual score. The app uses the lowest score as the official team score.`:captainTeam!=null?`Back 9 Shamble: enter every golfer's score for ${teams[captainTeam]?.name||"your team"}. The lowest score automatically becomes the team score.`:"Scores are view-only.";
+   $("entryHint").textContent=isCommissioner?"November 20: enter each golfer’s strokes for this hole. Every golfer’s points count toward the team total.":captainTeam!=null?`November 20: enter each golfer’s strokes for ${teams[captainTeam]?.name||"your team"}. All individual points count.`:"Scores are view-only.";
    return;
  }
  $("scoreRows").innerHTML=teams.map((t,i)=>{
