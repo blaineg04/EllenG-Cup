@@ -28,3 +28,5 @@ jobs:
           node-version: '22'
       - name: Run individual points and November 20 score integrity tests
         run: node --test tests/shamble-points.test.cjs tests/nov20-production-score-integrity.test.cjs
+      - name: Run roster, draft, cross-page and score completion regressions
+        run: node --test tests/gator-hole-variable-teams.test.cjs tests/alternate-scoring-validation.test.cjs tests/cross-page-points-parity.test.cjs tests/auto-pick-balance.test.cjs tests/draft-turn-order.test.cjs tests/draft-scoring-roster-handoff.test.cjs tests/stored-score-completion.test.cjs tests/commissioner-rsvp-preview.test.cjs
