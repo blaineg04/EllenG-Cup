@@ -499,3 +499,12 @@ test('active November 20 scoring awards Gator bonus only after both rosters fini
  ctx.tournament.gator_hole=null;
  assert.deepEqual(Array.from(ctx.totals(),t=>t.pts),[15,12],'unselected Gator Hole awards no bonus');
 });
+
+test('Gator award card must respect Commissioner reveal setting',()=>{
+ const start=html.indexOf('function renderTournamentAwards(){');
+ const end=html.indexOf('function ',start+10);
+ assert.ok(start>=0&&end>start,'Missing tournament awards renderer');
+ const source=html.slice(start,end);
+ assert.match(source,/!tournament\?\.gator_revealed\?"Secret until Commissioner reveals"/);
+ assert.match(source,/Commissioner controls Gator Hole reveal/);
+});
