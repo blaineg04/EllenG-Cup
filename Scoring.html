@@ -2548,21 +2548,27 @@ function totals(){
  return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>x.team_index===i&&x.hole===h&&x.score!=null);if(r)thru=Math.max(thru,h)}return{team:i,pts,thru}})
 }
 function renderLiveHoleScores(){
+ const summary=nov20Summary();
+ if(summary){
+  const active=summary.holes.map((h,i)=>({h,i})).filter(x=>x.h.some(t=>t.entered>0));
+  if(!active.length){$("liveHoleScores").innerHTML='<div class="note">No individual scores entered yet.</div>';return;}
+  $("liveHoleScores").innerHTML=active.map(({h,i})=>{
+   const complete=h.every(t=>t.complete);
+   const rows=h.map((v,ti)=>`<div class="row between" style="padding:5px 0;border-top:1px solid var(--line)"><span>${esc(teams[ti]?.name||"Team "+(ti+1))}</span><strong>${v.points} pts • ${v.entered}/${v.expected} golfers</strong></div>`).join("");
+   return `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff"><div class="row between"><strong>Hole ${i+1} • Par ${parForHole(i+1)}</strong><span class="badge">${complete?"COMPLETE":"IN PROGRESS"}</span></div>${rows}</div>`;
+  }).join("");
+  return;
+ }
  const activeHoles=Array.from({length:18},(_,i)=>i+1).filter(h=>scores.some(x=>x.hole===h&&x.score!=null));
  if(!activeHoles.length){$("liveHoleScores").innerHTML='<div class="note">No scores entered yet.</div>';return}
  $("liveHoleScores").innerHTML=activeHoles.map(h=>{
   const par=parForHole(h);
   const vals=teams.map((t,i)=>{const r=scores.find(x=>x.team_index===i&&x.hole===h&&x.score!=null);return {name:t.name,score:r?.score??null}});
   const count=vals.filter(v=>v.score!=null).length, official=count===teams.length;
-  const rows=vals.map(v=>{
-    const g=relativeGolf(v.score,par);
-    return `<div class="row between" style="padding:5px 0;border-top:1px solid var(--line)"><span>${esc(v.name)}</span><div style="text-align:right"><strong>${v.score==null?'—':`${esc(g.rel)} • ${esc(g.label)}`}</strong>${v.score==null?'':`<div class="status">${esc(v.score)} strokes</div>`}</div></div>`;
-  }).join('');
-  const gator=tournament&&tournament.gator_revealed&&Number(tournament.gator_hole)===h;
-  return `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff"><div class="row between"><strong>Hole ${h} • Par ${par}${gator?' 🐊':''}</strong><span class="badge" style="${official?'background:#2f7d4a;color:#fff':count>0?'background:#d4af37;color:#10263d':''}">${official?'OFFICIAL':count+'/'+teams.length+' ENTERED'}</span></div><div style="margin-top:8px">${rows}</div><div class="status" style="margin-top:7px">${official?'Cup points posted.':'Scores are live; Cup points pending remaining teams.'}</div></div>`
+  const rows=vals.map(v=>{const g=relativeGolf(v.score,par);return `<div class="row between" style="padding:5px 0;border-top:1px solid var(--line)"><span>${esc(v.name)}</span><strong>${v.score==null?'—':esc(g.rel)}</strong></div>`}).join('');
+  return `<div class="card"><strong>Hole ${h} • Par ${par}</strong><div>${rows}</div><div class="status">${count===teams.length?'Complete':'Awaiting team scores'}</div></div>`;
  }).join('');
 }
-
 function scoreClass(rel){if(!rel||rel==="—")return "";if(rel==="0")return "score-even";return rel.startsWith("−")?"score-good":"score-bad"}
 function projectedTotals(){
  const official=totals();
