@@ -4263,8 +4263,8 @@ function renderTournamentAwards(){
   const valid=Number.isInteger(gh)&&gh>=1&&gh<=18;
   const holeResult=valid?summary.holes[gh-1]:null;
   const complete=holeResult?.length===2&&holeResult.every(v=>v.complete);
-  const winner=!tournament?.gator_revealed?"Secret until Commissioner reveals":complete?(holeResult[0].points===holeResult[1].points?"Tie — both teams":teams[holeResult[0].points>holeResult[1].points?0:1]?.name):"Pending completion";
-  root.innerHTML=`<div class="award-card"><div class="award-kicker">GATOR HOLE</div><strong>${esc(winner||"Pending")}</strong><span>${!tournament?.gator_revealed?"Commissioner controls Gator Hole reveal":complete?(holeResult[0].points===holeResult[1].points?"5 bonus points each":"10 bonus points to winner"):"All golfers on both teams must finish"}</span></div>`;
+  const winner=!valid?"Gator Hole not selected":!tournament?.gator_revealed?"Secret until Commissioner reveals":complete?(holeResult[0].points===holeResult[1].points?"Tie — both teams":teams[holeResult[0].points>holeResult[1].points?0:1]?.name):"Pending completion";
+  root.innerHTML=`<div class="award-card"><div class="award-kicker">GATOR HOLE</div><strong>${esc(winner||"Pending")}</strong><span>${!valid?"Commissioner must select a Gator Hole":!tournament?.gator_revealed?"Commissioner controls Gator Hole reveal":complete?(holeResult[0].points===holeResult[1].points?"5 bonus points each":"10 bonus points to winner"):"All golfers on both teams must finish"}</span></div>`;
   return;
  }
 const front=bestByRel(1,9),back=bestByRel(10,18);let birds=null,eagles=null;teams.forEach((_,ti)=>{const s=teamRoundStats(ti);if(!birds||s.birdies>birds.value)birds={ti,value:s.birdies};if(!eagles||s.eagles>eagles.value)eagles={ti,value:s.eagles}});
