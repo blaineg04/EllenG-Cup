@@ -166,7 +166,7 @@ async function main() {
         await context.addInitScript(()=>{if(new URL(location.href).searchParams.has('visualSignedOut'))sessionStorage.removeItem('elleng_internal_menu');else sessionStorage.setItem('elleng_internal_menu','1');});
         await context.route('**/*',async route=>{
           const url=new URL(route.request().url());
-          if(url.hostname==='cdn.jsdelivr.net'&&url.pathname.includes('supabase-js')){const current=new URL(route.request().frame().url());return route.fulfill({contentType:'text/javascript',body:`(${installFixture.toString()})(${JSON.stringify({teamCount:9,role:['player','signedout'].includes(current.searchParams.get('visualRole'))?current.searchParams.get('visualRole'):'commissioner',signOutFailure:current.searchParams.get('visualSignOutFailure')==='1',partialDraft:['/draft.html','/captain.html','/admin.html'].includes(current.pathname)})});`});}
+          if(url.hostname==='cdn.jsdelivr.net'&&url.pathname.includes('supabase-js')){const current=new URL(route.request().frame().url());return route.fulfill({contentType:'text/javascript',body:`(${installFixture.toString()})(${JSON.stringify({teamCount:9,role:current.searchParams.has('visualSignedOut')?'signedout':(['player','signedout'].includes(current.searchParams.get('visualRole'))?current.searchParams.get('visualRole'):'commissioner'),signOutFailure:current.searchParams.get('visualSignOutFailure')==='1',partialDraft:['/draft.html','/captain.html','/admin.html'].includes(current.pathname)})});`});}
           if(url.origin===host.origin)return route.continue();
           return route.abort();
         });
@@ -249,7 +249,7 @@ async function main() {
             await page.waitForFunction(id=>document.getElementById(id)?.textContent.includes('try again'),target==='hub'?'hubSignedInAs':'userLabel');
             if(await page.locator('#loginCard').isVisible()||!await button.isEnabled())throw new Error('Failed sign-out incorrectly left the signed-in view');
             await capture(role+'-'+target+'-sign-out-error');
-            await button.click();await page.locator('#loginCard').waitFor({state:'visible'});
+            await button.click();await page.locator('#loginCard').waitFor({state:'visible',timeout:5000}).catch(async error=>{const state=await page.evaluate(()=>({loginClass:document.getElementById('loginCard')?.className,loginDisplay:getComputedStyle(document.getElementById('loginCard')).display,hubClass:document.getElementById('appHub')?.className,appClass:document.getElementById('app')?.className,bodyClass:document.body.className,buttonDisabled:document.getElementById('hubSignOutBtn')?.disabled,hubStatus:document.getElementById('hubSignedInAs')?.textContent,userStatus:document.getElementById('userLabel')?.textContent}));throw new Error('Sign-out state mismatch: '+JSON.stringify(state)+'; '+error.message.split('\n')[0]);});
             if(await page.locator('#appHub').isVisible()||await page.locator('#app').isVisible())throw new Error('Successful sign-out left private content visible');
           }
           for(const role of ['signedout','player'])for(const name of ['captain','admin']){

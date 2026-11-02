@@ -8,3 +8,5 @@ const players=[{name:'Ada'},{name:'Ben'},{name:'Cora'}];
 test('numeric and numeric-string indices survive draft to shamble',()=>assert.deepEqual(rosterOf([0,'1',{golferIndex:'2'}],players),[{index:0,name:'Ada'},{index:1,name:'Ben'},{index:2,name:'Cora'}]));
 test('invalid, duplicate and out-of-range roster entries are excluded',()=>assert.deepEqual(rosterOf([0,'0',-1,3,null,'',true,'abc',{golferIndex:99}],players),[{index:0,name:'Ada'}]));
 test('missing golfer records cannot create fake score entries',()=>assert.deepEqual(rosterOf([0,1,2],[{name:'Ada'},null,{name:' '}]),[{index:0,name:'Ada'}]));
+
+test('stale cross-team roster entries are hidden from score inputs',()=>assert.deepEqual(rosterOf([0,1,2],[{name:'Ada',team:0},{name:'Ben',team:1},{name:'Cora',team:null}]),[{index:0,name:'Ada'},{index:2,name:'Cora'}]));

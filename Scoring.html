@@ -1598,6 +1598,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 </head>
 <body class="login-mode">
+<script src="shamble-points.js"></script>
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
 <div id="appHub" class="app-hub hidden">
   <div class="app-hub-card tour-hub-card">
@@ -1781,8 +1782,8 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </div>
 
 <div id="homeSpecialCard" class="card home-highlight">
-  <div class="row between"><strong>🐊 Gator Hole & Final Cargo</strong><span class="badge">SPECIAL SCORING</span></div>
-  <div id="homeSpecialText" class="note" style="margin-top:8px">The Gator Hole is secret until the Commissioner reveals it. Final Cargo adds 6 points to the selected winner.</div>
+  <div class="row between"><strong>🐊 Gator Hole</strong><span class="badge">SPECIAL SCORING</span></div>
+  <div id="homeSpecialText" class="note" style="margin-top:8px">The Gator Hole is selected by the Commissioner. Winning team earns 10 bonus points; a tie splits the bonus 5–5.</div>
 </div>
 
 
@@ -1891,7 +1892,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div class="self-score-summary">
     <div class="self-score-box"><small>Golf Score</small><strong id="selfScoreRelative">—</strong><div id="selfScoreTerm" class="term">Enter strokes</div></div>
   </div>
-  <div class="note" style="margin-top:10px">Standard EllenG: any golfer on the team can update the Front 9 scramble team score. On the Back 9 shamble, each golfer can update only their own individual score. Split-Pair: each golfer can update only their own 2-man pair score.</div>
+  <div class="note" style="margin-top:10px">For the November 20 two-team shamble, every golfer enters their own strokes for all 18 holes and every golfer’s points count. Par 3: own ball throughout. Par 4: select best drive. Par 5: select best drive and second shot. Other legacy formats may use different score-entry permissions.</div>
   <div class="row" style="margin-top:12px"><button id="saveSelfScore" class="primary" type="button">Save My Score</button><button id="clearSelfScore" class="secondary" type="button">Clear This Score</button></div>
   <div id="selfScoreMsg" class="status" style="margin-top:9px"></div>
 </div>
@@ -2525,34 +2526,63 @@ function pointsForHole(h){
  }
  return normalPoints(vals);
 }
+function nov20Summary(){
+ const engine=window.EllenGShamblePoints;
+ if(!engine||!draftState||!Array.isArray(draftState.golfers)||!Array.isArray(draftState.teams)||!draftState.teams.some(t=>Array.isArray(t.roster)&&t.roster.length))return null;
+ return engine.summarize(draftState,playerScores,currentPars());
+}
 function totals(){
- return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>x.team_index===i&&x.hole===h&&x.score!=null);if(r)thru=Math.max(thru,h)}if(tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===i)pts+=Number(tournament.final_cargo_points||6);return{team:i,pts,thru}})
+ const result=nov20Summary();
+ if(result){
+  const out=result.totals.map(x=>({...x}));
+  const gh=Number(tournament?.gator_hole);
+  if(Number.isInteger(gh)&&gh>=1&&gh<=18&&out.length===2){
+   const hs=result.holes[gh-1];
+   if(hs.every(x=>x.complete)){
+    if(hs[0].points===hs[1].points){out[0].pts+=5;out[1].pts+=5;}
+    else out[hs[0].points>hs[1].points?0:1].pts+=10;
+   }
+  }
+  return out;
+ }
+ return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>x.team_index===i&&x.hole===h&&x.score!=null);if(r)thru=Math.max(thru,h)}return{team:i,pts,thru}})
 }
 function renderLiveHoleScores(){
+ const summary=nov20Summary();
+ if(summary){
+  const active=summary.holes.map((h,i)=>({h,i})).filter(x=>x.h.some(t=>t.entered>0));
+  if(!active.length){$("liveHoleScores").innerHTML='<div class="note">No individual scores entered yet.</div>';return;}
+  $("liveHoleScores").innerHTML=active.map(({h,i})=>{
+   const complete=h.every(t=>t.complete);
+   const rows=h.map((v,ti)=>`<div class="row between" style="padding:5px 0;border-top:1px solid var(--line)"><span>${esc(teams[ti]?.name||"Team "+(ti+1))}</span><strong>${v.points} pts • ${v.entered}/${v.expected} golfers</strong></div>`).join("");
+   return `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff"><div class="row between"><strong>Hole ${i+1} • Par ${parForHole(i+1)}</strong><span class="badge">${complete?"COMPLETE":"IN PROGRESS"}</span></div>${rows}</div>`;
+  }).join("");
+  return;
+ }
  const activeHoles=Array.from({length:18},(_,i)=>i+1).filter(h=>scores.some(x=>x.hole===h&&x.score!=null));
  if(!activeHoles.length){$("liveHoleScores").innerHTML='<div class="note">No scores entered yet.</div>';return}
  $("liveHoleScores").innerHTML=activeHoles.map(h=>{
   const par=parForHole(h);
   const vals=teams.map((t,i)=>{const r=scores.find(x=>x.team_index===i&&x.hole===h&&x.score!=null);return {name:t.name,score:r?.score??null}});
   const count=vals.filter(v=>v.score!=null).length, official=count===teams.length;
-  const rows=vals.map(v=>{
-    const g=relativeGolf(v.score,par);
-    return `<div class="row between" style="padding:5px 0;border-top:1px solid var(--line)"><span>${esc(v.name)}</span><div style="text-align:right"><strong>${v.score==null?'—':`${esc(g.rel)} • ${esc(g.label)}`}</strong>${v.score==null?'':`<div class="status">${esc(v.score)} strokes</div>`}</div></div>`;
-  }).join('');
-  const gator=tournament&&tournament.gator_revealed&&Number(tournament.gator_hole)===h;
-  return `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff"><div class="row between"><strong>Hole ${h} • Par ${par}${gator?' 🐊':''}</strong><span class="badge" style="${official?'background:#2f7d4a;color:#fff':count>0?'background:#d4af37;color:#10263d':''}">${official?'OFFICIAL':count+'/'+teams.length+' ENTERED'}</span></div><div style="margin-top:8px">${rows}</div><div class="status" style="margin-top:7px">${official?'Cup points posted.':'Scores are live; Cup points pending remaining teams.'}</div></div>`
+  const rows=vals.map(v=>{const g=relativeGolf(v.score,par);return `<div class="row between" style="padding:5px 0;border-top:1px solid var(--line)"><span>${esc(v.name)}</span><strong>${v.score==null?'—':esc(g.rel)}</strong></div>`}).join('');
+  return `<div class="card"><strong>Hole ${h} • Par ${par}</strong><div>${rows}</div><div class="status">${count===teams.length?'Complete':'Awaiting team scores'}</div></div>`;
  }).join('');
 }
-
 function scoreClass(rel){if(!rel||rel==="—")return "";if(rel==="0")return "score-even";return rel.startsWith("−")?"score-good":"score-bad"}
 function projectedTotals(){
  const official=totals();
+ const individual=nov20Summary();
  const out=teams.map((_,i)=>({team:i,official:official[i]?.pts||0,projected:official[i]?.pts||0,thru:official[i]?.thru||0,provisionalHoles:0}));
- for(let h=1;h<=18;h++){
+ if(individual){
+  individual.holes.forEach(h=>h.forEach((v,i)=>{if(v.entered>0&&!v.complete)out[i].provisionalHoles++}));
+ }else{
+  for(let h=1;h<=18;h++){
    const vals=teams.map((_,i)=>{const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&x.score!=null);return r?Number(r.score):NaN});
    const entered=vals.filter(Number.isFinite).length;
    if(!entered||entered===teams.length)continue;
    vals.forEach((v,i)=>{if(Number.isFinite(v))out[i].provisionalHoles++});
+  }
  }
  return out.sort((a,b)=>b.projected-a.projected||b.thru-a.thru||a.team-b.team);
 }
@@ -2855,7 +2885,7 @@ function renderLeaderboard(){
  if($("pointScaleBadge"))$("pointScaleBadge").textContent=pointScaleText();
  if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • 18 HOLES`;
  const arr=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
- $("leaderboard").innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===x.team?` <span class="badge">+6 Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
+ $("leaderboard").innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong></div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
  renderLiveHoleScores();
 }
 function trashTime(ts){
@@ -3160,7 +3190,6 @@ function teamRosterGolfers(teamIndex){
 function renderShambleScoring(par,pts){
  const area=$("shambleScoreArea"), front=$("frontNineScoreGrid");
  if(!area||!front)return;
- if(hole<=9){area.classList.add("hidden");front.classList.remove("hidden");return}
  front.classList.add("hidden");area.classList.remove("hidden");
  area.innerHTML=teams.map((t,teamIndex)=>{
    const roster=teamRosterGolfers(teamIndex);
@@ -3168,18 +3197,15 @@ function renderShambleScoring(par,pts){
      return `<div class="shamble-team"><div class="row between"><strong>${esc(t.name)}</strong><span class="badge">SHAMBLE</span></div><div class="note" style="margin-top:8px">No drafted golfers are on this team yet.</div></div>`;
    }
    const entered=roster.map(g=>playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===hole&&Number(x.golfer_index)===g.index));
-   const complete=entered.every(Boolean);
-   const low=complete?Math.min(...entered.map(x=>Number(x.score))):null;
-   const lowGolf=low==null?null:relativeGolf(low,par);
    const rows=roster.map(g=>{
      const row=playerScores.find(x=>Number(x.team_index)===teamIndex&&Number(x.hole)===hole&&Number(x.golfer_index)===g.index);
      const v=row?.score??"";
      const rg=v===""?null:relativeGolf(Number(v),par);
      return `<div class="shamble-player"><div><strong>${esc(g.name)}</strong></div><div><input class="shamble-player-score" type="number" min="1" max="20" step="1" inputmode="numeric" data-team="${teamIndex}" data-golfer="${g.index}" value="${v}" ${canEditTeam(teamIndex)?"":"disabled"}></div><div style="text-align:right">${v===""?'<span class="status">—</span>':`<strong>${esc(rg.rel)}</strong><div class="status">${esc(rg.label)}</div>`}</div></div>`;
    }).join("");
-   const pointText=pts[teamIndex]==null?"—":pts[teamIndex].toFixed(pts[teamIndex]%1?1:0);
-   const summary=complete?`LOW TEAM SCORE: ${low} strokes • ${esc(lowGolf.rel)} ${esc(lowGolf.label)} • ${pointText} Cup pts`:`Waiting on ${entered.filter(Boolean).length}/${roster.length} player scores. Team score posts after everyone finishes.`;
-   return `<div class="shamble-team"><div class="row between"><div><strong>${esc(t.name)}</strong><div class="status">Best tee shot, then everyone plays their own ball.</div></div><span class="badge">LOW SCORE COUNTS</span></div>${rows}<div class="shamble-low">${summary}</div></div>`;
+   const individual=nov20Summary()?.holes?.[hole-1]?.[teamIndex];
+   const summary=`${entered.filter(Boolean).length}/${roster.length} individual scores entered • ${individual?.points??0} individual points earned on this hole${individual?.complete?" • Complete":""}.`;
+   return `<div class="shamble-team"><div class="row between"><div><strong>${esc(t.name)}</strong><div class="status">Par 3: own ball throughout. Par 4: best drive, then own ball. Par 5: best drive and best second shot, then own ball from stroke three. Every golfer’s points count.</div></div><span class="badge">INDIVIDUAL SCORES</span></div>${rows}<div class="shamble-low">${summary}</div></div>`;
  }).join("");
  document.querySelectorAll(".shamble-player-score:not([disabled])").forEach(inp=>inp.addEventListener("change",()=>savePlayerShambleScore(Number(inp.dataset.team),Number(inp.dataset.golfer),inp.value)));
 }
@@ -3191,7 +3217,7 @@ function endScoreSave(ok=true){
  scoreSaveBusy=false;setSyncStatus(ok?"saved":"error",ok?"Saved ✓":"Save failed");
 }
 async function savePlayerShambleScore(teamIndex,golferIndex,val){
- if(hole<10||hole>18||!canEditTeam(teamIndex))return;if(!beginScoreSave())return;
+ if(hole<1||hole>18||!canEditTeam(teamIndex))return;if(!beginScoreSave())return;
  const el=$("saveMsg"); el.textContent="Saving shamble score…";
  const score=val===""?null:Number(val);
  try{
@@ -3302,9 +3328,9 @@ function renderScoring(){
    return;
  }
  renderShambleScoring(par,pts);
- if(hole>9){
+ if(hole>=1){
    $("scoreRows").innerHTML="";
-   $("entryHint").textContent=isCommissioner?`Back 9 Shamble: enter each golfer's individual score. The app uses the lowest score as the official team score.`:captainTeam!=null?`Back 9 Shamble: enter every golfer's score for ${teams[captainTeam]?.name||"your team"}. The lowest score automatically becomes the team score.`:"Scores are view-only.";
+   $("entryHint").textContent=isCommissioner?"November 20: enter each golfer’s strokes for this hole. Every golfer’s points count toward the team total.":captainTeam!=null?`November 20: enter each golfer’s strokes for ${teams[captainTeam]?.name||"your team"}. All individual points count.`:"Scores are view-only.";
    return;
  }
  $("scoreRows").innerHTML=teams.map((t,i)=>{

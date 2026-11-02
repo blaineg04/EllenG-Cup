@@ -12,7 +12,7 @@ function pendingHoleSave(kind,clear=false){
  let release;const pending=new Promise(resolve=>release=resolve);let first=true;const writes=[];
  const finish=()=>{if(first){first=false;return pending}return Promise.resolve({error:null})};
  const db={
-  rpc(name,payload){writes.push({table:'rpc',hole:payload.p_hole,score:payload.p_score,operation:name});return finish()},
+  rpc(name,payload){writes.push({table:'rpc',hole:payload.p_hole,score:payload.p_score,operation:name,payload});return finish()},
   from(table){if(kind==='shamble')throw Error('Unsafe raw Shamble table write');return {
    upsert(row){writes.push({table,hole:row.hole,score:row.score,operation:'upsert'});return finish()},
    delete(){const filters={};return {eq(key,value){filters[key]=value;return this},then(resolve,reject){writes.push({table,hole:filters.hole,operation:'delete'});return finish().then(resolve,reject)}}}
@@ -24,6 +24,51 @@ function pendingHoleSave(kind,clear=false){
  vm.runInNewContext(html.slice(start,end),context);
  return {context,writes,initial,release:()=>release({error:null}),run:()=>kind==='shamble'?context.savePlayerShambleScore(0,0,clear?'':'4'):context.savePairScore(0,0,clear?'':'4')};
 }
+test('shamble score saving rejects unauthorized teams and stale roster ownership before RPC',async()=>{
+ const page=pendingHoleSave('shamble');
+ page.context.teamRosterGolfers=()=>[];
+ await page.run();
+ assert.equal(page.writes.length,0,'No RPC when golfer is not on team roster');
+ const other=pendingHoleSave('shamble');
+ other.context.canEditTeam=()=>false;
+ await other.run();
+ assert.equal(other.writes.length,0,'No RPC when current user lacks team permission');
+});
+test('shamble score RPC receives the intended tournament, team, golfer and hole',async()=>{
+ const page=pendingHoleSave('shamble');const operation=page.run();
+ await Promise.resolve();page.release();await operation;
+ assert.equal(page.writes.length,1);
+ assert.equal(page.writes[0].operation,'elleng_test_authorized_shamble');
+ assert.equal(JSON.stringify(page.writes[0].payload),JSON.stringify({p_tournament_id:'test-tournament',p_team_index:0,p_hole:10,p_golfer_index:0,p_score:4}));
+});
+test('shamble score entry never writes directly to player or team score tables',async()=>{
+ const page=pendingHoleSave('shamble');
+ const operation=page.run();await Promise.resolve();page.release();await operation;
+ assert.equal(page.writes.length,1);
+ assert.equal(page.writes[0].table,'rpc');
+ assert.equal(page.writes[0].operation,'elleng_test_authorized_shamble');
+});
+test('shamble score entry rejects invalid hole and golfer identifiers before RPC',async()=>{
+ for(const invalidHole of [0,19]){
+  const page=pendingHoleSave('shamble');page.context.hole=invalidHole;
+  await page.run();assert.equal(page.writes.length,0,'Invalid hole must not submit');
+ }
+ for(const invalidGolfer of [-1,1.5]){
+  const page=pendingHoleSave('shamble');
+  await page.context.savePlayerShambleScore(0,invalidGolfer,'4');
+  assert.equal(page.writes.length,0,'Invalid golfer must not submit');
+ }
+});
+test('shamble score entry rejects invalid team and split-pair mode before RPC',async()=>{
+ for(const team of [-1,1.5,1]){
+  const page=pendingHoleSave('shamble');
+  page.context.canEditTeam=ti=>ti===0;
+  await page.context.savePlayerShambleScore(team,0,'4');
+  assert.equal(page.writes.length,0,'Invalid team must not submit');
+ }
+ const page=pendingHoleSave('shamble');page.context.isSplitPair=()=>true;
+ await page.run();assert.equal(page.writes.length,0,'Split-pair mode must not submit shamble score');
+});
 for(const kind of ['shamble','split-pair'])for(const clear of [false,true])test(`${kind} ${clear?'clear':'save'} keeps the original hole after navigation during a pending request`,async()=>{
  const page=pendingHoleSave(kind,clear),operation=page.run();await Promise.resolve();page.context.hole=page.initial+1;page.release();await operation;
  const expectedCount=1;
@@ -162,7 +207,7 @@ test('leaderboard thru accepts numeric identifiers serialized as strings',()=>{
  assert.equal(results[1].pts,1);
 });
 
-test('Final Cargo leaderboard badge uses configured bonus instead of fixed six',()=>{
+test('November 20 leaderboard omits obsolete Final Cargo badge',()=>{
  const start=html.indexOf('function renderLeaderboard(){');
  const end=html.indexOf('function trashTime(ts){',start);
  assert.ok(start>=0&&end>start,'Unable to locate leaderboard renderer');
@@ -180,8 +225,9 @@ test('Final Cargo leaderboard badge uses configured bonus instead of fixed six',
  };
  vm.runInNewContext(html.slice(start,end),ctx);
  ctx.renderLeaderboard();
- assert.match(board.innerHTML,/\+9 Cargo/);
- assert.doesNotMatch(board.innerHTML,/\+6 Cargo/);
+ assert.doesNotMatch(board.innerHTML,/Cargo/);
+ assert.match(board.innerHTML,/12 pts/);
+ assert.match(board.innerHTML,/4 pts/);
 });
 
 test('live hole scores accept string-serialized team and hole IDs',()=>{
@@ -480,4 +526,59 @@ test('scoring page inline scripts remain syntactically valid before RSVP rollout
   assert.doesNotThrow(()=>new vm.Script(source,{filename:'scoring.html:inline-script'}));
  }
  assert.match(html,/const EVENT_RSVP_MODE=false;/,'Event RSVP rollout must remain disabled');
+});
+
+test('active November 20 scoring awards Gator bonus only after both rosters finish',()=>{
+ const start=html.indexOf('function totals(){');
+ const end=html.indexOf('function renderLiveHoleScores(){',start);
+ assert.ok(start>=0&&end>start,'Unable to locate active totals');
+ const hole=(a,b,complete)=>[{points:a,entered:complete?2:1,expected:2,complete},{points:b,entered:2,expected:2,complete:true}];
+ const summary={totals:[{team:0,pts:15,thru:1},{team:1,pts:12,thru:1}],holes:Array.from({length:18},()=>hole(0,0,false))};
+ summary.holes[3]=hole(7,5,false);
+ const ctx={teams:[{name:'A'},{name:'B'}],tournament:{gator_hole:4},isShamblePoints:()=>true,shambleSummary:()=>summary};
+ vm.runInNewContext(html.slice(start,end),ctx);
+ assert.deepEqual(Array.from(ctx.totals(),t=>t.pts),[15,12],'incomplete Gator Hole must not award bonus');
+ summary.holes[3]=hole(7,5,true);
+ assert.deepEqual(Array.from(ctx.totals(),t=>t.pts),[25,12],'winner receives exactly 10 bonus points');
+ summary.holes[3]=hole(7,7,true);
+ assert.deepEqual(Array.from(ctx.totals(),t=>t.pts),[20,17],'tie splits bonus 5/5');
+ ctx.tournament.gator_hole=null;
+ assert.deepEqual(Array.from(ctx.totals(),t=>t.pts),[15,12],'unselected Gator Hole awards no bonus');
+});
+
+test('Gator award card must respect Commissioner reveal setting',()=>{
+ const start=html.indexOf('function renderTournamentAwards(){');
+ const end=html.indexOf('function ',start+10);
+ assert.ok(start>=0&&end>start,'Missing tournament awards renderer');
+ const source=html.slice(start,end);
+ assert.match(source,/!tournament\?\.gator_revealed\?"Secret until Commissioner reveals"/);
+ assert.match(source,/Commissioner controls Gator Hole reveal/);
+});
+
+test('shamble digital scorecard uses official Gator-adjusted team total',()=>{
+ const start=html.indexOf('function renderPointsScorecard(){');
+ const end=html.indexOf('function renderPointsEntry(){',start);
+ assert.ok(start>=0&&end>start,'Missing active shamble scorecard');
+ const source=html.slice(start,end);
+ assert.match(source,/totals\(\)\[ti\]\?\.pts\?\?0/);
+ assert.doesNotMatch(source,/Team total: \$\{x\.totals\[ti\]\.pts\}/);
+});
+
+test('shamble award display does not coerce an unset Gator Hole into a valid hole',()=>{
+ const start=html.indexOf('function renderTournamentAwards(){');
+ const end=html.indexOf('function ',start+10);
+ assert.ok(start>=0&&end>start,'Missing tournament award display');
+ const source=html.slice(start,end);
+ assert.match(source,/rawGator==null/);
+ assert.match(source,/String\(rawGator\)\.trim\(\)===""/);
+ assert.match(source,/Number\.isInteger\(gh\)&&gh>=1&&gh<=18/);
+});
+
+test('unconfigured Gator Hole gives Commissioner a specific action',()=>{
+ const start=html.indexOf('function renderTournamentAwards(){');
+ const end=html.indexOf('function ',start+10);
+ assert.ok(start>=0&&end>start,'Missing tournament award display');
+ const source=html.slice(start,end);
+ assert.match(source,/!valid\?"Gator Hole not selected"/);
+ assert.match(source,/!valid\?"Commissioner must select a Gator Hole"/);
 });
