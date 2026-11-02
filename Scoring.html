@@ -3160,7 +3160,6 @@ function teamRosterGolfers(teamIndex){
 function renderShambleScoring(par,pts){
  const area=$("shambleScoreArea"), front=$("frontNineScoreGrid");
  if(!area||!front)return;
- if(false){area.classList.add("hidden");front.classList.remove("hidden");return}
  front.classList.add("hidden");area.classList.remove("hidden");
  area.innerHTML=teams.map((t,teamIndex)=>{
    const roster=teamRosterGolfers(teamIndex);
