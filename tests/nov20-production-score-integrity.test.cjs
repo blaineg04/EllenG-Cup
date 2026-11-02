@@ -12,7 +12,7 @@ function pendingHoleSave(kind,clear=false){
  let release;const pending=new Promise(resolve=>release=resolve);let first=true;const writes=[];
  const finish=()=>{if(first){first=false;return pending}return Promise.resolve({error:null})};
  const db={
-  rpc(name,payload){writes.push({table:'rpc',hole:payload.p_hole,score:payload.p_score,operation:name});return finish()},
+  rpc(name,payload){writes.push({table:'rpc',hole:payload.p_hole,score:payload.p_score,operation:name,payload});return finish()},
   from(table){if(kind==='shamble')throw Error('Unsafe raw Shamble table write');return {
    upsert(row){writes.push({table,hole:row.hole,score:row.score,operation:'upsert'});return finish()},
    delete(){const filters={};return {eq(key,value){filters[key]=value;return this},then(resolve,reject){writes.push({table,hole:filters.hole,operation:'delete'});return finish().then(resolve,reject)}}}
@@ -33,6 +33,13 @@ test('shamble score saving rejects unauthorized teams and stale roster ownership
  other.context.canEditTeam=()=>false;
  await other.run();
  assert.equal(other.writes.length,0,'No RPC when current user lacks team permission');
+});
+test('shamble score RPC receives the intended tournament, team, golfer and hole',async()=>{
+ const page=pendingHoleSave('shamble');const operation=page.run();
+ await Promise.resolve();page.release();await operation;
+ assert.equal(page.writes.length,1);
+ assert.equal(page.writes[0].operation,'elleng_test_authorized_shamble');
+ assert.equal(JSON.stringify(page.writes[0].payload),JSON.stringify({p_tournament_id:'test-tournament',p_team_index:0,p_hole:10,p_golfer_index:0,p_score:4}));
 });
 test('shamble score entry rejects invalid hole and golfer identifiers before RPC',async()=>{
  for(const invalidHole of [0,19]){
