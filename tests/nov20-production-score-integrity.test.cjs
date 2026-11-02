@@ -508,3 +508,12 @@ test('Gator award card must respect Commissioner reveal setting',()=>{
  assert.match(source,/!tournament\?\.gator_revealed\?"Secret until Commissioner reveals"/);
  assert.match(source,/Commissioner controls Gator Hole reveal/);
 });
+
+test('shamble digital scorecard uses official Gator-adjusted team total',()=>{
+ const start=html.indexOf('function renderPointsScorecard(){');
+ const end=html.indexOf('function renderPointsEntry(){',start);
+ assert.ok(start>=0&&end>start,'Missing active shamble scorecard');
+ const source=html.slice(start,end);
+ assert.match(source,/totals\(\)\[ti\]\?\.pts\?\?0/);
+ assert.doesNotMatch(source,/Team total: \$\{x\.totals\[ti\]\.pts\}/);
+});
