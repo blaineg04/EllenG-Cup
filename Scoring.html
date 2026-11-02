@@ -2572,12 +2572,17 @@ function renderLiveHoleScores(){
 function scoreClass(rel){if(!rel||rel==="—")return "";if(rel==="0")return "score-even";return rel.startsWith("−")?"score-good":"score-bad"}
 function projectedTotals(){
  const official=totals();
+ const individual=nov20Summary();
  const out=teams.map((_,i)=>({team:i,official:official[i]?.pts||0,projected:official[i]?.pts||0,thru:official[i]?.thru||0,provisionalHoles:0}));
- for(let h=1;h<=18;h++){
+ if(individual){
+  individual.holes.forEach(h=>h.forEach((v,i)=>{if(v.entered>0&&!v.complete)out[i].provisionalHoles++}));
+ }else{
+  for(let h=1;h<=18;h++){
    const vals=teams.map((_,i)=>{const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&x.score!=null);return r?Number(r.score):NaN});
    const entered=vals.filter(Number.isFinite).length;
    if(!entered||entered===teams.length)continue;
    vals.forEach((v,i)=>{if(Number.isFinite(v))out[i].provisionalHoles++});
+  }
  }
  return out.sort((a,b)=>b.projected-a.projected||b.thru-a.thru||a.team-b.team);
 }
