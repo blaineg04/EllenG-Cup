@@ -1781,8 +1781,8 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </div>
 
 <div id="homeSpecialCard" class="card home-highlight">
-  <div class="row between"><strong>🐊 Gator Hole & Final Cargo</strong><span class="badge">SPECIAL SCORING</span></div>
-  <div id="homeSpecialText" class="note" style="margin-top:8px">The Gator Hole is secret until the Commissioner reveals it. Final Cargo adds 6 points to the selected winner.</div>
+  <div class="row between"><strong>🐊 Gator Hole</strong><span class="badge">SPECIAL SCORING</span></div>
+  <div id="homeSpecialText" class="note" style="margin-top:8px">The Gator Hole is selected by the Commissioner. Winning team earns 10 bonus points; a tie splits the bonus 5–5.</div>
 </div>
 
 
@@ -1891,7 +1891,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   <div class="self-score-summary">
     <div class="self-score-box"><small>Golf Score</small><strong id="selfScoreRelative">—</strong><div id="selfScoreTerm" class="term">Enter strokes</div></div>
   </div>
-  <div class="note" style="margin-top:10px">Standard EllenG: any golfer on the team can update the Front 9 scramble team score. On the Back 9 shamble, each golfer can update only their own individual score. Split-Pair: each golfer can update only their own 2-man pair score.</div>
+  <div class="note" style="margin-top:10px">For the November 20 two-team shamble, every golfer enters their own strokes for all 18 holes and every golfer’s points count. Par 3: own ball throughout. Par 4: select best drive. Par 5: select best drive and second shot. Other legacy formats may use different score-entry permissions.</div>
   <div class="row" style="margin-top:12px"><button id="saveSelfScore" class="primary" type="button">Save My Score</button><button id="clearSelfScore" class="secondary" type="button">Clear This Score</button></div>
   <div id="selfScoreMsg" class="status" style="margin-top:9px"></div>
 </div>
@@ -3179,7 +3179,7 @@ function renderShambleScoring(par,pts){
    }).join("");
    const pointText=pts[teamIndex]==null?"—":pts[teamIndex].toFixed(pts[teamIndex]%1?1:0);
    const summary=complete?`LOW TEAM SCORE: ${low} strokes • ${esc(lowGolf.rel)} ${esc(lowGolf.label)} • ${pointText} Cup pts`:`Waiting on ${entered.filter(Boolean).length}/${roster.length} player scores. Team score posts after everyone finishes.`;
-   return `<div class="shamble-team"><div class="row between"><div><strong>${esc(t.name)}</strong><div class="status">Par 3: own ball throughout. Par 4: best drive, then own ball. Par 5: best drive and best second shot, then own ball from stroke three. Every golfer’s points count.</div></div><span class="badge">LOW SCORE COUNTS</span></div>${rows}<div class="shamble-low">${summary}</div></div>`;
+   return `<div class="shamble-team"><div class="row between"><div><strong>${esc(t.name)}</strong><div class="status">Par 3: own ball throughout. Par 4: best drive, then own ball. Par 5: best drive and best second shot, then own ball from stroke three. Every golfer’s points count.</div></div><span class="badge">INDIVIDUAL SCORES</span></div>${rows}<div class="shamble-low">${summary}</div></div>`;
  }).join("");
  document.querySelectorAll(".shamble-player-score:not([disabled])").forEach(inp=>inp.addEventListener("change",()=>savePlayerShambleScore(Number(inp.dataset.team),Number(inp.dataset.golfer),inp.value)));
 }
