@@ -1598,6 +1598,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 
 </head>
 <body class="login-mode">
+<script src="shamble-points.js"></script>
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
 <div id="appHub" class="app-hub hidden">
   <div class="app-hub-card tour-hub-card">
@@ -2525,8 +2526,26 @@ function pointsForHole(h){
  }
  return normalPoints(vals);
 }
+function nov20Summary(){
+ const engine=window.EllenGShamblePoints;
+ if(!engine||!draftState||!Array.isArray(draftState.golfers))return null;
+ return engine.summarize(draftState,playerScores,currentPars());
+}
 function totals(){
- return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>x.team_index===i&&x.hole===h&&x.score!=null);if(r)thru=Math.max(thru,h)}if(tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===i)pts+=Number(tournament.final_cargo_points||6);return{team:i,pts,thru}})
+ const result=nov20Summary();
+ if(result){
+  const out=result.totals.map(x=>({...x}));
+  const gh=Number(tournament?.gator_hole);
+  if(Number.isInteger(gh)&&gh>=1&&gh<=18&&out.length===2){
+   const hs=result.holes[gh-1];
+   if(hs.every(x=>x.complete)){
+    if(hs[0].points===hs[1].points){out[0].pts+=5;out[1].pts+=5;}
+    else out[hs[0].points>hs[1].points?0:1].pts+=10;
+   }
+  }
+  return out;
+ }
+ return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>x.team_index===i&&x.hole===h&&x.score!=null);if(r)thru=Math.max(thru,h)}return{team:i,pts,thru}})
 }
 function renderLiveHoleScores(){
  const activeHoles=Array.from({length:18},(_,i)=>i+1).filter(h=>scores.some(x=>x.hole===h&&x.score!=null));
