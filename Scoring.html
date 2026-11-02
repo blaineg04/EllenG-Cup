@@ -2528,7 +2528,7 @@ function pointsForHole(h){
 }
 function nov20Summary(){
  const engine=window.EllenGShamblePoints;
- if(!engine||!draftState||!Array.isArray(draftState.golfers))return null;
+ if(!engine||!draftState||!Array.isArray(draftState.golfers)||!Array.isArray(draftState.teams)||!draftState.teams.some(t=>Array.isArray(t.roster)&&t.roster.length))return null;
  return engine.summarize(draftState,playerScores,currentPars());
 }
 function totals(){
@@ -2874,7 +2874,7 @@ function renderLeaderboard(){
  if($("pointScaleBadge"))$("pointScaleBadge").textContent=pointScaleText();
  if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • 18 HOLES`;
  const arr=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
- $("leaderboard").innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${tournament&&tournament.final_cargo_team!=null&&tournament.final_cargo_team!==""&&Number(tournament.final_cargo_team)===x.team?` <span class="badge">+6 Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
+ $("leaderboard").innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong></div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
  renderLiveHoleScores();
 }
 function trashTime(ts){
