@@ -527,3 +527,12 @@ test('shamble award display does not coerce an unset Gator Hole into a valid hol
  assert.match(source,/String\(rawGator\)\.trim\(\)===""/);
  assert.match(source,/Number\.isInteger\(gh\)&&gh>=1&&gh<=18/);
 });
+
+test('unconfigured Gator Hole gives Commissioner a specific action',()=>{
+ const start=html.indexOf('function renderTournamentAwards(){');
+ const end=html.indexOf('function ',start+10);
+ assert.ok(start>=0&&end>start,'Missing tournament award display');
+ const source=html.slice(start,end);
+ assert.match(source,/!valid\?"Gator Hole not selected"/);
+ assert.match(source,/!valid\?"Commissioner must select a Gator Hole"/);
+});
