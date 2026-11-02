@@ -3984,9 +3984,9 @@ function renderPointsScorecard(){
  const ti=Number(sel.value),x=shambleSummary();root.innerHTML=`<div style="overflow:auto"><table class="digital-scorecard"><thead><tr><th>Hole</th><th>Par</th><th>Team Points</th><th>Golfers entered</th></tr></thead><tbody>${x.holes.map((h,i)=>`<tr><td>${i+1}</td><td>${parForHole(i+1)}</td><td>${h[ti].points}</td><td>${h[ti].entered}/${h[ti].expected}</td></tr>`).join("")}</tbody></table></div><strong>Team total: ${x.totals[ti].pts} pts (includes Gator +${x.bonuses.gator[ti]})</strong>`;
 }
 function renderPointsEntry(){
- renderHolebar();$("holeFormat").textContent=`18-HOLE SHAMBLE • HOLE ${hole} • PAR ${parForHole(hole)}`;$("entryHint").textContent="Best team tee shot, then play your own ball. Every golfer earns points: eagle or better 5, birdie 4, par 3, bogey 2, double 1, triple or worse 0.";
+ renderHolebar();$("holeFormat").textContent=`18-HOLE SHAMBLE • HOLE ${hole} • PAR ${parForHole(hole)}`;$("entryHint").textContent="Par 3: own ball throughout. Par 4: choose the best drive, then play individually. Par 5: choose the best drive and best second shot, then play individually from stroke three. Every golfer earns points: eagle or better 5, birdie 4, par 3, bogey 2, double 1, triple or worse 0.";
  $("frontNineScoreGrid").classList.add("hidden");$("shambleScoreArea").classList.remove("hidden");$("scoreRows").innerHTML="";
- const x=shambleSummary();$("shambleScoreArea").innerHTML=teams.map((t,ti)=>`<div class="shamble-team"><strong>${esc(t.name)}</strong><span class="badge">EVERY GOLFER COUNTS</span>${teamRosterGolfers(ti).map(g=>{const r=playerScores.find(r=>Number(r.team_index)===ti&&Number(r.golfer_index)===g.index&&Number(r.hole)===hole),p=globalThis.EllenGShamblePoints.points(r?.score,parForHole(hole));return `<div class="shamble-player"><strong>${esc(g.name)}</strong><input class="points-player-input" aria-label="Strokes for ${esc(g.name)}" type="number" min="1" max="20" step="1" inputmode="numeric" data-team="${ti}" data-golfer="${g.index}" value="${r?.score??""}" ${canEditTeam(ti)?"":"disabled"}><span>${p===null?"Pending":p+" pts"}</span></div>`}).join("")}<div class="shamble-low">${x.holes[hole-1][ti].points} team pts • ${x.holes[hole-1][ti].entered}/${x.holes[hole-1][ti].expected} golfers entered</div></div>`).join("");
+ const x=shambleSummary();$("shambleScoreArea").innerHTML=teams.map((t,ti)=>`<div class="shamble-team"><strong>${esc(t.name)}</strong><span class="badge">EVERY GOLFER COUNTS</span>${!teamRosterGolfers(ti).length?'<div class="note" style="margin-top:8px">No golfers assigned yet. Complete the draft before entering individual scores.</div>':""}${teamRosterGolfers(ti).map(g=>{const r=playerScores.find(r=>Number(r.team_index)===ti&&Number(r.golfer_index)===g.index&&Number(r.hole)===hole),p=globalThis.EllenGShamblePoints.points(r?.score,parForHole(hole));return `<div class="shamble-player"><strong>${esc(g.name)}</strong><input class="points-player-input" aria-label="Strokes for ${esc(g.name)}" type="number" min="1" max="20" step="1" inputmode="numeric" data-team="${ti}" data-golfer="${g.index}" value="${r?.score??""}" ${canEditTeam(ti)?"":"disabled"}><span>${p===null?"Pending":p+" pts"}</span></div>`}).join("")}<div class="shamble-low">${x.holes[hole-1][ti].points} team pts • ${x.holes[hole-1][ti].entered}/${x.holes[hole-1][ti].expected} golfers entered</div></div>`).join("");
  document.querySelectorAll(".points-player-input:not([disabled])").forEach(el=>el.addEventListener("change",()=>savePlayerShambleScore(Number(el.dataset.team),Number(el.dataset.golfer),el.value)));
 }
 function renderPointsExtras(){
@@ -4268,14 +4268,25 @@ function renderClubhouse(){
  renderRivalryWatch();renderSeasonStandings();renderTrophyRoom();
 }
 function renderTournamentAwards(){
- const root=$("tournamentAwards");if(!root)return;const front=bestByRel(1,9),back=bestByRel(10,18);let birds=null,eagles=null;teams.forEach((_,ti)=>{const s=teamRoundStats(ti);if(!birds||s.birdies>birds.value)birds={ti,value:s.birdies};if(!eagles||s.eagles>eagles.value)eagles={ti,value:s.eagles}});
+ const root=$("tournamentAwards");if(!root)return;
+ if(isShamblePoints()){
+  const summary=shambleSummary(),rawGator=tournament?.gator_hole,gh=rawGator==null||typeof rawGator==="boolean"||String(rawGator).trim()===""?NaN:Number(rawGator);
+  const valid=Number.isInteger(gh)&&gh>=1&&gh<=18;
+  const holeResult=valid?summary.holes[gh-1]:null;
+  const complete=holeResult?.length===2&&holeResult.every(v=>v.complete);
+  const winner=!valid?"Gator Hole not selected":!tournament?.gator_revealed?"Secret until Commissioner reveals":complete?(holeResult[0].points===holeResult[1].points?"Tie — both teams":teams[holeResult[0].points>holeResult[1].points?0:1]?.name):"Pending completion";
+  root.innerHTML=`<div class="award-card"><div class="award-kicker">GATOR HOLE</div><strong>${esc(winner||"Pending")}</strong><span>${!valid?"Commissioner must select a Gator Hole":!tournament?.gator_revealed?"Commissioner controls Gator Hole reveal":complete?(holeResult[0].points===holeResult[1].points?"5 bonus points each":"10 bonus points to winner"):"All golfers on both teams must finish"}</span></div>`;
+  return;
+ }
+const front=bestByRel(1,9),back=bestByRel(10,18);let birds=null,eagles=null;teams.forEach((_,ti)=>{const s=teamRoundStats(ti);if(!birds||s.birdies>birds.value)birds={ti,value:s.birdies};if(!eagles||s.eagles>eagles.value)eagles={ti,value:s.eagles}});
  const gatorHole=Number(tournament?.gator_hole)||0;let gatorWinner=null;if(tournament?.gator_revealed&&gatorHole&&teams.length&&teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===gatorHole&&x.score!=null))){const vals=teams.map((_,ti)=>Number(scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===gatorHole)?.score));const low=Math.min(...vals),w=vals.map((v,i)=>v===low?i:null).filter(x=>x!=null);gatorWinner={names:w.map(i=>teams[i]?.name||`Team ${i+1}`).join(' / '),score:low}}
  const cards=[
   ['BEST FRONT 9',front?teams[front.ti]?.name:'—',front?`${front.rel===0?'E':front.rel>0?'+'+front.rel:'−'+Math.abs(front.rel)} through ${front.count} holes`:'Waiting on scores',front?.ti],
   ['BEST BACK 9',back?teams[back.ti]?.name:'—',back?`${back.rel===0?'E':back.rel>0?'+'+back.rel:'−'+Math.abs(back.rel)} through ${back.count} holes`:'Waiting on scores',back?.ti],
   ['BIRDIE LEADER',birds&&birds.value?teams[birds.ti]?.name:'—',birds&&birds.value?`${birds.value} birdie${birds.value===1?'':'s'}`:'No birdies yet',birds?.ti],
   ['EAGLE WATCH',eagles&&eagles.value?teams[eagles.ti]?.name:'—',eagles&&eagles.value?`${eagles.value} eagle${eagles.value===1?'':'s'}`:'No eagles yet',eagles?.ti],
-  ['GATOR KILLER',gatorWinner?gatorWinner.names:'—',gatorWinner?`Hole ${gatorHole} • ${gatorWinner.score} strokes`:(tournament?.gator_revealed?'Waiting on all teams':'Gator Hole still secret'),null]
+  ['GATOR KILLER',gatorWinner?gatorWinner.names:'—',gatorWinner?`Hole ${gatorHole} • ${gatorWinner.score} strokes`:(tournament?.gator_revealed?'Waiting on all teams':'Gator Hole still secret'),null],
+  ...(!isShamblePoints()?[['CARGO KING',tournament?.final_cargo_team!=null?(teams[Number(tournament.final_cargo_team)]?.name||'—'):'—','Legacy award',Number(tournament?.final_cargo_team)]]:[])
  ];
  root.innerHTML=cards.map(c=>`<div class="award-card" style="--accent:${Number.isInteger(c[3])?teamAccent(c[3]):'var(--gold)'}"><div class="award-kicker">${esc(c[0])}</div><strong>${esc(c[1]||'—')}</strong><span>${esc(c[2])}</span></div>`).join('');
  if($("awardsStatus"))$("awardsStatus").textContent=String(tournament?.status||'setup').toUpperCase()==='COMPLETE'?'FINAL':'LIVE';
