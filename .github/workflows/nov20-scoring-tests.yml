@@ -30,3 +30,20 @@ jobs:
         run: node --test tests/shamble-points.test.cjs tests/nov20-production-score-integrity.test.cjs
       - name: Run roster, draft, cross-page and score completion regressions
         run: node --test tests/gator-hole-variable-teams.test.cjs tests/alternate-scoring-validation.test.cjs tests/cross-page-points-parity.test.cjs tests/auto-pick-balance.test.cjs tests/draft-turn-order.test.cjs tests/draft-scoring-roster-handoff.test.cjs tests/stored-score-completion.test.cjs tests/commissioner-rsvp-preview.test.cjs
+
+  responsive-fixture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install visual test dependencies
+        run: npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
+      - name: Install Chromium
+        run: tests/visual/node_modules/.bin/playwright install --with-deps chromium
+      - name: Run fixture safety tests
+        run: node --test tests/visual/safety.test.cjs
+      - name: Run isolated responsive checks
+        run: node tests/visual/run.cjs
