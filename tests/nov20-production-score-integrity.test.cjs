@@ -481,3 +481,21 @@ test('scoring page inline scripts remain syntactically valid before RSVP rollout
  }
  assert.match(html,/const EVENT_RSVP_MODE=false;/,'Event RSVP rollout must remain disabled');
 });
+
+test('active November 20 scoring awards Gator bonus only after both rosters finish',()=>{
+ const start=html.indexOf('function totals(){');
+ const end=html.indexOf('function renderLiveHoleScores(){',start);
+ assert.ok(start>=0&&end>start,'Unable to locate active totals');
+ const hole=(a,b,complete)=>[{points:a,entered:complete?2:1,expected:2,complete},{points:b,entered:2,expected:2,complete:true}];
+ const summary={totals:[{team:0,pts:15,thru:1},{team:1,pts:12,thru:1}],holes:Array.from({length:18},()=>hole(0,0,false))};
+ summary.holes[3]=hole(7,5,false);
+ const ctx={teams:[{name:'A'},{name:'B'}],tournament:{gator_hole:4},isShamblePoints:()=>true,shambleSummary:()=>summary};
+ vm.runInNewContext(html.slice(start,end),ctx);
+ assert.deepEqual(Array.from(ctx.totals(),t=>t.pts),[15,12],'incomplete Gator Hole must not award bonus');
+ summary.holes[3]=hole(7,5,true);
+ assert.deepEqual(Array.from(ctx.totals(),t=>t.pts),[25,12],'winner receives exactly 10 bonus points');
+ summary.holes[3]=hole(7,7,true);
+ assert.deepEqual(Array.from(ctx.totals(),t=>t.pts),[20,17],'tie splits bonus 5/5');
+ ctx.tournament.gator_hole=null;
+ assert.deepEqual(Array.from(ctx.totals(),t=>t.pts),[15,12],'unselected Gator Hole awards no bonus');
+});
