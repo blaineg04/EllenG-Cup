@@ -34,6 +34,17 @@ test('shamble score saving rejects unauthorized teams and stale roster ownership
  await other.run();
  assert.equal(other.writes.length,0,'No RPC when current user lacks team permission');
 });
+test('shamble score entry rejects invalid hole and golfer identifiers before RPC',async()=>{
+ for(const invalidHole of [0,19]){
+  const page=pendingHoleSave('shamble');page.context.hole=invalidHole;
+  await page.run();assert.equal(page.writes.length,0,'Invalid hole must not submit');
+ }
+ for(const invalidGolfer of [-1,1.5]){
+  const page=pendingHoleSave('shamble');
+  await page.context.savePlayerShambleScore(0,invalidGolfer,'4');
+  assert.equal(page.writes.length,0,'Invalid golfer must not submit');
+ }
+});
 for(const kind of ['shamble','split-pair'])for(const clear of [false,true])test(`${kind} ${clear?'clear':'save'} keeps the original hole after navigation during a pending request`,async()=>{
  const page=pendingHoleSave(kind,clear),operation=page.run();await Promise.resolve();page.context.hole=page.initial+1;page.release();await operation;
  const expectedCount=1;
