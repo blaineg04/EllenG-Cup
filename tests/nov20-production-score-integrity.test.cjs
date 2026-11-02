@@ -48,6 +48,7 @@ test('shamble score entry rejects invalid hole and golfer identifiers before RPC
 test('shamble score entry rejects invalid team and split-pair mode before RPC',async()=>{
  for(const team of [-1,1.5,1]){
   const page=pendingHoleSave('shamble');
+  page.context.canEditTeam=ti=>ti===0;
   await page.context.savePlayerShambleScore(team,0,'4');
   assert.equal(page.writes.length,0,'Invalid team must not submit');
  }
