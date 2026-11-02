@@ -162,7 +162,7 @@ test('leaderboard thru accepts numeric identifiers serialized as strings',()=>{
  assert.equal(results[1].pts,1);
 });
 
-test('Final Cargo leaderboard badge uses configured bonus instead of fixed six',()=>{
+test('November 20 leaderboard omits obsolete Final Cargo badge',()=>{
  const start=html.indexOf('function renderLeaderboard(){');
  const end=html.indexOf('function trashTime(ts){',start);
  assert.ok(start>=0&&end>start,'Unable to locate leaderboard renderer');
@@ -180,8 +180,9 @@ test('Final Cargo leaderboard badge uses configured bonus instead of fixed six',
  };
  vm.runInNewContext(html.slice(start,end),ctx);
  ctx.renderLeaderboard();
- assert.match(board.innerHTML,/\+9 Cargo/);
- assert.doesNotMatch(board.innerHTML,/\+6 Cargo/);
+ assert.doesNotMatch(board.innerHTML,/Cargo/);
+ assert.match(board.innerHTML,/12 pts/);
+ assert.match(board.innerHTML,/4 pts/);
 });
 
 test('live hole scores accept string-serialized team and hole IDs',()=>{
