@@ -51,3 +51,16 @@ test('November 20 par 3, 4 and 5 score outcomes count every individual stroke to
  assert.equal(result.completeHoles,3);
  assert.deepEqual(result.players.map(x=>x.holes),[3,3,3]);
 });
+
+test('duplicate entries on one roster do not invalidate a golfer or block hole completion',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const state={golfers:[{name:'Ada',team:0},{name:'Ben',team:1}],teams:[{roster:[0,'0',{golferIndex:0}]},{roster:[1]}]};
+ const rows=[{golfer_index:0,team_index:0,hole:1,score:4},{golfer_index:1,team_index:1,hole:1,score:4}];
+ const result=summarize(state,rows,Array(18).fill(4));
+ assert.equal(result.holes[0][0].expected,1);
+ assert.equal(result.holes[0][0].entered,1);
+ assert.equal(result.holes[0][0].complete,true);
+ assert.equal(result.holes[0][1].complete,true);
+ assert.equal(result.completeHoles,1);
+ assert.deepEqual(result.totals.map(t=>t.pts),[3,3]);
+});
