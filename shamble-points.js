@@ -4,7 +4,7 @@
  function points(strokes,par){if(!integer(strokes,1,20)||!integer(par,3,5))return null;return Math.max(0,Math.min(5,3+Number(par)-Number(strokes)));}
  function summarize(state,rows,pars){
   const teams=Array.isArray(state?.teams)?state.teams:[],golfers=Array.isArray(state?.golfers)?state.golfers:[];
-  const owners=new Map(),rosters=teams.map((team,ti)=>(Array.isArray(team?.roster)?team.roster:[]).map(r=>typeof r==='object'&&r!==null?r.golferIndex:r).filter(i=>integer(i,0,golfers.length-1)).map(Number));
+  const owners=new Map(),rosters=teams.map(team=>[...new Set((Array.isArray(team?.roster)?team.roster:[]).map(r=>typeof r==='object'&&r!==null?r.golferIndex:r).filter(i=>integer(i,0,golfers.length-1)).map(Number))]);
   rosters.forEach((roster,ti)=>roster.forEach(i=>owners.set(i,owners.has(i)?-1:ti)));
   const players=golfers.map((g,i)=>({index:i,team:owners.get(i),points:0,holes:0}));
   const holes=Array.from({length:18},()=>teams.map(()=>({points:0,entered:0,expected:0,complete:false})));

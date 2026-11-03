@@ -1,4 +1,17 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EllenG Cup Commissioner</title><link rel="stylesheet" href="style.css"><style>.global-main-menu-bar{display:flex;justify-content:center;padding:12px}.global-main-menu-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 18px;border:2px solid #d5a72c;border-radius:999px;background:#0b2437;color:#fff;font-weight:900;text-decoration:none}</style></head><body class="commissioner-draft-page">
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EllenG Cup Commissioner</title><link rel="stylesheet" href="style.css"><style>.global-main-menu-bar{display:flex;justify-content:center;padding:12px}.global-main-menu-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 18px;border:2px solid #d5a72c;border-radius:999px;background:#0b2437;color:#fff;font-weight:900;text-decoration:none}</style><style>
+.draft-roster-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.draft-roster-table{width:100%;min-width:720px;table-layout:fixed;border-collapse:collapse}
+.draft-roster-table th,.draft-roster-table td{box-sizing:border-box;padding:8px 6px;vertical-align:middle;white-space:nowrap}
+.draft-roster-table th:nth-child(1),.draft-roster-table td:nth-child(1){width:68px;text-align:center}
+.draft-roster-table th:nth-child(2),.draft-roster-table td:nth-child(2){width:45px;text-align:center}
+.draft-roster-table th:nth-child(3),.draft-roster-table td:nth-child(3){width:auto}
+.draft-roster-table th:nth-child(4),.draft-roster-table td:nth-child(4){width:85px}
+.draft-roster-table th:nth-child(5),.draft-roster-table td:nth-child(5){width:88px}
+.draft-roster-table input[data-n]{display:block;width:100%;max-width:none;min-width:0;box-sizing:border-box}
+.draft-roster-table input[data-h],.draft-roster-table select[data-b]{display:block;width:100%;box-sizing:border-box}
+.draft-roster-table input[data-attending]{width:20px;height:20px}
+@media(min-width:900px){.draft-roster-table{min-width:0}}
+</style></head><body class="commissioner-draft-page">
 <div class="top"><img src="gator.jpeg"><div><h1>EllenG Cup — Commissioner</h1><div>Live Supabase Draft Control</div></div><div style="margin-left:auto" id="connection">CONNECTING</div></div>
 <nav class="global-main-menu-bar" aria-label="Main menu"><a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a></nav>
 <div class="wrap">
@@ -21,7 +34,7 @@
 <button id="applySetupSize" type="button" class="alt">Apply &amp; Save Counts</button></div>
 <p id="setupSizeMsg" class="muted" role="status" aria-live="polite">Change counts before drafting. Existing names and captain assignments are protected. RSVP enrollment is not yet connected to live draft setup.</p>
 <p id="draftSetupPreview" class="muted" role="status" aria-live="polite"></p>
-<div style="overflow:auto"><table><thead><tr><th>#</th><th>Golfer</th><th>HCP</th><th>Band</th></tr></thead><tbody id="grows"></tbody></table></div><h3>Teams</h3><table><tbody id="trows"></tbody></table><div class="actions" style="margin-top:10px"><select id="dtype"><option value="snake">Snake Draft</option><option value="straight">Straight Draft</option></select><select id="tlen"><option>30</option><option>45</option><option selected>60</option><option>90</option><option>120</option></select><button id="saveSetup" class="gold">Save Setup & Go Live</button></div></section>
+<p class="muted">Select the golfers attending this tournament, then save the selected roster. Unselected golfers are removed from this draft only; their accounts are not deleted.</p><div class="actions"><button id="selectAllDraftGolfers" type="button" class="alt">Select All</button><button id="clearDraftGolferSelection" type="button" class="alt">Clear Selection</button><button id="saveSelectedDraftGolfers" type="button" class="alt">Save Selected Golfers (No Draft Start)</button></div><p id="selectedDraftGolferCount" class="muted" role="status" aria-live="polite"></p><p id="previewDraftSaveWarning" class="muted" role="status" style="display:none">PREVIEW ONLY — Save is disabled here because this preview shares the live tournament database. Your selected checkboxes are not saved until this feature is approved and deployed.</p><div class="draft-roster-scroll"><table class="draft-roster-table"><thead><tr><th>Here</th><th>#</th><th>Golfer full name</th><th>HCP</th><th>Band</th></tr></thead><tbody id="grows"></tbody></table></div><h3>Teams</h3><table><tbody id="trows"></tbody></table><div class="actions" style="margin-top:10px"><select id="dtype"><option value="snake">Snake Draft</option><option value="straight">Straight Draft</option></select><select id="tlen"><option>30</option><option>45</option><option selected>60</option><option>90</option><option>120</option></select><button id="saveSetup" class="gold">Save Setup & Go Live</button></div></section>
 <section id="live" class="grid" style="display:none"><div class="card"><h2>Available Golfers</h2><div id="pool"></div></div><div class="card"><div class="bar"><div><strong id="onclock"></strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div class="muted">Pick clock</div></div></div><div id="teams" class="teams"></div></div></section></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="client-health.js"></script>
 <script src="common.js"></script><script src="draft-setup-config.js"></script><script src="event-rsvp-client.js"></script><script src="event-rsvp-eligibility.js"></script><script src="commissioner-rsvp-preview.js"></script><script>
@@ -84,6 +97,7 @@ load=async function(isCurrent=()=>true,onApplied=()=>{}){
  return S;
 };
 async function secureSave(){
+ if(location.hostname!=="elleng-cup.vercel.app")throw new Error("Preview is read-only: production draft writes are blocked.");
  if(savingDraft)throw new Error("A draft save is already in progress.");
  savingDraft=true;
  // A save attempt can change the local roster before the server accepts it.
@@ -202,12 +216,31 @@ document.getElementById("trows")?.addEventListener?.("input",()=>rsvpPreviewCont
 document.getElementById("dtype")?.addEventListener?.("change",()=>{updateDraftSetupPreview();rsvpPreviewController.invalidate()});
 document.getElementById("setupTeamCount")?.addEventListener?.("input",()=>{updateDraftSetupPreview();rsvpPreviewController.invalidate()});
 document.getElementById("setupGolferCount")?.addEventListener?.("input",()=>{updateDraftSetupPreview();rsvpPreviewController.invalidate()});
-function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map((g,i)=>`<tr><td>${i+1}</td><td><input data-n="${i}" value="${esc(g.name)}"></td><td><input data-h="${i}" type="number" step=".1" value="${esc(g.hcp)}"></td><td><select data-b="${i}"><option value="" ${!g.band?"selected":""}>Unranked</option>${bands.map(b=>`<option ${g.band===b?"selected":""}>${b}</option>`).join("")}</select></td></tr>`).join("");document.getElementById("trows").innerHTML=S.teams.map((t,i)=>`<tr><td>Team ${i+1}</td><td><input data-tn="${i}" value="${esc(t.name)}"></td><td><input data-tc="${i}" placeholder="Captain" value="${esc(t.captain)}"></td></tr>`).join("");document.getElementById("dtype").value=S.draftType;document.getElementById("tlen").value=S.timerLength;document.getElementById("setupTeamCount").value=S.teams.length;document.getElementById("setupGolferCount").value=S.golfers.length;
+// Store only attendance choices in this browser; never change the live draft from preview.
+const attendanceStorageKey="elleng-attendance-preview-v1";
+function attendanceFingerprint(){
+ return JSON.stringify({draft:cfg.draftId,golfers:S.golfers.map(g=>String(g.name||"").trim().toLowerCase())});
+}
+function persistAttendanceSelection(){
+ try{localStorage.setItem(attendanceStorageKey,JSON.stringify({fingerprint:attendanceFingerprint(),selected:[...document.querySelectorAll("[data-attending]:checked")].map(el=>Number(el.dataset.attending))}));}catch(_){}
+}
+function restoreAttendanceSelection(){
+ try{
+  const stored=JSON.parse(localStorage.getItem(attendanceStorageKey)||"null");
+  if(!stored||stored.fingerprint!==attendanceFingerprint())return;
+  const selected=new Set(stored.selected);
+  document.querySelectorAll("[data-attending]").forEach(el=>{el.checked=selected.has(Number(el.dataset.attending));});
+ }catch(_){}
+}
+function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map((g,i)=>`<tr><td><input type="checkbox" data-attending="${i}" ${g.name.trim()?"checked":""} aria-label="Attending: ${esc(g.name||"Empty slot "+(i+1))}"></td><td>${i+1}</td><td><input data-n="${i}" value="${esc(g.name)}"></td><td><input data-h="${i}" type="number" step=".1" value="${esc(g.hcp)}"></td><td><select data-b="${i}"><option value="" ${!g.band?"selected":""}>Unranked</option>${bands.map(b=>`<option ${g.band===b?"selected":""}>${b}</option>`).join("")}</select></td></tr>`).join("");document.getElementById("trows").innerHTML=S.teams.map((t,i)=>`<tr><td>Team ${i+1}</td><td><input data-tn="${i}" value="${esc(t.name)}"></td><td><input data-tc="${i}" placeholder="Captain" value="${esc(t.captain)}"></td></tr>`).join("");document.getElementById("dtype").value=S.draftType;document.getElementById("tlen").value=S.timerLength;document.getElementById("setupTeamCount").value=S.teams.length;document.getElementById("setupGolferCount").value=S.golfers.length;
+ restoreAttendanceSelection();
  // An active draft may be inspected, but its setup must never be edited.
  updateDraftSetupPreview();
  // Preview unsaved edits immediately; persistence still requires Save Setup.
  const rsvpButton=document.getElementById("refreshRsvpPreview");
  if(rsvpButton)rsvpButton.disabled=!rsvpPreviewEnabled||!commissionerUserId;
+ updateSelectedDraftGolferCount();
+ if(location.hostname!=="elleng-cup.vercel.app"){document.getElementById("previewDraftSaveWarning").style.display="block";document.getElementById("saveSelectedDraftGolfers").disabled=true;}
  const locked=setupIsLocked();
  document.getElementById("setup").querySelectorAll("input,select,button").forEach(el=>el.disabled=locked);
  const status=document.getElementById("setupSizeMsg");
@@ -244,6 +277,53 @@ function readSetupFields(){
   S.draftType=document.getElementById("dtype").value;
   S.timerLength=+document.getElementById("tlen").value;
 }
+function updateSelectedDraftGolferCount(){
+ const checked=[...document.querySelectorAll("[data-attending]")].filter(x=>x.checked);
+ const count=checked.filter(x=>document.querySelector('[data-n="'+x.dataset.attending+'"]')?.value.trim()).length;
+ document.getElementById("selectedDraftGolferCount").textContent=count+" golfers selected for this draft (including captains).";
+}
+document.getElementById("grows").addEventListener("change",e=>{if(e.target.matches("[data-attending]")){persistAttendanceSelection();updateSelectedDraftGolferCount()}});
+document.getElementById("selectAllDraftGolfers").onclick=()=>{document.querySelectorAll("[data-attending]").forEach(x=>x.checked=!!document.querySelector('[data-n="'+x.dataset.attending+'"]')?.value.trim());persistAttendanceSelection();updateSelectedDraftGolferCount()};
+document.getElementById("clearDraftGolferSelection").onclick=()=>{document.querySelectorAll("[data-attending]").forEach(x=>x.checked=false);persistAttendanceSelection();updateSelectedDraftGolferCount()};
+document.getElementById("saveSelectedDraftGolfers").onclick=async()=>{
+ if(savingDraft)return;
+ const actionEpoch=commissionerAuthEpoch,actionUserId=commissionerUserId;
+ if(!sameCommissionerAction(actionEpoch,actionUserId))return;
+ const button=document.getElementById("saveSelectedDraftGolfers"),message=document.getElementById("selectedDraftGolferCount");
+ if(location.hostname!=="elleng-cup.vercel.app"){message.textContent="Preview mode: selections can be reviewed, but saving is disabled to protect the live tournament. Your choices remain stored in this browser across refreshes.";return;}
+ const before=structuredClone(S);
+ try{
+  EllenGDraftSetup.assertDraftSetupEditable(S);
+  const indexes=[...document.querySelectorAll("[data-attending]:checked")].map(x=>Number(x.dataset.attending));
+  if(indexes.length<2)throw new Error("Select at least two attending golfers.");
+  if(new Set(indexes).size!==indexes.length||indexes.some(i=>!Number.isInteger(i)||i<0||i>=S.golfers.length))throw new Error("Invalid golfer selection. Reload and try again.");
+  // Account identity currently uses golfer_index. Never compact/reorder a live roster without atomic account remapping.
+  if(indexes.length!==S.golfers.length || indexes.some((i,pos)=>i!==pos))throw new Error("Roster selection is temporarily locked to protect golfer logins. Existing players and their accounts are safe.");
+  const chosen=indexes.map(i=>({
+   ...S.golfers[i],
+   name:document.querySelector('[data-n="'+i+'"]').value.trim(),
+   hcp:document.querySelector('[data-h="'+i+'"]').value,
+   band:document.querySelector('[data-b="'+i+'"]').value,
+   team:null
+  }));
+  if(chosen.some(g=>!g.name))throw new Error("Every selected golfer needs a name.");
+  if(new Set(chosen.map(g=>g.name.toLowerCase())).size!==chosen.length)throw new Error("Duplicate selected golfer names; correct them before saving.");
+  const captains=[...document.querySelectorAll("[data-tc]")].map(x=>x.value.trim());
+  if(captains.length!==S.teams.length||captains.some(x=>!x))throw new Error("Every team needs a captain.");
+  if(new Set(captains.map(x=>x.toLowerCase())).size!==captains.length)throw new Error("Team captains must be different golfers.");
+  if(captains.some(name=>!chosen.some(g=>g.name.toLowerCase()===name.toLowerCase())))throw new Error("Both captains must be among the selected golfers.");
+  if(!confirm("Save "+chosen.length+" attending golfers to this draft? The other "+(S.golfers.length-chosen.length)+" golfers will leave this draft roster only. This does NOT start the draft or delete accounts."))return;
+  button.disabled=true;
+  readSetupFields();
+  S={...S,golfers:chosen};
+  await save();
+  if(!sameCommissionerAction(actionEpoch,actionUserId))return;
+  try{localStorage.removeItem(attendanceStorageKey)}catch(_){}
+  setupRender();
+  message.textContent="Saved "+chosen.length+" attending golfers. Draft not started.";
+ }catch(e){S=before;message.textContent=e.message||String(e)}
+ finally{if(sameCommissionerAction(actionEpoch,actionUserId))button.disabled=false}
+};
 document.getElementById("applySetupSize").onclick=async()=>{
  if(savingDraft)return;
  const actionEpoch=commissionerAuthEpoch,actionUserId=commissionerUserId;
@@ -331,6 +411,8 @@ document.getElementById("resetClock").onclick=()=>saveCommissionerAction(()=>{
 // Invalidate pending commissioner lookups when the account changes. A late
 // getUser/draft response must not restore the old commissioner's controls.
 function revokeCommissionerSession(){
+ // Keep unsaved attendance choices before security revocation hides the setup.
+ if(commissionerUserId&&document.querySelectorAll("[data-attending]").length)persistAttendanceSelection();
  commissionerSuspendedForVisibility=false;
  commissionerAuthEpoch++;commissionerOpenId++;commissionerUserId=null;
  // A sign-out must release an unfinished sign-in immediately. Its retired
@@ -414,6 +496,7 @@ if(typeof window!=="undefined"&&typeof window.addEventListener==="function"){
 // cached commissioner controls immediately, including a pending login check;
 // returning to the foreground must reverify identity and draft ownership.
 function suspendCommissionerForVisibility(force=false){
+ if(document.querySelectorAll("[data-attending]").length)persistAttendanceSelection();
  const status=document.getElementById("connection");
  if(!force&&!commissionerUserId&&status.textContent!=="VERIFYING")return;
  revokeCommissionerSession();
