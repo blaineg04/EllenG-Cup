@@ -18,6 +18,14 @@ for (const [format, legacyCount, expected] of [
   });
   assert.equal(actual, expected, `format=${format} legacy teams=${legacyCount}`);
 }
+const golferCountFunction = html.match(/function draftGolferCount\(\)\s*\{[^\n]*\}/)?.[0];
+assert.ok(golferCountFunction, 'draft golfer count must exist');
+const countFor = (format, golfers, storedCount) => vm.runInNewContext(
+  `${golferCountFunction}; draftGolferCount()`,
+  { draftState: { playFormat: format, golfers: golfers.map(name => ({ name })), golferCount: storedCount }, isShamblePoints: () => format === 'shamble_points' }
+);
+assert.equal(countFor('shamble_points', ['A', 'B', 'C'], 35), 3, 'stale 35 must not inflate shamble count');
+assert.equal(countFor('standard', ['A', 'B', 'C'], 24), 24, 'standard setup count remains unchanged');
 assert.match(html, /function pointsHoleCards\(showEmpty=false,onlyHole=null,maxTeams=null\)/);
 assert.match(html, /pointsHoleCards\(true, null, 2\)/);
 assert.match(html, /Awaiting draft/);
