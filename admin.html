@@ -297,6 +297,7 @@ document.getElementById("saveSelectedDraftGolfers").onclick=async()=>{
   const indexes=[...document.querySelectorAll("[data-attending]:checked")].map(x=>Number(x.dataset.attending));
   if(indexes.length<2)throw new Error("Select at least two attending golfers.");
   const chosen=indexes.map(i=>({
+   ...S.golfers[i],
    name:document.querySelector('[data-n="'+i+'"]').value.trim(),
    hcp:document.querySelector('[data-h="'+i+'"]').value,
    band:document.querySelector('[data-b="'+i+'"]').value,
@@ -304,6 +305,10 @@ document.getElementById("saveSelectedDraftGolfers").onclick=async()=>{
   }));
   if(chosen.some(g=>!g.name))throw new Error("Every selected golfer needs a name.");
   if(new Set(chosen.map(g=>g.name.toLowerCase())).size!==chosen.length)throw new Error("Duplicate selected golfer names; correct them before saving.");
+  const captains=[...document.querySelectorAll("[data-tc]")].map(x=>x.value.trim());
+  if(captains.length!==S.teams.length||captains.some(x=>!x))throw new Error("Every team needs a captain.");
+  if(new Set(captains.map(x=>x.toLowerCase())).size!==captains.length)throw new Error("Team captains must be different golfers.");
+  if(captains.some(name=>!chosen.some(g=>g.name.toLowerCase()===name.toLowerCase())))throw new Error("Both captains must be among the selected golfers.");
   if(!confirm("Save "+chosen.length+" attending golfers to this draft? The other "+(S.golfers.length-chosen.length)+" golfers will leave this draft roster only. This does NOT start the draft or delete accounts."))return;
   button.disabled=true;
   readSetupFields();
