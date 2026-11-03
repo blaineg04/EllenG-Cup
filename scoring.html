@@ -3963,8 +3963,8 @@ function relativeGolf(score,par){
  return {rel,label};
 }
 
-function pointsHoleCards(showEmpty=false,onlyHole=null){
- const x=shambleSummary();return x.holes.map((values,i)=>({values,h:i+1})).filter(({values,h})=>(onlyHole==null||h===onlyHole)&&(showEmpty||values.some(v=>v.entered))).map(({values,h})=>`<div class="card" style="margin:8px 0"><strong>Hole ${h} • Par ${parForHole(h)}</strong>${values.map((v,ti)=>`<div class="row between" style="padding:7px 0"><span>${esc(teams[ti]?.name||"Team")}</span><strong>${v.points} pts</strong><span>${v.entered}/${v.expected} golfers ${v.complete?"✓":"• pending"}</span></div>`).join("")}</div>`).join("")||'<div class="note">No individual scores entered yet.</div>';
+function pointsHoleCards(showEmpty=false,onlyHole=null,maxTeams=null){
+ const x=shambleSummary();return x.holes.map((values,i)=>({values,h:i+1})).filter(({values,h})=>(onlyHole==null||h===onlyHole)&&(showEmpty||values.some(v=>v.entered))).map(({values,h})=>`<div class="card" style="margin:8px 0"><strong>Hole ${h} • Par ${parForHole(h)}</strong>${values.slice(0,maxTeams==null?values.length:maxTeams).map((v,ti)=>`<div class="row between" style="padding:7px 0"><span>${esc(teams[ti]?.name||`Team ${ti+1}`)}</span><strong>${v.points} pts</strong><span>${v.expected===0?"Awaiting draft":`${v.entered}/${v.expected} golfers ${v.complete?"✓":"• pending"}`}</span></div>`).join("")}</div>`).join("")||'<div class="note">No individual scores entered yet.</div>';
 }
 function renderPointsScorecard(){
  const sel=$("digitalScorecardTeam"),root=$("digitalScorecard");if(!sel||!root)return;const prior=sel.value;sel.innerHTML='<option value="">Select a team</option>'+teams.map((t,i)=>`<option value="${i}">${esc(t.name)}</option>`).join("");sel.value=prior;
@@ -4655,7 +4655,7 @@ function renderRankingsDirectory(){
 
 function renderProgress(){
  $("progressView").classList.toggle("shamble-progress",typeof isShamblePoints==="function"&&isShamblePoints());
- if(typeof isShamblePoints==="function"&&isShamblePoints()){const x=shambleSummary();$("progressSummary").innerHTML=`<span class="badge">${x.completeHoles}/18 holes complete</span>`;$("progressGrid").innerHTML=pointsHoleCards(true);return}
+ if(typeof isShamblePoints==="function"&&isShamblePoints()){const x=shambleSummary();$("progressSummary").innerHTML=`<span class="badge">${x.completeHoles}/18 holes complete</span>`;$("progressGrid").innerHTML=pointsHoleCards(true, null, 2);return}
  let complete=0;
  const cards=Array.from({length:18},(_,i)=>{
   const h=i+1, par=parForHole(h);
