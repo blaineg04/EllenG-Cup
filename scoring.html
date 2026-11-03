@@ -4938,7 +4938,8 @@ async function loadBase(){
   if(isCommissioner){
     const {data:listData,error:listError}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});
     if(listError)throw listError;if(listData?.error)throw new Error(listData.error);playerAccounts=listData?.accounts||[];
-    await ensureAutomaticPlayerAccounts();
+    // Do not create player accounts implicitly during login: draft roster indices are mutable.
+    // Account provisioning must be an explicit commissioner action after identity verification.
   }else playerAccounts=[];
  }else {currentGolferIndex=null;currentUsername="";mustChangePassword=false;playerAccounts=[];}
 }
