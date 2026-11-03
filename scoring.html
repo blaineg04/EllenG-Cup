@@ -3941,6 +3941,8 @@ function applySelectedCourseToPars(){
 }
 
 function activeTeamCount(){
+ // The November shamble is always two teams, even if legacy tournament settings retain nine.
+ if(draftState?.playFormat==="shamble_points")return 2;
  const n=Number(tournament?.team_count||6);
  return Math.max(2,Math.min(9,Number.isInteger(n)?n:6));
 }
