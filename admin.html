@@ -21,7 +21,7 @@
 <button id="applySetupSize" type="button" class="alt">Apply &amp; Save Counts</button></div>
 <p id="setupSizeMsg" class="muted" role="status" aria-live="polite">Change counts before drafting. Existing names and captain assignments are protected. RSVP enrollment is not yet connected to live draft setup.</p>
 <p id="draftSetupPreview" class="muted" role="status" aria-live="polite"></p>
-<div style="overflow:auto"><table><thead><tr><th>#</th><th>Golfer</th><th>HCP</th><th>Band</th></tr></thead><tbody id="grows"></tbody></table></div><h3>Teams</h3><table><tbody id="trows"></tbody></table><div class="actions" style="margin-top:10px"><select id="dtype"><option value="snake">Snake Draft</option><option value="straight">Straight Draft</option></select><select id="tlen"><option>30</option><option>45</option><option selected>60</option><option>90</option><option>120</option></select><button id="saveSetup" class="gold">Save Setup & Go Live</button></div></section>
+<p class="muted">Select the golfers attending this tournament, then save the selected roster. Unselected golfers are removed from this draft only; their accounts are not deleted.</p><div class="actions"><button id="selectAllDraftGolfers" type="button" class="alt">Select All</button><button id="clearDraftGolferSelection" type="button" class="alt">Clear Selection</button><button id="saveSelectedDraftGolfers" type="button" class="alt">Save Selected Golfers (No Draft Start)</button></div><p id="selectedDraftGolferCount" class="muted" role="status" aria-live="polite"></p><div style="overflow:auto"><table><thead><tr><th>Attending</th><th>#</th><th>Golfer</th><th>HCP</th><th>Band</th></tr></thead><tbody id="grows"></tbody></table></div><h3>Teams</h3><table><tbody id="trows"></tbody></table><div class="actions" style="margin-top:10px"><select id="dtype"><option value="snake">Snake Draft</option><option value="straight">Straight Draft</option></select><select id="tlen"><option>30</option><option>45</option><option selected>60</option><option>90</option><option>120</option></select><button id="saveSetup" class="gold">Save Setup & Go Live</button></div></section>
 <section id="live" class="grid" style="display:none"><div class="card"><h2>Available Golfers</h2><div id="pool"></div></div><div class="card"><div class="bar"><div><strong id="onclock"></strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div class="muted">Pick clock</div></div></div><div id="teams" class="teams"></div></div></section></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="client-health.js"></script>
 <script src="common.js"></script><script src="draft-setup-config.js"></script><script src="event-rsvp-client.js"></script><script src="event-rsvp-eligibility.js"></script><script src="commissioner-rsvp-preview.js"></script><script>
@@ -202,12 +202,13 @@ document.getElementById("trows")?.addEventListener?.("input",()=>rsvpPreviewCont
 document.getElementById("dtype")?.addEventListener?.("change",()=>{updateDraftSetupPreview();rsvpPreviewController.invalidate()});
 document.getElementById("setupTeamCount")?.addEventListener?.("input",()=>{updateDraftSetupPreview();rsvpPreviewController.invalidate()});
 document.getElementById("setupGolferCount")?.addEventListener?.("input",()=>{updateDraftSetupPreview();rsvpPreviewController.invalidate()});
-function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map((g,i)=>`<tr><td>${i+1}</td><td><input data-n="${i}" value="${esc(g.name)}"></td><td><input data-h="${i}" type="number" step=".1" value="${esc(g.hcp)}"></td><td><select data-b="${i}"><option value="" ${!g.band?"selected":""}>Unranked</option>${bands.map(b=>`<option ${g.band===b?"selected":""}>${b}</option>`).join("")}</select></td></tr>`).join("");document.getElementById("trows").innerHTML=S.teams.map((t,i)=>`<tr><td>Team ${i+1}</td><td><input data-tn="${i}" value="${esc(t.name)}"></td><td><input data-tc="${i}" placeholder="Captain" value="${esc(t.captain)}"></td></tr>`).join("");document.getElementById("dtype").value=S.draftType;document.getElementById("tlen").value=S.timerLength;document.getElementById("setupTeamCount").value=S.teams.length;document.getElementById("setupGolferCount").value=S.golfers.length;
+function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map((g,i)=>`<tr><td><input type="checkbox" data-attending="${i}" ${g.name.trim()?"checked":""} aria-label="Attending: ${esc(g.name||"Empty slot "+(i+1))}"></td><td>${i+1}</td><td><input data-n="${i}" value="${esc(g.name)}"></td><td><input data-h="${i}" type="number" step=".1" value="${esc(g.hcp)}"></td><td><select data-b="${i}"><option value="" ${!g.band?"selected":""}>Unranked</option>${bands.map(b=>`<option ${g.band===b?"selected":""}>${b}</option>`).join("")}</select></td></tr>`).join("");document.getElementById("trows").innerHTML=S.teams.map((t,i)=>`<tr><td>Team ${i+1}</td><td><input data-tn="${i}" value="${esc(t.name)}"></td><td><input data-tc="${i}" placeholder="Captain" value="${esc(t.captain)}"></td></tr>`).join("");document.getElementById("dtype").value=S.draftType;document.getElementById("tlen").value=S.timerLength;document.getElementById("setupTeamCount").value=S.teams.length;document.getElementById("setupGolferCount").value=S.golfers.length;
  // An active draft may be inspected, but its setup must never be edited.
  updateDraftSetupPreview();
  // Preview unsaved edits immediately; persistence still requires Save Setup.
  const rsvpButton=document.getElementById("refreshRsvpPreview");
  if(rsvpButton)rsvpButton.disabled=!rsvpPreviewEnabled||!commissionerUserId;
+ updateSelectedDraftGolferCount();
  const locked=setupIsLocked();
  document.getElementById("setup").querySelectorAll("input,select,button").forEach(el=>el.disabled=locked);
  const status=document.getElementById("setupSizeMsg");
@@ -244,6 +245,43 @@ function readSetupFields(){
   S.draftType=document.getElementById("dtype").value;
   S.timerLength=+document.getElementById("tlen").value;
 }
+function updateSelectedDraftGolferCount(){
+ const checked=[...document.querySelectorAll("[data-attending]")].filter(x=>x.checked);
+ const count=checked.filter(x=>document.querySelector('[data-n="'+x.dataset.attending+'"]')?.value.trim()).length;
+ document.getElementById("selectedDraftGolferCount").textContent=count+" golfers selected for this draft (including captains).";
+}
+document.getElementById("grows").addEventListener("change",e=>{if(e.target.matches("[data-attending]"))updateSelectedDraftGolferCount()});
+document.getElementById("selectAllDraftGolfers").onclick=()=>{document.querySelectorAll("[data-attending]").forEach(x=>x.checked=!!document.querySelector('[data-n="'+x.dataset.attending+'"]')?.value.trim());updateSelectedDraftGolferCount()};
+document.getElementById("clearDraftGolferSelection").onclick=()=>{document.querySelectorAll("[data-attending]").forEach(x=>x.checked=false);updateSelectedDraftGolferCount()};
+document.getElementById("saveSelectedDraftGolfers").onclick=async()=>{
+ if(savingDraft)return;
+ const actionEpoch=commissionerAuthEpoch,actionUserId=commissionerUserId;
+ if(!sameCommissionerAction(actionEpoch,actionUserId))return;
+ const button=document.getElementById("saveSelectedDraftGolfers"),message=document.getElementById("selectedDraftGolferCount");
+ const before=structuredClone(S);
+ try{
+  EllenGDraftSetup.assertDraftSetupEditable(S);
+  const indexes=[...document.querySelectorAll("[data-attending]:checked")].map(x=>Number(x.dataset.attending));
+  if(indexes.length<2)throw new Error("Select at least two attending golfers.");
+  const chosen=indexes.map(i=>({
+   name:document.querySelector('[data-n="'+i+'"]').value.trim(),
+   hcp:document.querySelector('[data-h="'+i+'"]').value,
+   band:document.querySelector('[data-b="'+i+'"]').value,
+   team:null
+  }));
+  if(chosen.some(g=>!g.name))throw new Error("Every selected golfer needs a name.");
+  if(new Set(chosen.map(g=>g.name.toLowerCase())).size!==chosen.length)throw new Error("Duplicate selected golfer names; correct them before saving.");
+  if(!confirm("Save "+chosen.length+" attending golfers to this draft? The other "+(S.golfers.length-chosen.length)+" golfers will leave this draft roster only. This does NOT start the draft or delete accounts."))return;
+  button.disabled=true;
+  readSetupFields();
+  S={...S,golfers:chosen};
+  await save();
+  if(!sameCommissionerAction(actionEpoch,actionUserId))return;
+  setupRender();
+  message.textContent="Saved "+chosen.length+" attending golfers. Draft not started.";
+ }catch(e){S=before;message.textContent=e.message||String(e)}
+ finally{if(sameCommissionerAction(actionEpoch,actionUserId))button.disabled=false}
+};
 document.getElementById("applySetupSize").onclick=async()=>{
  if(savingDraft)return;
  const actionEpoch=commissionerAuthEpoch,actionUserId=commissionerUserId;
