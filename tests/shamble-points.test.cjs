@@ -26,3 +26,64 @@ test('unlimited roster size, missing scores and stale or malformed entries canno
  const rows=golfers.map((g,i)=>({golfer_index:i,team_index:g.team,hole:1,score:4}));rows.push({...rows[0]},{...rows[0],team_index:1},{...rows[0],hole:19},{...rows[0],golfer_index:99});
  const x=summarize(state,rows,Array(18).fill(4));assert.deepEqual(x.totals.map(t=>t.pts),[90,90]);assert.equal(x.completeHoles,1);
 });
+
+test('November 20 par 3, 4 and 5 score outcomes count every individual stroke total',()=>{
+ const {points,summarize}=require('../shamble-points.js');
+ for(const par of [3,4,5]){
+  assert.deepEqual([par-2,par-1,par,par+1,par+2,par+3].map(strokes=>points(strokes,par)),[5,4,3,2,1,0]);
+ }
+ const golfers=[{name:'A',team:0},{name:'B',team:0},{name:'C',team:1}];
+ const state={golfers,teams:[{roster:[0,1]},{roster:[2]}]};
+ const pars=[3,4,5,...Array(15).fill(4)];
+ const rows=[
+  {golfer_index:0,team_index:0,hole:1,score:3},
+  {golfer_index:1,team_index:0,hole:1,score:4},
+  {golfer_index:2,team_index:1,hole:1,score:3},
+  {golfer_index:0,team_index:0,hole:2,score:4},
+  {golfer_index:1,team_index:0,hole:2,score:5},
+  {golfer_index:2,team_index:1,hole:2,score:4},
+  {golfer_index:0,team_index:0,hole:3,score:5},
+  {golfer_index:1,team_index:0,hole:3,score:6},
+  {golfer_index:2,team_index:1,hole:3,score:5}
+ ];
+ const result=summarize(state,rows,pars);
+ assert.deepEqual(result.totals.map(x=>x.pts),[15,9]);
+ assert.equal(result.completeHoles,3);
+ assert.deepEqual(result.players.map(x=>x.holes),[3,3,3]);
+});
+
+test('duplicate entries on one roster do not invalidate a golfer or block hole completion',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const state={golfers:[{name:'Ada',team:0},{name:'Ben',team:1}],teams:[{roster:[0,'0',{golferIndex:0}]},{roster:[1]}]};
+ const rows=[{golfer_index:0,team_index:0,hole:1,score:4},{golfer_index:1,team_index:1,hole:1,score:4}];
+ const result=summarize(state,rows,Array(18).fill(4));
+ assert.equal(result.holes[0][0].expected,1);
+ assert.equal(result.holes[0][0].entered,1);
+ assert.equal(result.holes[0][0].complete,true);
+ assert.equal(result.holes[0][1].complete,true);
+ assert.equal(result.completeHoles,1);
+ assert.deepEqual(result.totals.map(t=>t.pts),[3,3]);
+});
+
+test('24 golfers in six mixed foursomes: all 12 per team count and incomplete Gator hole stays pending',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const golfers=Array.from({length:24},(_,i)=>({name:'Rehearsal '+(i+1),team:i%2}));
+ const state={golfers,teams:[{roster:golfers.map((_,i)=>i).filter(i=>i%2===0)},{roster:golfers.map((_,i)=>i).filter(i=>i%2===1)}]};
+ const groups=Array.from({length:6},(_,g)=>[4*g,4*g+1,4*g+2,4*g+3]);
+ assert(groups.every(group=>group.filter(i=>golfers[i].team===0).length===2&&group.filter(i=>golfers[i].team===1).length===2));
+ const pars=Array(18).fill(4);
+ const rows=golfers.map((g,i)=>({golfer_index:i,team_index:g.team,hole:3,score:i%2===0?4:5}));
+ let result=summarize(state,rows,pars);
+ assert.deepEqual(result.holes[2].map(h=>({points:h.points,entered:h.entered,expected:h.expected,complete:h.complete})),[
+  {points:36,entered:12,expected:12,complete:true},
+  {points:24,entered:12,expected:12,complete:true}
+ ]);
+ assert.deepEqual(result.totals.map(t=>t.pts),[36,24]);
+ assert.equal(result.completeHoles,1);
+ rows.pop();
+ result=summarize(state,rows,pars);
+ assert.deepEqual(result.holes[2].map(h=>h.complete),[true,false]);
+ assert.deepEqual(result.holes[2].map(h=>h.entered),[12,11]);
+ assert.equal(result.completeHoles,0);
+ assert.deepEqual(result.totals.map(t=>t.pts),[36,22]);
+});

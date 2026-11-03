@@ -3014,6 +3014,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
         <span class="tour-chevron">›</span>
       </button>
 
+      <button type="button" class="app-hub-btn tour-card" id="hubRulebook"><span class="tour-icon">📘</span><span class="tour-copy"><small class="tour-kicker">PLAYER REFERENCE</small><strong>Tournament Rules</strong><em>Format, scoring, bonuses, drops and disputes</em></span><span class="tour-chevron">›</span></button>
       <button type="button" class="app-hub-btn tour-card" id="hubClubhouse">
         <span class="tour-icon">⚑</span>
         <span class="tour-copy"><small class="tour-kicker">CLUBHOUSE</small><strong>Clubhouse</strong><em>RSVP, tee times, profiles, course and recaps</em></span>
@@ -3124,8 +3125,8 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 </div>
 
 <div id="homeSpecialCard" class="card home-highlight">
-  <div class="row between"><strong>🐊 Gator Hole & Final Cargo Shot</strong><span class="badge">SPECIAL SCORING</span></div>
-  <div id="homeSpecialText" class="note" style="margin-top:8px">The Gator Hole is secret until the Commissioner reveals it. Final Cargo Shot adds 6 points to the winning team.</div>
+  <div class="row between"><strong>🐊 Gator Hole</strong><span class="badge">SPECIAL SCORING</span></div>
+  <div id="homeSpecialText" class="note" style="margin-top:8px">The Gator Hole is secret until the Commissioner reveals it. The winner earns 10 bonus points, or 5 per team if tied.</div>
 </div>
 
 
@@ -3253,7 +3254,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   <div class="self-score-summary">
     <div class="self-score-box"><small>Golf Score</small><strong id="selfScoreRelative">—</strong><div id="selfScoreTerm" class="term">Enter strokes</div></div>
   </div>
-  <div class="note" style="margin-top:10px">Standard EllenG: any golfer on the team can update the Front 9 scramble team score. On the Back 9 shamble, each golfer can update only their own individual score. Split-Pair: each golfer can update only their own 2-man pair score.</div>
+  <div id="selfScoreFormatNote" class="note" style="margin-top:10px">Individual golfers enter their own strokes for each hole. Every golfer’s points count toward their team total.</div>
   <div id="selfScoreMsg" role="status" aria-live="polite" class="status" style="margin-top:5px"></div>
   <div class="row" style="margin-top:12px"><button id="saveSelfScore" class="primary" type="button">Save My Score</button><button id="clearSelfScore" class="secondary" type="button">Clear This Score</button></div>
   
@@ -3279,7 +3280,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   <div style="margin-top:12px"><label><small>Choose team</small><select id="digitalScorecardTeam" style="max-width:360px"></select></label></div>
   <div id="digitalScorecard" class="scorecard-wrap"></div><div class="row" style="margin-top:12px"><button id="shareTeamScorecard" class="secondary" type="button">📤 Share Team Scorecard</button><span id="shareScorecardMsg" class="status"></span></div>
 </div>
-<div class="card note"><strong>Special scoring:</strong> The Gator Hole awards double first-place points (2 × the number of teams), split equally among tied lowest teams. Final Cargo Shot adds 6 points to the winning team.</div>
+<div class="card note"><strong>Special scoring:</strong> The Gator Hole awards double first-place points (2 × the number of teams), split equally among tied lowest teams. The Gator Hole winner earns 10 bonus points.</div>
 </section>
 
 <section id="teamsView" class="view hidden">
@@ -3371,7 +3372,17 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 </section>
 
 
+<section id="rulesView" class="view hidden"><div class="card" style="margin-top:16px"><button type="button" class="secondary" onclick="openAppHub()">← Back to Main Menu</button></div>
+<div id="officialRules" class="card" style="margin-top:16px;scroll-margin-top:16px">
+ <div class="row between"><div><div class="premium-label">ELLENG CUP • PLAYER REFERENCE</div><h2 style="margin:5px 0">📘 Tournament Rulebook</h2></div><span class="badge">TWO-TEAM SHAMBLE</span></div>
+ <p class="status">Official format and scoring reference. Golf relief procedures and overall tiebreakers require Commissioner confirmation before the tournament.</p>
+ <label style="display:block;margin:12px 0"><small>Find a rule</small><input id="rulebookSearch" type="search" placeholder="Search scoring, drops, draft…" oninput="document.querySelectorAll('#rulebookSections details').forEach(d=>{const match=d.textContent.toLowerCase().includes(this.value.trim().toLowerCase());d.hidden=!match;if(this.value.trim()&&match)d.open=true;else if(!this.value.trim())d.open=false})" aria-label="Search tournament rules"></label>
+ <div id="rulebookSections"><details style="padding:12px 0;border-top:1px solid var(--line)"><summary style="cursor:pointer;font-weight:700">1. Tournament Overview</summary><p class="status" style="line-height:1.65;margin:10px 0 2px">EllenG Cup is a two-team, 18-hole shamble. Each golfer earns individual points on every hole. Every golfer’s points contribute to the team’s tournament total. The team with the highest verified total, including special bonuses, wins.</p></details><details style="padding:12px 0;border-top:1px solid var(--line)"><summary style="cursor:pointer;font-weight:700">2. Teams &amp; Draft</summary><p class="status" style="line-height:1.65;margin:10px 0 2px">The Commissioner manages tournament setup and the draft. Captains select players according to the configured draft order and eligibility restrictions. Only golfers officially assigned to a team count toward its score. Consult the live roster for confirmed assignments.</p></details><details style="padding:12px 0;border-top:1px solid var(--line)"><summary style="cursor:pointer;font-weight:700">3. How the Shamble Works</summary><p class="status" style="line-height:1.65;margin:10px 0 2px">Par 3: each golfer plays their own ball from tee to cup. Par 4: each team selects its best drive, then every golfer plays their own ball from that position until holed out. Par 5: each team selects its best drive and best second shot, then every golfer plays their own ball from stroke three until holed out. Each team selects its shots independently. Record each golfer’s individual stroke total, including applicable penalty strokes.</p></details><details style="padding:12px 0;border-top:1px solid var(--line)"><summary style="cursor:pointer;font-weight:700">4. Individual Points</summary><p class="status" style="line-height:1.65;margin:10px 0 2px">Eagle or better: 5 points. Birdie: 4. Par: 3. Bogey: 2. Double bogey: 1. Triple bogey or worse: 0. All individual points add to the golfer’s team total; no golfer’s score is dropped.</p></details><details style="padding:12px 0;border-top:1px solid var(--line)"><summary style="cursor:pointer;font-weight:700">5. Gator Hole</summary><p class="status" style="line-height:1.65;margin:10px 0 2px">The Commissioner selects the secret Gator Hole. Once all eligible golfers on both teams have completed it, the team with the higher combined individual points on that hole earns 10 bonus points; if tied, each team receives 5. Bonuses are added to team totals, not individual totals.</p></details><details style="padding:12px 0;border-top:1px solid var(--line)"><summary style="cursor:pointer;font-weight:700">6. Score Entry &amp; Verification</summary><p class="status" style="line-height:1.65;margin:10px 0 2px">Captains and authorized scorers enter each golfer’s strokes hole by hole. Verify the selected golfer, hole, par and strokes before submitting. Incomplete holes do not trigger special bonuses. Report errors promptly to the Commissioner for review before results are finalized.</p></details><details style="padding:12px 0;border-top:1px solid var(--line)"><summary style="cursor:pointer;font-weight:700">7. Golf Rules &amp; Drops</summary><p class="status" style="line-height:1.65;margin:10px 0 2px">Lost balls, out-of-bounds shots, and balls in water hazards carry one penalty stroke under EllenG Cup event rules: the shot into trouble counts as stroke 1, the penalty counts as stroke 2, and the next shot is stroke 3 after the permitted drop or replay. Include that stroke in each golfer’s individual hole score. The drop location must follow the applicable course rule or a Commissioner-announced event procedure; do not assume a free drop. No additional tournament-specific penalties apply.</p></details><details style="padding:12px 0;border-top:1px solid var(--line)"><summary style="cursor:pointer;font-weight:700">8. Winners &amp; Tiebreakers</summary><p class="status" style="line-height:1.65;margin:10px 0 2px">The team with the highest total individual points plus earned Gator Hole bonuses wins. An overall tournament tie remains tied until the Commissioner confirms the tournament’s published tiebreak procedure; no automatic winner is assumed.</p></details><details style="padding:12px 0;border-top:1px solid var(--line)"><summary style="cursor:pointer;font-weight:700">9. Commissioner &amp; Official Decisions</summary><p class="status" style="line-height:1.65;margin:10px 0 2px">The Commissioner confirms the tournament setup, Gator Hole, eligibility, corrections and final results. Any local-rule exceptions, overall tiebreak procedure, and unresolved disputes must be communicated to both captains before finalization. Rule changes should be announced to all teams.</p></details></div>
+</div>
+</section>
+
 <section id="clubhouseView" class="view hidden">
+
 <div class="card" style="margin-top:16px">
  <div class="row between"><h2 style="margin:0">📖 How Scoring Works</h2><span class="badge">PLAYER GUIDE</span></div>
  <p class="status">18-hole individual shamble. Every golfer's points count toward the team total.</p>
@@ -3380,8 +3391,8 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
  <span>Par</span><strong>3 pts</strong><span>Bogey</span><strong>2 pts</strong>
  <span>Double Bogey</span><strong>1 pt</strong><span>Triple Bogey or worse</span><strong>0 pts</strong>
  </div><hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
- <strong>🐊 Gator Hole</strong><p class="status">Secret until the Commissioner reveals it. Double first-place points go to the lowest-scoring team, shared among ties.</p>
- <strong>🏁 Final Cargo Shot</strong><p class="status">6 bonus points to the winning team.</p>
+ <strong>🐊 Gator Hole</strong><p class="status">Secret until the Commissioner reveals it. Highest combined team points wins 10 bonus points; a tie awards 5 to each team.</p>
+ 
 </div>
 <div class="card clubhouse-hero">
   <div class="home-kicker">ELLENG CUP • CLUBHOUSE</div>
@@ -3485,7 +3496,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
  <span>Double Bogey</span><strong>1 pt</strong><span>Triple Bogey or worse</span><strong>0 pts</strong>
  </div><hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
  <strong>🐊 Gator Hole</strong><p class="status">Secret until the Commissioner reveals it. Double first-place points go to the lowest-scoring team, shared among ties.</p>
- <strong>🏁 Final Cargo Shot</strong><p class="status">6 bonus points to the winning team.</p>
+ 
 </div></div>
 <div id="holebar" class="holebar" style="margin-top:14px"></div>
 <div id="mobileHoleGuide" class="mobile-hole-guide"></div>
@@ -3564,7 +3575,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 
 <div id="adminTournament" class="card admin-card">
   <div class="section-toolbar">
-    <div class="admin-section-title"><span class="step">1</span><div><h2>Tournament Controls</h2><div class="section-sub">Course, routing, status, team size, golfer count, hole pars, Gator Hole and Final Cargo Shot.</div></div></div>
+    <div class="admin-section-title"><span class="step">1</span><div><h2>Tournament Controls</h2><div class="section-sub">Course, routing, status, team size, golfer count, hole pars, Gator Hole.</div></div></div>
   </div>
   <div class="admin-grid">
 
@@ -3579,9 +3590,10 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
     <label><small>Gator Hole side</small><select id="gatorSide"><option value="">Select / keep current</option><option value="front">Front 9</option><option value="back">Back 9</option></select></label>
     <label><small>Secret Gator Hole</small><select id="gatorHole"><option value="">Not selected</option></select></label>
     <label><small>Gator Hole visibility</small><select id="gatorReveal"><option value="false">Keep Secret</option><option value="true">Reveal Gator Hole</option></select></label>
-    <label><small>Final Cargo Shot winner</small><select id="cargoTeam"><option value="">Not awarded</option></select></label>
+    
   </div>
-  <div id="teamBuildSummary" class="note" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb"></div>
+  <select id="cargoTeam" hidden aria-hidden="true"><option value="">Not awarded</option></select>
+   <div id="teamBuildSummary" class="note" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb"></div>
   <div class="note" style="margin-top:7px">Number of teams and Number of golfers stay blank until you choose a new value. Leaving either blank keeps the current saved setting.</div>
   <div style="margin-top:16px">
     <div class="row between"><div><strong>Hole Pars</strong><div class="status">Set each hole as a Par 3, 4 or 5. Live scoring automatically shows − / + and Birdie, Par, Bogey, etc.</div></div><span class="badge">PAR 3–5</span></div>
@@ -3633,7 +3645,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 
 <div id="adminNewTournament" class="card admin-card" style="border:2px solid #d8b14a">
   <div class="admin-section-title"><span class="step">6</span><div><h2>Quarterly Tournament Reset</h2><div class="section-sub">Archive the current event, clear live scoring, and prepare the app for the next EllenG Cup.</div></div></div>
-  <div class="note" style="margin-top:12px"><strong>Archive & Start New</strong> keeps your golfer list, handicaps, team count, hole pars and captain login accounts, but clears scores, team assignments, draft picks, captain names, captain team assignments, Gator Hole and Final Cargo Shot. Team names stay in place and can be renamed afterward.</div>
+  <div class="note" style="margin-top:12px"><strong>Archive & Start New</strong> keeps your golfer list, handicaps, team count, hole pars and captain login accounts, but clears scores, team assignments, draft picks, captain names, captain team assignments, Gator Hole. Team names stay in place and can be renamed afterward.</div>
   <div class="admin-grid" style="margin-top:12px">
     <label><small>New tournament name</small><input id="newTournamentName" value="EllenG Cup" placeholder="EllenG Cup"></label>
     <label><small>New tournament date</small><input id="newTournamentDate" type="date"></label>
@@ -3676,6 +3688,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
             <button class="more-menu-btn" type="button" data-more-view="course"><span>⛳</span>Course</button>
       <button class="more-menu-btn" type="button" data-more-view="rankings"><span>🏷️</span>Player Rankings</button>
       <button class="more-menu-btn" type="button" data-more-view="extras"><span>🏆</span>Tournament Extras</button>
+      <button class="more-menu-btn" type="button" data-more-view="rules"><span>📘</span>Tournament Rules</button>
       <button class="more-menu-btn" type="button" data-more-view="progress"><span>✅</span>Hole Progress</button>
       <button class="more-menu-btn" type="button" data-more-view="clubhouse"><span>🏛️</span>Clubhouse</button>
       <button class="more-menu-btn" type="button" data-more-view="trash"><span class="trash-talk-menu-icon"><img src="trash-talk-icon.png" alt="" aria-hidden="true"></span>Trash Talk</button>
@@ -3699,7 +3712,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
     <div id="broadcastTicker" class="broadcast-ticker">Waiting for tournament action…</div>
     <div class="broadcast-grid">
       <div class="broadcast-panel"><h2>Live Standings</h2><div id="broadcastStandings" class="broadcast-rows"></div></div>
-      <div class="broadcast-panel"><h2>Tournament Now</h2><div class="status" style="color:rgba(255,255,255,.7)">CURRENT LEADER</div><div id="broadcastLeader" class="broadcast-leader">—</div><div id="broadcastLeaderSub" style="margin-top:5px;opacity:.78">No official points yet</div><div style="margin-top:22px" class="status">COURSE</div><strong id="broadcastCourse" style="display:block;font-size:20px;margin-top:4px">—</strong><div style="margin-top:18px" class="status">HOLES COMPLETE</div><strong id="broadcastHoles" style="display:block;font-size:30px;margin-top:4px">0 / 18</strong><div style="margin-top:18px" class="status">GATOR / CARGO</div><strong id="broadcastSpecial" style="display:block;font-size:17px;margin-top:4px">Secret / Not awarded</strong></div>
+      <div class="broadcast-panel"><h2>Tournament Now</h2><div class="status" style="color:rgba(255,255,255,.7)">CURRENT LEADER</div><div id="broadcastLeader" class="broadcast-leader">—</div><div id="broadcastLeaderSub" style="margin-top:5px;opacity:.78">No official points yet</div><div style="margin-top:22px" class="status">COURSE</div><strong id="broadcastCourse" style="display:block;font-size:20px;margin-top:4px">—</strong><div style="margin-top:18px" class="status">HOLES COMPLETE</div><strong id="broadcastHoles" style="display:block;font-size:30px;margin-top:4px">0 / 18</strong><div style="margin-top:18px" class="status">GATOR HOLE</div><strong id="broadcastSpecial" style="display:block;font-size:17px;margin-top:4px">Secret</strong></div>
     </div>
   </div>
 </div>
@@ -3969,24 +3982,26 @@ function pointsHoleCards(showEmpty=false,onlyHole=null){
 function renderPointsScorecard(){
  const sel=$("digitalScorecardTeam"),root=$("digitalScorecard");if(!sel||!root)return;const prior=sel.value;sel.innerHTML='<option value="">Select a team</option>'+teams.map((t,i)=>`<option value="${i}">${esc(t.name)}</option>`).join("");sel.value=prior;
  if(sel.value===""){root.innerHTML='<div class="note">Choose a team to view every golfer’s points.</div>';return}
- const ti=Number(sel.value),x=shambleSummary();root.innerHTML=`<div style="overflow:auto"><table class="digital-scorecard"><thead><tr><th>Hole</th><th>Par</th><th>Team Points</th><th>Golfers entered</th></tr></thead><tbody>${x.holes.map((h,i)=>`<tr><td>${i+1}</td><td>${parForHole(i+1)}</td><td>${h[ti].points}</td><td>${h[ti].entered}/${h[ti].expected}</td></tr>`).join("")}</tbody></table></div><strong>Team total: ${x.totals[ti].pts} pts</strong>`;
+ const ti=Number(sel.value),x=shambleSummary();root.innerHTML=`<div style="overflow:auto"><table class="digital-scorecard"><thead><tr><th>Hole</th><th>Par</th><th>Team Points</th><th>Golfers entered</th></tr></thead><tbody>${x.holes.map((h,i)=>`<tr><td>${i+1}</td><td>${parForHole(i+1)}</td><td>${h[ti].points}</td><td>${h[ti].entered}/${h[ti].expected}</td></tr>`).join("")}</tbody></table></div><strong>Team total: ${x.totals[ti].pts} pts (includes Gator +${x.bonuses.gator[ti]})</strong>`;
 }
 function renderPointsEntry(){
- renderHolebar();$("holeFormat").textContent=`18-HOLE SHAMBLE • HOLE ${hole} • PAR ${parForHole(hole)}`;$("entryHint").textContent="Best team tee shot, then play your own ball. Every golfer earns points: eagle or better 5, birdie 4, par 3, bogey 2, double 1, triple or worse 0.";
+ renderHolebar();$("holeFormat").textContent=`18-HOLE SHAMBLE • HOLE ${hole} • PAR ${parForHole(hole)}`;$("entryHint").textContent="Par 3: own ball throughout. Par 4: choose the best drive, then play individually. Par 5: choose the best drive and best second shot, then play individually from stroke three. Every golfer earns points: eagle or better 5, birdie 4, par 3, bogey 2, double 1, triple or worse 0.";
  $("frontNineScoreGrid").classList.add("hidden");$("shambleScoreArea").classList.remove("hidden");$("scoreRows").innerHTML="";
- const x=shambleSummary();$("shambleScoreArea").innerHTML=teams.map((t,ti)=>`<div class="shamble-team"><strong>${esc(t.name)}</strong><span class="badge">EVERY GOLFER COUNTS</span>${teamRosterGolfers(ti).map(g=>{const r=playerScores.find(r=>Number(r.team_index)===ti&&Number(r.golfer_index)===g.index&&Number(r.hole)===hole),p=globalThis.EllenGShamblePoints.points(r?.score,parForHole(hole));return `<div class="shamble-player"><strong>${esc(g.name)}</strong><input class="points-player-input" aria-label="Strokes for ${esc(g.name)}" type="number" min="1" max="20" step="1" inputmode="numeric" data-team="${ti}" data-golfer="${g.index}" value="${r?.score??""}" ${canEditTeam(ti)?"":"disabled"}><span>${p===null?"Pending":p+" pts"}</span></div>`}).join("")}<div class="shamble-low">${x.holes[hole-1][ti].points} team pts • ${x.holes[hole-1][ti].entered}/${x.holes[hole-1][ti].expected} golfers entered</div></div>`).join("");
+ const x=shambleSummary();$("shambleScoreArea").innerHTML=teams.map((t,ti)=>`<div class="shamble-team"><strong>${esc(t.name)}</strong><span class="badge">EVERY GOLFER COUNTS</span>${!teamRosterGolfers(ti).length?'<div class="note" style="margin-top:8px">No golfers assigned yet. Complete the draft before entering individual scores.</div>':""}${teamRosterGolfers(ti).map(g=>{const r=playerScores.find(r=>Number(r.team_index)===ti&&Number(r.golfer_index)===g.index&&Number(r.hole)===hole),p=globalThis.EllenGShamblePoints.points(r?.score,parForHole(hole));return `<div class="shamble-player"><strong>${esc(g.name)}</strong><input class="points-player-input" aria-label="Strokes for ${esc(g.name)}" type="number" min="1" max="20" step="1" inputmode="numeric" data-team="${ti}" data-golfer="${g.index}" value="${r?.score??""}" ${canEditTeam(ti)?"":"disabled"}><span>${p===null?"Pending":p+" pts"}</span></div>`}).join("")}<div class="shamble-low">${x.holes[hole-1][ti].points} team pts • ${x.holes[hole-1][ti].entered}/${x.holes[hole-1][ti].expected} golfers entered</div></div>`).join("");
  document.querySelectorAll(".points-player-input:not([disabled])").forEach(el=>el.addEventListener("change",()=>savePlayerShambleScore(Number(el.dataset.team),Number(el.dataset.golfer),el.value)));
 }
 function renderPointsExtras(){
+ if($("manualCargoControl"))$("manualCargoControl").style.display="none";
  const x=shambleSummary(),set=(id,value)=>{const el=$(id);if(el)el.textContent=value;};
- set("homeHolesComplete",x.completeHoles+" / 18");set("broadcastHoles",x.completeHoles+" / 18");set("homeSpecialText","Gator Hole: Secret until the Commissioner reveals it. Double first-place points go to the lowest-scoring team, shared among ties. Final Cargo Shot: 6 bonus points to the winning team.");
+ set("homeHolesComplete",x.completeHoles+" / 18");set("broadcastHoles",x.completeHoles+" / 18");set("homeSpecialText","Gator Hole: Highest combined individual points on the secret hole earns 10 bonus points (5 each if tied). Bonuses count only after both teams complete the hole.");
  set("broadcastSpecial","18-hole shamble • Every golfer counts");
- const chosen=$("teamRosterSelect")?.value||"all";$("teamCards").innerHTML=teams.map((t,ti)=>({t,ti})).filter(({ti})=>chosen==="all"||String(ti)===chosen).map(({t,ti})=>`<div class="card"><h3>${esc(t.name)} • ${x.totals[ti].pts} pts</h3>${teamRosterGolfers(ti).map(g=>`<div class="row between" style="padding:8px 0"><span>${esc(g.name)}</span><strong>${x.players[g.index].points} pts</strong><span>${x.players[g.index].holes}/18 holes</span></div>`).join("")||"No golfers assigned yet."}</div>`).join("");
+ const chosen=$("teamRosterSelect")?.value||"all";$("teamCards").innerHTML=teams.map((t,ti)=>({t,ti})).filter(({ti})=>chosen==="all"||String(ti)===chosen).map(({t,ti})=>`<div class="card"><h3>${esc(t.name)} • ${x.totals[ti].pts} pts</h3><div class="status">Individual: ${x.totals[ti].pts-x.bonuses.gator[ti]} • Gator: +${x.bonuses.gator[ti]}</div>${teamRosterGolfers(ti).map(g=>`<div class="row between" style="padding:8px 0"><span>${esc(g.name)}</span><strong>${x.players[g.index].points} pts</strong><span>${x.players[g.index].holes}/18 holes</span></div>`).join("")||"No golfers assigned yet."}</div>`).join("");
  const ranked=x.players.filter(p=>p.holes).sort((a,b)=>b.points-a.points||a.index-b.index);
  if($("tournamentMvpCard"))$("tournamentMvpCard").innerHTML=ranked.length?`<strong>${esc(draftState.golfers[ranked[0].index].name)}</strong><div>${ranked[0].points} individual points • ${ranked[0].holes}/18 holes</div>`:'<div class="note">Individual points will appear once scores are saved.</div>';
  if($("postRoundRecap"))$("postRoundRecap").innerHTML=x.totals.slice().sort((a,b)=>b.pts-a.pts).map(t=>`<div class="row between"><strong>${esc(teams[t.team].name)}</strong><span>${t.pts} pts</span></div>`).join("");
  // Legacy stroke-only extras do not describe this format.
  for(const id of ["bestWorstHoleRecap","featuredMatchup","playerSpotlight","holeBattleTimeline","teamMomentumMeter","tournamentAwards","tournamentPulse","paceTracker"]){const el=$(id);if(el)el.innerHTML='<div class="note">18-hole shamble: follow individual and team points on the leaderboard.</div>';}
+ if($("selfScoreFormatNote"))$("selfScoreFormatNote").textContent="18-hole Shamble: each golfer records their own strokes after the required best-ball shots. Every golfer earns individual points toward their team total.";
  if($("pointsGolferCountLabel"))$("pointsGolferCountLabel").classList.toggle("hidden",false);
 }
 
@@ -4024,7 +4039,10 @@ function pointsForHole(h){
 function finalCargoBonus(){const raw=tournament?.final_cargo_points;const n=Number(raw);return raw===null||raw===undefined||typeof raw==="boolean"||String(raw).trim()===""||!Number.isSafeInteger(n)||n<0?6:n}
 function isFinalCargoTeam(i){const raw=tournament?.final_cargo_team;return raw!==null&&raw!==undefined&&typeof raw!=="boolean"&&String(raw).trim()!==""&&Number.isInteger(Number(raw))&&Number(raw)>=0&&Number(raw)<teams.length&&Number(raw)===i}
 function totals(){
- if(typeof isShamblePoints==="function"&&isShamblePoints())return shambleSummary().totals;
+ if(typeof isShamblePoints==="function"&&isShamblePoints()){
+  // shambleSummary already includes the completed Gator Hole bonus exactly once.
+  return shambleSummary().totals.map(t=>({...t}));
+ }
  return teams.map((_,i)=>{let pts=0,thru=0;for(let h=1;h<=18;h++){const p=pointsForHole(h)[i];if(p!=null)pts+=p;const r=scores.find(x=>Number(x.team_index)===i&&Number(x.hole)===h&&validTeamScore(x.score));if(r)thru=Math.max(thru,h)}if(isFinalCargoTeam(i))pts+=finalCargoBonus();return{team:i,pts,thru}})
 }
 function renderLiveHoleScores(){
@@ -4046,6 +4064,11 @@ function renderLiveHoleScores(){
 
 function scoreClass(rel){if(!rel||rel==="—")return "";if(rel==="0")return "score-even";return rel.startsWith("−")?"score-good":"score-bad"}
 function projectedTotals(){
+ if(typeof isShamblePoints==="function"&&isShamblePoints()){
+  const official=totals(),summary=shambleSummary();
+  return teams.map((_,i)=>({team:i,official:official[i]?.pts||0,projected:official[i]?.pts||0,thru:official[i]?.thru||0,provisionalHoles:summary.holes.filter(h=>h[i]?.entered>0&&!h[i]?.complete).length})).sort((a,b)=>b.projected-a.projected||b.thru-a.thru||a.team-b.team);
+ }
+
  const official=totals();
  const out=teams.map((_,i)=>({team:i,official:official[i]?.pts||0,projected:official[i]?.pts||0,thru:official[i]?.thru||0,provisionalHoles:0}));
  for(let h=1;h<=18;h++){
@@ -4069,7 +4092,7 @@ function renderBroadcast(){
  $("broadcastLeader").textContent=hasLeader?(teams[leader.team]?.name||'—'):'—';$("broadcastLeaderSub").textContent=hasLeader?`${leader.pts.toFixed(leader.pts%1?1:0)} official Cup pts • Thru ${leader.thru||0}`:'No official Cup points yet';
  $("broadcastCourse").textContent=tournamentCourseLabel()||"Course not selected";
  let complete=0;for(let h=1;h<=18;h++){if(teams.every((_,ti)=>(typeof isShamblePoints==="function"&&isShamblePoints()?shambleSummary().holes[h-1]?.[ti]?.complete:scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null))))complete++}$("broadcastHoles").textContent=`${complete} / 18`;
- const g=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Gator: Hole ${Number(tournament.gator_hole)}`:'Gator: Secret';const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`Cargo: ${teams[Number(tournament.final_cargo_team)]?.name||'Awarded'}`:'Cargo: Not awarded';$("broadcastSpecial").textContent=`${g} • ${cargo}`;
+ const g=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Gator: Hole ${Number(tournament.gator_hole)}`:'Gator: Secret';$("broadcastSpecial").textContent=g;
 }
 async function openBroadcastMode(){const ov=$("broadcastOverlay");if(!ov)return;syncBroadcastGatorLogo();document.documentElement.classList.add("broadcast-active");document.body.classList.add("broadcast-active");ov.classList.add('open');ov.setAttribute('aria-hidden','false');renderBroadcast();try{await ov.requestFullscreen?.()}catch(e){}finally{if(!ov.classList.contains("open")&&document.fullscreenElement===ov){try{await document.exitFullscreen()}catch(e){}}}}
 async function closeBroadcastMode(){const ov=$("broadcastOverlay");if(!ov)return;ov.classList.remove('open');ov.setAttribute('aria-hidden','true');document.documentElement.classList.remove("broadcast-active");document.body.classList.remove("broadcast-active");try{if(document.fullscreenElement)await document.exitFullscreen()}catch(e){}}
@@ -4081,7 +4104,7 @@ async function createWinnerGraphic(){
  const grad=ctx.createLinearGradient(0,0,1200,675);grad.addColorStop(0,'#061827');grad.addColorStop(.6,'#08253b');grad.addColorStop(1,'#123d55');ctx.fillStyle=grad;ctx.fillRect(0,0,1200,675);
  ctx.fillStyle='#d5a72c';ctx.fillRect(0,0,1200,12);ctx.fillRect(0,663,1200,12);ctx.textAlign='center';ctx.fillStyle='#d5a72c';ctx.font='900 70px Georgia, serif';ctx.fillText('EllenG Cup',600,120);ctx.fillStyle='#ffffff';ctx.font='700 30px Arial';ctx.fillText('TOURNAMENT CHAMPIONS',600,176);
  ctx.fillStyle='#ffffff';ctx.font='900 66px Arial';ctx.fillText(teams[win.team]?.name||`Team ${win.team+1}`,600,305);ctx.fillStyle='#d5a72c';ctx.font='900 44px Arial';ctx.fillText(`${win.pts.toFixed(win.pts%1?1:0)} CUP POINTS`,600,365);
- ctx.fillStyle='rgba(255,255,255,.82)';ctx.font='26px Arial';ctx.fillText(tournamentCourseLabel()||'Course not selected',600,430);const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`Final Cargo Shot: ${teams[Number(tournament.final_cargo_team)]?.name||'Awarded'}`:'Final Cargo Shot: —';ctx.font='22px Arial';ctx.fillText(cargo,600,475);ctx.fillStyle='rgba(255,255,255,.65)';ctx.font='20px Arial';ctx.fillText('PLAY BAD. LOOK GOOD. • ELLENG CUP',600,590);
+ ctx.fillStyle='rgba(255,255,255,.82)';ctx.font='26px Arial';ctx.fillText(tournamentCourseLabel()||'Course not selected',600,430);ctx.fillStyle='rgba(255,255,255,.65)';ctx.font='20px Arial';ctx.fillText('PLAY BAD. LOOK GOOD. • ELLENG CUP',600,590);
  const url=canvas.toDataURL('image/png');preview.innerHTML=`<img src="${url}" alt="EllenG Cup winner graphic"><a class="primary" id="winnerDownload" download="EllenG-Cup-Champions.png" href="${url}" style="padding:11px 14px;border-radius:10px;color:white;font-weight:800">Save Winner Graphic</a> <button type="button" class="secondary" id="winnerShare">Share</button>`;msg.textContent='Winner graphic ready.';
  const share=$("winnerShare");if(share)share.onclick=async()=>{try{const blob=await (await fetch(url)).blob(),file=new File([blob],'EllenG-Cup-Champions.png',{type:'image/png'});if(navigator.canShare?.({files:[file]}))await navigator.share({files:[file],title:'EllenG Cup Champions'});else if(navigator.share)await navigator.share({title:'EllenG Cup Champions',text:`${teams[win.team]?.name||'Champions'} won the EllenG Cup.`});else msg.textContent='Use Save Winner Graphic to save or share it.'}catch(e){if(e?.name!=='AbortError')msg.textContent='Use Save Winner Graphic to save or share it.'}};
 }
@@ -4190,7 +4213,7 @@ function renderCourseHoleCard(){
  const h=Number(sel.value||1),p=parForHole(h),yards=activeTeeLine(h,false);
  const isG=!!(tournament?.gator_revealed&&Number(tournament?.gator_hole)===h);
  const cargo=(h===18);
- root.innerHTML=`<div class="hole-big">Hole ${h} • Par ${p}</div><div style="margin-top:5px;opacity:.88">${esc(yards||"Yardage unavailable")}</div><div class="hole-meta"><span class="hole-pill">${isG?"🐊 GATOR HOLE":"⛳ Standard Hole"}</span>${cargo?'<span class="hole-pill">🚢 FINAL CARGO SHOT</span>':""}<span class="hole-pill">HCP ${h}</span></div><div style="margin-top:12px;font-size:13px;opacity:.86">${p===3?"Accuracy hole — center of the green is your friend.":p===5?"Risk/reward — position the tee shot for the best scoring angle.":"Commit to the target and keep the ball in play."}</div>`;
+ root.innerHTML=`<div class="hole-big">Hole ${h} • Par ${p}</div><div style="margin-top:5px;opacity:.88">${esc(yards||"Yardage unavailable")}</div><div class="hole-meta"><span class="hole-pill">${isG?"🐊 GATOR HOLE":"⛳ Standard Hole"}</span>${cargo?'':""}<span class="hole-pill">HCP ${h}</span></div><div style="margin-top:12px;font-size:13px;opacity:.86">${p===3?"Accuracy hole — center of the green is your friend.":p===5?"Risk/reward — position the tee shot for the best scoring angle.":"Commit to the target and keep the ball in play."}</div>`;
 }
 async function loadWeather(){
  const panel=$("weatherPanel"),btn=$("loadWeatherBtn");if(!panel)return;
@@ -4238,7 +4261,17 @@ function renderClubhouse(){
  renderRivalryWatch();renderSeasonStandings();renderTrophyRoom();
 }
 function renderTournamentAwards(){
- const root=$("tournamentAwards");if(!root)return;const front=bestByRel(1,9),back=bestByRel(10,18);let birds=null,eagles=null;teams.forEach((_,ti)=>{const s=teamRoundStats(ti);if(!birds||s.birdies>birds.value)birds={ti,value:s.birdies};if(!eagles||s.eagles>eagles.value)eagles={ti,value:s.eagles}});
+ const root=$("tournamentAwards");if(!root)return;
+ if(isShamblePoints()){
+  const summary=shambleSummary(),rawGator=tournament?.gator_hole,gh=rawGator==null||typeof rawGator==="boolean"||String(rawGator).trim()===""?NaN:Number(rawGator);
+  const valid=Number.isInteger(gh)&&gh>=1&&gh<=18;
+  const holeResult=valid?summary.holes[gh-1]:null;
+  const complete=holeResult?.length===2&&holeResult.every(v=>v.complete);
+  const winner=!valid?"Gator Hole not selected":!tournament?.gator_revealed?"Secret until Commissioner reveals":complete?(holeResult[0].points===holeResult[1].points?"Tie — both teams":teams[holeResult[0].points>holeResult[1].points?0:1]?.name):"Pending completion";
+  root.innerHTML=`<div class="award-card"><div class="award-kicker">GATOR HOLE</div><strong>${esc(winner||"Pending")}</strong><span>${!valid?"Commissioner must select a Gator Hole":!tournament?.gator_revealed?"Commissioner controls Gator Hole reveal":complete?(holeResult[0].points===holeResult[1].points?"5 bonus points each":"10 bonus points to winner"):"All golfers on both teams must finish"}</span></div>`;
+  return;
+ }
+const front=bestByRel(1,9),back=bestByRel(10,18);let birds=null,eagles=null;teams.forEach((_,ti)=>{const s=teamRoundStats(ti);if(!birds||s.birdies>birds.value)birds={ti,value:s.birdies};if(!eagles||s.eagles>eagles.value)eagles={ti,value:s.eagles}});
  const gatorHole=Number(tournament?.gator_hole)||0;let gatorWinner=null;if(tournament?.gator_revealed&&gatorHole&&teams.length&&teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===gatorHole&&x.score!=null))){const vals=teams.map((_,ti)=>Number(scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===gatorHole)?.score));const low=Math.min(...vals),w=vals.map((v,i)=>v===low?i:null).filter(x=>x!=null);gatorWinner={names:w.map(i=>teams[i]?.name||`Team ${i+1}`).join(' / '),score:low}}
  const cards=[
   ['BEST FRONT 9',front?teams[front.ti]?.name:'—',front?`${front.rel===0?'E':front.rel>0?'+'+front.rel:'−'+Math.abs(front.rel)} through ${front.count} holes`:'Waiting on scores',front?.ti],
@@ -4246,7 +4279,7 @@ function renderTournamentAwards(){
   ['BIRDIE LEADER',birds&&birds.value?teams[birds.ti]?.name:'—',birds&&birds.value?`${birds.value} birdie${birds.value===1?'':'s'}`:'No birdies yet',birds?.ti],
   ['EAGLE WATCH',eagles&&eagles.value?teams[eagles.ti]?.name:'—',eagles&&eagles.value?`${eagles.value} eagle${eagles.value===1?'':'s'}`:'No eagles yet',eagles?.ti],
   ['GATOR KILLER',gatorWinner?gatorWinner.names:'—',gatorWinner?`Hole ${gatorHole} • ${gatorWinner.score} strokes`:(tournament?.gator_revealed?'Waiting on all teams':'Gator Hole still secret'),null],
-  ['CARGO KING',tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?(teams[Number(tournament.final_cargo_team)]?.name||'—'):'—',tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==''?`+${finalCargoBonus()} Final Cargo Shot points`:'Not awarded yet',Number(tournament?.final_cargo_team)]
+  ...(!isShamblePoints()?[['CARGO KING',tournament?.final_cargo_team!=null?(teams[Number(tournament.final_cargo_team)]?.name||'—'):'—','Legacy award',Number(tournament?.final_cargo_team)]]:[])
  ];
  root.innerHTML=cards.map(c=>`<div class="award-card" style="--accent:${Number.isInteger(c[3])?teamAccent(c[3]):'var(--gold)'}"><div class="award-kicker">${esc(c[0])}</div><strong>${esc(c[1]||'—')}</strong><span>${esc(c[2])}</span></div>`).join('');
  if($("awardsStatus"))$("awardsStatus").textContent=String(tournament?.status||'setup').toUpperCase()==='COMPLETE'?'FINAL':'LIVE';
@@ -4256,7 +4289,7 @@ function renderCommissionerControlRoom(){
  const pending=nextHole<=18?teams.filter((_,ti)=>!scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===nextHole&&x.score!=null)).map(t=>t.name):[];
  const logged='Live account tracking is not enabled';
  root.innerHTML=`<div class="control-card"><span>OFFICIAL HOLES</span><strong>${holes.length} / 18</strong><div class="status">Completed by every team</div></div><div class="control-card"><span>CURRENT LEADER</span><strong>${snap?(snap.tied?'Tied':esc(teams[snap.team]?.name||`Team ${snap.team+1}`)):'—'}</strong><div class="status">${snap?`${snap.pts.toFixed(snap.pts%1?1:0)} Cup pts`:'No official points yet'}</div></div><div class="control-card"><span>NEXT ACTIVE HOLE</span><strong>${nextHole<=18?'Hole '+nextHole:'Complete'}</strong><div class="status">${nextHole<=18?`${teams.length-pending.length}/${teams.length} teams posted`:'Round finished'}</div></div><div class="control-card"><span>PLAYER STATUS</span><strong>${(draftState?.golfers||[]).filter(g=>(g?.name||'').trim()).length}</strong><div class="status">${logged}</div></div>`;
- alert.innerHTML=nextHole>18?'<strong>Round scoring is complete.</strong> Review final standings, awards, Gator Hole and Final Cargo Shot before marking the tournament complete.':pending.length?`<strong>Hole ${nextHole} pending:</strong> ${esc(pending.join(', '))}`:`<strong>Hole ${nextHole} ready to score.</strong> No teams have posted yet.`;
+ alert.innerHTML=nextHole>18?'<strong>Round scoring is complete.</strong> Review final standings, awards, Gator Hole before marking the tournament complete.':pending.length?`<strong>Hole ${nextHole} pending:</strong> ${esc(pending.join(', '))}`:`<strong>Hole ${nextHole} ready to score.</strong> No teams have posted yet.`;
 }
 function pulseGolfLabel(score,par){
  const diff=Number(score)-Number(par);
@@ -4337,8 +4370,8 @@ function renderTournamentRecap(){
  }
  const medals=["🥇","🥈","🥉"],pod=ranking.slice(0,3).map((x,i)=>`<div class="recap-place team-accent" style="--team-accent:${teamAccent(x.team)}"><span class="medal">${medals[i]}</span><strong>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div class="status" style="margin-top:4px">${x.pts.toFixed(x.pts%1?1:0)} Cup pts • Thru ${x.thru||0}</div></div>`).join("");
  let best=null;teams.forEach((_,ti)=>{let s=0,p=0,c=0;for(let h=1;h<=18;h++){const r=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null);if(r){s+=Number(r.score);p+=parForHole(h);c++}}if(c&&(!best||((s-p)<best.rel)||((s-p)===best.rel&&c>best.c)))best={ti,rel:s-p,c}});
- const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Hole ${Number(tournament.gator_hole)}`:"Secret / not revealed";const cargo=tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""?(teams[Number(tournament.final_cargo_team)]?.name||`Team ${Number(tournament.final_cargo_team)+1}`):"Not awarded";const bestText=best?`${teams[best.ti]?.name||`Team ${best.ti+1}`} ${best.rel===0?'E':best.rel>0?'+'+best.rel:'−'+Math.abs(best.rel)} (${best.c} holes)`:"—";
- root.innerHTML=`<div class="recap-podium">${pod}</div><div class="recap-stats"><div class="recap-stat"><span class="status">BEST TO PAR</span><strong>${esc(bestText)}</strong></div><div class="recap-stat"><span class="status">GATOR HOLE</span><strong>${esc(gator)}</strong></div><div class="recap-stat"><span class="status">FINAL CARGO SHOT</span><strong>${esc(cargo)}</strong></div></div>`;
+ const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Hole ${Number(tournament.gator_hole)}`:"Secret / not revealed";const bestText=best?`${teams[best.ti]?.name||`Team ${best.ti+1}`} ${best.rel===0?'E':best.rel>0?'+'+best.rel:'−'+Math.abs(best.rel)} (${best.c} holes)`:"—";
+ root.innerHTML=`<div class="recap-podium">${pod}</div><div class="recap-stats"><div class="recap-stat"><span class="status">BEST TO PAR</span><strong>${esc(bestText)}</strong></div><div class="recap-stat"><span class="status">GATOR HOLE</span><strong>${esc(gator)}</strong></div></div>`;
 }
 function renderTournamentHealth(){
  if(!isCommissioner||!draftState)return;let incomplete=0,missing=0;const next=[];for(let h=1;h<=18;h++){const miss=teams.map((t,ti)=>(typeof isShamblePoints==="function"&&isShamblePoints()?shambleSummary().holes[h-1]?.[ti]?.complete:scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null))?null:t.name).filter(Boolean);if(miss.length){incomplete++;missing+=miss.length;if(next.length<4)next.push(`Hole ${h}: ${miss.join(', ')}`)}}
@@ -4353,7 +4386,7 @@ function renderLeaderboard(){
  const arr=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
  const board=$("leaderboard");
  if(board) board.dataset.teamCount=String(arr.length);
- board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${isFinalCargoTeam(x.team)?` <span class="badge">+${finalCargoBonus()} Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
+ board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${isShamblePoints()?` <span class="badge">+${(shambleSummary().bonuses.gator[x.team])} special</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
  renderLiveHoleScores();
 }
 function trashTime(ts){
@@ -4680,7 +4713,7 @@ function teamRosterGolfers(teamIndex){
    const idx=Number(raw);
    if(!Number.isSafeInteger(idx)||idx<0||idx>=golfers.length||seen.has(idx))return null;
    const golfer=golfers[idx];
-   if(!golfer||!String(golfer.name||"").trim())return null;
+   if(!golfer||!String(golfer.name||"").trim()||(golfer.team!=null&&String(golfer.team)!==String(teamIndex)))return null;
    seen.add(idx);
    return {index:idx,name:String(golfer.name).trim()};
  }).filter(Boolean);
@@ -4732,8 +4765,8 @@ async function savePlayerShambleScore(teamIndex,golferIndex,val){
  try{
    if(score!==null&&(!Number.isInteger(score)||score<1||score>20))throw new Error("Enter a score from 1 to 20.");
    // Fail closed: never fall back to separate client-side player/team writes.
-   // This RPC has not been installed in production. Release remains blocked
-   // until server-side authorization, RLS and concurrent device tests pass.
+   // The authorized Shamble RPC is installed on the tournament database.
+   // Authenticated multi-device release verification is still required.
    const {error}=await db.rpc("elleng_test_authorized_shamble",{
      p_tournament_id:TOURNAMENT_ID,p_team_index:teamIndex,p_hole:scoreHole,
      p_golfer_index:golferIndex,p_score:score
@@ -4926,7 +4959,24 @@ function draftGolferCount(){if(typeof isShamblePoints==="function"&&isShamblePoi
 function draftTeamSize(){let n=Number(draftState?.teamSize||4);return [2,3,4].includes(n)?n:4}
 function playFormat(){return ["split_pair","shamble_points"].includes(draftState?.playFormat)?draftState.playFormat:"standard"}
 function isShamblePoints(){return draftState?.playFormat==="shamble_points"}
-function shambleSummary(){return globalThis.EllenGShamblePoints.summarize({...draftState,teams:(draftState?.teams||[]).slice(0,teams.length)},playerScores,currentPars())}
+function shambleSummary(){
+ const result=globalThis.EllenGShamblePoints.summarize({...draftState,teams:(draftState?.teams||[]).slice(0,teams.length)},playerScores,currentPars());
+ result.bonuses={gator:[0,0],cargo:[0,0],gatorReady:false,cargoReady:false};
+ if(result.totals.length!==2)return result;
+ const award=(hole,amount,key)=>{
+  if(!Number.isInteger(hole)||hole<1||hole>18)return;
+  const rows=result.holes[hole-1];
+  if(!rows||rows.length!==2||!rows.every(v=>v.complete))return;
+  result.bonuses[key+'Ready']=true;
+  const best=Math.max(rows[0].points,rows[1].points);
+  const winners=rows.map((v,i)=>v.points===best?i:-1).filter(i=>i>=0);
+  for(const ti of winners){const bonus=amount/winners.length;result.bonuses[key][ti]=bonus;result.totals[ti].pts+=bonus;}
+ };
+ const raw=tournament?.gator_hole;
+ const gator=raw===null||raw===undefined||String(raw).trim()===''?NaN:Number(raw);
+ award(gator,10,'gator');
+ return result;
+}
 function isSplitPair(){return playFormat()==="split_pair"}
 function calculatedTeamCount(golfers=draftGolferCount(),size=draftTeamSize()){if(typeof isShamblePoints==="function"&&isShamblePoints())return 2;return Math.ceil(Number(golfers)/Number(size))}
 function ensureDraftShape(){
@@ -5411,7 +5461,7 @@ async function resetGolferPin(i){
  const gh=Number(tournament.gator_hole)||0; if($("gatorSide"))$("gatorSide").value="";
  renderHoleParEditor(); populateGatorHoles();
  $("gatorReveal").value=String(!!tournament.gator_revealed);
- $("cargoTeam").innerHTML='<option value="">Not awarded</option>'+teams.map((t,i)=>`<option value="${i}">${esc(t.name)} — +6 points</option>`).join(""); $("cargoTeam").value=tournament.final_cargo_team??""; $("newGolferTeam").innerHTML=teamOptions("");
+ $("cargoTeam").value=""; $("newGolferTeam").innerHTML=teamOptions("");
  const activeTeams=draftState.teams.slice(0,activeTeamCount()), golfers=draftState.golfers||[];
  const captainCount=activeTeams.filter(t=>(t.captain||"").trim()).length, assignedCount=golfers.filter(g=>g.team!==null&&g.team!==undefined&&g.team!=="").length;
  if($("commissionerTeamCount"))$("commissionerTeamCount").textContent=activeTeams.length;
@@ -5496,7 +5546,7 @@ async function archiveAndStartNew(){
  const date=$("newTournamentDate")?.value||null;
  const first=confirm("Archive the current tournament and start a new quarterly event? Current scores and rosters will be saved in the archive first. Captain logins will be kept for the next event.");
  if(!first)return;
- const second=confirm("This will clear live scores, draft picks, golfer-to-team assignments, the Gator Hole and Final Cargo Shot. Captain login accounts will be kept, but captain names, emails and team assignments will be cleared. Continue?");
+ const second=confirm("This will clear live scores, draft picks, golfer-to-team assignments, the Gator Hole. Captain login accounts will be kept, but captain names, emails and team assignments will be cleared. Continue?");
  if(!second)return;
  const msg=$("newTournamentMsg"); if(msg)msg.textContent="Archiving current tournament…";
  try{
@@ -5513,7 +5563,7 @@ async function archiveAndStartNew(){
   if(resetError)throw resetError;
   if(resetData?.error)throw new Error(resetData.error);
   await loadBase(); await loadScores(); renderAll();
-  if(msg)msg.textContent="New tournament is ready. Scores, picks, golfer team assignments, captain names, captain team assignments, Gator Hole and Final Cargo Shot were reset. Captain login accounts were kept.";
+  if(msg)msg.textContent="New tournament is ready. Scores, picks, golfer team assignments, captain names, captain team assignments, Gator Hole were reset. Captain login accounts were kept.";
  }catch(e){console.error(e);if(msg)msg.textContent=e?.message||"Unable to start the new tournament."}
 }
 
@@ -5541,8 +5591,8 @@ function checkLiveAlerts(){
  const gh=Number(tournament?.gator_hole)||0,gComplete=!!(tournament?.gator_revealed&&gh&&teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===gh&&x.score!=null)));
  if(gComplete&&!lastAlertGatorComplete)pushInAppAlert("🐊 Gator Hole complete",`Hole ${gh} points are official`);
  lastAlertGatorComplete=gComplete;
- const cargo=tournament?.final_cargo_team;
- if(cargo!==null&&cargo!==undefined&&cargo!==""&&String(cargo)!==String(lastAlertCargo)){pushInAppAlert("🚢 Final Cargo Shot awarded",`${teams[Number(cargo)]?.name||`Team ${Number(cargo)+1}`} +${Number(tournament?.final_cargo_points||6)} points`);lastAlertCargo=cargo}
+ const cargo=null;
+
 }
 
 function renderLeaderSpotlight(){
@@ -5628,8 +5678,8 @@ function checkBigMoments(){
  const gComplete=!!(tournament?.gator_revealed&&gh&&teams.length&&teams.every((_,ti)=>scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===gh&&x.score!=null)));
  if(gComplete&&!lastBigMomentGator){const hp=pointsForHole(gh)||[],mx=Math.max(...hp),wins=teams.map((t,i)=>({t,i,p:Number(hp[i]||0)})).filter(x=>x.p===mx&&mx>0).map(x=>x.t?.name||`Team ${x.i+1}`);showBigMoment("🐊","GATOR HOLE",wins.length?`${wins.join(" & ")} STRIKE`:"GATOR HOLE COMPLETE",`Hole ${gh} • ${wins.length>1?"points split":`${2*teams.length}-point showdown`}`)}
  lastBigMomentGator=gComplete;
- const cargo=tournament?.final_cargo_team;
- if(cargo!==null&&cargo!==undefined&&cargo!==""&&String(cargo)!==String(lastBigMomentCargo)){const ti=Number(cargo);showBigMoment("🚢","FINAL CARGO SHOT",`${teams[ti]?.name||`Team ${ti+1}`} GETS THE CARGO`,`+${Number(tournament?.final_cargo_points||6)} Cup points`);lastBigMomentCargo=cargo}
+ const cargo=null;
+ 
 }
 function applyPlayerSimplicity(){
  const simple=!!user&&!isCommissioner;
@@ -5661,9 +5711,9 @@ function renderHome(){
  if($("homeFormat"))$("homeFormat").textContent=formatConfirmed?(isShamblePoints()?"Two-Team Shamble":isSplitPair()?"Split-Pair Scramble":`${draftTeamSize()}-Man EllenG`):"—";
  if($("homeFormatSub"))$("homeFormatSub").textContent=formatConfirmed?(isShamblePoints()?"18 holes • individual points • every golfer counts":isSplitPair()?"Two 2-man pairs • both scores count":"Front 9 Scramble • Back 9 Shamble"):"";
  const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Gator Hole: Hole ${Number(tournament.gator_hole)}. `:"Gator Hole is still secret. ";
- let cargo="Final Cargo Shot has not been awarded.";
+ let cargo="";
  if(tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""){const ti=Number(tournament.final_cargo_team);cargo=`Final Cargo Shot: ${teams[ti]?.name||`Team ${ti+1}`} +${finalCargoBonus()} points.`}
- if($("homeSpecialText"))$("homeSpecialText").textContent=gator+cargo;
+ if($("homeSpecialText"))$("homeSpecialText").textContent=isShamblePoints()?"Gator Hole: Highest combined individual points on the secret hole earns 10 bonus points (5 each if tied). Bonuses count only after both teams complete the hole.":gator;
 }
 
 
@@ -6043,6 +6093,15 @@ function openHubView(view){
  if(view==="clubhouse"){showView("clubhouse");return}
  if(view==="scoring"){showView("home");return}
 }
+// Bind the rulebook navigation in script, rather than relying on inline onclick.
+// Keep the menu closed and display the rules view in one deterministic action.
+const rulesHubButton=$("hubRulebook");
+if(rulesHubButton)rulesHubButton.addEventListener("click",function(event){
+ event.preventDefault();
+ event.stopPropagation();
+ closeAppHub();
+ showView("rules");
+});
 function showView(name){
  if(name!=="leaderboard")document.body.classList.remove("my-profile-open");
  if(!user){enterViewer();return}
@@ -6314,7 +6373,7 @@ $("saveAdmin").addEventListener("click",async()=>{
   const selectedCourse=COURSE_LIBRARY[draftState.courseId];
   const selectedRoute=selectedCourse?.routes?.[draftState.courseRoute];
   const pars=selectedRoute?selectedRoute.par.slice():Array.from(document.querySelectorAll("[data-hole-par]")).sort((a,b)=>Number(a.dataset.holePar)-Number(b.dataset.holePar)).map(x=>Number(x.value));
-  const patch={status:$("statusSelect").value,team_count:newCount,hole_pars:pars,gator_hole:$("gatorHole").value?Number($("gatorHole").value):null,gator_revealed:$("gatorReveal").value==="true",final_cargo_team:$("cargoTeam").value!==""?Number($("cargoTeam").value):null,updated_at:new Date().toISOString()};
+  const patch={status:$("statusSelect").value,team_count:newCount,hole_pars:pars,gator_hole:$("gatorHole").value?Number($("gatorHole").value):null,gator_revealed:$("gatorReveal").value==="true",updated_at:new Date().toISOString()};
   const {data,error}=await db.from("elleng_tournaments").update(patch).eq("id",TOURNAMENT_ID).select().single();if(error)throw error;
   tournament=data;
   rebuildTeamRosters();
