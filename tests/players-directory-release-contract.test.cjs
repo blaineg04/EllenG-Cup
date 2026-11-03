@@ -25,6 +25,7 @@ const countFor = (format, golfers, storedCount) => vm.runInNewContext(
   { draftState: { playFormat: format, golfers: golfers.map(name => ({ name })), golferCount: storedCount }, isShamblePoints: () => format === 'shamble_points' }
 );
 assert.equal(countFor('shamble_points', ['A', 'B', 'C'], 35), 3, 'stale 35 must not inflate shamble count');
+assert.match(golferCountFunction, /g\.participating!==false/, 'nonparticipants excluded from shamble count');
 assert.equal(countFor('standard', ['A', 'B', 'C'], 24), 24, 'standard setup count remains unchanged');
 assert.match(html, /function pointsHoleCards\(showEmpty=false,onlyHole=null,maxTeams=null\)/);
 assert.match(html, /pointsHoleCards\(true, null, 2\)/);
