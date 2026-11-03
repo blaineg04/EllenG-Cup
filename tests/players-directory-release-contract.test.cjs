@@ -4,6 +4,7 @@ const html = fs.readFileSync('scoring.html', 'utf8');
 assert.match(html, /function renderPlayersDirectory\(\)/);
 assert.match(html, /const activeIndices=new Set\(golfers\.map\(g=>g\.index\)\)/);
 assert.match(html, /Not in this tournament · Account preserved/);
+assert.match(html, /if\(draftState\?\.playFormat==="shamble_points"\)return 2;/);
 assert.match(html, /function pointsHoleCards\(showEmpty=false,onlyHole=null,maxTeams=null\)/);
 assert.match(html, /pointsHoleCards\(true, null, 2\)/);
 assert.match(html, /Awaiting draft/);
