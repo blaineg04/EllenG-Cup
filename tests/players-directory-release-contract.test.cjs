@@ -1,0 +1,11 @@
+const fs = require('node:fs');
+const assert = require('node:assert/strict');
+const html = fs.readFileSync('scoring.html', 'utf8');
+assert.match(html, /function renderPlayersDirectory\(\)/);
+assert.match(html, /const activeIndices=new Set\(golfers\.map\(g=>g\.index\)\)/);
+assert.match(html, /Not in this tournament · Account preserved/);
+assert.match(html, /function pointsHoleCards\(showEmpty=false,onlyHole=null,maxTeams=null\)/);
+assert.match(html, /pointsHoleCards\(true, null, 2\)/);
+assert.match(html, /Awaiting draft/);
+assert.match(html, /values\.slice\(0,2\)\.every\(v=>v\.expected>0&&v\.complete\)/);
+console.log('Players directory and two-team progress source contracts passed');
