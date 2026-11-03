@@ -296,6 +296,7 @@ document.getElementById("saveSelectedDraftGolfers").onclick=async()=>{
   EllenGDraftSetup.assertDraftSetupEditable(S);
   const indexes=[...document.querySelectorAll("[data-attending]:checked")].map(x=>Number(x.dataset.attending));
   if(indexes.length<2)throw new Error("Select at least two attending golfers.");
+  if(new Set(indexes).size!==indexes.length||indexes.some(i=>!Number.isInteger(i)||i<0||i>=S.golfers.length))throw new Error("Invalid golfer selection. Reload and try again.");
   const chosen=indexes.map(i=>({
    ...S.golfers[i],
    name:document.querySelector('[data-n="'+i+'"]').value.trim(),
