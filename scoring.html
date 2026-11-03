@@ -3790,7 +3790,7 @@ const db=window.supabase.createClient(cfg.supabaseUrl,supabaseKey);
 window.EllenGResetRequests?.init(db);
 globalThis.EllenGHealth?.attach(db);
 connection("✓ App connected — live scoring ready.",true);
-const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
+const TOURNAMENT_ID="elleng-nov20-rehearsal-20261103", DRAFT_ID="elleng-nov20-rehearsal-draft-20261103";
 let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, draftUpdatedAt=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", mustChangePassword=false, hole=1;
 let scoreSaveBusy=false, lastSuccessfulSyncAt=null;
 let tournamentArchives=[], trashReactions=[];
@@ -6917,6 +6917,7 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
 </style>
 
 
+<div style="position:fixed;bottom:0;left:0;right:0;background:#ffdc62;color:#1b2630;text-align:center;font-weight:800;padding:9px;z-index:99999;pointer-events:none">TEST REHEARSAL ONLY — NOT NOVEMBER 20 LIVE TOURNAMENT</div>
 </body>
 
 <style id="v2766-handicap-restore">
