@@ -3254,7 +3254,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   <div class="self-score-summary">
     <div class="self-score-box"><small>Golf Score</small><strong id="selfScoreRelative">—</strong><div id="selfScoreTerm" class="term">Enter strokes</div></div>
   </div>
-  <div class="note" style="margin-top:10px">Standard EllenG: any golfer on the team can update the Front 9 scramble team score. On the Back 9 shamble, each golfer can update only their own individual score. Split-Pair: each golfer can update only their own 2-man pair score.</div>
+  <div id="selfScoreFormatNote" class="note" style="margin-top:10px">Individual golfers enter their own strokes for each hole. Every golfer’s points count toward their team total.</div>
   <div id="selfScoreMsg" role="status" aria-live="polite" class="status" style="margin-top:5px"></div>
   <div class="row" style="margin-top:12px"><button id="saveSelfScore" class="primary" type="button">Save My Score</button><button id="clearSelfScore" class="secondary" type="button">Clear This Score</button></div>
   
@@ -4000,6 +4000,7 @@ function renderPointsExtras(){
  if($("postRoundRecap"))$("postRoundRecap").innerHTML=x.totals.slice().sort((a,b)=>b.pts-a.pts).map(t=>`<div class="row between"><strong>${esc(teams[t.team].name)}</strong><span>${t.pts} pts</span></div>`).join("");
  // Legacy stroke-only extras do not describe this format.
  for(const id of ["bestWorstHoleRecap","featuredMatchup","playerSpotlight","holeBattleTimeline","teamMomentumMeter","tournamentAwards","tournamentPulse","paceTracker"]){const el=$(id);if(el)el.innerHTML='<div class="note">18-hole shamble: follow individual and team points on the leaderboard.</div>';}
+ if($("selfScoreFormatNote"))$("selfScoreFormatNote").textContent="18-hole Shamble: each golfer records their own strokes after the required best-ball shots. Every golfer earns individual points toward their team total.";
  if($("pointsGolferCountLabel"))$("pointsGolferCountLabel").classList.toggle("hidden",false);
 }
 
