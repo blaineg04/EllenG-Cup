@@ -64,3 +64,26 @@ test('duplicate entries on one roster do not invalidate a golfer or block hole c
  assert.equal(result.completeHoles,1);
  assert.deepEqual(result.totals.map(t=>t.pts),[3,3]);
 });
+
+test('24 golfers in six mixed foursomes: all 12 per team count and incomplete Gator hole stays pending',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const golfers=Array.from({length:24},(_,i)=>({name:'Rehearsal '+(i+1),team:i%2}));
+ const state={golfers,teams:[{roster:golfers.map((_,i)=>i).filter(i=>i%2===0)},{roster:golfers.map((_,i)=>i).filter(i=>i%2===1)}]};
+ const groups=Array.from({length:6},(_,g)=>[4*g,4*g+1,4*g+2,4*g+3]);
+ assert(groups.every(group=>group.filter(i=>golfers[i].team===0).length===2&&group.filter(i=>golfers[i].team===1).length===2));
+ const pars=Array(18).fill(4);
+ const rows=golfers.map((g,i)=>({golfer_index:i,team_index:g.team,hole:3,score:i%2===0?4:5}));
+ let result=summarize(state,rows,pars);
+ assert.deepEqual(result.holes[2].map(h=>({points:h.points,entered:h.entered,expected:h.expected,complete:h.complete})),[
+  {points:36,entered:12,expected:12,complete:true},
+  {points:24,entered:12,expected:12,complete:true}
+ ]);
+ assert.deepEqual(result.totals.map(t=>t.pts),[36,24]);
+ assert.equal(result.completeHoles,1);
+ rows.pop();
+ result=summarize(state,rows,pars);
+ assert.deepEqual(result.holes[2].map(h=>h.complete),[true,false]);
+ assert.deepEqual(result.holes[2].map(h=>h.entered),[12,11]);
+ assert.equal(result.completeHoles,0);
+ assert.deepEqual(result.totals.map(t=>t.pts),[36,22]);
+});
