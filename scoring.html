@@ -4655,7 +4655,7 @@ function renderRankingsDirectory(){
 
 function renderProgress(){
  $("progressView").classList.toggle("shamble-progress",typeof isShamblePoints==="function"&&isShamblePoints());
- if(typeof isShamblePoints==="function"&&isShamblePoints()){const x=shambleSummary();$("progressSummary").innerHTML=`<span class="badge">${x.completeHoles}/18 holes complete</span>`;$("progressGrid").innerHTML=pointsHoleCards(true, null, 2);return}
+ if(typeof isShamblePoints==="function"&&isShamblePoints()){const x=shambleSummary();$("progressSummary").innerHTML=`<span class="badge">${(x.holes||[]).filter(values=>values.slice(0,2).length===2&&values.slice(0,2).every(v=>v.expected>0&&v.complete)).length}/18 holes complete</span>`;$("progressGrid").innerHTML=pointsHoleCards(true, null, 2);return}
  let complete=0;
  const cards=Array.from({length:18},(_,i)=>{
   const h=i+1, par=parForHole(h);
