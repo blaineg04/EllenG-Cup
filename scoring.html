@@ -4927,7 +4927,7 @@ async function loadScores(){
  scores=data||[];playerScores=nextPlayerScores;pairScores=nextPairScores;
 }
 function teamOptions(selected=""){return '<option value="">Available / Unassigned</option>'+teams.map((t,i)=>`<option value="${i}" ${String(selected)===String(i)?"selected":""}>${esc(t.name)}</option>`).join("")}
-function draftGolferCount(){if(typeof isShamblePoints==="function"&&isShamblePoints())return Math.max(2,Number(draftState?.golferCount||draftState?.golfers?.length||2));let n=Number(draftState?.golferCount||draftState?.golfers?.length||24);return Math.max(8,Math.min(36,Number.isInteger(n)?n:24))}
+function draftGolferCount(){if(typeof isShamblePoints==="function"&&isShamblePoints()){const active=(draftState?.golfers||[]).filter(g=>String(g?.name||"").trim()).length;return Math.max(2,active||2)};let n=Number(draftState?.golferCount||draftState?.golfers?.length||24);return Math.max(8,Math.min(36,Number.isInteger(n)?n:24))}
 function draftTeamSize(){let n=Number(draftState?.teamSize||4);return [2,3,4].includes(n)?n:4}
 function playFormat(){return ["split_pair","shamble_points"].includes(draftState?.playFormat)?draftState.playFormat:"standard"}
 function isShamblePoints(){return draftState?.playFormat==="shamble_points"}
