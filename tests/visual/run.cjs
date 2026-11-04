@@ -253,6 +253,13 @@ async function main() {
           if(await reserveRow.count()!==1)throw new Error('Expected exactly one registered reserve row');
           const reserveText=await reserveRow.innerText();
           if(!reserveText.includes('Not in this tournament · Account preserved'))throw new Error('Reserve golfer status missing: '+reserveText);
+          if(await reserveRow.getAttribute('data-player-profile')!==null||await reserveRow.getAttribute('role')==='button')throw new Error('Unlinked reserve account must not open a potentially incorrect player profile');
+          const directorySearch=page.locator('#playerDirectorySearch');
+          await directorySearch.fill('Registered Reserve Golfer');
+          await reserveRow.waitFor({state:'visible'});
+          if(await page.locator('#playerDirectory .player-row-public').count()!==1)throw new Error('Reserve golfer search must return only the matching account');
+          await directorySearch.fill('');
+          await reserveRow.waitFor({state:'visible'});
           await capture('player-directory-reserve');
           await page.locator(width<700?'[data-mobile-view="leaderboard"]':'.tab[data-view="leaderboard"]').click();
           await page.locator('#leaderboardView:not(.hidden)').waitFor();await capture('player-my-score');
