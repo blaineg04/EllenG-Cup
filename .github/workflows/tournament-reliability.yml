@@ -33,9 +33,6 @@ jobs:
       - name: Verify recovery and existing scoring tests
         working-directory: ${{ env.ELLENG_VERIFY_DIR }}
         run: node --test tests/offline-score-queue.test.cjs tests/tournament-update-policy.test.cjs tests/tournament-health.test.cjs tests/nov20-production-score-integrity.test.cjs tests/alternate-scoring-validation.test.cjs tests/gator-hole-variable-teams.test.cjs tests/cross-page-points-parity.test.cjs tests/stored-score-completion.test.cjs tests/split-pair-atomic-contract.test.cjs tests/draft-two-client-simulation.test.cjs tests/realtime-client-reconnect.test.cjs tests/draft-reconnect.test.cjs tests/integration/isolated-auth-scoring-safety.test.cjs tests/visual/safety.test.cjs tests/acceptance/score-save-format-guard.test.cjs tests/acceptance/commissioner-format-change-guard.test.cjs tests/acceptance/broadcast-fullscreen-race.test.cjs tests/acceptance/player-home-navigation-race.test.cjs
-      - name: Rehearse conditional offline writes in private disposable PostgreSQL
-        working-directory: ${{ env.ELLENG_VERIFY_DIR }}
-        run: bash scripts/test-offline-score-native.sh
       - name: Capture synthetic browser matrix
         working-directory: ${{ env.ELLENG_VERIFY_DIR }}
         run: |
@@ -50,4 +47,14 @@ jobs:
           if mount | grep -F " on $mount_dir " >/dev/null; then hdiutil detach -quiet "$mount_dir" || hdiutil detach -quiet -force "$mount_dir"; fi
           if test -f "$image"; then rm -f "$image"; fi
           if test -d "$mount_dir"; then rmdir "$mount_dir" 2>/dev/null || true; fi
+  database:
+    if: github.repository == 'blaineg04/EllenG-Cup'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Rehearse conditional offline writes in private disposable PostgreSQL
+        run: bash scripts/test-offline-score-native.sh
 

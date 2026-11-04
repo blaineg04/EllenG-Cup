@@ -2,11 +2,11 @@
 set -euo pipefail
 export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
 if ! command -v initdb >/dev/null; then
- for bin in /usr/local/opt/postgresql@17/bin /opt/homebrew/opt/postgresql@17/bin /usr/local/opt/postgresql@16/bin /opt/homebrew/opt/postgresql@16/bin; do
+ for bin in /usr/lib/postgresql/*/bin /Applications/Postgres.app/Contents/Versions/*/bin /usr/local/opt/postgresql@17/bin /opt/homebrew/opt/postgresql@17/bin /usr/local/opt/postgresql@16/bin /opt/homebrew/opt/postgresql@16/bin; do
   if test -x "$bin/initdb"; then export PATH="$bin:$PATH"; break; fi
  done
 fi
-command -v initdb >/dev/null
+if ! command -v initdb >/dev/null; then echo 'Native PostgreSQL tools unavailable on this worker.'; exit 1; fi
 umask 077
 tmp="$(mktemp -d "${RUNNER_TEMP:-/tmp}/elleng-offline-cas.XXXXXX")"
 mkdir -p "$tmp/socket"
