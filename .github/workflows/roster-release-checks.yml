@@ -6,15 +6,14 @@ on:
   workflow_dispatch:
 jobs:
   roster-contracts:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, macOS]
     permissions:
       contents: read
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - name: Check Node runtime
+        run: node --version
       - name: Verify public roster contract
         run: node tests/public-roster-contract.test.cjs
       - name: Verify directory and draft contract
