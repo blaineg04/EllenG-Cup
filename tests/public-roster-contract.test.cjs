@@ -10,7 +10,7 @@ assert.doesNotMatch(source, /auth\.admin\.listUsers|updateUserById|deleteUser/, 
 console.log('Authenticated public roster source contract passed');
 
 const html = fs.readFileSync('scoring.html', 'utf8');
-assert.match(source, /\/\^Bearer\\s\+\\S\+\$\/i/, 'bearer token syntax must use real whitespace classes');
+assert.ok(source.includes(String.raw`/^Bearer\s+\S+$/i`), 'bearer token syntax must use real whitespace classes');
 assert.match(html, /async function loadPublicRoster\(\)/, 'roster loader exists');
 assert.match(html, /loadPublicRoster\(\),/, 'roster loads on app startup');
 assert.match(html, /const inactiveAccounts=publicRoster\.filter\(a=>!a\.participating/, 'nonparticipants shown without relying on null indices');
