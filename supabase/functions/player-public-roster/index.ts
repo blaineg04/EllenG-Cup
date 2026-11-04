@@ -32,7 +32,7 @@ Deno.serve(async (request) => {
     if (accountsError) throw new Error('Roster unavailable');
     const golfers = Array.isArray(draft.state?.golfers) ? draft.state.golfers : [];
     const players = (accounts || []).map((account) => {
-      const index = Number(account.golfer_index);
+      const index = account.golfer_index == null ? NaN : Number(account.golfer_index);
       const golfer = Number.isInteger(index) && index >= 0 ? golfers[index] : null;
       const displayName = String(golfer?.name || account.username || '').trim();
       return { displayName, participating: !!golfer?.name && golfer.participating !== false, golferIndex: golfer?.name ? index : null };
