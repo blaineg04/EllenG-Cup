@@ -3779,7 +3779,7 @@ window.EllenGResetRequests?.init(db);
 globalThis.EllenGHealth?.attach(db);
 connection("✓ App connected — live scoring ready.",true);
 const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
-let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, draftUpdatedAt=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", mustChangePassword=false, hole=1;
+let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], publicRoster=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, draftUpdatedAt=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", mustChangePassword=false, hole=1;
 let scoreSaveBusy=false, lastSuccessfulSyncAt=null;
 let tournamentArchives=[], trashReactions=[];
 let rsvps=[], groupAssignments=[], lastAlertLeader=null, lastAlertGatorComplete=false, lastAlertCargo=null;
@@ -4637,13 +4637,13 @@ function renderPlayersDirectory(){
  const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>({...(g||{}),index:i,name:(g?.name||"").trim()})).filter(g=>g.name);
  // Show preserved nonparticipant accounts to commissioner only; never add to draft.
  const activeIndices=new Set(golfers.map(g=>g.index));
- const inactiveAccounts=isCommissioner?(playerAccounts||[]).filter(a=>Number.isInteger(Number(a.golfer_index))&&!activeIndices.has(Number(a.golfer_index))&&String(a.username||"").trim()):[];
+ const inactiveAccounts=publicRoster.filter(a=>a.golferIndex==null&&!golfers.some(g=>g.name.toLowerCase()===a.displayName.toLowerCase()));
  const q=($("playerDirectorySearch")?.value||"").trim().toLowerCase();
  const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q));
  const rowHtml=g=>{const band=playerBandLabel(g);const bandChip=band==="—"?"":`<span class="player-roster-band" title="Handicap band ${esc(band)}">${esc(band)}</span>`;return `<div class="player-row-public player-roster-only" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}<div class="player-team-inline">${esc(g.teamName)}</div></div>${bandChip}<div class="player-open-arrow">›</div></div>`};
- if(!rows.length&&!inactiveAccounts.some(a=>!q||String(a.username).toLowerCase().includes(q))){root.innerHTML='<div class="note">No matching players found.</div>';return}
+ if(!rows.length&&!inactiveAccounts.some(a=>!q||String(a.displayName).toLowerCase().includes(q))){root.innerHTML='<div class="note">No matching players found.</div>';return}
  const sorted=rows.sort((a,b)=>{const ap=a.name.trim().split(/\s+/),bp=b.name.trim().split(/\s+/);return ap.at(-1).localeCompare(bp.at(-1),undefined,{sensitivity:"base"})||ap.slice(0,-1).join(" ").localeCompare(bp.slice(0,-1).join(" "),undefined,{sensitivity:"base"})||a.index-b.index;});
- root.innerHTML=`<div class="player-directory-flat">${[...sorted.map(g=>({name:g.name,html:rowHtml(g)})),...inactiveAccounts.filter(a=>!q||String(a.username).toLowerCase().includes(q)).map(a=>({name:String(a.username),html:`<div class="player-row-public player-roster-only">${publicPlayerAvatar({name:a.username})}<div class="player-name-public">${esc(a.username)}<div class="player-team-inline">Not in this tournament · Account preserved</div></div></div>`}))].sort((a,b)=>{const ap=a.name.trim().split(/\s+/),bp=b.name.trim().split(/\s+/);return ap.at(-1).localeCompare(bp.at(-1),undefined,{sensitivity:"base"})||ap.slice(0,-1).join(" ").localeCompare(bp.slice(0,-1).join(" "),undefined,{sensitivity:"base"});}).map(r=>r.html).join("")}</div>`;
+ root.innerHTML=`<div class="player-directory-flat">${[...sorted.map(g=>({name:g.name,html:rowHtml(g)})),...inactiveAccounts.filter(a=>!q||String(a.displayName).toLowerCase().includes(q)).map(a=>({name:String(a.displayName),html:`<div class="player-row-public player-roster-only">${publicPlayerAvatar({name:a.displayName})}<div class="player-name-public">${esc(a.displayName)}<div class="player-team-inline">Not in this tournament · Account preserved</div></div></div>`}))].sort((a,b)=>{const ap=a.name.trim().split(/\s+/),bp=b.name.trim().split(/\s+/);return ap.at(-1).localeCompare(bp.at(-1),undefined,{sensitivity:"base"})||ap.slice(0,-1).join(" ").localeCompare(bp.slice(0,-1).join(" "),undefined,{sensitivity:"base"});}).map(r=>r.html).join("")}</div>`;
 }
 
 function renderRankingsDirectory(){
@@ -4877,6 +4877,14 @@ async function saveScore(teamIndex,val){
    });if(error)throw error;
    await loadScores();el.textContent="Saved.";renderAll();endScoreSave(true);
  }catch(e){globalThis.EllenGHealth?.report("score_save_failed");el.textContent=e?.message||"Unable to save score.";endScoreSave(false)}
+}
+async function loadPublicRoster(){
+ if(!user){publicRoster=[];return}
+ try{
+  const {data,error}=await db.functions.invoke("player-public-roster",{body:{draft_id:DRAFT_ID}});
+  if(error||data?.error)throw error||new Error(data.error);
+  publicRoster=Array.isArray(data?.players)?data.players.filter(p=>typeof p.displayName==="string"&&p.displayName.trim()):[];
+ }catch(e){publicRoster=[];console.warn("Public roster unavailable",e)}
 }
 async function loadBase(){
  const tournamentSource="elleng_tournaments";
