@@ -3613,7 +3613,6 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 </div>
 
 <div id="adminPlayers" class="card admin-card">
-  <div id="registeredAccountSummary" class="note" style="margin:12px 0"></div>
   <div class="admin-section-title"><span class="step">4</span><div><h2>Players & Assignments</h2><div class="section-sub">Edit players and teams. Player logins are created automatically using first initial + last name.</div></div></div>
   <div class="note" style="margin:12px 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb"><strong>Automatic player accounts:</strong> Username = first initial + last name. Duplicate usernames get 2, 3, etc. The temporary password is <strong>golf01</strong>. On first sign-in, each player must choose a new password.<div class="row" style="margin-top:10px"><button id="createMissingLogins" class="secondary" type="button">Create Missing Player Logins</button></div><div id="createMissingLoginsMsg" class="status" style="margin-top:7px"></div></div>
   <div style="margin:14px 0;padding:12px;border:2px solid var(--gold);border-radius:12px;background:#fffaf0">
@@ -3623,6 +3622,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   <div class="section-toolbar"><button id="savePlayers" class="primary save-wide">Save Player Changes</button></div>
   <div class="player-admin-row" style="font-size:12px;font-weight:800;color:var(--muted);margin-top:10px"><div>PLAYER</div><div>BAND</div><div>HCP</div><div class="player-team">TEAM</div><div></div></div>
   <div id="playerEditor"></div>
+  <div id="registeredAccountSummary" style="margin:18px 0 0;border-top:2px solid var(--line);padding-top:14px"></div>
   <div class="note" style="margin-top:8px">Photos stay with the golfer profile and carry forward with the roster unless you change or remove the URL.</div><div id="playerEditMsg" class="status" style="margin-top:9px"></div>
 </div>
 
@@ -5131,7 +5131,7 @@ function renderRegisteredAccountSummary(){
    const i=a.golfer_index==null?NaN:Number(a.golfer_index);
    return !Number.isInteger(i)||i<0||!golfers[i]?.name;
  }).sort((a,b)=>String(a.username||"").localeCompare(String(b.username||"")));
- root.innerHTML='<strong>Registered golfers not playing this tournament ('+inactive.length+')</strong>'+
+ root.innerHTML='<h3 style="margin:0 0 8px">Registered golfers · Not playing ('+inactive.length+')</h3>'+
    '<div class="note">These accounts remain active and visible to golfers, but are excluded from the current draft and scoring. The commissioner can reset their passwords here.</div>'+
    (inactive.length?inactive.map(a=>{
      const i=Number(a.golfer_index);
