@@ -3613,6 +3613,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 </div>
 
 <div id="adminPlayers" class="card admin-card">
+  <div id="registeredAccountSummary" class="note" style="margin:12px 0"></div>
   <div class="admin-section-title"><span class="step">4</span><div><h2>Players & Assignments</h2><div class="section-sub">Edit players and teams. Player logins are created automatically using first initial + last name.</div></div></div>
   <div class="note" style="margin:12px 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb"><strong>Automatic player accounts:</strong> Username = first initial + last name. Duplicate usernames get 2, 3, etc. The temporary password is <strong>golf01</strong>. On first sign-in, each player must choose a new password.<div class="row" style="margin-top:10px"><button id="createMissingLogins" class="secondary" type="button">Create Missing Player Logins</button></div><div id="createMissingLoginsMsg" class="status" style="margin-top:7px"></div></div>
   <div style="margin:14px 0;padding:12px;border:2px solid var(--gold);border-radius:12px;background:#fffaf0">
@@ -5123,8 +5124,20 @@ async function uploadExistingPlayerPhoto(i){
  }catch(e){if(msg)msg.textContent=e?.message||"Unable to upload photo."}
  finally{if(btn)btn.disabled=false}
 }
+function renderRegisteredAccountSummary(){
+ const root=$("registeredAccountSummary");if(!root)return;
+ const golfers=Array.isArray(draftState?.golfers)?draftState.golfers:[];
+ const inactive=playerAccounts.filter(a=>{
+   const i=Number(a.golfer_index);
+   return !Number.isInteger(i)||i<0||!golfers[i]?.name;
+ }).sort((a,b)=>String(a.username||"").localeCompare(String(b.username||"")));
+ root.innerHTML='<strong>Registered accounts not in this tournament ('+inactive.length+')</strong>'+
+   '<div class="note">These accounts remain active and visible in Players. They are not eligible for the current draft or scoring. Account names are not yet linked to full golfer profiles.</div>'+
+   (inactive.length?inactive.map(a=>'<div class="player-admin-row"><span>'+esc(String(a.username||"Registered golfer"))+'</span><span>Not playing</span></div>').join(""):'<div class="note">All registered accounts have a tournament golfer record.</div>');
+}
 function renderPlayerEditor(){
  ensureDraftShape();
+ renderRegisteredAccountSummary();
  $("playerEditor").innerHTML=draftState.golfers.map((g,i)=>{
    const isRanked=g?.self_ranked===true;
    const rawHcp=isRanked?String(g.hcp??"").trim():"";
