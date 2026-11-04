@@ -5135,10 +5135,25 @@ function renderRegisteredAccountSummary(){
    '<div class="note">These accounts remain active and visible to golfers, but are excluded from the current draft and scoring. The commissioner can reset their passwords here.</div>'+
    (inactive.length?inactive.map(a=>{
      const i=Number(a.golfer_index);
-     const label=publicRoster.find(p=>p.golferIndex===i)?.displayName||a.username||"Registered golfer";
-     return '<div class="registered-reset-card" style="border-top:1px solid var(--line);padding:12px 0;display:grid;gap:9px;min-width:0"><div style="font-weight:600;overflow-wrap:anywhere">'+esc(label)+(label.toLowerCase()===String(a.username||"").toLowerCase()?'':' <small style="font-weight:400">('+esc(a.username||"")+')</small>')+'</div><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:end"><label style="flex:1 1 170px;min-width:0"><small>New temporary password</small><input style="width:100%;box-sizing:border-box" type="password" minlength="6" autocomplete="new-password" data-inactive-password="'+i+'" placeholder="6+ characters"></label><button style="flex:0 0 auto;min-height:44px;white-space:nowrap" type="button" class="secondary" data-reset-inactive="'+i+'">Reset Password</button></div><div class="status" aria-live="polite" data-reset-inactive-msg="'+i+'"></div></div>';
+     const label=String(a.display_name||publicRoster.find(p=>p.accountIndex===i)?.displayName||a.username||"Registered golfer");
+     return '<div class="registered-reset-card" style="border-top:1px solid var(--line);padding:12px 0;display:grid;gap:9px;min-width:0"><div style="font-weight:600;overflow-wrap:anywhere">'+esc(label)+' <small style="font-weight:400">('+esc(a.username||"")+')</small></div><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:end"><label style="flex:1 1 170px;min-width:0"><small>Golfer full name</small><input style="width:100%;box-sizing:border-box" data-inactive-name="'+i+'" value="'+esc(a.display_name||"")+'" placeholder="First and last name"></label><button style="flex:0 0 auto;min-height:44px" type="button" class="secondary" data-save-inactive-name="'+i+'">Save Name</button></div><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:end"><label style="flex:1 1 170px;min-width:0"><small>New temporary password</small><input style="width:100%;box-sizing:border-box" type="password" minlength="6" autocomplete="new-password" data-inactive-password="'+i+'" placeholder="6+ characters"></label><button style="flex:0 0 auto;min-height:44px;white-space:nowrap" type="button" class="secondary" data-reset-inactive="'+i+'">Reset Password</button></div><div class="status" aria-live="polite" data-reset-inactive-msg="'+i+'"></div></div>';
    }).join(""):'<div class="note">All registered accounts have a tournament golfer record.</div>');
+ root.querySelectorAll("[data-save-inactive-name]").forEach(button=>button.addEventListener("click",()=>saveInactiveName(Number(button.dataset.saveInactiveName))));
  root.querySelectorAll("[data-reset-inactive]").forEach(button=>button.addEventListener("click",()=>resetInactivePassword(Number(button.dataset.resetInactive))));
+}
+async function saveInactiveName(i){
+ if(!isCommissioner)return;
+ const name=String(document.querySelector('[data-inactive-name="'+i+'"]')?.value||"").trim();
+ const msg=document.querySelector('[data-reset-inactive-msg="'+i+'"]');
+ if(name.length<2||name.length>100){if(msg)msg.textContent="Enter a full name (2–100 characters).";return;}
+ if(msg)msg.textContent="Saving name…";
+ try{
+   const {data,error}=await db.functions.invoke("player-admin",{body:{action:"update_registered_name",draft_id:DRAFT_ID,golfer_index:i,display_name:name}});
+   if(error||data?.error)throw error||new Error(data.error);
+   await Promise.all([loadPublicRoster(),(async()=>{const {data:list,error:listError}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});if(!listError&&Array.isArray(list?.accounts))playerAccounts=list.accounts;})()]);
+   renderPlayersDirectory();renderRegisteredAccountSummary();
+   const fresh=document.querySelector('[data-reset-inactive-msg="'+i+'"]');if(fresh)fresh.textContent="✓ Name saved";
+ }catch(e){if(msg)msg.textContent=e?.message||"Name update failed."}
 }
 async function resetInactivePassword(i){
  if(!isCommissioner)return;
