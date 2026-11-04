@@ -13,6 +13,7 @@
 
 - [x] Preserve all registered accounts; do not reset passwords or reassign accounts.
 - [x] MacBook scoring and responsive isolated tests passed on commit `dc4102c` (164 contracts; 246 browser views, zero issues). Synthetic ordinary-golfer browser checks verify all **13** account-only nonparticipants are visible and correctly labeled across seven widths, and searching for a specific reserve returns one matching account. The source contract also verifies 23 participants plus 13 preserved nonparticipants yield a draft count of 23. Database acceptance and November 20 score integrity passed. This is **not** a live authenticated 36-account verification.
+- [x] MacBook roster-outage regression passed on `b6a7a50` (164 tests, 253 browser views, zero layout/navigation issues); all seven widths show the outage notice while retaining the tournament golfer directory. Disposable PostgreSQL acceptance and November 20 scoring integrity also passed. This remains isolated fixture verification, not a live authenticated account check.
 - [x] User confirmed all 23 currently participating golfers are playing November 20; preserve all 23.
 - [ ] Verify the 13 account-only users' correct full-name mappings with an authorized source before displaying profile links.
 - [ ] Verify all 36 registered golfers appear in the Players directory for a noncommissioner account, including account-only entries.
