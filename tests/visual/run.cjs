@@ -97,8 +97,15 @@ async function verifyNavigation(page, width, capture, prefix = '') {
     }).map(e=>e.textContent.trim());
   });
   if(unreadable.length)throw new Error('More menu text lacks contrast: '+unreadable.join(', '));
-  const menuNeedsScroll = await page.locator('.more-sheet').evaluate(e=>e.scrollHeight>e.clientHeight+2);
-  if(menuNeedsScroll)throw new Error('More menu hides destinations below its scroll area');
+  const menuReachability = await page.locator('.more-sheet').evaluate(e=>{
+    const needsScroll=e.scrollHeight>e.clientHeight+2;
+    if(!needsScroll)return {needsScroll,reachable:true};
+    e.scrollTop=e.scrollHeight;
+    const buttons=[...e.querySelectorAll('.more-menu-btn')].filter(b=>getComputedStyle(b).display!=='none'&&b.getClientRects().length);
+    const last=buttons.at(-1),sheet=e.getBoundingClientRect(),bottom=last?.getBoundingClientRect().bottom;
+    return {needsScroll,reachable:!!last&&bottom<=sheet.bottom+2&&bottom>=sheet.top};
+  });
+  if(!menuReachability.reachable)throw new Error('More menu destinations cannot be reached by scrolling');
   for(const selector of ['#moreAdminBtn','#moreScoringBtn']){
     if(await page.locator(selector).isVisible() !== (prefix !== 'player-'))throw new Error('Incorrect role visibility: '+selector);
   }
@@ -166,7 +173,7 @@ async function main() {
         await context.addInitScript(()=>{if(new URL(location.href).searchParams.has('visualSignedOut'))sessionStorage.removeItem('elleng_internal_menu');else sessionStorage.setItem('elleng_internal_menu','1');});
         await context.route('**/*',async route=>{
           const url=new URL(route.request().url());
-          if(url.hostname==='cdn.jsdelivr.net'&&url.pathname.includes('supabase-js')){const current=new URL(route.request().frame().url());return route.fulfill({contentType:'text/javascript',body:`(${installFixture.toString()})(${JSON.stringify({teamCount:9,role:['player','signedout'].includes(current.searchParams.get('visualRole'))?current.searchParams.get('visualRole'):'commissioner',signOutFailure:current.searchParams.get('visualSignOutFailure')==='1',partialDraft:['/draft.html','/captain.html','/admin.html'].includes(current.pathname)})});`});}
+          if(url.hostname==='cdn.jsdelivr.net'&&url.pathname.includes('supabase-js')){const current=new URL(route.request().frame().url());return route.fulfill({contentType:'text/javascript',body:`(${installFixture.toString()})(${JSON.stringify({teamCount:9,role:current.searchParams.has('visualSignedOut')?'signedout':(['player','signedout'].includes(current.searchParams.get('visualRole'))?current.searchParams.get('visualRole'):'commissioner'),signOutFailure:current.searchParams.get('visualSignOutFailure')==='1',rosterFailure:current.searchParams.get('visualRosterFailure')==='1',partialDraft:['/draft.html','/captain.html','/admin.html'].includes(current.pathname)})});`});}
           if(url.origin===host.origin)return route.continue();
           return route.abort();
         });
@@ -239,7 +246,45 @@ async function main() {
           await page.locator('#appHub:not(.hidden)').waitFor();await page.locator('#hubScoring').click();
           await page.locator('#appHub').waitFor({state:'hidden'});await capture('player-home');
           await verifyNavigation(page,width,capture,'player-');
-          await page.locator(width<700?'[data-mobile-view="leaderboard"]':'.tab[data-view="leaderboard"]').click();
+          await page.locator(width<700?'[data-mobile-view="players"]':'.tab[data-view="players"]').click();
+          await page.locator('#playersView:not(.hidden)').waitFor();
+          const reserveRows=page.locator('#playerDirectory .player-row-public').filter({hasText:'Registered Reserve Golfer'});
+          const reserveRow=reserveRows.filter({hasText:'Not in this tournament · Account preserved'}).first();
+          await reserveRow.waitFor({state:'visible'});
+          const reserveCount=await reserveRows.count();
+          if(reserveCount!==13)throw new Error('Expected all 13 registered reserve rows; found '+reserveCount);
+          const reserveText=await reserveRow.innerText();
+          if(!reserveText.includes('Not in this tournament · Account preserved'))throw new Error('Reserve golfer status missing: '+reserveText);
+          if(await reserveRow.getAttribute('data-player-profile')!==null||await reserveRow.getAttribute('role')==='button')throw new Error('Unlinked reserve account must not open a potentially incorrect player profile');
+          const directorySearch=page.locator('#playerDirectorySearch');
+          await directorySearch.fill('Registered Reserve Golfer 13');
+          await reserveRow.waitFor({state:'visible'});
+          if(await page.locator('#playerDirectory .player-row-public').count()!==1)throw new Error('Reserve golfer search must return only the matching account');
+          await directorySearch.fill('');
+          await reserveRow.waitFor({state:'visible'});
+          await capture('player-directory-reserve');
+          await page.goto(host.origin+'/scoring.html?visualRole=player&visualRosterFailure=1#hub');
+          await page.locator('#appHub:not(.hidden)').waitFor();
+          await page.locator('#hubScoring').click();
+          await page.locator('#appHub').waitFor({state:'hidden'});
+          const outagePlayersTab=page.locator(width<700?'[data-mobile-view="players"]':'.tab[data-view="players"]');
+          await outagePlayersTab.waitFor({state:'visible'});
+          await outagePlayersTab.click();
+          // Mobile menu transitions can briefly override a tab selection on slow runners.
+          // Retry the navigation only if the intended view did not become visible.
+          if(!(await page.locator('#playersView:not(.hidden)').isVisible())){
+            await outagePlayersTab.click();
+          }
+          await page.locator('#playersView:not(.hidden)').waitFor({timeout:10000});
+          await page.locator('#playerDirectory [role="status"]').filter({hasText:'Registered account directory is temporarily unavailable'}).waitFor({state:'visible'});
+          if(await page.locator('#playerDirectory .player-row-public').count()!==36)throw new Error('Roster outage must preserve all 36 tournament golfers');
+          if(await page.locator('#playerDirectory .player-row-public').filter({hasText:'Registered Reserve Golfer'}).count()!==0)throw new Error('Roster outage must not invent reserve accounts');
+          await capture('player-directory-roster-unavailable');
+          // Stay in the same authenticated outage session: changing sessions here
+          // raced the mobile navigation initialization at intermediate widths.
+          const leaderboardTab=page.locator(width<700?'[data-mobile-view="leaderboard"]':'.tab[data-view="leaderboard"]');
+          await leaderboardTab.waitFor({state:'visible'});
+          await leaderboardTab.click();
           await page.locator('#leaderboardView:not(.hidden)').waitFor();await capture('player-my-score');
           for(const role of ['commissioner','player'])for(const target of ['hub','content']){
             await page.goto(host.origin+'/scoring.html?visualRole='+role+'&visualSignOutFailure=1&visualSignOutTarget='+target+'#hub');

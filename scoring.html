@@ -3622,6 +3622,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   <div class="section-toolbar"><button id="savePlayers" class="primary save-wide">Save Player Changes</button></div>
   <div class="player-admin-row" style="font-size:12px;font-weight:800;color:var(--muted);margin-top:10px"><div>PLAYER</div><div>BAND</div><div>HCP</div><div class="player-team">TEAM</div><div></div></div>
   <div id="playerEditor"></div>
+  <div id="registeredAccountSummary" style="margin:18px 0 0;border-top:2px solid var(--line);padding-top:14px"></div>
   <div class="note" style="margin-top:8px">Photos stay with the golfer profile and carry forward with the roster unless you change or remove the URL.</div><div id="playerEditMsg" class="status" style="margin-top:9px"></div>
 </div>
 
@@ -3779,7 +3780,7 @@ window.EllenGResetRequests?.init(db);
 globalThis.EllenGHealth?.attach(db);
 connection("✓ App connected — live scoring ready.",true);
 const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
-let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, draftUpdatedAt=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", mustChangePassword=false, hole=1;
+let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], publicRoster=[], publicRosterUnavailable=false, teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, draftUpdatedAt=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", mustChangePassword=false, hole=1;
 let scoreSaveBusy=false, lastSuccessfulSyncAt=null;
 let tournamentArchives=[], trashReactions=[];
 let rsvps=[], groupAssignments=[], lastAlertLeader=null, lastAlertGatorComplete=false, lastAlertCargo=null;
@@ -3941,6 +3942,8 @@ function applySelectedCourseToPars(){
 }
 
 function activeTeamCount(){
+ // The November shamble is always two teams, even if legacy tournament settings retain nine.
+ if(draftState?.playFormat==="shamble_points")return 2;
  const n=Number(tournament?.team_count||6);
  return Math.max(2,Math.min(9,Number.isInteger(n)?n:6));
 }
@@ -3963,8 +3966,8 @@ function relativeGolf(score,par){
  return {rel,label};
 }
 
-function pointsHoleCards(showEmpty=false,onlyHole=null){
- const x=shambleSummary();return x.holes.map((values,i)=>({values,h:i+1})).filter(({values,h})=>(onlyHole==null||h===onlyHole)&&(showEmpty||values.some(v=>v.entered))).map(({values,h})=>`<div class="card" style="margin:8px 0"><strong>Hole ${h} • Par ${parForHole(h)}</strong>${values.map((v,ti)=>`<div class="row between" style="padding:7px 0"><span>${esc(teams[ti]?.name||"Team")}</span><strong>${v.points} pts</strong><span>${v.entered}/${v.expected} golfers ${v.complete?"✓":"• pending"}</span></div>`).join("")}</div>`).join("")||'<div class="note">No individual scores entered yet.</div>';
+function pointsHoleCards(showEmpty=false,onlyHole=null,maxTeams=null){
+ const x=shambleSummary();return x.holes.map((values,i)=>({values,h:i+1})).filter(({values,h})=>(onlyHole==null||h===onlyHole)&&(showEmpty||values.some(v=>v.entered))).map(({values,h})=>`<div class="card" style="margin:8px 0"><strong>Hole ${h} • Par ${parForHole(h)}</strong>${values.slice(0,maxTeams==null?values.length:maxTeams).map((v,ti)=>`<div class="row between" style="padding:7px 0"><span>${esc(teams[ti]?.name||`Team ${ti+1}`)}</span><strong>${v.points} pts</strong><span>${v.expected===0?"Awaiting draft":`${v.entered}/${v.expected} golfers ${v.complete?"✓":"• pending"}`}</span></div>`).join("")}</div>`).join("")||'<div class="note">No individual scores entered yet.</div>';
 }
 function renderPointsScorecard(){
  const sel=$("digitalScorecardTeam"),root=$("digitalScorecard");if(!sel||!root)return;const prior=sel.value;sel.innerHTML='<option value="">Select a team</option>'+teams.map((t,i)=>`<option value="${i}">${esc(t.name)}</option>`).join("");sel.value=prior;
@@ -4614,6 +4617,7 @@ function playerHandicapLabel(g){
 }
 function golferTeamIndex(golferIndex){
  const g=draftState?.golfers?.[golferIndex];
+ if(!g||g.participating===false)return null;
  if(g&&g.team!==null&&g.team!==undefined&&g.team!==""&&Number.isInteger(Number(g.team)))return Number(g.team);
  const ts=Array.isArray(draftState?.teams)?draftState.teams:[];
  const found=ts.findIndex(t=>(Array.isArray(t?.roster)?t.roster:[]).some(r=>Number(typeof r==="object"?r?.golferIndex:r)===Number(golferIndex)));
@@ -4631,13 +4635,16 @@ function publicPlayerAvatar(g,cls="player-photo-thumb"){
 }
 function renderPlayersDirectory(){
  const root=$("playerDirectory"); if(!root||!draftState)return;
+ const rosterWarning=publicRosterUnavailable?'<div class="note" role="status">Registered account directory is temporarily unavailable. Tournament golfers are still shown below.</div>':"";
  const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>({...(g||{}),index:i,name:(g?.name||"").trim()})).filter(g=>g.name);
+ // Keep all named golfers visible, including those excluded from this tournament.
+ const inactiveAccounts=publicRoster.filter(a=>!a.participating&&!golfers.some(g=>Number.isInteger(a.golferIndex)&&g.index===a.golferIndex));
  const q=($("playerDirectorySearch")?.value||"").trim().toLowerCase();
- const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q));
+ const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:g.participating===false?"Not in this tournament":ti==null?"Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q));
  const rowHtml=g=>{const band=playerBandLabel(g);const bandChip=band==="—"?"":`<span class="player-roster-band" title="Handicap band ${esc(band)}">${esc(band)}</span>`;return `<div class="player-row-public player-roster-only" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}<div class="player-team-inline">${esc(g.teamName)}</div></div>${bandChip}<div class="player-open-arrow">›</div></div>`};
- if(!rows.length){root.innerHTML='<div class="note">No matching players found.</div>';return}
+ if(!rows.length&&!inactiveAccounts.some(a=>!q||String(a.displayName).toLowerCase().includes(q))){root.innerHTML=rosterWarning+'<div class="note">No matching players found.</div>';return}
  const sorted=rows.sort((a,b)=>{const ap=a.name.trim().split(/\s+/),bp=b.name.trim().split(/\s+/);return ap.at(-1).localeCompare(bp.at(-1),undefined,{sensitivity:"base"})||ap.slice(0,-1).join(" ").localeCompare(bp.slice(0,-1).join(" "),undefined,{sensitivity:"base"})||a.index-b.index;});
- root.innerHTML=`<div class="player-directory-flat">${sorted.map(rowHtml).join("")}</div>`;
+ root.innerHTML=rosterWarning+`<div class="player-directory-flat">${[...sorted.map(g=>({name:g.name,html:rowHtml(g)})),...inactiveAccounts.filter(a=>!q||String(a.displayName).toLowerCase().includes(q)).map(a=>({name:String(a.displayName),html:`<div class="player-row-public player-roster-only">${publicPlayerAvatar({name:a.displayName,photo_url:a.photoUrl})}<div class="player-name-public">${esc(a.displayName)}<div class="player-team-inline">Not in this tournament · Account preserved</div></div></div>`}))].sort((a,b)=>{const ap=a.name.trim().split(/\s+/),bp=b.name.trim().split(/\s+/);return ap.at(-1).localeCompare(bp.at(-1),undefined,{sensitivity:"base"})||ap.slice(0,-1).join(" ").localeCompare(bp.slice(0,-1).join(" "),undefined,{sensitivity:"base"});}).map(r=>r.html).join("")}</div>`;
 }
 
 function renderRankingsDirectory(){
@@ -4651,7 +4658,7 @@ function renderRankingsDirectory(){
 
 function renderProgress(){
  $("progressView").classList.toggle("shamble-progress",typeof isShamblePoints==="function"&&isShamblePoints());
- if(typeof isShamblePoints==="function"&&isShamblePoints()){const x=shambleSummary();$("progressSummary").innerHTML=`<span class="badge">${x.completeHoles}/18 holes complete</span>`;$("progressGrid").innerHTML=pointsHoleCards(true);return}
+ if(typeof isShamblePoints==="function"&&isShamblePoints()){const x=shambleSummary();$("progressSummary").innerHTML=`<span class="badge">${(x.holes||[]).filter(values=>values.slice(0,2).length===2&&values.slice(0,2).every(v=>v.expected>0&&v.complete)).length}/18 holes complete</span>`;$("progressGrid").innerHTML=pointsHoleCards(true, null, 2);return}
  let complete=0;
  const cards=Array.from({length:18},(_,i)=>{
   const h=i+1, par=parForHole(h);
@@ -4872,6 +4879,16 @@ async function saveScore(teamIndex,val){
    await loadScores();el.textContent="Saved.";renderAll();endScoreSave(true);
  }catch(e){globalThis.EllenGHealth?.report("score_save_failed");el.textContent=e?.message||"Unable to save score.";endScoreSave(false)}
 }
+async function loadPublicRoster(){
+ if(!user){publicRoster=[];publicRosterUnavailable=false;return}
+ try{
+  const {data,error}=await db.functions.invoke("player-public-roster",{body:{draft_id:DRAFT_ID}});
+  if(error||data?.error)throw error||new Error(data.error);
+  if(!Array.isArray(data?.players))throw new Error("Invalid public roster response");
+  publicRoster=data.players.filter(p=>typeof p.displayName==="string"&&p.displayName.trim());
+  publicRosterUnavailable=false;
+ }catch(e){publicRoster=[];publicRosterUnavailable=true;console.warn("Public roster unavailable",e)}
+}
 async function loadBase(){
  const tournamentSource="elleng_tournaments";
  const [{data:t,error:te},{data:d,error:de}]=await Promise.all([
@@ -4922,7 +4939,7 @@ async function loadScores(){
  scores=data||[];playerScores=nextPlayerScores;pairScores=nextPairScores;
 }
 function teamOptions(selected=""){return '<option value="">Available / Unassigned</option>'+teams.map((t,i)=>`<option value="${i}" ${String(selected)===String(i)?"selected":""}>${esc(t.name)}</option>`).join("")}
-function draftGolferCount(){if(typeof isShamblePoints==="function"&&isShamblePoints())return Math.max(2,Number(draftState?.golferCount||draftState?.golfers?.length||2));let n=Number(draftState?.golferCount||draftState?.golfers?.length||24);return Math.max(8,Math.min(36,Number.isInteger(n)?n:24))}
+function draftGolferCount(){if(typeof isShamblePoints==="function"&&isShamblePoints()){const active=(draftState?.golfers||[]).filter(g=>String(g?.name||"").trim()&&g.participating!==false).length;return Math.max(2,active||2)};let n=Number(draftState?.golferCount||draftState?.golfers?.length||24);return Math.max(8,Math.min(36,Number.isInteger(n)?n:24))}
 function draftTeamSize(){let n=Number(draftState?.teamSize||4);return [2,3,4].includes(n)?n:4}
 function playFormat(){return ["split_pair","shamble_points"].includes(draftState?.playFormat)?draftState.playFormat:"standard"}
 function isShamblePoints(){return draftState?.playFormat==="shamble_points"}
@@ -4940,7 +4957,7 @@ function ensureDraftShape(){
 }
 function rebuildTeamRosters(){
  ensureDraftShape(); draftState.teams.forEach(t=>t.roster=[]);
- draftState.golfers.forEach((g,i)=>{let ti=(g.team==null||g.team==="")?null:Number(g.team);if(Number.isInteger(ti)&&ti>=0&&ti<draftState.teams.length){g.team=ti;draftState.teams[ti].roster.push(i)}else g.team=null});
+ draftState.golfers.forEach((g,i)=>{if(g.participating===false){g.team=null;return}let ti=(g.team==null||g.team==="")?null:Number(g.team);if(Number.isInteger(ti)&&ti>=0&&ti<draftState.teams.length){g.team=ti;draftState.teams[ti].roster.push(i)}else g.team=null});
 }
 
 const TEAM_DEFAULT_COLORS=["#d5a72c","#188754","#2f6fc0","#a7263d","#8750b5","#df6f2f","#248b8b","#6f7a85","#b48a17"];
@@ -5107,6 +5124,82 @@ async function uploadExistingPlayerPhoto(i){
  }catch(e){if(msg)msg.textContent=e?.message||"Unable to upload photo."}
  finally{if(btn)btn.disabled=false}
 }
+function renderRegisteredAccountSummary(){
+ const root=$("registeredAccountSummary");if(!root)return;
+ const golfers=Array.isArray(draftState?.golfers)?draftState.golfers:[];
+ const inactive=playerAccounts.filter(a=>{
+   const i=a.golfer_index==null?NaN:Number(a.golfer_index);
+   return !Number.isInteger(i)||i<0||!golfers[i]?.name;
+ }).sort((a,b)=>String(a.display_name||a.username||"").localeCompare(String(b.display_name||b.username||""),undefined,{sensitivity:"base"}));
+ root.innerHTML='<h3 style="margin:0 0 8px">Registered golfers · Not playing ('+inactive.length+')</h3>'+
+   '<div class="note">All registered golfers remain visible in the Players directory. These accounts are excluded from this tournament; names and passwords can be managed here without changing the draft or scores.</div>'+
+   (inactive.length?inactive.map(a=>{
+     const i=Number(a.golfer_index);
+     const label=String(a.display_name||publicRoster.find(p=>p.accountIndex===i)?.displayName||a.username||"Registered golfer");
+     return '<div class="registered-reset-card" style="border-top:1px solid var(--line);padding:14px 0;display:grid;gap:12px;min-width:0">'+
+       '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><strong style="overflow-wrap:anywhere">'+esc(label)+'</strong><span class="badge">Not in this tournament</span></div>'+
+       '<div class="player-admin-row" style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px"><label><small>Golfer full name</small><input style="width:100%;box-sizing:border-box" data-inactive-name="'+i+'" value="'+esc(a.display_name||"")+'" placeholder="First and last name"></label><button class="secondary" style="min-height:44px" type="button" data-save-inactive-name="'+i+'">Save Name</button></div>'+
+       '<div class="player-photo-tools"><label><small>Profile photo</small><input type="file" accept="image/*" data-inactive-photo-file="'+i+'"></label><button type="button" class="secondary" data-upload-inactive-photo="'+i+'">Upload Photo</button><div class="player-photo-preview">'+(a.photo_url?'<img src="'+esc(a.photo_url)+'" alt="'+esc(label)+'"><span>Current profile photo</span>':'<span>No photo yet — initials will be used.</span>')+'</div></div>'+
+       '<div class="player-login-row" style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px"><label><small>Player username</small><input type="text" value="'+esc(a.username||"")+'" readonly aria-label="Player username (unchanged)"></label><label><small>Reset password (optional)</small><input style="width:100%;box-sizing:border-box" type="password" minlength="6" autocomplete="new-password" data-inactive-password="'+i+'" placeholder="6+ characters"></label><button style="min-height:44px" type="button" class="primary" data-reset-inactive="'+i+'">Update / Reset</button><div class="player-login-status">✓ Registered account · Excluded from draft and scoring</div></div>'+
+       '<div class="status" aria-live="polite" data-reset-inactive-msg="'+i+'"></div></div>';
+   }).join(""):'<div class="note">All registered accounts have a tournament golfer record.</div>');
+ root.querySelectorAll("[data-upload-inactive-photo]").forEach(button=>button.addEventListener("click",()=>uploadInactivePhoto(Number(button.dataset.uploadInactivePhoto))));
+ root.querySelectorAll("[data-save-inactive-name]").forEach(button=>button.addEventListener("click",()=>saveInactiveName(Number(button.dataset.saveInactiveName))));
+ root.querySelectorAll("[data-reset-inactive]").forEach(button=>button.addEventListener("click",()=>resetInactivePassword(Number(button.dataset.resetInactive))));
+}
+async function uploadInactivePhoto(i){
+ if(!isCommissioner)return;
+ const account=playerAccounts.find(a=>Number(a.golfer_index)===i);
+ if(!account)return;
+ const input=document.querySelector('[data-inactive-photo-file="'+i+'"]');
+ const msg=document.querySelector('[data-reset-inactive-msg="'+i+'"]');
+ const btn=document.querySelector('[data-upload-inactive-photo="'+i+'"]');
+ const file=input?.files?.[0];
+ if(!file){if(msg)msg.textContent="Choose a photo first.";return}
+ if(btn)btn.disabled=true;if(msg)msg.textContent="Uploading photo…";
+ try{
+   const url=await uploadPlayerPhotoFile(file,i,account.display_name||account.username);
+   const {data,error}=await db.functions.invoke("player-admin",{body:{action:"update_registered_photo",draft_id:DRAFT_ID,golfer_index:i,photo_url:url}});
+   if(error||data?.error)throw error||new Error(data.error);
+   const {data:list,error:listError}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});
+   if(listError||!Array.isArray(list?.accounts))throw listError||new Error("Photo saved; refresh to view.");
+   playerAccounts=list.accounts;
+   await loadPublicRoster();renderPlayersDirectory();renderRegisteredAccountSummary();
+   const fresh=document.querySelector('[data-reset-inactive-msg="'+i+'"]');
+   if(fresh)fresh.textContent="✓ Profile photo saved.";
+ }catch(e){if(msg)msg.textContent=e?.message||"Photo upload failed."}
+ finally{if(btn)btn.disabled=false}
+}
+async function saveInactiveName(i){
+ if(!isCommissioner)return;
+ const name=String(document.querySelector('[data-inactive-name="'+i+'"]')?.value||"").trim();
+ const msg=document.querySelector('[data-reset-inactive-msg="'+i+'"]');
+ if(name.length<2||name.length>100){if(msg)msg.textContent="Enter a full name (2–100 characters).";return;}
+ if(msg)msg.textContent="Saving name…";
+ try{
+   const {data,error}=await db.functions.invoke("player-admin",{body:{action:"update_registered_name",draft_id:DRAFT_ID,golfer_index:i,display_name:name}});
+   if(error||data?.error)throw error||new Error(data.error);
+   await Promise.all([loadPublicRoster(),(async()=>{const {data:list,error:listError}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});if(!listError&&Array.isArray(list?.accounts))playerAccounts=list.accounts;})()]);
+   renderPlayersDirectory();renderRegisteredAccountSummary();
+   const fresh=document.querySelector('[data-reset-inactive-msg="'+i+'"]');if(fresh)fresh.textContent="✓ Name saved";
+ }catch(e){if(msg)msg.textContent=e?.message||"Name update failed."}
+}
+async function resetInactivePassword(i){
+ if(!isCommissioner)return;
+ const account=playerAccounts.find(a=>Number(a.golfer_index)===i);
+ if(!account?.user_id)return;
+ const password=document.querySelector('[data-inactive-password="'+i+'"]')?.value||"";
+ const msg=document.querySelector('[data-reset-inactive-msg="'+i+'"]');
+ if(password.length<6){if(msg)msg.textContent="Enter at least 6 characters.";return;}
+ if(!confirm("Reset password for "+account.username+"? They will need to change it when signing in."))return;
+ if(msg)msg.textContent="Resetting…";
+ try{
+   const {data,error}=await db.functions.invoke("player-admin",{body:{action:"reset_registered_password",draft_id:DRAFT_ID,golfer_index:i,password}});
+   if(error||data?.error)throw error||new Error(data.error);
+   const input=document.querySelector('[data-inactive-password="'+i+'"]');if(input)input.value="";
+   if(msg)msg.textContent="✓ Password reset. Temporary password required at next sign-in.";
+ }catch(e){if(msg)msg.textContent=e?.message||"Reset failed."}
+}
 function renderPlayerEditor(){
  ensureDraftShape();
  $("playerEditor").innerHTML=draftState.golfers.map((g,i)=>{
@@ -5120,6 +5213,7 @@ function renderPlayerEditor(){
    const preview=photo?`<div class="player-photo-preview"><img src="${esc(photo)}" alt="${esc(g.name||"Player")}"><span>Current profile photo</span></div>`:`<div class="player-photo-preview"><span>No photo yet — initials will be used on the profile card.</span></div>`;
    return `<div data-player-block="${i}"><div class="player-admin-row" data-player-row="${i}"><div class="player-name-edit"><input data-player-name="${i}" value="${esc(g.name||"")}" placeholder="Golfer name"><div class="player-name-msg" data-player-name-msg="${i}"></div></div><select data-player-band="${i}"><option value="" ${shownBand===""?"selected":""}>Unranked</option>${["A","B","C","D"].map(b=>`<option value="${b}" ${shownBand===b?"selected":""}>${b}</option>`).join("")}</select><input data-player-hcp="${i}" type="number" min="0" max="54" step="0.1" inputmode="decimal" value="${esc(rawHcp)}" placeholder="HCP" oninput="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onchange="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onblur="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)"><select class="player-team" data-player-team="${i}">${teamOptions(g.team==null?"":g.team)}</select><div class="row player-actions" style="gap:5px;flex-wrap:nowrap"><button class="secondary" style="padding:8px 9px;font-size:11px" data-save-player-name="${i}" type="button">Save Name</button><button class="danger" style="padding:8px 9px;font-size:11px" data-remove-player="${i}" type="button">Remove</button></div></div><div class="player-photo-tools"><label><small>Profile photo</small><input data-player-photo-file="${i}" type="file" accept="image/*"></label><button class="secondary" type="button" data-upload-player-photo="${i}">Upload Photo</button><label style="grid-column:1/-1"><small>Photo URL (optional backup)</small><input class="player-photo-input" data-idx="${i}" value="${esc(photo)}" placeholder="Optional image URL"></label><div style="grid-column:1/-1" data-player-photo-msg="${i}" class="status"></div><div style="grid-column:1/-1">${preview}</div></div><div class="player-login-row"><label><small>Player username</small><input data-player-login-username="${i}" type="text" autocapitalize="none" autocomplete="off" value="${esc(loginUsername)}" placeholder="Example: ${esc(String(g.name||"player").toLowerCase().replace(/[^a-z0-9]+/g,""))}"></label><label><small>${linked?"Reset password (optional)":"Temporary password"}</small><input data-player-login-password="${i}" type="password" minlength="6" placeholder="${linked?"Enter only to reset":"Automatic: golf01"}"></label><button class="primary" type="button" data-save-player-login="${i}">${linked?"Update / Reset":"Create Login"}</button><button class="secondary" type="button" data-unlink-player-login="${i}" ${linked||loginUsername?"":"disabled"}>Unlink</button><div class="player-login-status" data-player-login-msg="${i}">${linked?`✓ Username: ${esc(loginUsername||"linked account")}${acct?.must_change_password?" • temporary password still active":""}`:"Login will be created automatically."}</div></div></div>`;
  }).join("")||'<div class="note" style="padding:12px 0">No golfers yet.</div>';
+ renderRegisteredAccountSummary();
  document.querySelectorAll("[data-remove-player]").forEach(b=>b.addEventListener("click",()=>removePlayer(Number(b.dataset.removePlayer))));
  document.querySelectorAll("[data-save-player-name]").forEach(b=>b.addEventListener("click",()=>savePlayerName(Number(b.dataset.savePlayerName))));
  document.querySelectorAll("[data-save-player-login]").forEach(b=>b.addEventListener("click",()=>savePlayerLogin(Number(b.dataset.savePlayerLogin))));
@@ -5945,24 +6039,9 @@ document.body.classList.add("login-mode");setGlobalMenuVisible(false);setMobileN
 }
 function forceSignedInHome(){
  if(!user)return;
- // Only regular players get the repeated Home landing guard.
- // Commissioner/captain sessions are left alone so admin rendering/navigation cannot be interrupted.
- if(isCommissioner||captainTeam!=null){showView("home");return;}
- const goHome=()=>{
-   if(!user||isCommissioner||captainTeam!=null)return;
-   const home=$("homeView");
-   if(!home)return;
-   document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));
-   home.classList.remove("hidden");
-   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.view==="home"));
-   document.querySelectorAll(".mobile-nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.mobileView==="home"));
-   document.body.classList.remove("extras-screen-active");
-   window.scrollTo({top:0,behavior:"auto"});
- };
- goHome();
- requestAnimationFrame(goHome);
- setTimeout(goHome,120);
- setTimeout(goHome,450);
+ // Set the initial destination once; delayed redirects can override a golfer's next tap.
+ showView("home");
+ window.scrollTo({top:0,behavior:"auto"});
 }
 
 async function enterApp(){
@@ -5972,6 +6051,7 @@ document.body.classList.remove("login-mode");setGlobalMenuVisible(false);setMobi
  try{
   await loadBase();
   await Promise.all([
+    loadPublicRoster(),
     loadScores(),
     loadTournamentArchives(),
     loadRsvps(),

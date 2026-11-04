@@ -37,7 +37,7 @@ jobs:
     if: >-
       github.repository == 'blaineg04/EllenG-Cup' &&
       ((github.event_name != 'pull_request' && github.ref == 'refs/heads/development/nov20-release-reconciliation-20261026') ||
-       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'development/nov20-release-reconciliation-20261026'))
+       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (github.event.pull_request.head.ref == 'development/nov20-release-reconciliation-20261026' || github.event.pull_request.head.ref == 'fix/players-directory-preserve-unselected-20261103')))
     runs-on: [self-hosted, macOS]
     timeout-minutes: 25
     steps:
@@ -51,8 +51,18 @@ jobs:
           test "$(uname -s)" = Darwin
       - name: Install pinned Playwright dependencies
         run: npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
+      - name: Verify checked-out scoring source before tests
+        run: |
+          git rev-parse HEAD
+          git status --short
+          # The dedicated MacBook runner can retain modified tracked files between jobs.
+          # Restore only tracked scoring-page copies from the checked-out commit; never touch credentials or untracked files.
+          git restore --source=HEAD --worktree -- scoring.html scoring.html.html index.html.html
+          git diff --exit-code -- scoring.html scoring.html.html index.html.html
+          shasum -a 256 scoring.html Scoring.html
+          node -e 'const fs=require("fs");const s=fs.readFileSync("scoring.html","utf8");for(const q of ["function normalPoints(values){","function finalCargoBonus(){","function renderPlayersDirectory()"]){if(!s.includes(q))throw Error("Checked-out scoring source missing: "+q)}console.log("Scoring source markers verified; bytes:",s.length)'
       - name: Run scoring and visual safety contracts
-        run: node --test tests/nov20-production-score-integrity.test.cjs tests/alternate-scoring-validation.test.cjs tests/gator-hole-variable-teams.test.cjs tests/cross-page-points-parity.test.cjs tests/stored-score-completion.test.cjs tests/split-pair-atomic-contract.test.cjs tests/draft-two-client-simulation.test.cjs tests/realtime-client-reconnect.test.cjs tests/draft-reconnect.test.cjs tests/integration/isolated-auth-scoring-safety.test.cjs tests/visual/safety.test.cjs tests/acceptance/score-save-format-guard.test.cjs tests/acceptance/commissioner-format-change-guard.test.cjs tests/acceptance/broadcast-fullscreen-race.test.cjs
+        run: node --test tests/nov20-production-score-integrity.test.cjs tests/alternate-scoring-validation.test.cjs tests/gator-hole-variable-teams.test.cjs tests/cross-page-points-parity.test.cjs tests/stored-score-completion.test.cjs tests/split-pair-atomic-contract.test.cjs tests/draft-two-client-simulation.test.cjs tests/realtime-client-reconnect.test.cjs tests/draft-reconnect.test.cjs tests/integration/isolated-auth-scoring-safety.test.cjs tests/visual/safety.test.cjs tests/acceptance/score-save-format-guard.test.cjs tests/acceptance/commissioner-format-change-guard.test.cjs tests/acceptance/broadcast-fullscreen-race.test.cjs tests/acceptance/player-home-navigation-race.test.cjs
       - name: Install Chromium without Docker
         run: tests/visual/node_modules/.bin/playwright install chromium
       - name: Run local-only isolated seven-width browser rehearsal

@@ -8,7 +8,7 @@ const end=html.indexOf('\nasync function loadBase(',start);
 const body=html.slice(start,end);
 test('front-nine Scramble saves use authorized RPC and never direct score-table writes',()=>{
  assert.ok(start>=0 && end>start,'score-save function must be present');
- const guard=body.indexOf('if(isSplitPair()||hole<1||hole>9)');
+ const guard=body.indexOf('if(isShamblePoints()||isSplitPair()||hole<1||hole>9)');
  assert.ok(guard>=0,'format guard must be present');
  assert.doesNotMatch(body,/db\.from\("elleng_team_scores"\)/);
  assert.ok(body.indexOf('db.rpc("elleng_test_authorized_scramble"')>guard,'format guard must precede authorized RPC');
@@ -24,7 +24,7 @@ test('Shamble refuses unassigned golfer before any scoring RPC',()=>{
  const end=html.indexOf('function renderPairScoring(',start);
  assert.ok(start>=0&&end>start);
  const body=html.slice(start,end);
- assert.match(body,/if\(isSplitPair\(\)\|\|hole<10\|\|hole>18/);
+ assert.match(body,/if\(isSplitPair\(\)\|\|hole<\(typeof isShamblePoints===\"function\"&&isShamblePoints\(\)\?1:10\)\|\|hole>18/);
  assert.match(body,/teamRosterGolfers\(teamIndex\)\.some\(g=>g\.index===golferIndex\)/);
  assert.ok(body.indexOf('teamRosterGolfers(teamIndex).some')<body.indexOf('beginScoreSave()'));
  assert.match(body,/db\.rpc\("elleng_test_authorized_shamble"/);
