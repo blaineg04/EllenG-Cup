@@ -21,3 +21,8 @@ assert.match(html, /g\.participating===false\?"Not in this tournament"/, 'nonpar
 
 assert.match(html, /!golfers\.some\(g=>Number\.isInteger\(a\.golferIndex\)&&g\.index===a\.golferIndex\)/, 'directory deduplicates by linked golfer index, never by possibly shared display name');
 assert.doesNotMatch(html, /g\.name\.toLowerCase\(\)===a\.displayName\.toLowerCase\(\)/, 'a same-name account must not disappear from the directory');
+
+const fixture = fs.readFileSync('tests/visual/fixture.cjs', 'utf8');
+assert.match(fixture, /name === 'player-public-roster'/, 'isolated browser fixture must serve authenticated roster endpoint');
+assert.match(fixture, /displayName:'Registered Reserve Golfer',participating:false,golferIndex:null/, 'browser fixture must include registered nonparticipant without a draft slot');
+assert.match(html, /Not in this tournament · Account preserved/, 'directory must label account-only golfers without putting them in draft');
