@@ -28,14 +28,14 @@ Deno.serve(async (request) => {
       .select('state').eq('id', draftId).single();
     if (draftError || !draft) throw new Error('Roster unavailable');
     const { data: accounts, error: accountsError } = await admin.from('elleng_player_accounts')
-      .select('golfer_index,username').eq('draft_id', draftId).limit(1000);
+      .select('golfer_index,username,display_name,photo_url').eq('draft_id', draftId).limit(1000);
     if (accountsError) throw new Error('Roster unavailable');
     const golfers = Array.isArray(draft.state?.golfers) ? draft.state.golfers : [];
     const players = (accounts || []).map((account) => {
       const index = account.golfer_index == null ? NaN : Number(account.golfer_index);
       const golfer = Number.isInteger(index) && index >= 0 ? golfers[index] : null;
-      const displayName = String(golfer?.name || account.username || '').trim();
-      return { displayName, participating: !!golfer?.name && golfer.participating !== false, golferIndex: golfer?.name ? index : null };
+      const displayName = String(golfer?.name || account.display_name || account.username || '').trim();
+      return { displayName, photoUrl: String(golfer?.photo_url || account.photo_url || ''), participating: !!golfer?.name && golfer.participating !== false, golferIndex: golfer?.name ? index : null, accountIndex: Number.isInteger(index) ? index : null };
     }).filter((p) => p.displayName).sort((a, b) => a.displayName.localeCompare(b.displayName));
     return reply(200, { players });
   } catch {

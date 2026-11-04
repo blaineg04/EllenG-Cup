@@ -7,11 +7,11 @@ assert.match(source, /if \(!\/\^Bearer/, 'reject missing or malformed bearer aut
 assert.match(source, /if \(authError \|\| !auth\.user\) return reply\(401/, 'reject invalid or expired sessions');
 assert.doesNotMatch(source, /return reply\(403, \{ error: 'Golfer access required' \}\)/, 'signed-in golfers can view directory before tournament selection');
 assert.match(source, /\.select\('state'\)\.eq\('id', draftId\)/, 'resolve golfer state from scoped tournament');
-assert.match(source, /\.select\('golfer_index,username'\)\.eq\('draft_id', draftId\)/, 'scope public roster to current tournament');
+assert.match(source, /\.select\('golfer_index,username,display_name,photo_url'\)\.eq\('draft_id', draftId\)/, 'scope public roster to current tournament');
 assert.doesNotMatch(source, /return reply\(200,\s*\{\s*(accounts|auth|draft)\s*\}/, 'never return raw account, auth or draft records');
 assert.doesNotMatch(source, /if \(!member &&/, 'do not confuse tournament membership with registered-directory visibility');
-assert.match(source, /\.select\('golfer_index,username'\)/, 'fetch only roster linkage fields');
-assert.match(source, /displayName, participating:.*golferIndex:/, 'return public roster fields only');
+assert.match(source, /\.select\('golfer_index,username,display_name,photo_url'\)/, 'fetch only roster linkage fields');
+assert.match(source, /displayName, photoUrl:.*participating:.*golferIndex:.*accountIndex:/, 'return public roster fields only');
 assert.doesNotMatch(source, /select\('\*'\)/, 'never select all private account columns');
 assert.doesNotMatch(source, /auth\.admin\.listUsers|updateUserById|deleteUser/, 'endpoint must not manage accounts');
 console.log('Authenticated public roster source contract passed');
@@ -38,3 +38,24 @@ assert.match(fixture, /name === 'player-public-roster'/, 'isolated browser fixtu
 assert.match(fixture, /Array\.from\(\{length:13\}/, 'browser fixture must include thirteen registered nonparticipants');
 assert.match(fixture, /displayName:i===0\?'Registered Reserve Golfer'/, 'fixture must preserve named reserve sentinel');
 assert.match(html, /Not in this tournament · Account preserved/, 'directory must label account-only golfers without putting them in draft');
+
+const vm = require('node:vm');
+const mapping = source.slice(source.indexOf('const players ='), source.indexOf('return reply(200, { players });'));
+const context = { accounts: [
+  { golfer_index: 0, username: 'active', display_name: 'Old Name', photo_url: 'old.png' },
+  { golfer_index: 35, username: 'reserve', display_name: 'Reserve Golfer', photo_url: 'reserve.png' },
+  { golfer_index: null, username: 'unlinked' }
+], golfers: [{ name: 'Active Golfer', photo_url: 'active.png' }] };
+vm.createContext(context);
+vm.runInContext(mapping + ';globalThis.result = players;', context);
+const rows = JSON.parse(JSON.stringify(context.result));
+assert.deepEqual(rows.find(p => p.displayName === 'Reserve Golfer'), {
+  displayName: 'Reserve Golfer', photoUrl: 'reserve.png', participating: false, golferIndex: null, accountIndex: 35
+}, 'preserved account retains its full name, photo and management identity outside the draft');
+assert.deepEqual(rows.find(p => p.displayName === 'Active Golfer'), {
+  displayName: 'Active Golfer', photoUrl: 'active.png', participating: true, golferIndex: 0, accountIndex: 0
+}, 'active golfer profile takes precedence over account fallback');
+assert.deepEqual(rows.find(p => p.displayName === 'unlinked'), {
+  displayName: 'unlinked', photoUrl: '', participating: false, golferIndex: null, accountIndex: null
+}, 'unlinked account never borrows golfer zero profile');
+console.log('Public roster profile mapping passed');
