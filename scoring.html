@@ -4637,7 +4637,7 @@ function renderPlayersDirectory(){
  const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>({...(g||{}),index:i,name:(g?.name||"").trim()})).filter(g=>g.name);
  // Show preserved nonparticipant accounts to commissioner only; never add to draft.
  const activeIndices=new Set(golfers.map(g=>g.index));
- const inactiveAccounts=(playerAccounts||[]).filter(a=>Number.isInteger(Number(a.golfer_index))&&!activeIndices.has(Number(a.golfer_index))&&String(a.username||"").trim());
+ const inactiveAccounts=isCommissioner?(playerAccounts||[]).filter(a=>Number.isInteger(Number(a.golfer_index))&&!activeIndices.has(Number(a.golfer_index))&&String(a.username||"").trim()):[];
  const q=($("playerDirectorySearch")?.value||"").trim().toLowerCase();
  const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:ti==null?"Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q));
  const rowHtml=g=>{const band=playerBandLabel(g);const bandChip=band==="—"?"":`<span class="player-roster-band" title="Handicap band ${esc(band)}">${esc(band)}</span>`;return `<div class="player-row-public player-roster-only" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}<div class="player-team-inline">${esc(g.teamName)}</div></div>${bandChip}<div class="player-open-arrow">›</div></div>`};
