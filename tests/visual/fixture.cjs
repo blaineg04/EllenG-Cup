@@ -33,7 +33,7 @@ function installFixture({ teamCount = 9, role = 'commissioner', partialDraft = f
     from: query,
     auth: { signOut:async()=>{if(signOutFailure&&signOutAttempts++===0)return {error:{message:'Synthetic sign-out unavailable'}};signedOut=true;return {error:null}}, signInWithPassword:async()=>({data:{user:null,session:null},error:{message:'Invalid login credentials'}}), getSession: async()=>({data:{session:signedOut?null:{user}},error:null}), getUser: async()=>({data:{user:signedOut?null:user},error:null}), onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}) },
     functions: { invoke: async(name, options) => {
-      if (name === 'player-public-roster') return {data:{players:[...golfers.map((g,i)=>({displayName:g.name,participating:g.participating!==false,golferIndex:i})),{displayName:'Registered Reserve Golfer',participating:false,golferIndex:null}]},error:null};
+      if (name === 'player-public-roster') return {data:{players:[...golfers.map((g,i)=>({displayName:g.name,participating:g.participating!==false,golferIndex:i})),...Array.from({length:13},(_,i)=>({displayName:i===0?'Registered Reserve Golfer':`Registered Reserve Golfer ${i+1}`,participating:false,golferIndex:null}))]},error:null};
       if (name === 'player-profile') return {data:{linked:true,golfer_index:0,username:'visual',must_change_password:false},error:null};
       if (name === 'player-admin' && options?.body?.action === 'list') return {data:{accounts},error:null};
       throw new Error(`Fixture forbids function write: ${name}`);
