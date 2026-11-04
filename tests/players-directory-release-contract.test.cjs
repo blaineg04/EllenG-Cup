@@ -8,6 +8,11 @@ assert.match(html, /Not in this tournament · Account preserved/);
 assert.match(html, /const band=playerBandLabel\(g\);const bandChip=/, 'public directory shows handicap band rather than exact handicap');
 assert.match(html, /const rawHcp=isRanked\?String\(g\.hcp\?\?""\)\.trim\(\):""/, 'commissioner handicap editor must leave unranked exact handicap blank');
 assert.match(html, /const displayHcp=selfRanked&&String\(g\.hcp\?\?""\)\.trim\(\)!==""\?String\(g\.hcp\):"—"/, 'personal handicap display must hide stale unranked handicap');
+assert.match(html, /function renderRegisteredAccountSummary\(\)/, 'commissioner must see registered accounts outside tournament');
+assert.match(html, /playerAccounts\.filter\(a=>\{/, 'commissioner summary uses actual registered accounts');
+assert.match(html, /!golfers\[i\]\?\.name/, 'account-only entries remain separate from tournament golfer records');
+assert.match(html, /renderRegisteredAccountSummary\(\)/, 'commissioner player editor renders preserved account summary');
+assert.match(html, /id="registeredAccountSummary"/, 'commissioner has a dedicated registered account section');
 const activeTeamFunction = html.match(/function activeTeamCount\(\)\s*\{[\s\S]*?\n\}/)?.[0];
 assert.ok(activeTeamFunction, 'activeTeamCount implementation must exist');
 for (const [format, legacyCount, expected] of [
