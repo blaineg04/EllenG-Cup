@@ -1,0 +1,42 @@
+name: EllenG independent tournament health
+on:
+  schedule:
+    - cron: '3-58/5 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main, reliability/tournament-recovery-20261104]
+    paths: ['scripts/tournament-health.cjs', 'tests/tournament-health.test.cjs', '.github/workflows/tournament-health.yml', 'config.js']
+permissions:
+  contents: read
+concurrency:
+  group: elleng-independent-health
+  cancel-in-progress: false
+jobs:
+  health:
+    if: github.repository == 'blaineg04/EllenG-Cup'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify checker behavior
+        run: node --test tests/tournament-health.test.cjs
+      - name: Read-only live service checks
+        run: node scripts/tournament-health.cjs
+  incident:
+    needs: health
+    if: always() && github.ref == 'refs/heads/main' && github.repository == 'blaineg04/EllenG-Cup'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Confirm incident or recovery and update one incident
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/tournament-health.cjs

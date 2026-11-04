@@ -1,0 +1,53 @@
+name: EllenG tournament reliability verification
+on:
+  push:
+    branches: [reliability/tournament-recovery-20261104]
+permissions:
+  contents: read
+concurrency:
+  group: elleng-reliability-tests
+  cancel-in-progress: false
+jobs:
+  macbook:
+    if: github.repository == 'blaineg04/EllenG-Cup' && github.ref == 'refs/heads/reliability/tournament-recovery-20261104'
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Extract a case-sensitive verification copy
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="$RUNNER_TEMP/elleng-reliability-$GITHUB_RUN_ID.dmg"
+          mount_dir="$RUNNER_TEMP/elleng-reliability-mount-$GITHUB_RUN_ID"
+          mkdir -p "$mount_dir"
+          hdiutil create -quiet -size 512m -fs HFSX -volname EllenGReliability "$image"
+          hdiutil attach -quiet -nobrowse -mountpoint "$mount_dir" "$image"
+          echo "ELLENG_VERIFY_DIR=$mount_dir" >> "$GITHUB_ENV"
+          git archive HEAD | tar -xf - -C "$mount_dir"
+      - name: Install pinned browser harness
+        working-directory: ${{ env.ELLENG_VERIFY_DIR }}
+        run: npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
+      - name: Verify recovery and existing scoring tests
+        working-directory: ${{ env.ELLENG_VERIFY_DIR }}
+        run: node --test tests/offline-score-queue.test.cjs tests/tournament-update-policy.test.cjs tests/tournament-health.test.cjs tests/nov20-production-score-integrity.test.cjs tests/alternate-scoring-validation.test.cjs tests/gator-hole-variable-teams.test.cjs tests/cross-page-points-parity.test.cjs tests/stored-score-completion.test.cjs tests/split-pair-atomic-contract.test.cjs tests/draft-two-client-simulation.test.cjs tests/realtime-client-reconnect.test.cjs tests/draft-reconnect.test.cjs tests/integration/isolated-auth-scoring-safety.test.cjs tests/visual/safety.test.cjs tests/acceptance/score-save-format-guard.test.cjs tests/acceptance/commissioner-format-change-guard.test.cjs tests/acceptance/broadcast-fullscreen-race.test.cjs tests/acceptance/player-home-navigation-race.test.cjs
+      - name: Rehearse conditional offline writes in private disposable PostgreSQL
+        working-directory: ${{ env.ELLENG_VERIFY_DIR }}
+        run: bash scripts/test-offline-score-native.sh
+      - name: Capture synthetic browser matrix
+        working-directory: ${{ env.ELLENG_VERIFY_DIR }}
+        run: |
+          tests/visual/node_modules/.bin/playwright install chromium
+          node tests/visual/run.cjs
+      - name: Remove synthetic verification volume
+        if: always()
+        shell: bash
+        run: |
+          mount_dir="$RUNNER_TEMP/elleng-reliability-mount-$GITHUB_RUN_ID"
+          image="$RUNNER_TEMP/elleng-reliability-$GITHUB_RUN_ID.dmg"
+          if mount | grep -F " on $mount_dir " >/dev/null; then hdiutil detach -quiet "$mount_dir" || hdiutil detach -quiet -force "$mount_dir"; fi
+          if test -f "$image"; then rm -f "$image"; fi
+          if test -d "$mount_dir"; then rmdir "$mount_dir" 2>/dev/null || true; fi
+

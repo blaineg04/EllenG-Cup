@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="elleng-app-version" content="2.7.91">
+<meta name="elleng-app-version" content="2.7.92">
 <meta name="elleng-build-date" content="Oct 3, 2026">
 <title>EllenG Cup — Live Scoring</title>
 <style>
@@ -3692,6 +3692,8 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./reset-request-badge.js"></script>
 <script src="config.js"></script>
+<script src="offline-score-queue.js?v=20261104"></script>
+<script src="tournament-update-policy.js?v=20261104"></script>
 <script src="client-health.js"></script><script src="shamble-points.js"></script>
 <script src="event-rsvp-client.js"></script>
 <div id="broadcastOverlay" class="broadcast-overlay" aria-hidden="true">
@@ -3725,6 +3727,7 @@ const updateText=document.getElementById("updateText");
 const refreshAppBtn=document.getElementById("refreshAppBtn");
 let pendingAppUpdate="",autoUpdateStarted=false,autoUpdateRetry=null;
 function reloadWithLatestVersion(){
+  if(!appCanRefresh()){if(updateText)updateText.textContent="Finish play and sync pending scores before updating.";return;}
   try{localStorage.setItem("elleng_last_refresh",Date.now().toString())}catch(_){}
   const u=new URL(window.location.href);u.searchParams.set("v",Date.now().toString());window.location.replace(u.toString());
 }
@@ -3735,23 +3738,16 @@ function appUserIsEditing(){
   if(a.matches?.('input:not([type="button"]):not([type="submit"]):not([type="reset"]),select'))return true;
   return false;
 }
-function installAppUpdateWhenSafe(latest){
-  if(!latest||autoUpdateStarted)return;
-  pendingAppUpdate=latest;
-  updateBanner?.classList.remove("hidden");
-  if(refreshAppBtn)refreshAppBtn.style.display="none";
-  const attempt=()=>{
-    if(autoUpdateStarted||!pendingAppUpdate)return;
-    if(!navigator.onLine||appUserIsEditing()){
-      if(updateText)updateText.textContent=`Version ${pendingAppUpdate} is ready and will install automatically when you finish editing.`;
-      clearTimeout(autoUpdateRetry);autoUpdateRetry=setTimeout(attempt,2000);return;
-    }
-    autoUpdateStarted=true;
-    if(updateText)updateText.textContent=`Updating automatically to version ${pendingAppUpdate}…`;
-    setTimeout(reloadWithLatestVersion,1500);
-  };
-  attempt();
+function appCanRefresh(){
+ let pending=1;try{pending=offlineQueue().length+(offlineScores?.legacyCount()||0)}catch(_){}
+ return globalThis.EllenGUpdatePolicy?.canRefresh({online:navigator.onLine,live:tournament?.status==="live",saving:scoreSaveBusy,pending,editing:appUserIsEditing()})===true;
 }
+function installAppUpdateWhenSafe(latest){
+ if(!latest)return;pendingAppUpdate=latest;updateBanner?.classList.remove("hidden");
+ if(updateText)updateText.textContent="An update is available. Apply it after play when all scores have synced.";
+ if(refreshAppBtn){refreshAppBtn.style.display="";refreshAppBtn.disabled=!appCanRefresh();}
+}
+
 if(refreshAppBtn)refreshAppBtn.onclick=reloadWithLatestVersion;
 async function checkForAppUpdate(){
   try{
@@ -4562,16 +4558,47 @@ function playerAchievementBadges(g,gi){
  own.forEach(x=>{const d=Number(x.score)-parForHole(Number(x.hole));if(d===-1)birds++;if(d<=-2)eagles++});
  const b=[];if(eagles)b.push("🦅 Eagle Club");if(birds>=2)b.push("🔥 Birdie Machine");if(Number(g.gator_wins||0)>0)b.push("🐊 Gator King");if(Number(g.career_wins||0)>0)b.push("🏆 Cup Champion");if(!b.length&&own.length>=9)b.push("⛳ Grinder");return b;
 }
-const OFFLINE_SCORE_KEY="elleng_offline_score_queue_v1";
-function offlineQueue(){try{return JSON.parse(localStorage.getItem(OFFLINE_SCORE_KEY)||"[]")}catch(_){return[]}}
-function setOfflineQueue(q){localStorage.setItem(OFFLINE_SCORE_KEY,JSON.stringify(q));renderOfflineState()}
-function renderOfflineState(){const b=$("offlineBanner"),q=offlineQueue();if(!b)return;b.classList.toggle("hidden",navigator.onLine&&q.length===0);b.textContent=!navigator.onLine?`Offline • ${q.length} score${q.length===1?"":"s"} waiting`:q.length?`${q.length} score${q.length===1?"":"s"} waiting to sync`:""}
-function queueOfflineScore(payload){const q=offlineQueue();q.push({...payload,queued_at:new Date().toISOString()});setOfflineQueue(q)}
-async function flushOfflineScores(){
- if(!navigator.onLine||!user)return;let q=offlineQueue();if(!q.length){renderOfflineState();return}
- const keep=[];for(const item of q){try{const {data,error}=await db.functions.invoke("golfer-handicap",{body:item});if(error||data?.error)throw error||new Error(data.error)}catch(e){keep.push(item)}}
- setOfflineQueue(keep);if(!keep.length){await loadScores();renderAll();pushInAppAlert("Offline scores synced","All queued scores reached the server.")}
+const offlineScores=globalThis.EllenGOfflineScores?.createScoreQueue({storage:localStorage});
+function offlineIdentity(){
+ return {userId:user?.id||null,golferIndex:currentGolferIndex,teamIndex:currentGolferIndex==null?null:golferTeamIndex(currentGolferIndex),draftId:DRAFT_ID,tournamentId:TOURNAMENT_ID,eventDate:draftState?.tournamentDate||""};
 }
+function offlineQueue(){return offlineScores?.entries()||[]}
+function captureOfflineScore(h){
+ const who=offlineIdentity(),row=playerScores.find(s=>Number(s.golfer_index)===who.golferIndex&&Number(s.team_index)===who.teamIndex&&Number(s.hole)===h);
+ let entryId=null;try{entryId=offlineQueue().find(x=>globalThis.EllenGOfflineScores.sameIdentity(x,who)&&x.hole===h)?.id||null}catch(_){}
+ return {...who,hole:h,expectedScore:row?Number(row.score):null,expectedUpdatedAt:row?.updated_at||null,entryId};
+}
+globalThis.EllenGOfflineRecovery={capture:captureOfflineScore,acknowledge:context=>{if(context?.entryId)offlineScores?.acknowledge(context,context.entryId);renderOfflineState()}};
+function renderOfflineState(){
+ const b=$("offlineBanner");if(!b)return;
+ try{
+  const q=offlineQueue(),legacy=offlineScores?.legacyCount()||0,who=offlineIdentity();
+  const own=q.filter(x=>globalThis.EllenGOfflineScores.sameIdentity(x,who)),conflicts=own.filter(x=>x.status==="conflict").length;
+  b.classList.toggle("hidden",navigator.onLine&&q.length===0&&legacy===0);
+  b.textContent=conflicts?conflicts+" pending score(s) need review. Open My Score and save the correct score while online.":legacy?legacy+" older offline score(s) need review before updating this app.":q.length>own.length?"Offline scores are retained for the original golfer and tournament.":q.length?q.length+" score(s) saved on this device, waiting to sync.":navigator.onLine?"":"Offline — keep this page open.";
+ }catch(_){b.classList.remove("hidden");b.textContent="Offline score storage needs recovery. Keep this page open and record your strokes."}
+}
+function queueOfflineScore(payload,context){
+ if(!offlineScores)throw new Error("Offline storage is unavailable.");
+ const item=offlineScores.enqueue({...context,score:String(payload.score)});
+ renderOfflineState();return item;
+}
+async function flushOfflineScores(){
+ if(!navigator.onLine||!user||scoreSaveBusy||!offlineScores||appUserIsEditing())return;
+ const who=offlineIdentity();
+ if(!offlineQueue().some(x=>globalThis.EllenGOfflineScores.sameIdentity(x,who)&&x.status==="pending")){renderOfflineState();return;}
+ try{
+  await offlineScores.flush(who,async item=>{
+   if(user?.id!==who.userId)throw new Error("Account changed.");
+   const {data,error}=await db.rpc("elleng_save_own_offline_score",{p_draft_id:item.draftId,p_tournament_id:item.tournamentId,p_hole:item.hole,p_score:item.score===""?null:Number(item.score),p_user_id:item.userId,p_golfer_index:item.golferIndex,p_team_index:item.teamIndex,p_event_date:item.eventDate,p_expected_score:item.expectedScore,p_expected_updated_at:item.expectedUpdatedAt});
+   if(error){if(["40001","42501","22023"].includes(error.code))return {conflict:true};throw error}
+   return data;
+  });
+  if(user?.id===who.userId){await loadScores();renderAll();}
+ }catch(e){globalThis.EllenGHealth?.report("score_refresh_failed")}
+ finally{renderOfflineState()}
+}
+
 function renderTeams(){
  const sel=$("teamRosterSelect");
  if(sel){
@@ -5462,12 +5489,14 @@ async function saveSelfScore(clear=false){
  if(!clear&&raw===""){msg.textContent="Enter your strokes first.";return}
  if(!clear&&(!Number.isInteger(Number(raw))||Number(raw)<1||Number(raw)>20)){msg.textContent="Enter a whole-number stroke score from 1 to 20.";return}
  const score=clear?"":raw;
+ const offlineContext=globalThis.EllenGOfflineRecovery?.capture(h);
  let scoreAccepted=false;
  btn.disabled=true;scoreSaveBusy=true;setSyncStatus("saving",clear?"Clearing…":"Saving…");msg.textContent=clear?"Clearing…":"Saving…";
  try{
    const {data,error}=await db.functions.invoke("golfer-handicap",{body:{action:"update_score",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,hole:h,score}});
    if(error)throw error;if(data?.error)throw new Error(data.error);
    scoreAccepted=true;
+   globalThis.EllenGOfflineRecovery?.acknowledge(offlineContext);
    await loadBase();await loadScores();renderAll();
    if(clear){
      if(Number($("selfScoreHole").value)===h&&$("selfScoreInput").value.trim()===raw){$("selfScoreInput").value="";renderSelfGolfScore();}
@@ -5486,8 +5515,10 @@ async function saveSelfScore(clear=false){
      msg.textContent=`${clear?"Score cleared":"Score saved"} for Hole ${h}, but the display could not refresh. Refresh to see the latest scores.`;
      setSyncStatus("error","Refresh needed");
    }else if(!navigator.onLine || /fetch|network|timeout|failed/i.test(String(e?.message||""))){
-     queueOfflineScore({action:"update_score",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,hole:h,score});
-     msg.textContent="Saved offline — it will sync automatically when connection returns.";setSyncStatus("saving","Queued offline");
+     try{
+      queueOfflineScore({action:"update_score",draft_id:DRAFT_ID,tournament_id:TOURNAMENT_ID,hole:h,score},offlineContext);
+      msg.textContent="Saved offline on this device — keep this page open. It will sync when connection returns.";setSyncStatus("saving","Queued offline");
+     }catch(_){msg.textContent="Could not save on this device. Keep a written record of your strokes and retry when online.";setSyncStatus("error","Not saved");}
    }else{msg.textContent=e?.message||"Unable to save score.";setSyncStatus("error","Save failed")}
  }
  finally{btn.disabled=false;scoreSaveBusy=false;}
@@ -6072,6 +6103,7 @@ document.body.classList.remove("login-mode");setGlobalMenuVisible(false);setMobi
     // Keep Home ready underneath, then show the signed-in destination hub.
     forceSignedInHome();
     subscribeLive();
+    void flushOfflineScores();
     setSyncStatus("saved","Synced");
     if($("hubSignedInAs"))$("hubSignedInAs").textContent=`Signed in as ${visibleLogin()}`;
     openAppHub();
@@ -6259,7 +6291,9 @@ document.querySelectorAll(".global-main-menu-btn").forEach(a=>a.addEventListener
   openAppHub();
 }));
 
-window.addEventListener("online",()=>{renderOfflineState();flushOfflineScores()});
+window.addEventListener("online",()=>{renderOfflineState();void flushOfflineScores()});
+setInterval(()=>{if(!document.hidden)void flushOfflineScores()},15000);
+window.addEventListener("focus",()=>{void flushOfflineScores()});
 window.addEventListener("offline",renderOfflineState);
 if("serviceWorker" in navigator){window.addEventListener("load",async()=>{try{const reg=await navigator.serviceWorker.register("./service-worker.js?v=2.7.43",{scope:"./",updateViaCache:"none"});await reg.update().catch(()=>{});if(reg.waiting){reg.waiting.postMessage({type:"SKIP_WAITING"})}}catch(e){console.warn("Service worker registration skipped",e)}})}
 
@@ -7878,5 +7912,6 @@ body.player-simple-home #homeView #homeSpecialCard{flex:0 0 auto!important;min-h
 }
 body.player-simple-home #homeView #leaderSpotlightBody{max-height:none!important;height:auto!important;overflow:visible!important}
 </style>
+
 
 
