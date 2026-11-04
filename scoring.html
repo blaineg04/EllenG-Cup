@@ -5130,9 +5130,9 @@ function renderRegisteredAccountSummary(){
  const inactive=playerAccounts.filter(a=>{
    const i=a.golfer_index==null?NaN:Number(a.golfer_index);
    return !Number.isInteger(i)||i<0||!golfers[i]?.name;
- }).sort((a,b)=>String(a.username||"").localeCompare(String(b.username||"")));
+ }).sort((a,b)=>String(a.display_name||a.username||"").localeCompare(String(b.display_name||b.username||""),undefined,{sensitivity:"base"}));
  root.innerHTML='<h3 style="margin:0 0 8px">Registered golfers · Not playing ('+inactive.length+')</h3>'+
-   '<div class="note">These accounts remain active and visible to golfers, but are excluded from the current draft and scoring. The commissioner can reset their passwords here.</div>'+
+   '<div class="note">All registered golfers remain visible in the Players directory. These accounts are excluded from this tournament; names and passwords can be managed here without changing the draft or scores.</div>'+
    (inactive.length?inactive.map(a=>{
      const i=Number(a.golfer_index);
      const label=String(a.display_name||publicRoster.find(p=>p.accountIndex===i)?.displayName||a.username||"Registered golfer");
@@ -5178,7 +5178,6 @@ async function resetInactivePassword(i){
 }
 function renderPlayerEditor(){
  ensureDraftShape();
- renderRegisteredAccountSummary();
  $("playerEditor").innerHTML=draftState.golfers.map((g,i)=>{
    const isRanked=g?.self_ranked===true;
    const rawHcp=isRanked?String(g.hcp??"").trim():"";
@@ -5190,6 +5189,7 @@ function renderPlayerEditor(){
    const preview=photo?`<div class="player-photo-preview"><img src="${esc(photo)}" alt="${esc(g.name||"Player")}"><span>Current profile photo</span></div>`:`<div class="player-photo-preview"><span>No photo yet — initials will be used on the profile card.</span></div>`;
    return `<div data-player-block="${i}"><div class="player-admin-row" data-player-row="${i}"><div class="player-name-edit"><input data-player-name="${i}" value="${esc(g.name||"")}" placeholder="Golfer name"><div class="player-name-msg" data-player-name-msg="${i}"></div></div><select data-player-band="${i}"><option value="" ${shownBand===""?"selected":""}>Unranked</option>${["A","B","C","D"].map(b=>`<option value="${b}" ${shownBand===b?"selected":""}>${b}</option>`).join("")}</select><input data-player-hcp="${i}" type="number" min="0" max="54" step="0.1" inputmode="decimal" value="${esc(rawHcp)}" placeholder="HCP" oninput="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onchange="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)" onblur="window.ellengSyncPlayerBand&&window.ellengSyncPlayerBand(this)"><select class="player-team" data-player-team="${i}">${teamOptions(g.team==null?"":g.team)}</select><div class="row player-actions" style="gap:5px;flex-wrap:nowrap"><button class="secondary" style="padding:8px 9px;font-size:11px" data-save-player-name="${i}" type="button">Save Name</button><button class="danger" style="padding:8px 9px;font-size:11px" data-remove-player="${i}" type="button">Remove</button></div></div><div class="player-photo-tools"><label><small>Profile photo</small><input data-player-photo-file="${i}" type="file" accept="image/*"></label><button class="secondary" type="button" data-upload-player-photo="${i}">Upload Photo</button><label style="grid-column:1/-1"><small>Photo URL (optional backup)</small><input class="player-photo-input" data-idx="${i}" value="${esc(photo)}" placeholder="Optional image URL"></label><div style="grid-column:1/-1" data-player-photo-msg="${i}" class="status"></div><div style="grid-column:1/-1">${preview}</div></div><div class="player-login-row"><label><small>Player username</small><input data-player-login-username="${i}" type="text" autocapitalize="none" autocomplete="off" value="${esc(loginUsername)}" placeholder="Example: ${esc(String(g.name||"player").toLowerCase().replace(/[^a-z0-9]+/g,""))}"></label><label><small>${linked?"Reset password (optional)":"Temporary password"}</small><input data-player-login-password="${i}" type="password" minlength="6" placeholder="${linked?"Enter only to reset":"Automatic: golf01"}"></label><button class="primary" type="button" data-save-player-login="${i}">${linked?"Update / Reset":"Create Login"}</button><button class="secondary" type="button" data-unlink-player-login="${i}" ${linked||loginUsername?"":"disabled"}>Unlink</button><div class="player-login-status" data-player-login-msg="${i}">${linked?`✓ Username: ${esc(loginUsername||"linked account")}${acct?.must_change_password?" • temporary password still active":""}`:"Login will be created automatically."}</div></div></div>`;
  }).join("")||'<div class="note" style="padding:12px 0">No golfers yet.</div>';
+ renderRegisteredAccountSummary();
  document.querySelectorAll("[data-remove-player]").forEach(b=>b.addEventListener("click",()=>removePlayer(Number(b.dataset.removePlayer))));
  document.querySelectorAll("[data-save-player-name]").forEach(b=>b.addEventListener("click",()=>savePlayerName(Number(b.dataset.savePlayerName))));
  document.querySelectorAll("[data-save-player-login]").forEach(b=>b.addEventListener("click",()=>savePlayerLogin(Number(b.dataset.savePlayerLogin))));
