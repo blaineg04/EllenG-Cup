@@ -5,23 +5,87 @@ on:
     paths: ['.github/workflows/macbook-approved-production.yml']
 permissions:
   contents: read
+concurrency:
+  group: elleng-production-release
+  cancel-in-progress: false
 jobs:
-  cleanup-task-build:
+  release:
     if: github.repository == 'blaineg04/EllenG-Cup' && github.ref == 'refs/heads/release/macbook-approved-3b46216'
     runs-on: [self-hosted, macOS]
-    timeout-minutes: 3
+    environment: production
+    timeout-minutes: 15
     steps:
-      - name: Clean only this release attempt's temporary files
+      - name: Check out only the user-approved release
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 3b462169fd078c8b51fb1bee9c588001e90825f0
+          path: approved-elleng-release
+          persist-credentials: false
+      - name: Extract approved source onto a temporary case-sensitive volume
+        working-directory: approved-elleng-release
         shell: bash
         run: |
           set -euo pipefail
-          mount_dir="$RUNNER_TEMP/elleng-approved-mount-41891532300"
-          image="$RUNNER_TEMP/elleng-approved-41891532300.dmg"
-          cli_dir="$RUNNER_TEMP/elleng-vercel-cli-41891532300"
-          if mount | grep -F " on $mount_dir " >/dev/null; then
-            hdiutil detach -quiet "$mount_dir" || hdiutil detach -quiet -force "$mount_dir"
+          test "$(git rev-parse HEAD)" = 3b462169fd078c8b51fb1bee9c588001e90825f0
+          image="$RUNNER_TEMP/elleng-approved-$GITHUB_RUN_ID.dmg"
+          mount="$RUNNER_TEMP/elleng-approved-mount-$GITHUB_RUN_ID"
+          mkdir -p "$mount"
+          hdiutil create -quiet -size 256m -fs HFSX -volname EllenGApprovedRelease "$image"
+          hdiutil attach -quiet -nobrowse -mountpoint "$mount" "$image"
+          echo "ELLENG_RELEASE_DIR=$mount" >> "$GITHUB_ENV"
+          git archive 3b462169fd078c8b51fb1bee9c588001e90825f0 | tar -xf - -C "$mount"
+          echo "Approved commit extracted from Git objects onto case-sensitive temporary volume."
+      - name: Verify approved source and existing CLI
+        working-directory: ${{ env.ELLENG_RELEASE_DIR }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -s)" = Darwin
+          export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$HOME/.volta/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"
+          for candidate in "$HOME/.nvm/versions/node"/*/bin/vercel "$HOME/.local/share/mise/installs/node"/*/bin/vercel "$HOME/.npm/_npx"/*/node_modules/.bin/vercel; do
+            if test -x "$candidate"; then export PATH="$(dirname "$candidate"):$PATH"; break; fi
+          done
+          if ! command -v vercel >/dev/null 2>&1; then
+            cli_dir="$RUNNER_TEMP/elleng-vercel-cli-$GITHUB_RUN_ID"
+            npm install --prefix "$cli_dir" --ignore-scripts --no-audit --no-fund vercel@65.4.0
+            export PATH="$cli_dir/node_modules/.bin:$PATH"
           fi
+          echo "$(dirname "$(command -v vercel)")" >> "$GITHUB_PATH"
+          vercel --version
+          node --test tests/acceptance/player-home-navigation-race.test.cjs
+          node tests/public-roster-contract.test.cjs
+          node tests/players-directory-release-contract.test.cjs
+      - name: Build on MacBook and release approved production
+        working-directory: ${{ env.ELLENG_RELEASE_DIR }}
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: team_K0z3DaMWKG5dYBawap4u3tAH
+          VERCEL_PROJECT_ID: prj_wpcMGLHuH21jWarwziP1mo85RBcC
+          CI: 'true'
+        run: |
+          set -euo pipefail
+          if test -z "${VERCEL_TOKEN:-}"; then unset VERCEL_TOKEN; fi
+          if ! vercel whoami >/dev/null 2>&1; then
+            echo "BLOCKED: MacBook Vercel CLI has no usable authentication; no deployment attempted." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          mkdir -p .vercel
+          node -e 'require("fs").writeFileSync(".vercel/project.json",JSON.stringify({orgId:process.env.VERCEL_ORG_ID,projectId:process.env.VERCEL_PROJECT_ID}))'
+          vercel project inspect elleng-cup --scope "$VERCEL_ORG_ID"
+          vercel pull --yes --environment=production --scope "$VERCEL_ORG_ID"
+          vercel build --prod --scope "$VERCEL_ORG_ID"
+          vercel deploy --prebuilt --prod --yes --scope "$VERCEL_ORG_ID" --meta approvedCommit=3b462169fd078c8b51fb1bee9c588001e90825f0 > "$RUNNER_TEMP/elleng-approved-production-url.txt"
+          cat "$RUNNER_TEMP/elleng-approved-production-url.txt"
+          echo "Production deployment submitted from approved commit 3b462169fd078c8b51fb1bee9c588001e90825f0." >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove temporary release volume
+        if: always()
+        shell: bash
+        run: |
+          mount="$RUNNER_TEMP/elleng-approved-mount-$GITHUB_RUN_ID"
+          image="$RUNNER_TEMP/elleng-approved-$GITHUB_RUN_ID.dmg"
+          if mount | grep -F " on $mount " >/dev/null; then hdiutil detach -quiet "$mount" || hdiutil detach -quiet -force "$mount"; fi
           if test -f "$image"; then rm -f "$image"; fi
+          if test -d "$mount"; then rmdir "$mount" 2>/dev/null || true; fi
+          cli_dir="$RUNNER_TEMP/elleng-vercel-cli-$GITHUB_RUN_ID"
           if test -d "$cli_dir"; then rm -rf "$cli_dir"; fi
-          if test -d "$mount_dir"; then rmdir "$mount_dir"; fi
-          echo "Temporary release volume and CLI cleaned; awaiting MacBook Vercel sign-in." >> "$GITHUB_STEP_SUMMARY"
