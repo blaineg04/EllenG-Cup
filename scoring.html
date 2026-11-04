@@ -5986,6 +5986,7 @@ document.body.classList.remove("login-mode");setGlobalMenuVisible(false);setMobi
  try{
   await loadBase();
   await Promise.all([
+    loadPublicRoster(),
     loadScores(),
     loadTournamentArchives(),
     loadRsvps(),
