@@ -173,7 +173,7 @@ async function main() {
         await context.addInitScript(()=>{if(new URL(location.href).searchParams.has('visualSignedOut'))sessionStorage.removeItem('elleng_internal_menu');else sessionStorage.setItem('elleng_internal_menu','1');});
         await context.route('**/*',async route=>{
           const url=new URL(route.request().url());
-          if(url.hostname==='cdn.jsdelivr.net'&&url.pathname.includes('supabase-js')){const current=new URL(route.request().frame().url());return route.fulfill({contentType:'text/javascript',body:`(${installFixture.toString()})(${JSON.stringify({teamCount:9,role:current.searchParams.has('visualSignedOut')?'signedout':(['player','signedout'].includes(current.searchParams.get('visualRole'))?current.searchParams.get('visualRole'):'commissioner'),signOutFailure:current.searchParams.get('visualSignOutFailure')==='1',partialDraft:['/draft.html','/captain.html','/admin.html'].includes(current.pathname)})});`});}
+          if(url.hostname==='cdn.jsdelivr.net'&&url.pathname.includes('supabase-js')){const current=new URL(route.request().frame().url());return route.fulfill({contentType:'text/javascript',body:`(${installFixture.toString()})(${JSON.stringify({teamCount:9,role:current.searchParams.has('visualSignedOut')?'signedout':(['player','signedout'].includes(current.searchParams.get('visualRole'))?current.searchParams.get('visualRole'):'commissioner'),signOutFailure:current.searchParams.get('visualSignOutFailure')==='1',rosterFailure:current.searchParams.get('visualRosterFailure')==='1',partialDraft:['/draft.html','/captain.html','/admin.html'].includes(current.pathname)})});`});}
           if(url.origin===host.origin)return route.continue();
           return route.abort();
         });
@@ -263,6 +263,20 @@ async function main() {
           await directorySearch.fill('');
           await reserveRow.waitFor({state:'visible'});
           await capture('player-directory-reserve');
+          await page.goto(host.origin+'/scoring.html?visualRole=player&visualRosterFailure=1#hub');
+          await page.locator('#appHub:not(.hidden)').waitFor();
+          await page.locator('#hubScoring').click();
+          await page.locator('#appHub').waitFor({state:'hidden'});
+          await page.locator(width<700?'[data-mobile-view="players"]':'.tab[data-view="players"]').click();
+          await page.locator('#playersView:not(.hidden)').waitFor();
+          await page.locator('#playerDirectory [role="status"]').filter({hasText:'Registered account directory is temporarily unavailable'}).waitFor({state:'visible'});
+          if(await page.locator('#playerDirectory .player-row-public').count()!==36)throw new Error('Roster outage must preserve all 36 tournament golfers');
+          if(await page.locator('#playerDirectory .player-row-public').filter({hasText:'Registered Reserve Golfer'}).count()!==0)throw new Error('Roster outage must not invent reserve accounts');
+          await capture('player-directory-roster-unavailable');
+          await page.goto(host.origin+'/scoring.html?visualRole=player#hub');
+          await page.locator('#appHub:not(.hidden)').waitFor();await page.locator('#hubScoring').click();
+          await page.locator('#appHub').waitFor({state:'hidden'});
+
           await page.locator(width<700?'[data-mobile-view="leaderboard"]':'.tab[data-view="leaderboard"]').click();
           await page.locator('#leaderboardView:not(.hidden)').waitFor();await capture('player-my-score');
           for(const role of ['commissioner','player'])for(const target of ['hub','content']){
