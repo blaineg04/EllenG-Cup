@@ -273,11 +273,11 @@ async function main() {
           if(await page.locator('#playerDirectory .player-row-public').count()!==36)throw new Error('Roster outage must preserve all 36 tournament golfers');
           if(await page.locator('#playerDirectory .player-row-public').filter({hasText:'Registered Reserve Golfer'}).count()!==0)throw new Error('Roster outage must not invent reserve accounts');
           await capture('player-directory-roster-unavailable');
-          await page.goto(host.origin+'/scoring.html?visualRole=player#hub');
-          await page.locator('#appHub:not(.hidden)').waitFor();await page.locator('#hubScoring').click();
-          await page.locator('#appHub').waitFor({state:'hidden'});
-
-          await page.locator(width<700?'[data-mobile-view="leaderboard"]':'.tab[data-view="leaderboard"]').click();
+          // Stay in the same authenticated outage session: changing sessions here
+          // raced the mobile navigation initialization at intermediate widths.
+          const leaderboardTab=page.locator(width<700?'[data-mobile-view="leaderboard"]':'.tab[data-view="leaderboard"]');
+          await leaderboardTab.waitFor({state:'visible'});
+          await leaderboardTab.click();
           await page.locator('#leaderboardView:not(.hidden)').waitFor();await capture('player-my-score');
           for(const role of ['commissioner','player'])for(const target of ['hub','content']){
             await page.goto(host.origin+'/scoring.html?visualRole='+role+'&visualSignOutFailure=1&visualSignOutTarget='+target+'#hub');
