@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const html = fs.readFileSync('scoring.html', 'utf8');
 assert.match(html, /function renderPlayersDirectory\(\)/);
-assert.match(html, /const activeIndices=new Set\(golfers\.map\(g=>g\.index\)\)/);
+assert.match(html, /g\.participating===false\?"Not in this tournament"/, 'nonparticipants must be labeled correctly');
 assert.match(html, /Not in this tournament · Account preserved/);
 const activeTeamFunction = html.match(/function activeTeamCount\(\)\s*\{[\s\S]*?\n\}/)?.[0];
 assert.ok(activeTeamFunction, 'activeTeamCount implementation must exist');
