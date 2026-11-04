@@ -248,7 +248,7 @@ async function main() {
           await verifyNavigation(page,width,capture,'player-');
           await page.locator(width<700?'[data-mobile-view="players"]':'.tab[data-view="players"]').click();
           await page.locator('#playersView:not(.hidden)').waitFor();
-          await page.locator('#playerDirectory').getByText('Registered Reserve Golfer',{exact:true}).waitFor({state:'visible'});
+          try{await page.locator('#playerDirectory').getByText('Registered Reserve Golfer',{exact:true}).waitFor({state:'visible'});}catch(error){const diagnostic=await page.evaluate(()=>({directory:document.querySelector('#playerDirectory')?.innerText?.slice(-700),viewVisible:!document.querySelector('#playersView')?.classList.contains('hidden'),search:document.querySelector('#playerDirectorySearch')?.value,rosterCount:typeof publicRoster!=='undefined'?publicRoster.length:'unavailable'}));throw new Error('Registered nonparticipant missing from ordinary golfer directory: '+JSON.stringify(diagnostic)+'; '+error.message);}
           await page.locator('#playerDirectory').getByText('Not in this tournament · Account preserved',{exact:true}).waitFor({state:'visible'});
           await capture('player-directory-reserve');
           await page.locator(width<700?'[data-mobile-view="leaderboard"]':'.tab[data-view="leaderboard"]').click();
