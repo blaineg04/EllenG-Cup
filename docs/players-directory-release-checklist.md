@@ -17,7 +17,8 @@
 - [ ] Verify the 13 account-only users' correct full-name mappings with an authorized source before displaying profile links.
 - [ ] Verify all 36 registered golfers appear in the Players directory for a noncommissioner account, including account-only entries.
 - [ ] Verify all 23 active golfers appear in the draft and scoring, the 13 account-only users stay out, and team assignments/matchups are finalized only after registration closes.
-- [ ] Confirm the handicap display fix is included in the production deployment.
+- [x] Confirm the handicap display behavior is present in the development release candidate: public directory shows bands, stale unranked HCP is hidden in personal view, and unranked commissioner editor HCP is blank (source regression checks passed on `f547bf0`).
+- [ ] Confirm those handicap display changes are included in the approved production deployment.
 - [ ] Confirm the authenticated roster function's deployment and authorization before switching production directory behavior.
 - [ ] Obtain approval before the single bundled production deployment.
 
