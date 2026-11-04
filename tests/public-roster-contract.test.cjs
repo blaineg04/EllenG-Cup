@@ -24,5 +24,6 @@ assert.doesNotMatch(html, /g\.name\.toLowerCase\(\)===a\.displayName\.toLowerCas
 
 const fixture = fs.readFileSync('tests/visual/fixture.cjs', 'utf8');
 assert.match(fixture, /name === 'player-public-roster'/, 'isolated browser fixture must serve authenticated roster endpoint');
-assert.match(fixture, /displayName:'Registered Reserve Golfer',participating:false,golferIndex:null/, 'browser fixture must include registered nonparticipant without a draft slot');
+assert.match(fixture, /Array\.from\(\{length:13\}/, 'browser fixture must include thirteen registered nonparticipants');
+assert.match(fixture, /displayName:i===0\?'Registered Reserve Golfer'/, 'fixture must preserve named reserve sentinel');
 assert.match(html, /Not in this tournament · Account preserved/, 'directory must label account-only golfers without putting them in draft');
