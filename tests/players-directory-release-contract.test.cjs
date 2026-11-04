@@ -26,6 +26,18 @@ const countFor = (format, golfers, storedCount) => vm.runInNewContext(
 );
 assert.equal(countFor('shamble_points', ['A', 'B', 'C'], 35), 3, 'stale 35 must not inflate shamble count');
 assert.match(golferCountFunction, /g\.participating!==false/, 'nonparticipants excluded from shamble count');
+const mixedCount = vm.runInNewContext(`${golferCountFunction}; draftGolferCount()`, {
+  draftState: { playFormat: 'shamble_points', golferCount: 35, golfers: [
+    ...Array.from({ length: 22 }, (_, i) => ({ name: `Selected ${i + 1}` })),
+    { name: 'Justin Phillips', participating: false }
+  ] },
+  isShamblePoints: () => true
+});
+assert.equal(mixedCount, 22, '22 participants plus one preserved nonparticipant must yield 22');
+const draftHtml = fs.readFileSync('draft.html', 'utf8');
+assert.match(draftHtml, /S\\.golfers\\.filter\\(g=>g\\?\\.name && g\\.participating!==false\\)/, 'draft completion excludes nonparticipants');
+assert.match(draftHtml, /S\\.golfers\\.filter\\(g=>g\\.name && g\\.participating!==false && g\\.team==null\\)/, 'available pool excludes nonparticipants');
+
 assert.equal(countFor('standard', ['A', 'B', 'C'], 24), 24, 'standard setup count remains unchanged');
 assert.match(html, /function pointsHoleCards\(showEmpty=false,onlyHole=null,maxTeams=null\)/);
 assert.match(html, /pointsHoleCards\(true, null, 2\)/);
