@@ -21,17 +21,12 @@ Deno.serve(async (request) => {
 
   try {
     const draftId = 'elleng-cup';
-    const { data: member, error: memberError } = await admin.from('elleng_player_accounts')
-      .select('user_id').eq('draft_id', draftId).eq('user_id', auth.user.id).maybeSingle();
+    // The Players directory is a signed-in, app-wide listing. A golfer can
+    // view it before being added to the tournament's active draft or captain
+    // table. Do not use draft participation as a directory permission check.
     const { data: draft, error: draftError } = await admin.from('elleng_drafts')
-      .select('owner_id,state').eq('id', draftId).single();
-    if (memberError || draftError || !draft) throw new Error('Roster unavailable');
-    // Captains have legitimate tournament access even when they do not have a
-    // separate golfer-account row (e.g. commissioner-created captain login).
-    const { data: captain, error: captainError } = await admin.from('elleng_captains')
-      .select('user_id').eq('draft_id', draftId).eq('user_id', auth.user.id).maybeSingle();
-    if (captainError) throw new Error('Roster unavailable');
-    if (!member && !captain && draft.owner_id !== auth.user.id) return reply(403, { error: 'Golfer access required' });
+      .select('state').eq('id', draftId).single();
+    if (draftError || !draft) throw new Error('Roster unavailable');
     const { data: accounts, error: accountsError } = await admin.from('elleng_player_accounts')
       .select('golfer_index,username').eq('draft_id', draftId).limit(1000);
     if (accountsError) throw new Error('Roster unavailable');
