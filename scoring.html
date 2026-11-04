@@ -4644,7 +4644,7 @@ function renderPlayersDirectory(){
  const rowHtml=g=>{const band=playerBandLabel(g);const bandChip=band==="—"?"":`<span class="player-roster-band" title="Handicap band ${esc(band)}">${esc(band)}</span>`;return `<div class="player-row-public player-roster-only" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}<div class="player-team-inline">${esc(g.teamName)}</div></div>${bandChip}<div class="player-open-arrow">›</div></div>`};
  if(!rows.length&&!inactiveAccounts.some(a=>!q||String(a.displayName).toLowerCase().includes(q))){root.innerHTML=rosterWarning+'<div class="note">No matching players found.</div>';return}
  const sorted=rows.sort((a,b)=>{const ap=a.name.trim().split(/\s+/),bp=b.name.trim().split(/\s+/);return ap.at(-1).localeCompare(bp.at(-1),undefined,{sensitivity:"base"})||ap.slice(0,-1).join(" ").localeCompare(bp.slice(0,-1).join(" "),undefined,{sensitivity:"base"})||a.index-b.index;});
- root.innerHTML=rosterWarning+`<div class="player-directory-flat">${[...sorted.map(g=>({name:g.name,html:rowHtml(g)})),...inactiveAccounts.filter(a=>!q||String(a.displayName).toLowerCase().includes(q)).map(a=>({name:String(a.displayName),html:`<div class="player-row-public player-roster-only">${publicPlayerAvatar({name:a.displayName})}<div class="player-name-public">${esc(a.displayName)}<div class="player-team-inline">Not in this tournament · Account preserved</div></div></div>`}))].sort((a,b)=>{const ap=a.name.trim().split(/\s+/),bp=b.name.trim().split(/\s+/);return ap.at(-1).localeCompare(bp.at(-1),undefined,{sensitivity:"base"})||ap.slice(0,-1).join(" ").localeCompare(bp.slice(0,-1).join(" "),undefined,{sensitivity:"base"});}).map(r=>r.html).join("")}</div>`;
+ root.innerHTML=rosterWarning+`<div class="player-directory-flat">${[...sorted.map(g=>({name:g.name,html:rowHtml(g)})),...inactiveAccounts.filter(a=>!q||String(a.displayName).toLowerCase().includes(q)).map(a=>({name:String(a.displayName),html:`<div class="player-row-public player-roster-only">${publicPlayerAvatar({name:a.displayName,photo_url:a.photoUrl})}<div class="player-name-public">${esc(a.displayName)}<div class="player-team-inline">Not in this tournament · Account preserved</div></div></div>`}))].sort((a,b)=>{const ap=a.name.trim().split(/\s+/),bp=b.name.trim().split(/\s+/);return ap.at(-1).localeCompare(bp.at(-1),undefined,{sensitivity:"base"})||ap.slice(0,-1).join(" ").localeCompare(bp.slice(0,-1).join(" "),undefined,{sensitivity:"base"});}).map(r=>r.html).join("")}</div>`;
 }
 
 function renderRankingsDirectory(){
@@ -5139,12 +5139,36 @@ function renderRegisteredAccountSummary(){
      return '<div class="registered-reset-card" style="border-top:1px solid var(--line);padding:14px 0;display:grid;gap:12px;min-width:0">'+
        '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><strong style="overflow-wrap:anywhere">'+esc(label)+'</strong><span class="badge">Not in this tournament</span></div>'+
        '<div class="player-admin-row" style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px"><label><small>Golfer full name</small><input style="width:100%;box-sizing:border-box" data-inactive-name="'+i+'" value="'+esc(a.display_name||"")+'" placeholder="First and last name"></label><button class="secondary" style="min-height:44px" type="button" data-save-inactive-name="'+i+'">Save Name</button></div>'+
-       '<div class="player-photo-tools"><div class="player-photo-preview"><span>Profile photo: no tournament profile assigned</span></div></div>'+
+       '<div class="player-photo-tools"><label><small>Profile photo</small><input type="file" accept="image/*" data-inactive-photo-file="'+i+'"></label><button type="button" class="secondary" data-upload-inactive-photo="'+i+'">Upload Photo</button><div class="player-photo-preview">'+(a.photo_url?'<img src="'+esc(a.photo_url)+'" alt="'+esc(label)+'"><span>Current profile photo</span>':'<span>No photo yet — initials will be used.</span>')+'</div></div>'+
        '<div class="player-login-row" style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px"><label><small>Player username</small><input type="text" value="'+esc(a.username||"")+'" readonly aria-label="Player username (unchanged)"></label><label><small>Reset password (optional)</small><input style="width:100%;box-sizing:border-box" type="password" minlength="6" autocomplete="new-password" data-inactive-password="'+i+'" placeholder="6+ characters"></label><button style="min-height:44px" type="button" class="primary" data-reset-inactive="'+i+'">Update / Reset</button><div class="player-login-status">✓ Registered account · Excluded from draft and scoring</div></div>'+
        '<div class="status" aria-live="polite" data-reset-inactive-msg="'+i+'"></div></div>';
    }).join(""):'<div class="note">All registered accounts have a tournament golfer record.</div>');
+ root.querySelectorAll("[data-upload-inactive-photo]").forEach(button=>button.addEventListener("click",()=>uploadInactivePhoto(Number(button.dataset.uploadInactivePhoto))));
  root.querySelectorAll("[data-save-inactive-name]").forEach(button=>button.addEventListener("click",()=>saveInactiveName(Number(button.dataset.saveInactiveName))));
  root.querySelectorAll("[data-reset-inactive]").forEach(button=>button.addEventListener("click",()=>resetInactivePassword(Number(button.dataset.resetInactive))));
+}
+async function uploadInactivePhoto(i){
+ if(!isCommissioner)return;
+ const account=playerAccounts.find(a=>Number(a.golfer_index)===i);
+ if(!account)return;
+ const input=document.querySelector('[data-inactive-photo-file="'+i+'"]');
+ const msg=document.querySelector('[data-reset-inactive-msg="'+i+'"]');
+ const btn=document.querySelector('[data-upload-inactive-photo="'+i+'"]');
+ const file=input?.files?.[0];
+ if(!file){if(msg)msg.textContent="Choose a photo first.";return}
+ if(btn)btn.disabled=true;if(msg)msg.textContent="Uploading photo…";
+ try{
+   const url=await uploadPlayerPhotoFile(file,i,account.display_name||account.username);
+   const {data,error}=await db.functions.invoke("player-admin",{body:{action:"update_registered_photo",draft_id:DRAFT_ID,golfer_index:i,photo_url:url}});
+   if(error||data?.error)throw error||new Error(data.error);
+   const {data:list,error:listError}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});
+   if(listError||!Array.isArray(list?.accounts))throw listError||new Error("Photo saved; refresh to view.");
+   playerAccounts=list.accounts;
+   await loadPublicRoster();renderPlayersDirectory();renderRegisteredAccountSummary();
+   const fresh=document.querySelector('[data-reset-inactive-msg="'+i+'"]');
+   if(fresh)fresh.textContent="✓ Profile photo saved.";
+ }catch(e){if(msg)msg.textContent=e?.message||"Photo upload failed."}
+ finally{if(btn)btn.disabled=false}
 }
 async function saveInactiveName(i){
  if(!isCommissioner)return;
