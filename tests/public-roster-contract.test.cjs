@@ -1,0 +1,10 @@
+const fs = require('node:fs');
+const assert = require('node:assert/strict');
+const source = fs.readFileSync('supabase/functions/player-public-roster/index.ts', 'utf8');
+assert.match(source, /admin\.auth\.getUser\(/, 'verify the caller token');
+assert.match(source, /if \(!member && draft\.owner_id !== auth\.user\.id\)/, 'require linked golfer or commissioner');
+assert.match(source, /\.select\('golfer_index,username'\)/, 'fetch only roster linkage fields');
+assert.match(source, /displayName, participating:.*golferIndex:/, 'return public roster fields only');
+assert.doesNotMatch(source, /select\('\*'\)/, 'never select all private account columns');
+assert.doesNotMatch(source, /auth\.admin\.listUsers|updateUserById|deleteUser/, 'endpoint must not manage accounts');
+console.log('Authenticated public roster source contract passed');
