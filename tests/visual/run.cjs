@@ -246,6 +246,11 @@ async function main() {
           await page.locator('#appHub:not(.hidden)').waitFor();await page.locator('#hubScoring').click();
           await page.locator('#appHub').waitFor({state:'hidden'});await capture('player-home');
           await verifyNavigation(page,width,capture,'player-');
+          await page.locator(width<700?'[data-mobile-view="players"]':'.tab[data-view="players"]').click();
+          await page.locator('#playersView:not(.hidden)').waitFor();
+          await page.locator('#playerDirectory').getByText('Registered Reserve Golfer',{exact:true}).waitFor({state:'visible'});
+          await page.locator('#playerDirectory').getByText('Not in this tournament · Account preserved',{exact:true}).waitFor({state:'visible'});
+          await capture('player-directory-reserve');
           await page.locator(width<700?'[data-mobile-view="leaderboard"]':'.tab[data-view="leaderboard"]').click();
           await page.locator('#leaderboardView:not(.hidden)').waitFor();await capture('player-my-score');
           for(const role of ['commissioner','player'])for(const target of ['hub','content']){
