@@ -42,12 +42,13 @@ jobs:
           set -euo pipefail
           test "$(uname -s)" = Darwin
           export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$HOME/.volta/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"
-          for candidate in "$HOME/.nvm/versions/node"/*/bin/vercel "$HOME/.local/share/mise/installs/node"/*/bin/vercel; do
+          for candidate in "$HOME/.nvm/versions/node"/*/bin/vercel "$HOME/.local/share/mise/installs/node"/*/bin/vercel "$HOME/.npm/_npx"/*/node_modules/.bin/vercel; do
             if test -x "$candidate"; then export PATH="$(dirname "$candidate"):$PATH"; break; fi
           done
           if ! command -v vercel >/dev/null 2>&1; then
-            echo "BLOCKED: Vercel CLI is not installed on the MacBook runner." | tee -a "$GITHUB_STEP_SUMMARY"
-            exit 1
+            cli_dir="$RUNNER_TEMP/elleng-vercel-cli-$GITHUB_RUN_ID"
+            npm install --prefix "$cli_dir" --ignore-scripts --no-audit --no-fund vercel@65.4.0
+            export PATH="$cli_dir/node_modules/.bin:$PATH"
           fi
           echo "$(dirname "$(command -v vercel)")" >> "$GITHUB_PATH"
           vercel --version
@@ -86,3 +87,5 @@ jobs:
           if mount | grep -F " on $mount " >/dev/null; then hdiutil detach -quiet "$mount"; fi
           if test -f "$image"; then rm -f "$image"; fi
           if test -d "$mount"; then rmdir "$mount" 2>/dev/null || true; fi
+          cli_dir="$RUNNER_TEMP/elleng-vercel-cli-$GITHUB_RUN_ID"
+          if test -d "$cli_dir"; then rm -rf "$cli_dir"; fi
