@@ -9,10 +9,11 @@ assert.match(html, /const band=playerBandLabel\(g\);const bandChip=/, 'public di
 assert.match(html, /const rawHcp=isRanked\?String\(g\.hcp\?\?""\)\.trim\(\):""/, 'commissioner handicap editor must leave unranked exact handicap blank');
 assert.match(html, /const displayHcp=selfRanked&&String\(g\.hcp\?\?""\)\.trim\(\)!==""\?String\(g\.hcp\):"—"/, 'personal handicap display must hide stale unranked handicap');
 assert.match(html, /function renderRegisteredAccountSummary\(\)/, 'commissioner must see registered accounts outside tournament');
-assert.ok(html.includes('const inactive=publicRoster.filter(a=>{'), 'commissioner uses working public roster');
+assert.ok(html.includes('const inactive=playerAccounts.filter(a=>{'), 'commissioner uses registered accounts for password resets');
 assert.ok(html.includes('!golfers[i]?.name'), 'account-only entries remain separate');
-assert.ok(html.includes('a.golferIndex==null?NaN:Number(a.golferIndex)'), 'missing account index is not golfer zero');
+assert.ok(html.includes('a.golfer_index==null?NaN:Number(a.golfer_index)'), 'missing account index is not golfer zero');
 assert.match(html, /renderRegisteredAccountSummary\(\)/, 'commissioner player editor renders preserved account summary');
+assert.ok(html.includes('action:"reset_registered_password"'), 'commissioner can reset existing registered accounts without tournament membership');
 assert.match(html, /id="registeredAccountSummary"/, 'commissioner has a dedicated registered account section');
 const activeTeamFunction = html.match(/function activeTeamCount\(\)\s*\{[\s\S]*?\n\}/)?.[0];
 assert.ok(activeTeamFunction, 'activeTeamCount implementation must exist');
