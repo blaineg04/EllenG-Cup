@@ -1,0 +1,67 @@
+name: MacBook approved EllenG production release
+on:
+  push:
+    branches: ['release/macbook-approved-3b46216']
+    paths: ['.github/workflows/macbook-approved-production.yml']
+permissions:
+  contents: read
+concurrency:
+  group: elleng-production-release
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.repository == 'blaineg04/EllenG-Cup' && github.ref == 'refs/heads/release/macbook-approved-3b46216'
+    runs-on: [self-hosted, macOS]
+    environment: production
+    timeout-minutes: 15
+    steps:
+      - name: Check out only the user-approved release
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 3b462169fd078c8b51fb1bee9c588001e90825f0
+          path: approved-elleng-release
+          persist-credentials: false
+      - name: Verify approved source and existing CLI
+        working-directory: approved-elleng-release
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -s)" = Darwin
+          test "$(git rev-parse HEAD)" = 3b462169fd078c8b51fb1bee9c588001e90825f0
+          git diff --exit-code
+          export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$HOME/.volta/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"
+          for candidate in "$HOME/.nvm/versions/node"/*/bin/vercel "$HOME/.local/share/mise/installs/node"/*/bin/vercel; do
+            if test -x "$candidate"; then export PATH="$(dirname "$candidate"):$PATH"; break; fi
+          done
+          if ! command -v vercel >/dev/null 2>&1; then
+            echo "BLOCKED: Vercel CLI is not installed on the MacBook runner." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          echo "$(dirname "$(command -v vercel)")" >> "$GITHUB_PATH"
+          vercel --version
+          node --test tests/acceptance/player-home-navigation-race.test.cjs
+          node tests/public-roster-contract.test.cjs
+          node tests/players-directory-release-contract.test.cjs
+      - name: Build on MacBook and release approved production
+        working-directory: approved-elleng-release
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: team_K0z3DaMWKG5dYBawap4u3tAH
+          VERCEL_PROJECT_ID: prj_wpcMGLHuH21jWarwziP1mo85RBcC
+          CI: 'true'
+        run: |
+          set -euo pipefail
+          if test -z "${VERCEL_TOKEN:-}"; then unset VERCEL_TOKEN; fi
+          if ! vercel whoami >/dev/null 2>&1; then
+            echo "BLOCKED: MacBook Vercel CLI has no usable authentication; no deployment attempted." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          mkdir -p .vercel
+          node -e 'require("fs").writeFileSync(".vercel/project.json",JSON.stringify({orgId:process.env.VERCEL_ORG_ID,projectId:process.env.VERCEL_PROJECT_ID}))'
+          vercel project inspect elleng-cup --scope "$VERCEL_ORG_ID"
+          vercel pull --yes --environment=production --scope "$VERCEL_ORG_ID"
+          vercel build --prod --scope "$VERCEL_ORG_ID"
+          vercel deploy --prebuilt --prod --yes --scope "$VERCEL_ORG_ID" > "$RUNNER_TEMP/elleng-approved-production-url.txt"
+          cat "$RUNNER_TEMP/elleng-approved-production-url.txt"
+          echo "Production deployment submitted from approved commit 3b462169fd078c8b51fb1bee9c588001e90825f0." >> "$GITHUB_STEP_SUMMARY"
