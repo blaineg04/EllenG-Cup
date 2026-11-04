@@ -5,6 +5,8 @@ const html = fs.readFileSync('scoring.html', 'utf8');
 assert.match(html, /function renderPlayersDirectory\(\)/);
 assert.match(html, /const activeIndices=new Set\(golfers\.map\(g=>g\.index\)\)/);
 assert.match(html, /Not in this tournament · Account preserved/);
+assert.match(html, /const inactiveAccounts=\(playerAccounts\|\|\[\]\)\.filter\(/, 'preserved accounts must be visible to every golfer');
+assert.doesNotMatch(html, /const inactiveAccounts=isCommissioner\?/, 'public directory must not hide nonparticipants from golfers');
 const activeTeamFunction = html.match(/function activeTeamCount\(\)\s*\{[\s\S]*?\n\}/)?.[0];
 assert.ok(activeTeamFunction, 'activeTeamCount implementation must exist');
 for (const [format, legacyCount, expected] of [
