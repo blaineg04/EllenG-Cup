@@ -97,8 +97,15 @@ async function verifyNavigation(page, width, capture, prefix = '') {
     }).map(e=>e.textContent.trim());
   });
   if(unreadable.length)throw new Error('More menu text lacks contrast: '+unreadable.join(', '));
-  const menuNeedsScroll = await page.locator('.more-sheet').evaluate(e=>e.scrollHeight>e.clientHeight+2);
-  if(menuNeedsScroll)throw new Error('More menu hides destinations below its scroll area');
+  const menuReachability = await page.locator('.more-sheet').evaluate(e=>{
+    const needsScroll=e.scrollHeight>e.clientHeight+2;
+    if(!needsScroll)return {needsScroll,reachable:true};
+    e.scrollTop=e.scrollHeight;
+    const buttons=[...e.querySelectorAll('.more-menu-btn')].filter(b=>getComputedStyle(b).display!=='none'&&b.getClientRects().length);
+    const last=buttons.at(-1),sheet=e.getBoundingClientRect(),bottom=last?.getBoundingClientRect().bottom;
+    return {needsScroll,reachable:!!last&&bottom<=sheet.bottom+2&&bottom>=sheet.top};
+  });
+  if(!menuReachability.reachable)throw new Error('More menu destinations cannot be reached by scrolling');
   for(const selector of ['#moreAdminBtn','#moreScoringBtn']){
     if(await page.locator(selector).isVisible() !== (prefix !== 'player-'))throw new Error('Incorrect role visibility: '+selector);
   }
