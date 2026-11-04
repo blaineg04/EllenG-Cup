@@ -248,10 +248,10 @@ async function main() {
           await verifyNavigation(page,width,capture,'player-');
           await page.locator(width<700?'[data-mobile-view="players"]':'.tab[data-view="players"]').click();
           await page.locator('#playersView:not(.hidden)').waitFor();
-          const reserveRow=page.locator('#playerDirectory .player-row-public').filter({hasText:'Registered Reserve Golfer'});
+          const reserveRows=page.locator('#playerDirectory .player-row-public').filter({hasText:'Registered Reserve Golfer'});
+          const reserveRow=reserveRows.filter({hasText:'Not in this tournament · Account preserved'}).first();
           await reserveRow.waitFor({state:'visible'});
-          if(await reserveRow.count()!==1)throw new Error('Expected exactly one registered reserve row');
-          const reserveCount=await page.locator('#playerDirectory .player-row-public').filter({hasText:'Registered Reserve Golfer'}).count();
+          const reserveCount=await reserveRows.count();
           if(reserveCount!==13)throw new Error('Expected all 13 registered reserve rows; found '+reserveCount);
           const reserveText=await reserveRow.innerText();
           if(!reserveText.includes('Not in this tournament · Account preserved'))throw new Error('Reserve golfer status missing: '+reserveText);
