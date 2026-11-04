@@ -28,12 +28,12 @@ assert.equal(countFor('shamble_points', ['A', 'B', 'C'], 35), 3, 'stale 35 must 
 assert.match(golferCountFunction, /g\.participating!==false/, 'nonparticipants excluded from shamble count');
 const mixedCount = vm.runInNewContext(`${golferCountFunction}; draftGolferCount()`, {
   draftState: { playFormat: 'shamble_points', golferCount: 35, golfers: [
-    ...Array.from({ length: 22 }, (_, i) => ({ name: `Selected ${i + 1}` })),
-    { name: 'Justin Phillips', participating: false }
+    ...Array.from({ length: 23 }, (_, i) => ({ name: `Participating ${i + 1}` })),
+    ...Array.from({ length: 13 }, (_, i) => ({ name: `Registered Reserve ${i + 1}`, participating: false }))
   ] },
   isShamblePoints: () => true
 });
-assert.equal(mixedCount, 22, '22 participants plus one preserved nonparticipant must yield 22');
+assert.equal(mixedCount, 23, '23 participants plus 13 preserved nonparticipants must yield 23');
 const draftHtml = fs.readFileSync('draft.html', 'utf8');
 assert.match(draftHtml, /S\.golfers\.filter\(g=>g\?\.name && g\.participating!==false\)/, 'draft completion excludes nonparticipants');
 assert.match(draftHtml, /S\.golfers\.filter\(g=>g\.name && g\.participating!==false && g\.team==null\)/, 'available pool excludes nonparticipants');
