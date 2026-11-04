@@ -12,7 +12,7 @@
 ## Release gates
 
 - [x] Preserve all registered accounts; do not reset passwords or reassign accounts.
-- [x] MacBook scoring and responsive isolated tests passed on commit `72e32b4` (164 contracts; 246 browser views, zero issues). Synthetic ordinary-golfer browser checks confirm an account-only nonparticipant remains visible and correctly labeled across all seven widths. Database acceptance and November 20 score integrity also passed. This is **not** a live authenticated 36-account verification.
+- [x] MacBook scoring and responsive isolated tests passed on commit `38a1f30` (164 contracts; 246 browser views, zero issues). Synthetic ordinary-golfer browser checks now verify all **13** account-only nonparticipants are visible and correctly labeled across seven widths, and searching for a specific reserve returns one matching account. Database acceptance and November 20 score integrity also passed. This is **not** a live authenticated 36-account verification.
 - [x] User confirmed all 23 currently participating golfers are playing November 20; preserve all 23.
 - [ ] Verify the 13 account-only users' correct full-name mappings with an authorized source before displaying profile links.
 - [ ] Verify all 36 registered golfers appear in the Players directory for a noncommissioner account, including account-only entries.
