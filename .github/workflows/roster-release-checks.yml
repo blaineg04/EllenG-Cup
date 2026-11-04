@@ -1,0 +1,21 @@
+name: EllenG roster release checks
+on:
+  push:
+    branches:
+      - fix/players-directory-preserve-unselected-20261103
+  workflow_dispatch:
+jobs:
+  roster-contracts:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify public roster contract
+        run: node tests/public-roster-contract.test.cjs
+      - name: Verify directory and draft contract
+        run: node tests/players-directory-release-contract.test.cjs
