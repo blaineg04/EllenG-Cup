@@ -267,8 +267,15 @@ async function main() {
           await page.locator('#appHub:not(.hidden)').waitFor();
           await page.locator('#hubScoring').click();
           await page.locator('#appHub').waitFor({state:'hidden'});
-          await page.locator(width<700?'[data-mobile-view="players"]':'.tab[data-view="players"]').click();
-          await page.locator('#playersView:not(.hidden)').waitFor();
+          const outagePlayersTab=page.locator(width<700?'[data-mobile-view="players"]':'.tab[data-view="players"]');
+          await outagePlayersTab.waitFor({state:'visible'});
+          await outagePlayersTab.click();
+          // Mobile menu transitions can briefly override a tab selection on slow runners.
+          // Retry the navigation only if the intended view did not become visible.
+          if(!(await page.locator('#playersView:not(.hidden)').isVisible())){
+            await outagePlayersTab.click();
+          }
+          await page.locator('#playersView:not(.hidden)').waitFor({timeout:10000});
           await page.locator('#playerDirectory [role="status"]').filter({hasText:'Registered account directory is temporarily unavailable'}).waitFor({state:'visible'});
           if(await page.locator('#playerDirectory .player-row-public').count()!==36)throw new Error('Roster outage must preserve all 36 tournament golfers');
           if(await page.locator('#playerDirectory .player-row-public').filter({hasText:'Registered Reserve Golfer'}).count()!==0)throw new Error('Roster outage must not invent reserve accounts');
