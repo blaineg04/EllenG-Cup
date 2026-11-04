@@ -15,3 +15,6 @@ assert.match(html, /async function loadPublicRoster\(\)/, 'roster loader exists'
 assert.match(html, /loadPublicRoster\(\),/, 'roster loads on app startup');
 assert.match(html, /const inactiveAccounts=publicRoster\.filter\(a=>!a\.participating/, 'nonparticipants shown without relying on null indices');
 assert.doesNotMatch(html, /const inactiveAccounts=isCommissioner\?/, 'directory visibility is not commissioner-only');
+
+assert.match(source, /account\.golfer_index == null \? NaN : Number\(account\.golfer_index\)/, 'missing golfer index must never map to golfer zero');
+assert.match(html, /g\.participating===false\?"Not in this tournament"/, 'nonparticipants labeled outside tournament');
