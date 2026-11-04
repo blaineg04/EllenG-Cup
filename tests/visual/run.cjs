@@ -166,7 +166,7 @@ async function main() {
         await context.addInitScript(()=>{if(new URL(location.href).searchParams.has('visualSignedOut'))sessionStorage.removeItem('elleng_internal_menu');else sessionStorage.setItem('elleng_internal_menu','1');});
         await context.route('**/*',async route=>{
           const url=new URL(route.request().url());
-          if(url.hostname==='cdn.jsdelivr.net'&&url.pathname.includes('supabase-js')){const current=new URL(route.request().frame().url());return route.fulfill({contentType:'text/javascript',body:`(${installFixture.toString()})(${JSON.stringify({teamCount:9,role:['player','signedout'].includes(current.searchParams.get('visualRole'))?current.searchParams.get('visualRole'):'commissioner',signOutFailure:current.searchParams.get('visualSignOutFailure')==='1',partialDraft:['/draft.html','/captain.html','/admin.html'].includes(current.pathname)})});`});}
+          if(url.hostname==='cdn.jsdelivr.net'&&url.pathname.includes('supabase-js')){const current=new URL(route.request().frame().url());return route.fulfill({contentType:'text/javascript',body:`(${installFixture.toString()})(${JSON.stringify({teamCount:9,role:current.searchParams.has('visualSignedOut')?'signedout':(['player','signedout'].includes(current.searchParams.get('visualRole'))?current.searchParams.get('visualRole'):'commissioner'),signOutFailure:current.searchParams.get('visualSignOutFailure')==='1',partialDraft:['/draft.html','/captain.html','/admin.html'].includes(current.pathname)})});`});}
           if(url.origin===host.origin)return route.continue();
           return route.abort();
         });
