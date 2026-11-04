@@ -6039,24 +6039,9 @@ document.body.classList.add("login-mode");setGlobalMenuVisible(false);setMobileN
 }
 function forceSignedInHome(){
  if(!user)return;
- // Only regular players get the repeated Home landing guard.
- // Commissioner/captain sessions are left alone so admin rendering/navigation cannot be interrupted.
- if(isCommissioner||captainTeam!=null){showView("home");return;}
- const goHome=()=>{
-   if(!user||isCommissioner||captainTeam!=null)return;
-   const home=$("homeView");
-   if(!home)return;
-   document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));
-   home.classList.remove("hidden");
-   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.view==="home"));
-   document.querySelectorAll(".mobile-nav-btn").forEach(x=>x.classList.toggle("active",x.dataset.mobileView==="home"));
-   document.body.classList.remove("extras-screen-active");
-   window.scrollTo({top:0,behavior:"auto"});
- };
- goHome();
- requestAnimationFrame(goHome);
- setTimeout(goHome,120);
- setTimeout(goHome,450);
+ // Set the initial destination once; delayed redirects can override a golfer's next tap.
+ showView("home");
+ window.scrollTo({top:0,behavior:"auto"});
 }
 
 async function enterApp(){
