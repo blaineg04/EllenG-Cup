@@ -4616,6 +4616,7 @@ function playerHandicapLabel(g){
 }
 function golferTeamIndex(golferIndex){
  const g=draftState?.golfers?.[golferIndex];
+ if(!g||g.participating===false)return null;
  if(g&&g.team!==null&&g.team!==undefined&&g.team!==""&&Number.isInteger(Number(g.team)))return Number(g.team);
  const ts=Array.isArray(draftState?.teams)?draftState.teams:[];
  const found=ts.findIndex(t=>(Array.isArray(t?.roster)?t.roster:[]).some(r=>Number(typeof r==="object"?r?.golferIndex:r)===Number(golferIndex)));
@@ -4945,7 +4946,7 @@ function ensureDraftShape(){
 }
 function rebuildTeamRosters(){
  ensureDraftShape(); draftState.teams.forEach(t=>t.roster=[]);
- draftState.golfers.forEach((g,i)=>{let ti=(g.team==null||g.team==="")?null:Number(g.team);if(Number.isInteger(ti)&&ti>=0&&ti<draftState.teams.length){g.team=ti;draftState.teams[ti].roster.push(i)}else g.team=null});
+ draftState.golfers.forEach((g,i)=>{if(g.participating===false){g.team=null;return}let ti=(g.team==null||g.team==="")?null:Number(g.team);if(Number.isInteger(ti)&&ti>=0&&ti<draftState.teams.length){g.team=ti;draftState.teams[ti].roster.push(i)}else g.team=null});
 }
 
 const TEAM_DEFAULT_COLORS=["#d5a72c","#188754","#2f6fc0","#a7263d","#8750b5","#df6f2f","#248b8b","#6f7a85","#b48a17"];
