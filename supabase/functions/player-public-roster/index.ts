@@ -15,8 +15,8 @@ Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
   if (request.method !== 'POST') return reply(405, { error: 'Method not allowed' });
   const bearer = request.headers.get('authorization') || '';
-  if (!/^Bearer\\s+\\S+$/i.test(bearer)) return reply(401, { error: 'Sign in required' });
-  const { data: auth, error: authError } = await admin.auth.getUser(bearer.replace(/^Bearer\\s+/i, ''));
+  if (!/^Bearer\s+\S+$/i.test(bearer)) return reply(401, { error: 'Sign in required' });
+  const { data: auth, error: authError } = await admin.auth.getUser(bearer.replace(/^Bearer\s+/i, ''));
   if (authError || !auth.user) return reply(401, { error: 'Sign in required' });
 
   try {
