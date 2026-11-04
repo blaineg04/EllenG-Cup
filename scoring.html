@@ -5128,7 +5128,7 @@ function renderRegisteredAccountSummary(){
  const root=$("registeredAccountSummary");if(!root)return;
  const golfers=Array.isArray(draftState?.golfers)?draftState.golfers:[];
  const inactive=playerAccounts.filter(a=>{
-   const i=Number(a.golfer_index);
+   const i=a.golfer_index==null?NaN:Number(a.golfer_index);
    return !Number.isInteger(i)||i<0||!golfers[i]?.name;
  }).sort((a,b)=>String(a.username||"").localeCompare(String(b.username||"")));
  root.innerHTML='<strong>Registered accounts not in this tournament ('+inactive.length+')</strong>'+
