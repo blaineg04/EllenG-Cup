@@ -5127,13 +5127,15 @@ async function uploadExistingPlayerPhoto(i){
 function renderRegisteredAccountSummary(){
  const root=$("registeredAccountSummary");if(!root)return;
  const golfers=Array.isArray(draftState?.golfers)?draftState.golfers:[];
- const inactive=playerAccounts.filter(a=>{
-   const i=a.golfer_index==null?NaN:Number(a.golfer_index);
-   return !Number.isInteger(i)||i<0||!golfers[i]?.name;
- }).sort((a,b)=>String(a.username||"").localeCompare(String(b.username||"")));
- root.innerHTML='<strong>Registered accounts not in this tournament ('+inactive.length+')</strong>'+
-   '<div class="note">These accounts remain active and visible in Players. They are not eligible for the current draft or scoring. Account names are not yet linked to full golfer profiles.</div>'+
-   (inactive.length?inactive.map(a=>'<div class="player-admin-row"><span>'+esc(String(a.username||"Registered golfer"))+'</span><span>Not playing</span></div>').join(""):'<div class="note">All registered accounts have a tournament golfer record.</div>');
+ // The public roster is the authoritative directory; player-admin may return only linked accounts.
+ const inactive=publicRoster.filter(a=>{
+   const i=a.golferIndex==null?NaN:Number(a.golferIndex);
+   return !a.participating||!Number.isInteger(i)||i<0||!golfers[i]?.name||golfers[i]?.participating===false;
+ }).sort((a,b)=>String(a.displayName||"").localeCompare(String(b.displayName||"")));
+ root.innerHTML='<strong>Registered golfers not playing this tournament ('+inactive.length+')</strong>'+
+   '<div class="note">These registered accounts stay visible in the golfer directory but are excluded from this tournament draft and scoring. Names shown are those currently available in the account directory.</div>'+
+   (publicRosterUnavailable?'<div class="note">Registered account directory temporarily unavailable.</div>':'')+
+   (inactive.length?inactive.map(a=>'<div class="player-admin-row"><span>'+esc(String(a.displayName||"Registered golfer"))+'</span><span>Not playing</span></div>').join(""):'<div class="note">No additional registered golfers found.</div>');
 }
 function renderPlayerEditor(){
  ensureDraftShape();
