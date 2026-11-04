@@ -1,10 +1,24 @@
 # Players directory release checks
 
-- Verify the 35 existing golfer accounts remain intact; do not reset passwords or reassign accounts.
-- Confirm only the 22 selected golfers are eligible for the November 20 draft.
-- Verify excluded golfers remain outside draft and scoring.
-- The current PR displays excluded accounts by username to commissioner only. It is not a complete golfer directory and must not be released as one.
-- Confirm proper account-to-name mapping before adding full names or profile links.
-- Test on the MacBook self-hosted runner before merging.
-- Confirm the handicap display fix is included in the eventual production deployment.
-- Do not alter live draft, scoring, or production database during verification.
+## Confirmed read-only live audit (November 3, 2026)
+
+- 36 existing golfer accounts remain in the database; no account resets or reassignment performed.
+- The current draft state contains 23 named golfer entries, all marked participating.
+- 23 accounts map to those named entries; 13 other accounts have indices beyond the current draft golfer array.
+- This is **not** a verified 22-person active roster. Do not change participation flags automatically to force a count.
+- The account-only directory fallback currently uses username, not a verified full name or linked player profile. Do not claim it provides full golfer profiles.
+- The authenticated `player-public-roster` Edge Function is committed on this branch but is not confirmed deployed to production.
+
+## Release gates
+
+- [x] Preserve all registered accounts; do not reset passwords or reassign accounts.
+- [x] MacBook scoring and responsive isolated tests passed (164 contracts; 239 browser views, zero issues) on commit `23b8800`.
+- [ ] Confirm which golfers are active for November 20; user previously requested 22, live state currently marks 23.
+- [ ] Verify the 13 account-only users' correct full-name mappings with an authorized source before displaying profile links.
+- [ ] Verify all 36 registered golfers appear in the Players directory for a noncommissioner account, including account-only entries.
+- [ ] Verify only selected participants appear in the draft, pairings, and scoring.
+- [ ] Confirm the handicap display fix is included in the production deployment.
+- [ ] Confirm the authenticated roster function's deployment and authorization before switching production directory behavior.
+- [ ] Obtain approval before the single bundled production deployment.
+
+Do not alter the live draft, scoring, or production database during verification.
