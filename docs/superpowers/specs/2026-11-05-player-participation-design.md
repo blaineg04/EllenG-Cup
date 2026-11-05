@@ -5,3 +5,5 @@ Approved by the user: new golfers default to Not playing; commissioner can choos
 Approach: retain existing participating boolean and stable golfer_index, add a small status control and commissioner-only atomic database operation. Reusing Remove would reindex golfers and was rejected. RSVP alone does not control draft membership. Build only in a development branch; production and live data stay unchanged pending verification and preview.
 
 User-approved extension: Players header shows Total golfers in app, including playing, excluded and account-only golfers without double-counting linked accounts. Search does not change the app total. If account directory retrieval fails, show total temporarily unavailable rather than a partial total. Reuse the existing subtitle line to preserve mobile spacing.
+
+User-approved extension: display Playing in this tournament beneath the total, counting named golfers whose participating flag is not false, including unassigned eligible golfers. Keep this count independent of search. Remove Account preserved from the nonplaying directory description.

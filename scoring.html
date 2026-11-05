@@ -3302,7 +3302,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 <section id="playersView" class="view hidden">
 <div class="card">
   <div class="row between">
-    <div><h2 style="margin:0">Players</h2><div class="status" id="playerDirectoryTotal" role="status">Total golfers in app: loading…</div></div>
+    <div><h2 style="margin:0">Players</h2><div class="status" id="playerDirectoryTotal" role="status">Total golfers in app: loading…</div><div class="status" id="playerDirectoryPlaying" role="status">Playing in this tournament: loading…</div></div>
     <span class="badge">LIVE DRAFT SYNC</span>
   </div>
   <div class="players-toolbar players-toolbar-single">
@@ -4640,6 +4640,8 @@ function renderPlayersDirectory(){
  const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>({...(g||{}),index:i,name:(g?.name||"").trim()})).filter(g=>g.name);
  // Keep all named golfers visible, including those excluded from this tournament.
  const inactiveAccounts=publicRoster.filter(a=>!a.participating&&!golfers.some(g=>Number.isInteger(a.golferIndex)&&g.index===a.golferIndex));
+ const playing=$("playerDirectoryPlaying");
+ if(playing)playing.textContent=`Playing in this tournament: ${golfers.filter(g=>g.participating!==false).length}`;
  const total=$("playerDirectoryTotal");
  if(total)total.textContent=publicRosterUnavailable?"Total golfers in app: temporarily unavailable":`Total golfers in app: ${golfers.length+inactiveAccounts.length}`;
  const q=($("playerDirectorySearch")?.value||"").trim().toLowerCase();
@@ -4647,7 +4649,7 @@ function renderPlayersDirectory(){
  const rowHtml=g=>{const band=playerBandLabel(g);const bandChip=band==="—"?"":`<span class="player-roster-band" title="Handicap band ${esc(band)}">${esc(band)}</span>`;return `<div class="player-row-public player-roster-only" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}<div class="player-team-inline">${esc(g.teamName)}</div></div>${bandChip}<div class="player-open-arrow">›</div></div>`};
  if(!rows.length&&!inactiveAccounts.some(a=>!q||String(a.displayName).toLowerCase().includes(q))){root.innerHTML=rosterWarning+'<div class="note">No matching players found.</div>';return}
  const sorted=rows.sort((a,b)=>{const ap=a.name.trim().split(/\s+/),bp=b.name.trim().split(/\s+/);return ap.at(-1).localeCompare(bp.at(-1),undefined,{sensitivity:"base"})||ap.slice(0,-1).join(" ").localeCompare(bp.slice(0,-1).join(" "),undefined,{sensitivity:"base"})||a.index-b.index;});
- root.innerHTML=rosterWarning+`<div class="player-directory-flat">${[...sorted.map(g=>({name:g.name,html:rowHtml(g)})),...inactiveAccounts.filter(a=>!q||String(a.displayName).toLowerCase().includes(q)).map(a=>({name:String(a.displayName),html:`<div class="player-row-public player-roster-only">${publicPlayerAvatar({name:a.displayName,photo_url:a.photoUrl})}<div class="player-name-public">${esc(a.displayName)}<div class="player-team-inline">Not in this tournament · Account preserved</div></div></div>`}))].sort((a,b)=>{const ap=a.name.trim().split(/\s+/),bp=b.name.trim().split(/\s+/);return ap.at(-1).localeCompare(bp.at(-1),undefined,{sensitivity:"base"})||ap.slice(0,-1).join(" ").localeCompare(bp.slice(0,-1).join(" "),undefined,{sensitivity:"base"});}).map(r=>r.html).join("")}</div>`;
+ root.innerHTML=rosterWarning+`<div class="player-directory-flat">${[...sorted.map(g=>({name:g.name,html:rowHtml(g)})),...inactiveAccounts.filter(a=>!q||String(a.displayName).toLowerCase().includes(q)).map(a=>({name:String(a.displayName),html:`<div class="player-row-public player-roster-only">${publicPlayerAvatar({name:a.displayName,photo_url:a.photoUrl})}<div class="player-name-public">${esc(a.displayName)}<div class="player-team-inline">Not in this tournament</div></div></div>`}))].sort((a,b)=>{const ap=a.name.trim().split(/\s+/),bp=b.name.trim().split(/\s+/);return ap.at(-1).localeCompare(bp.at(-1),undefined,{sensitivity:"base"})||ap.slice(0,-1).join(" ").localeCompare(bp.slice(0,-1).join(" "),undefined,{sensitivity:"base"});}).map(r=>r.html).join("")}</div>`;
 }
 
 function renderRankingsDirectory(){
