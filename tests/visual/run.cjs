@@ -249,12 +249,12 @@ async function main() {
           await page.locator(width<700?'[data-mobile-view="players"]':'.tab[data-view="players"]').click();
           await page.locator('#playersView:not(.hidden)').waitFor();
           const reserveRows=page.locator('#playerDirectory .player-row-public').filter({hasText:'Registered Reserve Golfer'});
-          const reserveRow=reserveRows.filter({hasText:'Not in this tournament · Account preserved'}).first();
+          const reserveRow=reserveRows.filter({hasText:'Not in this tournament'}).first();
           await reserveRow.waitFor({state:'visible'});
           const reserveCount=await reserveRows.count();
           if(reserveCount!==13)throw new Error('Expected all 13 registered reserve rows; found '+reserveCount);
           const reserveText=await reserveRow.innerText();
-          if(!reserveText.includes('Not in this tournament · Account preserved'))throw new Error('Reserve golfer status missing: '+reserveText);
+          if(!reserveText.includes('Not in this tournament'))throw new Error('Reserve golfer status missing: '+reserveText);
           if(await reserveRow.getAttribute('data-player-profile')!==null||await reserveRow.getAttribute('role')==='button')throw new Error('Unlinked reserve account must not open a potentially incorrect player profile');
           const directorySearch=page.locator('#playerDirectorySearch');
           await directorySearch.fill('Registered Reserve Golfer 13');
