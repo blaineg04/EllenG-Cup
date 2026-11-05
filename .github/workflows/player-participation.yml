@@ -10,8 +10,34 @@ jobs:
     runs-on: [self-hosted, macOS]
     steps:
       - uses: actions/checkout@v4
-      - name: Participation behavior
-        run: node --test tests/player-participation.test.cjs
+      - name: Extract case-sensitive test copy
+        shell: bash
+        run: |
+          image="$RUNNER_TEMP/elleng-participation-$GITHUB_RUN_ID.dmg"
+          mount_dir="$RUNNER_TEMP/elleng-participation-mount-$GITHUB_RUN_ID"
+          mkdir -p "$mount_dir"
+          hdiutil create -quiet -size 512m -fs HFSX -volname EllenGParticipation "$image"
+          hdiutil attach -quiet -nobrowse -mountpoint "$mount_dir" "$image"
+          echo "ELLENG_VERIFY_DIR=$mount_dir" >> "$GITHUB_ENV"
+          git archive HEAD | tar -xf - -C "$mount_dir"
+      - name: Participation and app regression tests
+        working-directory: ${{ env.ELLENG_VERIFY_DIR }}
+        run: node --test tests/player-participation.test.cjs tests/nov20-production-score-integrity.test.cjs tests/alternate-scoring-validation.test.cjs tests/draft-two-client-simulation.test.cjs tests/acceptance/player-home-navigation-race.test.cjs
+      - name: Synthetic responsive browser rehearsal
+        working-directory: ${{ env.ELLENG_VERIFY_DIR }}
+        run: |
+          npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
+          tests/visual/node_modules/.bin/playwright install chromium
+          node tests/visual/run.cjs
+      - name: Clean synthetic test volume
+        if: always()
+        shell: bash
+        run: |
+          mount_dir="$RUNNER_TEMP/elleng-participation-mount-$GITHUB_RUN_ID"
+          image="$RUNNER_TEMP/elleng-participation-$GITHUB_RUN_ID.dmg"
+          hdiutil detach -quiet "$mount_dir" || hdiutil detach -quiet -force "$mount_dir" || true
+          rm -f "$image"
+          rmdir "$mount_dir" 2>/dev/null || true
   database:
     runs-on: ubuntu-latest
     steps:
