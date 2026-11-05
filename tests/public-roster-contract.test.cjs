@@ -30,14 +30,14 @@ assert.doesNotMatch(html, /const inactiveAccounts=isCommissioner\?/, 'directory 
 assert.match(source, /account\.golfer_index == null \? NaN : Number\(account\.golfer_index\)/, 'missing golfer index must never map to golfer zero');
 assert.match(html, /g\.participating===false\?"Not in this tournament"/, 'nonparticipants labeled outside tournament');
 
-assert.match(html, /!golfers\.some\(g=>Number\.isInteger\(a\.golferIndex\)&&g\.index===a\.golferIndex\)/, 'directory deduplicates by linked golfer index, never by possibly shared display name');
+assert.ok(html.includes('g.index===(Number.isInteger(a.golferIndex)?a.golferIndex:a.accountIndex)'), 'directory deduplicates by stable golfer or account index, never shared display name');
 assert.doesNotMatch(html, /g\.name\.toLowerCase\(\)===a\.displayName\.toLowerCase\(\)/, 'a same-name account must not disappear from the directory');
 
 const fixture = fs.readFileSync('tests/visual/fixture.cjs', 'utf8');
 assert.match(fixture, /name === 'player-public-roster'/, 'isolated browser fixture must serve authenticated roster endpoint');
 assert.match(fixture, /Array\.from\(\{length:13\}/, 'browser fixture must include thirteen registered nonparticipants');
 assert.match(fixture, /displayName:i===0\?'Registered Reserve Golfer'/, 'fixture must preserve named reserve sentinel');
-assert.match(html, /Not in this tournament · Account preserved/, 'directory must label account-only golfers without putting them in draft');
+assert.doesNotMatch(html, /Not in this tournament · Account preserved/, 'removed account-preserved wording must stay removed');
 
 const vm = require('node:vm');
 const mapping = source.slice(source.indexOf('const players ='), source.indexOf('return reply(200, { players });'));
