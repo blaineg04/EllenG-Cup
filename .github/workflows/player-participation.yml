@@ -1,0 +1,29 @@
+name: EllenG player participation verification
+on:
+  push:
+    branches: [development/player-participation-20261105]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  interface:
+    runs-on: [self-hosted, macOS]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Participation behavior
+        run: node --test tests/player-participation.test.cjs
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Disposable PostgreSQL rehearsal
+        shell: bash
+        run: |
+          export PATH="/usr/lib/postgresql/17/bin:/usr/lib/postgresql/16/bin:$PATH"
+          tmp=$(mktemp -d)
+          trap 'pg_ctl -D "$tmp/data" -m immediate stop >/dev/null 2>&1 || true; rm -rf "$tmp"' EXIT
+          mkdir "$tmp/socket"
+          initdb -D "$tmp/data" -A trust -U elleng_ci >/dev/null
+          pg_ctl -D "$tmp/data" -o "-c listen_addresses='' -k '$tmp/socket'" -l "$tmp/log" start
+          createdb -h "$tmp/socket" -U elleng_ci elleng_participation_test
+          psql -X -h "$tmp/socket" -U elleng_ci -d elleng_participation_test -v ON_ERROR_STOP=1 -f tests/participation-native.sql
