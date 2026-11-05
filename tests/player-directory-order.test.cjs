@@ -2,7 +2,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const source=fs.readFileSync('scoring.html','utf8');
 function directory(names,query=''){
  const root={innerHTML:''};
- const ctx={draftState:{golfers:names.map(name=>({name})),teams:[]},$:id=>id==='playerDirectory'?root:{value:query},golferTeamIndex:()=>null,playerBandLabel:()=> '—',publicPlayerAvatar:()=>'',esc:x=>String(x)};
+ const ctx={publicRoster:[],publicRosterUnavailable:false,draftState:{golfers:names.map(name=>({name})),teams:[]},$:id=>id==='playerDirectory'?root:{value:query},golferTeamIndex:()=>null,playerBandLabel:()=> '—',publicPlayerAvatar:()=>'',esc:x=>String(x)};
  vm.createContext(ctx);vm.runInContext(source.slice(source.indexOf('function renderPlayersDirectory(){'),source.indexOf('function renderRankingsDirectory(){'))+';renderPlayersDirectory();',ctx);
  return [...root.innerHTML.matchAll(/data-player-profile="(\d+)"/g)].map(m=>Number(m[1]));
 }
