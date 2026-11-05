@@ -1,0 +1,20 @@
+name: Weighted draft balance
+on:
+  pull_request:
+    paths: ['weighted-draft.js', 'common.js', 'admin.html', 'captain.html', 'draft.html', 'db/releases/weighted-draft/**', 'tests/weighted-draft*', 'tests/weighted-admin-behavior.test.cjs', 'tests/support/weighted-postgres/**', '.github/workflows/weighted-draft-balance.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  weighted-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: node --test tests/weighted-admin-behavior.test.cjs tests/weighted-draft.test.cjs tests/draft-turn-order.test.cjs tests/draft-submitted-band.test.cjs tests/commissioner-session-fence.test.cjs tests/draft-participant-scope.test.cjs
+      - run: npm ci --prefix tests/support/weighted-postgres --ignore-scripts --no-audit --no-fund
+      - name: Verify isolated PostgreSQL parity and authorization
+        run: PGLITE_MODULE="$GITHUB_WORKSPACE/tests/support/weighted-postgres/node_modules/@electric-sql/pglite" node tests/weighted-draft-postgres.cjs

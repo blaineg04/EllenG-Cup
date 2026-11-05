@@ -10,7 +10,7 @@
 <input id="password" type="password" autocomplete="current-password" placeholder="Password" style="max-width:240px">
 <button id="login" class="gold">Sign In</button>
 </div><div id="authMsg" class="muted"></div></div>
-<div id="adminApp" style="display:none"><div class="card"><div class="actions"><button id="setupBtn" class="alt">Setup</button><button id="undo" class="gold">Undo Pick</button><button id="pause" class="alt">Pause/Resume</button><button id="resetClock" class="alt">Reset Clock</button></div></div>
+<div id="adminApp" style="display:none"><div class="card"><div class="actions"><button id="setupBtn" class="alt">Setup</button><button id="undo" class="gold">Undo Pick</button><button id="prepareWeighted" class="gold">Prepare Balanced Draft</button><button id="pause" class="alt">Pause/Resume</button><button id="resetClock" class="alt">Reset Clock</button></div></div>
 <section class="card" aria-labelledby="rsvpPreviewHeading"><h3 id="rsvpPreviewHeading">Approved RSVP cross-check</h3>
 <p id="rsvpReadinessStatus" class="muted" role="status" aria-live="polite">Event RSVP preview is disabled until the reviewed migration and authenticated rehearsal are approved.</p>
 <button id="refreshRsvpPreview" type="button" class="alt" disabled>Check approved RSVPs (read-only)</button></section>
@@ -21,10 +21,10 @@
 <button id="applySetupSize" type="button" class="alt">Apply &amp; Save Counts</button></div>
 <p id="setupSizeMsg" class="muted" role="status" aria-live="polite">Change counts before drafting. Existing names and captain assignments are protected. RSVP enrollment is not yet connected to live draft setup.</p>
 <p id="draftSetupPreview" class="muted" role="status" aria-live="polite"></p>
-<div style="overflow:auto"><table><thead><tr><th>#</th><th>Golfer</th><th>HCP</th><th>Band</th></tr></thead><tbody id="grows"></tbody></table></div><h3>Teams</h3><table><tbody id="trows"></tbody></table><div class="actions" style="margin-top:10px"><select id="dtype"><option value="snake">Snake Draft</option><option value="straight">Straight Draft</option></select><select id="tlen"><option>30</option><option>45</option><option selected>60</option><option>90</option><option>120</option></select><button id="saveSetup" class="gold">Save Setup & Go Live</button></div></section>
-<section id="live" class="grid" style="display:none"><div class="card"><h2>Available Golfers</h2><div id="pool"></div></div><div class="card"><div class="bar"><div><strong id="onclock"></strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div class="muted">Pick clock</div></div></div><div id="teams" class="teams"></div></div></section></div></div>
+<div style="overflow:auto"><table><thead><tr><th>#</th><th>Golfer</th><th>HCP</th><th>Band</th></tr></thead><tbody id="grows"></tbody></table></div><h3>Teams</h3><table><tbody id="trows"></tbody></table><div class="actions" style="margin-top:10px"><select id="dtype"><option value="snake">Snake Draft</option><option value="straight">Straight Draft</option></select><select id="tlen"><option>30</option><option>45</option><option selected>60</option><option>90</option><option>120</option></select><button id="saveSetup" class="gold">Save Setup & Prepare Draft</button></div></section>
+<p id="weightedStatus" class="muted" role="status"></p><section id="live" class="grid" style="display:none"><div class="card"><h2>Available Golfers</h2><div id="pool"></div></div><div class="card"><div class="bar"><div><strong id="onclock"></strong><div id="meta" class="muted"></div></div><div style="text-align:center"><div id="clock">1:00</div><div class="muted">Pick clock</div></div></div><div id="teams" class="teams"></div></div></section></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script><script src="client-health.js"></script>
-<script src="common.js"></script><script src="draft-setup-config.js"></script><script src="event-rsvp-client.js"></script><script src="event-rsvp-eligibility.js"></script><script src="commissioner-rsvp-preview.js"></script><script>
+<script src="weighted-draft.js"></script><script src="common.js"></script><script src="draft-setup-config.js"></script><script src="event-rsvp-client.js"></script><script src="event-rsvp-eligibility.js"></script><script src="commissioner-rsvp-preview.js"></script><script>
 let draftUpdatedAt=null;
 let savingDraft=false;
 let commissionerAuthEpoch=0,commissionerOpenId=0,commissionerUserId=null;let commissionerChannel=null;
@@ -63,15 +63,15 @@ const rsvpPreviewController=EllenGCommissionerRsvpPreview.create({
 // The shared Realtime subscriber passes an eligibility guard and an applied callback.
 // Preserve that contract while fencing superseded reads and commissioner sign-out.
 let commissionerLoadRequest=0;
-load=async function(isCurrent=()=>true,onApplied=()=>{}){
- if(savingDraft||!commissionerUserId)return S;
+load=async function(isCurrent=()=>true,onApplied=()=>{},allowDuringSave=false){
+ if((savingDraft&&!allowDuringSave)||!commissionerUserId)return S;
  const request=++commissionerLoadRequest,authEpoch=commissionerAuthEpoch,userId=commissionerUserId;
  // A Realtime notification means the prior RSVP preview may already be stale.
  // Clear it before the asynchronous authoritative draft read, even if that read fails.
  rsvpPreviewController.invalidate();
  const {data,error}=await db.from("elleng_drafts").select("state,owner_id,updated_at").eq("id",cfg.draftId).single();
  if(error)throw error;
- if(savingDraft||request!==commissionerLoadRequest||authEpoch!==commissionerAuthEpoch||userId!==commissionerUserId||!isCurrent())return S;
+ if((savingDraft&&!allowDuringSave)||request!==commissionerLoadRequest||authEpoch!==commissionerAuthEpoch||userId!==commissionerUserId||!isCurrent())return S;
  // Draft ownership can change in another session after initial sign-in.
  // Never apply remote state or retain commissioner controls for a former owner.
  // The server must still enforce RLS and owner checks on every write.
@@ -216,7 +216,12 @@ function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map(
  if(locked)status.textContent="Draft picks exist. Setup is read-only; undo all picks before editing golfers, teams or draft format.";
  else if(status.textContent.startsWith("Draft picks exist."))status.textContent="Setup unlocked. Changes must be saved before going live.";
 }
-function liveRender(){let total=S.golfers.filter(g=>g.name&&g.name.trim()&&g.participating!==false).length,teamCount=S.teams.length,done=S.picks.length>=total,t=done?0:order(S.picks.length);document.getElementById("onclock").textContent=done?"DRAFT COMPLETE":"ON THE CLOCK: "+S.teams[t].name;document.getElementById("meta").textContent=done?"All rosters complete":`Round ${Math.floor(S.picks.length/Math.max(1,teamCount))+1} • Pick ${S.picks.length+1}`;document.getElementById("pool").innerHTML=S.golfers.map((g,i)=>({...g,i})).filter(g=>g.name&&g.participating!==false&&g.team==null).map(g=>`<div class="player"><strong>${esc(g.name)}</strong><span class="badge">${g.self_ranked===true?esc(g.band):"Unranked"}</span><span class="muted">${g.self_ranked===true?esc(g.hcp||"—"):"—"}</span><button data-p="${g.i}" ${!done&&canBand(t,g.band)?"":"disabled"}>${done?"Complete":canBand(t,g.band)?"Draft":"Limit"}</button></div>`).join("");document.getElementById("teams").innerHTML=S.teams.map((tm,i)=>`<div class="team"><div class="teamhead"><strong>${esc(tm.name)}</strong><div class="muted" style="color:#ddd">${esc(tm.captain)}</div><div style="font-size:11px">${bands.map(b=>b+" "+(tm.roster||[]).filter(index=>S.golfers[index]?.self_ranked===true&&S.golfers[index]?.band===b).length).join(" • ")}</div></div><div class="roster">${Array.from({length:teamCapacity(i)},(_,j)=>{let g=S.golfers[tm.roster[j]];return g?`<div class="slot"><strong>${esc(g.name)}</strong> <span class="badge">${g.self_ranked===true?esc(g.band):"Unranked"}</span><div class="muted">HCP ${g.self_ranked===true?esc(g.hcp||"—"):"—"}</div></div>`:`<div class="slot muted">Open roster spot</div>`}).join("")}</div></div>`).join("");document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>pick(+b.dataset.p));drawClock()}
+function liveRender(){
+ const balanceButton=document.getElementById("prepareWeighted");
+ const weightedStatus=document.getElementById("weightedStatus");
+ if(weightedStatus)weightedStatus.textContent=S.draftRules==="weighted"?(S.timerPaused?"Balanced draft paused. Use Pause/Resume when ready. ":"")+"Captain strength and team depth are included. Only picks that preserve the best available balance can be selected. Exact handicaps are optional.":"Two-team tournaments can use automatic strength and depth balancing. Pause before preparing; all playing golfers must submit their band.";
+ if(balanceButton){balanceButton.disabled=S.draftRules==="weighted";balanceButton.textContent=S.draftRules==="weighted"?"Balanced Draft Ready":"Prepare Balanced Draft";}
+ let total=S.golfers.filter(g=>g.name&&g.name.trim()&&g.participating!==false).length,teamCount=S.teams.length,done=S.picks.length>=total,t=done?0:order(S.picks.length);document.getElementById("onclock").textContent=done?"DRAFT COMPLETE":"ON THE CLOCK: "+S.teams[t].name;document.getElementById("meta").textContent=done?"All rosters complete":`Round ${Math.floor(S.picks.length/Math.max(1,teamCount))+1} • Pick ${S.picks.length+1}`;document.getElementById("pool").innerHTML=S.golfers.map((g,i)=>({...g,i})).filter(g=>g.name&&g.participating!==false&&g.team==null).map(g=>`<div class="player"><strong>${esc(g.name)}</strong><span class="badge">${g.self_ranked===true?esc(g.band):"Unranked"}</span><span class="muted">${g.self_ranked===true?esc(g.hcp||"—"):"—"}</span><button data-p="${g.i}" ${!done&&canBand(t,g.band)?"":"disabled"}>${done?"Complete":canBand(t,g.band)?"Draft":"Limit"}</button></div>`).join("");document.getElementById("teams").innerHTML=S.teams.map((tm,i)=>`<div class="team"><div class="teamhead"><strong>${esc(tm.name)}</strong><div class="muted" style="color:#ddd">${esc(tm.captain)}</div><div style="font-size:11px">${bands.map(b=>b+" "+(tm.roster||[]).filter(index=>S.golfers[index]?.self_ranked===true&&S.golfers[index]?.band===b).length).join(" • ")}</div></div><div class="roster">${Array.from({length:teamCapacity(i)},(_,j)=>{let g=S.golfers[tm.roster[j]];return g?`<div class="slot"><strong>${esc(g.name)}</strong> <span class="badge">${g.self_ranked===true?esc(g.band):"Unranked"}</span><div class="muted">HCP ${g.self_ranked===true?esc(g.hcp||"—"):"—"}</div></div>`:`<div class="slot muted">Open roster spot</div>`}).join("")}</div></div>`).join("");document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>pick(+b.dataset.p));drawClock()}
 function drawClock(){let x=remaining();document.getElementById("clock").textContent=Math.floor(x/60)+":"+String(x%60).padStart(2,"0");document.getElementById("clock").style.color=x<=10?"#9b2f2f":""}
 // Fence all optimistic commissioner actions to the verified login that began them.
 // A stale UI event must not mutate the draft while the tab is hidden or offline.
@@ -229,6 +234,20 @@ async function pick(i){
  const total=totalPicks();if(S.timerPaused||S.picks.length>=total)return;
  let t=order(S.picks.length),g=S.golfers[i];
  if(!g||g.participating===false||g.team!=null||!canBand(t,g.band))return;
+ if(S.draftRules==="weighted"){
+  savingDraft=true;
+  try{
+   const {error}=await db.rpc("elleng_weighted_pick",{p_draft_id:cfg.draftId,p_golfer_index:i});
+   if(error)throw error;
+   let applied=false;
+   await load(()=>sameCommissionerAction(actionEpoch,actionUserId),()=>{applied=true;},true);
+   if(!sameCommissionerAction(actionEpoch,actionUserId))return;
+   if(!applied)throw new Error("Pick saved, but the latest draft could not be verified. Reload before continuing.");
+   liveRender();
+  }catch(error){if(sameCommissionerAction(actionEpoch,actionUserId))alert(error.message||"Pick could not be saved.");}
+  finally{if(actionEpoch===commissionerAuthEpoch&&actionUserId===commissionerUserId)savingDraft=false;}
+  return;
+ }
  const before=structuredClone(S);
  g.team=t;S.teams[t].roster.push(i);S.picks.push({golfer:i,team:t});
  S.timerPaused=false;S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();
@@ -281,10 +300,17 @@ document.getElementById("saveSetup").onclick=async()=>{
   readSetupFields();
   const named=S.golfers.filter(g=>g.name&&g.name.trim()&&g.participating!==false);
   if(named.length<S.teams.length)throw new Error("Enter at least one golfer per team before starting the draft.");
-  if(named.some(g=>!bands.includes(g.band)))throw new Error("Set a handicap band for each named golfer before starting the draft.");
-  S.timerPaused=false;
-  S.timerEndsAt=new Date(Date.now()+S.timerLength*1000).toISOString();
+  if(named.some(g=>g.self_ranked!==true||!bands.includes(g.band)))throw new Error("Set a handicap band for each named golfer before starting the draft.");
+  const weighted=S.teams.length===2;
+  if(weighted)EllenGWeightedDraft.prepare({...S,timerPaused:true});
+  S.timerPaused=weighted;
+  S.timerEndsAt=weighted?null:new Date(Date.now()+S.timerLength*1000).toISOString();
   await save();
+  if(weighted){
+   const {error}=await db.rpc("elleng_prepare_weighted_draft",{p_draft_id:cfg.draftId});
+   if(error)throw error;
+   await load();
+  }
   if(!sameCommissionerAction(actionEpoch,actionUserId))return;
   liveMode=true;
   document.getElementById("setup").style.display="none";
@@ -295,6 +321,23 @@ document.getElementById("saveSetup").onclick=async()=>{
  }finally{
   button.disabled=setupIsLocked();
  }
+};
+if(document.getElementById("prepareWeighted"))document.getElementById("prepareWeighted").onclick=async()=>{
+ if(savingDraft)return;
+ const epoch=commissionerAuthEpoch,userId=commissionerUserId;
+ if(!sameCommissionerAction(epoch,userId))return;
+ try{
+  EllenGWeightedDraft.prepare(S);
+  savingDraft=true;
+  const {error}=await db.rpc("elleng_prepare_weighted_draft",{p_draft_id:cfg.draftId});
+  if(error)throw error;
+  let applied=false;
+  await load(()=>sameCommissionerAction(epoch,userId),()=>{applied=true;},true);
+  if(!sameCommissionerAction(epoch,userId))return;
+  if(!applied)throw new Error("Draft prepared, but the latest state could not be verified. Reload before continuing.");
+  if(sameCommissionerAction(epoch,userId)){liveMode=true;document.getElementById("setup").style.display="none";document.getElementById("live").style.display="grid";liveRender();}
+ }catch(error){if(sameCommissionerAction(epoch,userId))alert(error.message||"Balanced draft could not be prepared.");}
+ finally{if(epoch===commissionerAuthEpoch&&userId===commissionerUserId)savingDraft=false;}
 };
 document.getElementById("setupBtn").onclick=()=>{liveMode=false;document.getElementById("live").style.display="none";document.getElementById("setup").style.display="block";setupRender()};
 async function saveCommissionerAction(change){
@@ -314,6 +357,7 @@ async function saveCommissionerAction(change){
  }
 }
 document.getElementById("undo").onclick=()=>saveCommissionerAction(()=>{
+ if(S.draftRules==="weighted"&&S.picks.length<=2)return false;
  const p=S.picks.at(-1);
  if(!p)return false;
  S.picks.pop();
