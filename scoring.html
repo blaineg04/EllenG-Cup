@@ -6386,14 +6386,12 @@ $("saveAdmin").addEventListener("click",async()=>{
   if(teamCountSelection!=="")draftState.teamCountConfirmed=true;
   if(playFormatSelection!=="")draftState.playFormatConfirmed=true;
   if(selectedPlayFormat==="split_pair"&&(selectedTeamSize!==4||desiredGolfers!==newCount*4)){$("adminMsg").textContent="Split-Pair Scramble requires 4-man teams with exactly 4 golfers on every team. Set golfers to 4 × the number of teams.";return}
-  const namedGolfers=(draftState.golfers||[]).filter(g=>(g?.name||"").trim()).length;
-  if(desiredGolfers<namedGolfers){$("adminMsg").textContent=`You already have ${namedGolfers} named golfers. Remove golfers first before lowering the setup to ${desiredGolfers}.`;return}
-  while(draftState.golfers.length<desiredGolfers)draftState.golfers.push({name:"",hcp:"",band:"",self_ranked:false,team:null});
-  if(draftState.golfers.length>desiredGolfers){
-    const removable=[]; for(let i=draftState.golfers.length-1;i>=0&&draftState.golfers.length-removable.length>desiredGolfers;i--){const g=draftState.golfers[i];if(!(g?.name||"").trim()&&g?.team==null)removable.push(i)}
-    if(draftState.golfers.length-removable.length>desiredGolfers){$("adminMsg").textContent=`There are not enough empty golfer slots to reduce to ${desiredGolfers}. Remove golfers first.`;return}
-    removable.sort((a,b)=>b-a).forEach(i=>draftState.golfers.splice(i,1));
-  }
+  const playingGolfers=(draftState.golfers||[]).filter(g=>String(g?.name||"").trim()&&g.participating!==false).length;
+  if(desiredGolfers<playingGolfers){$("adminMsg").textContent=`You already have ${playingGolfers} golfers playing. Mark golfers as not playing before lowering the setup to ${desiredGolfers}.`;return}
+  // Tournament capacity is independent of the account directory. Never compact
+  // slots: player accounts, picks and scores reference their original indices.
+  const openPlayingSlots=draftState.golfers.filter(g=>!String(g?.name||"").trim()&&g?.participating!==false&&g?.team==null).length;
+  for(let i=playingGolfers+openPlayingSlots;i<desiredGolfers;i++)draftState.golfers.push({name:"",hcp:"",band:"",self_ranked:false,team:null});
   draftState.golferCount=desiredGolfers;
   draftState.teamSize=selectedTeamSize;
   draftState.playFormat=selectedPlayFormat;
