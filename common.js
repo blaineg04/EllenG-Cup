@@ -19,12 +19,12 @@ function order(n){
  let r=Math.floor(n/teamCount),p=n%teamCount;
  return S.draftType==="snake"&&r%2?(teamCount-1-p):p;
 }
-function bandCounts(){let c={A:0,B:0,C:0,D:0};S.golfers.forEach(g=>{if(g.name&&bands.includes(g.band))c[g.band]++});return c}
+function bandCounts(){let c={A:0,B:0,C:0,D:0};S.golfers.forEach(g=>{if(g.name&&g.participating!==false&&bands.includes(g.band))c[g.band]++});return c}
 function tbc(t,b){return S.teams[t].roster.reduce((n,i)=>n+(S.golfers[i]?.band===b),0)}
 
 function totalPicks(){
-  const named=S.golfers.filter(g=>g&&g.name).length;
-  return named||S.golfers.length;
+  const named=S.golfers.filter(g=>g&&g.name&&g.participating!==false).length;
+  return named;
 }
 
 /*
@@ -63,7 +63,7 @@ function bandPenalty(t,b){
 function canBand(t,b){
   if(String(S?.draftRules||"banded")==="open") return !!S.teams?.[t];
   if(!bands.includes(b)||!S.teams?.[t])return false;
-  const remainingBands=[...new Set(S.golfers.filter(g=>g?.name&&g.team==null&&bands.includes(g.band)).map(g=>g.band))];
+  const remainingBands=[...new Set(S.golfers.filter(g=>g?.name&&g.participating!==false&&g.team==null&&bands.includes(g.band)).map(g=>g.band))];
   if(!remainingBands.length)return false;
   const best=Math.min(...remainingBands.map(rb=>bandPenalty(t,rb)));
   return bandPenalty(t,b)===best;
