@@ -2974,6 +2974,11 @@ body.my-profile-open #myProfilePhotoCard #selfPhotoPlayerName{color:#10202c!impo
 body.my-profile-open #myProfilePhotoCard .self-photo-choose{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-height:48px!important;background:#edf2f5!important;border:2px solid #607787!important;color:#10202c!important;-webkit-text-fill-color:#10202c!important;font-size:16px!important;font-weight:900!important;opacity:1!important;visibility:visible!important}
 body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!important}
 </style>
+<style id="main-menu-navigation-preview">
+#mobileBottomNav{display:none!important}
+.app-hub{align-items:start!important;overflow-y:auto!important}
+.tour-hub-card{margin:auto!important}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -2996,6 +3001,31 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
     <div id="hubSignedInAs" class="hub-signed-in"></div>
 
     <div class="app-hub-grid">
+      <button type="button" class="app-hub-btn tour-card" data-hub-view="home">
+        <span class="tour-icon" aria-hidden="true">⌂</span>
+        <span class="tour-copy"><strong>Home</strong><em>Tournament overview and live leaderboard</em></span>
+        <span class="tour-chevron" aria-hidden="true">›</span>
+      </button>
+      <button type="button" class="app-hub-btn tour-card" data-hub-view="leaderboard">
+        <span class="tour-icon" aria-hidden="true">✏️</span>
+        <span class="tour-copy"><strong>My Score</strong><em>Enter your scores and view your round</em></span>
+        <span class="tour-chevron" aria-hidden="true">›</span>
+      </button>
+      <button type="button" class="app-hub-btn tour-card" data-hub-view="teams">
+        <span class="tour-icon" aria-hidden="true">👥</span>
+        <span class="tour-copy"><strong>Teams</strong><em>See the teams and their golfers</em></span>
+        <span class="tour-chevron" aria-hidden="true">›</span>
+      </button>
+      <button type="button" class="app-hub-btn tour-card" data-hub-view="players">
+        <span class="tour-icon" aria-hidden="true">⛳</span>
+        <span class="tour-copy"><strong>Players</strong><em>Browse all golfers and tournament participation</em></span>
+        <span class="tour-chevron" aria-hidden="true">›</span>
+      </button>
+      <button type="button" class="app-hub-btn tour-card" data-hub-view="more">
+        <span class="tour-icon" aria-hidden="true">•••</span>
+        <span class="tour-copy"><strong>More</strong><em>My profile, rules and more tournament options</em></span>
+        <span class="tour-chevron" aria-hidden="true">›</span>
+      </button>
       <button type="button" class="app-hub-btn tour-card" id="hubDraft">
         <span class="tour-icon">▤</span>
         <span class="tour-copy"><small class="tour-kicker">DRAFT</small><strong>Draft</strong><em>Watch the draft and team selections</em></span>
@@ -6040,6 +6070,7 @@ function subscribeLive(){
 
 
 function setMobileNavVisible(show){
+ show=false; // Navigation preview: destinations live on the main menu.
  const nav=$("mobileBottomNav");
  if(nav)nav.classList.toggle("hidden",!show);
  if(!show)closeMoreMenu?.();
@@ -6229,6 +6260,12 @@ initTournamentExtrasScreen();
 if($("playerExtrasToggle"))$("playerExtrasToggle").addEventListener("click",()=>{const v=$("extrasView");if(v?._resetExtrasDetail)v._resetExtrasDetail();showView("extras")});
 if($("extrasBackButton"))$("extrasBackButton").addEventListener("click",()=>{const v=$("extrasView");if(v?._resetExtrasDetail)v._resetExtrasDetail()});
 if($("closeTournamentExtras"))$("closeTournamentExtras").addEventListener("click",()=>{const v=$("extrasView");if(v?._resetExtrasDetail)v._resetExtrasDetail();showView("home")});
+document.querySelectorAll("[data-hub-view]").forEach(button=>button.addEventListener("click",()=>{
+ const destination=button.dataset.hubView;
+ closeAppHub();
+ if(destination==="more"){openMoreMenu();return}
+ showView(destination);
+}));
 document.querySelectorAll("[data-mobile-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.mobileView)));
 const moreBackdrop=$("moreMenuBackdrop"), moreBtn=$("mobileMoreBtn");
 function closeMoreMenu(){if(moreBackdrop){moreBackdrop.classList.remove("open");moreBackdrop.setAttribute("aria-hidden","true")}}
