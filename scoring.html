@@ -5232,6 +5232,7 @@ function renderPlayerEditor(){
    const rawHcp=isRanked?String(g.hcp??"").trim():"";
    const shownBand=isRanked&&["A","B","C","D"].includes(String(g.band||"").toUpperCase())?String(g.band).toUpperCase():"";
    const acct=playerAccounts.find(a=>Number(a.golfer_index)===i);
+   if(!String(g?.name||"").trim()&&!acct)return ""; // Reserved index gaps are not golfer accounts.
    const loginUsername=String(acct?.username||"");
    const linked=!!acct?.user_id;
    const photo=String(g.photo_url||g.photo||"").trim();
