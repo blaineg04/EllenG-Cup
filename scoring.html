@@ -3124,8 +3124,8 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 </div>
 
 <div id="homeSpecialCard" class="card home-highlight">
-  <div class="row between"><strong>🐊 Gator Hole & Final Cargo Shot</strong><span class="badge">SPECIAL SCORING</span></div>
-  <div id="homeSpecialText" class="note" style="margin-top:8px">The Gator Hole is secret until the Commissioner reveals it. Final Cargo Shot adds 6 points to the winning team.</div>
+  <div class="row between"><strong>🐊 Gator Hole</strong><span class="badge">SPECIAL SCORING</span></div>
+  <div id="homeSpecialText" class="note" style="margin-top:8px">The Gator Hole is secret until the Commissioner reveals it. The winning team earns 10 bonus points; tied teams split the bonus equally.</div>
 </div>
 
 
@@ -3253,7 +3253,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   <div class="self-score-summary">
     <div class="self-score-box"><small>Golf Score</small><strong id="selfScoreRelative">—</strong><div id="selfScoreTerm" class="term">Enter strokes</div></div>
   </div>
-  <div class="note" style="margin-top:10px">Standard EllenG: any golfer on the team can update the Front 9 scramble team score. On the Back 9 shamble, each golfer can update only their own individual score. Split-Pair: each golfer can update only their own 2-man pair score.</div>
+  <div class="note" style="margin-top:10px">Every golfer plays their own ball after the selected team tee shot for all 18 holes and saves their own strokes. Eagle or better: 5 points; birdie: 4; par: 3; bogey: 2; double bogey: 1; triple bogey or worse: 0. Every golfer’s points count toward the team total.</div>
   <div id="selfScoreMsg" role="status" aria-live="polite" class="status" style="margin-top:5px"></div>
   <div class="row" style="margin-top:12px"><button id="saveSelfScore" class="primary" type="button">Save My Score</button><button id="clearSelfScore" class="secondary" type="button">Clear This Score</button></div>
   
@@ -3279,7 +3279,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   <div style="margin-top:12px"><label><small>Choose team</small><select id="digitalScorecardTeam" style="max-width:360px"></select></label></div>
   <div id="digitalScorecard" class="scorecard-wrap"></div><div class="row" style="margin-top:12px"><button id="shareTeamScorecard" class="secondary" type="button">📤 Share Team Scorecard</button><span id="shareScorecardMsg" class="status"></span></div>
 </div>
-<div class="card note"><strong>Special scoring:</strong> The Gator Hole awards double first-place points (2 × the number of teams), split equally among tied lowest teams. Final Cargo Shot adds 6 points to the winning team.</div>
+<div class="card note"><strong>Special scoring:</strong> The Gator Hole winning team earns 10 bonus points. Tied teams split the bonus equally.</div>
 </section>
 
 <section id="teamsView" class="view hidden">
@@ -3380,8 +3380,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
  <span>Par</span><strong>3 pts</strong><span>Bogey</span><strong>2 pts</strong>
  <span>Double Bogey</span><strong>1 pt</strong><span>Triple Bogey or worse</span><strong>0 pts</strong>
  </div><hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
- <strong>🐊 Gator Hole</strong><p class="status">Secret until the Commissioner reveals it. Double first-place points go to the lowest-scoring team, shared among ties.</p>
- <strong>🏁 Final Cargo Shot</strong><p class="status">6 bonus points to the winning team.</p>
+ <strong>🐊 Gator Hole</strong><p class="status">Secret until the Commissioner reveals it. The winning team earns 10 bonus points; tied teams split the bonus equally.</p>
 </div>
 <div class="card clubhouse-hero">
   <div class="home-kicker">ELLENG CUP • CLUBHOUSE</div>
@@ -3484,8 +3483,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
  <span>Par</span><strong>3 pts</strong><span>Bogey</span><strong>2 pts</strong>
  <span>Double Bogey</span><strong>1 pt</strong><span>Triple Bogey or worse</span><strong>0 pts</strong>
  </div><hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
- <strong>🐊 Gator Hole</strong><p class="status">Secret until the Commissioner reveals it. Double first-place points go to the lowest-scoring team, shared among ties.</p>
- <strong>🏁 Final Cargo Shot</strong><p class="status">6 bonus points to the winning team.</p>
+ <strong>🐊 Gator Hole</strong><p class="status">Secret until the Commissioner reveals it. The winning team earns 10 bonus points; tied teams split the bonus equally.</p>
 </div></div>
 <div id="holebar" class="holebar" style="margin-top:14px"></div>
 <div id="mobileHoleGuide" class="mobile-hole-guide"></div>
@@ -3564,7 +3562,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 
 <div id="adminTournament" class="card admin-card">
   <div class="section-toolbar">
-    <div class="admin-section-title"><span class="step">1</span><div><h2>Tournament Controls</h2><div class="section-sub">Course, routing, status, team size, golfer count, hole pars, Gator Hole and Final Cargo Shot.</div></div></div>
+    <div class="admin-section-title"><span class="step">1</span><div><h2>Tournament Controls</h2><div class="section-sub">Course, routing, status, team size, golfer count, hole pars and Gator Hole.</div></div></div>
   </div>
   <div class="admin-grid">
 
@@ -3579,7 +3577,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
     <label><small>Gator Hole side</small><select id="gatorSide"><option value="">Select / keep current</option><option value="front">Front 9</option><option value="back">Back 9</option></select></label>
     <label><small>Secret Gator Hole</small><select id="gatorHole"><option value="">Not selected</option></select></label>
     <label><small>Gator Hole visibility</small><select id="gatorReveal"><option value="false">Keep Secret</option><option value="true">Reveal Gator Hole</option></select></label>
-    <label><small>Final Cargo Shot winner</small><select id="cargoTeam"><option value="">Not awarded</option></select></label>
+    <label class="hidden" aria-hidden="true"><small>Final Cargo Shot winner</small><select id="cargoTeam"><option value="">Not awarded</option></select></label>
   </div>
   <div id="teamBuildSummary" class="note" style="margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f8fafb"></div>
   <div class="note" style="margin-top:7px">Number of teams and Number of golfers stay blank until you choose a new value. Leaving either blank keeps the current saved setting.</div>
@@ -3983,7 +3981,7 @@ function renderPointsEntry(){
 }
 function renderPointsExtras(){
  const x=shambleSummary(),set=(id,value)=>{const el=$(id);if(el)el.textContent=value;};
- set("homeHolesComplete",x.completeHoles+" / 18");set("broadcastHoles",x.completeHoles+" / 18");set("homeSpecialText","Gator Hole: Secret until the Commissioner reveals it. Double first-place points go to the lowest-scoring team, shared among ties. Final Cargo Shot: 6 bonus points to the winning team.");
+ set("homeHolesComplete",x.completeHoles+" / 18");set("broadcastHoles",x.completeHoles+" / 18");set("homeSpecialText","Gator Hole: Secret until the Commissioner reveals it. The winning team earns 10 bonus points; tied teams split the bonus equally.");
  set("broadcastSpecial","18-hole shamble • Every golfer counts");
  const chosen=$("teamRosterSelect")?.value||"all";$("teamCards").innerHTML=teams.map((t,ti)=>({t,ti})).filter(({ti})=>chosen==="all"||String(ti)===chosen).map(({t,ti})=>`<div class="card"><h3>${esc(t.name)} • ${x.totals[ti].pts} pts</h3>${teamRosterGolfers(ti).map(g=>`<div class="row between" style="padding:8px 0"><span>${esc(g.name)}</span><strong>${x.players[g.index].points} pts</strong><span>${x.players[g.index].holes}/18 holes</span></div>`).join("")||"No golfers assigned yet."}</div>`).join("");
  const ranked=x.players.filter(p=>p.holes).sort((a,b)=>b.points-a.points||a.index-b.index);
@@ -5537,7 +5535,7 @@ async function resetGolferPin(i){
  const captainCount=activeTeams.filter(t=>(t.captain||"").trim()).length, assignedCount=golfers.filter(g=>g.team!==null&&g.team!==undefined&&g.team!=="").length;
  if($("commissionerTeamCount"))$("commissionerTeamCount").textContent=activeTeams.length;
  if($("commissionerCaptainCount"))$("commissionerCaptainCount").textContent=captainCount;
- if($("commissionerGolferCount"))$("commissionerGolferCount").textContent=golfers.length;
+ if($("commissionerGolferCount"))$("commissionerGolferCount").textContent=golfers.filter(g=>String(g?.name||"").trim()).length;
  if($("commissionerAssignedCount"))$("commissionerAssignedCount").textContent=assignedCount;
  const gc=draftGolferCount(),tc=activeTeamCount(),size=draftTeamSize(),base=Math.floor(gc/tc),extra=gc%tc;
  if($("teamBuildSummary"))$("teamBuildSummary").innerHTML=extra===0?`<strong>${gc} golfers → ${tc} teams of ${size}.</strong>`:`<strong>${gc} golfers → ${tc} teams using a ${size}-man format.</strong> ${extra} team${extra===1?"":"s"} will have ${base+1} golfers; the other ${tc-extra} will have ${base}.`;
@@ -5782,9 +5780,7 @@ function renderHome(){
  if($("homeFormat"))$("homeFormat").textContent=formatConfirmed?(isShamblePoints()?"Two-Team Shamble":isSplitPair()?"Split-Pair Scramble":`${draftTeamSize()}-Man EllenG`):"—";
  if($("homeFormatSub"))$("homeFormatSub").textContent=formatConfirmed?(isShamblePoints()?"18 holes • individual points • every golfer counts":isSplitPair()?"Two 2-man pairs • both scores count":"Front 9 Scramble • Back 9 Shamble"):"";
  const gator=tournament?.gator_revealed&&Number(tournament?.gator_hole)?`Gator Hole: Hole ${Number(tournament.gator_hole)}. `:"Gator Hole is still secret. ";
- let cargo="Final Cargo Shot has not been awarded.";
- if(tournament?.final_cargo_team!==null&&tournament?.final_cargo_team!==undefined&&tournament?.final_cargo_team!==""){const ti=Number(tournament.final_cargo_team);cargo=`Final Cargo Shot: ${teams[ti]?.name||`Team ${ti+1}`} +${finalCargoBonus()} points.`}
- if($("homeSpecialText"))$("homeSpecialText").textContent=gator+cargo;
+ if($("homeSpecialText"))$("homeSpecialText").textContent=gator+"The winning team earns 10 bonus points; tied teams split the bonus equally.";
 }
 
 
