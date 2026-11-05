@@ -4639,7 +4639,7 @@ function renderPlayersDirectory(){
  const rosterWarning=publicRosterUnavailable?'<div class="note" role="status">Registered account directory is temporarily unavailable. Tournament golfers are still shown below.</div>':"";
  const golfers=(Array.isArray(draftState.golfers)?draftState.golfers:[]).map((g,i)=>({...(g||{}),index:i,name:(g?.name||"").trim()})).filter(g=>g.name);
  // Keep all named golfers visible, including those excluded from this tournament.
- const inactiveAccounts=publicRoster.filter(a=>!a.participating&&!golfers.some(g=>Number.isInteger(a.golferIndex)&&g.index===a.golferIndex));
+ const inactiveAccounts=publicRoster.filter(a=>!a.participating&&!golfers.some(g=>g.index===(Number.isInteger(a.golferIndex)?a.golferIndex:a.accountIndex)));
  const playing=$("playerDirectoryPlaying");
  if(playing)playing.textContent=`Playing in this tournament: ${golfers.filter(g=>g.participating!==false).length}`;
  const total=$("playerDirectoryTotal");
