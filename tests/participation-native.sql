@@ -17,7 +17,7 @@ SELECT set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001'
 DO $$
 DECLARE stamp timestamptz; s jsonb; before_accounts jsonb;
 BEGIN
- IF has_function_privilege('anon','public.elleng_set_player_participation(text,text,integer,boolean,timestamptz)','EXECUTE') THEN RAISE EXCEPTION 'anon allowed'; END IF;
+ IF has_function_privilege('anon','public.elleng_set_player_participation(text,text,integer,boolean,timestamptz,jsonb)','EXECUTE') THEN RAISE EXCEPTION 'anon allowed'; END IF;
  SELECT jsonb_agg(to_jsonb(a)) INTO before_accounts FROM elleng_player_accounts a;
  SELECT updated_at INTO stamp FROM elleng_drafts;
  PERFORM elleng_set_player_participation('elleng-cup','elleng-cup-live',0,false,stamp);
@@ -35,9 +35,15 @@ BEGIN
  PERFORM elleng_set_player_participation('elleng-cup','elleng-cup-live',0,true,(SELECT updated_at FROM elleng_drafts));RAISE EXCEPTION 'nonowner accepted';
  EXCEPTION WHEN SQLSTATE '42501' THEN NULL; END;
  PERFORM set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',false);
+ SELECT updated_at INTO stamp FROM elleng_drafts;
+ PERFORM elleng_set_player_participation('elleng-cup','elleng-cup-live',5,false,stamp,'{"name":"Synthetic New","team":1}');
+ IF (SELECT state#>>'{golfers,5,participating}' FROM elleng_drafts)<>'false' OR (SELECT state#>>'{golfers,5,team}' FROM elleng_drafts) IS NOT NULL THEN RAISE EXCEPTION 'nonplayer creation failed'; END IF;
  INSERT INTO elleng_player_hole_scores VALUES('elleng-cup-live');
  BEGIN
  PERFORM elleng_set_player_participation('elleng-cup','elleng-cup-live',0,true,(SELECT updated_at FROM elleng_drafts));RAISE EXCEPTION 'scores accepted' USING ERRCODE='XX000';
+ EXCEPTION WHEN SQLSTATE 'P0001' THEN NULL; END;
+ BEGIN
+ PERFORM elleng_set_player_participation('elleng-cup','elleng-cup-live',6,true,(SELECT updated_at FROM elleng_drafts),'{"name":"Synthetic Late"}');RAISE EXCEPTION 'playing add with scores accepted' USING ERRCODE='XX000';
  EXCEPTION WHEN SQLSTATE 'P0001' THEN NULL; END;
  DELETE FROM elleng_player_hole_scores;
  UPDATE elleng_drafts SET state=jsonb_set(state,'{picks}','[{"golfer":1}]');
