@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const html = fs.readFileSync('scoring.html', 'utf8');
 assert.match(html, /function renderPlayersDirectory\(\)/);
 assert.match(html, /g\.participating===false\?"Not in this tournament"/, 'nonparticipants must be labeled correctly');
-assert.match(html, /Not in this tournament · Account preserved/);
+assert.doesNotMatch(html, /Not in this tournament · Account preserved/, 'removed account-preserved wording must stay removed');
 assert.match(html, /const band=playerBandLabel\(g\);const bandChip=/, 'public directory shows handicap band rather than exact handicap');
 assert.match(html, /const rawHcp=isRanked\?String\(g\.hcp\?\?""\)\.trim\(\):""/, 'commissioner handicap editor must leave unranked exact handicap blank');
 assert.match(html, /const displayHcp=selfRanked&&String\(g\.hcp\?\?""\)\.trim\(\)!==""\?String\(g\.hcp\):"—"/, 'personal handicap display must hide stale unranked handicap');
