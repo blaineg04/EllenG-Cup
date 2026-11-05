@@ -1,0 +1,13 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync(require('node:path').join(__dirname,'../scoring.html'),'utf8');
+const fn=source.slice(source.indexOf('function renderPlayerEditor(){'),source.indexOf('\nasync function savePlayerName('));
+const golfers=Array.from({length:57},()=>({name:'',team:null,participating:false}));
+golfers[0]={name:'Existing Golfer',participating:true};golfers[56]={name:'Connor Castille',participating:false};
+const original=JSON.stringify(golfers),root={};
+const ctx={draftState:{golfers},playerAccounts:[{golfer_index:56,username:'ccastille',user_id:'test'}],ensureDraftShape:()=>{},$:()=>root,esc:s=>String(s),participationControl:()=>'',teamOptions:()=>'',renderRegisteredAccountSummary:()=>{},bindParticipationControls:()=>{},document:{querySelectorAll:()=>[]}};
+vm.createContext(ctx);vm.runInContext(fn,ctx);vm.runInContext('renderPlayerEditor()',ctx);
+assert.equal((root.innerHTML.match(/data-player-block=/g)||[]).length,2,'Only named golfers should get editor cards');
+assert.ok(root.innerHTML.includes('data-player-block="56"'),'Original account index must remain stable');
+assert.ok(root.innerHTML.includes('ccastille'),'Keep account management for nonplaying golfers');
+assert.equal(JSON.stringify(golfers),original,'Rendering must not alter golfer data');
+console.log('PASS: empty slots hidden; nonplaying account and indices preserved; no data changes');
