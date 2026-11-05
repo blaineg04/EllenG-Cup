@@ -22,7 +22,7 @@ jobs:
           git archive HEAD | tar -xf - -C "$mount_dir"
       - name: Participation and app regression tests
         working-directory: ${{ env.ELLENG_VERIFY_DIR }}
-        run: node --test tests/player-participation.test.cjs tests/nov20-production-score-integrity.test.cjs tests/alternate-scoring-validation.test.cjs tests/draft-two-client-simulation.test.cjs tests/acceptance/player-home-navigation-race.test.cjs
+        run: node --test tests/player-directory-count.test.cjs tests/player-participation.test.cjs tests/nov20-production-score-integrity.test.cjs tests/alternate-scoring-validation.test.cjs tests/draft-two-client-simulation.test.cjs tests/acceptance/player-home-navigation-race.test.cjs
       - name: Synthetic responsive browser rehearsal
         working-directory: ${{ env.ELLENG_VERIFY_DIR }}
         run: |
