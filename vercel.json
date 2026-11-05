@@ -17,8 +17,6 @@
     }
   ],
   "git": {
-    "deploymentEnabled": {
-      "development/nov20-release-reconciliation-20261026": false
-    }
+    "deploymentEnabled": false
   }
 }
