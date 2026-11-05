@@ -528,7 +528,7 @@ const actionStart=source.indexOf('// Fence all optimistic commissioner actions')
 const actionEnd=source.indexOf('// Invalidate pending commissioner lookups',actionStart);
 assert.ok(actionStart>0&&actionEnd>actionStart);
 function actionHarness(){
- const state={picks:[],golfers:[{name:'Synthetic',team:null,band:'A'}],teams:[{name:'A',roster:[]}],timerPaused:false,timerLength:60,timerEndsAt:null};
+ const state={picks:[],golfers:[{name:'Synthetic',team:null,band:'A',self_ranked:true}],teams:[{name:'A',roster:[]}],timerPaused:false,timerLength:60,timerEndsAt:null};
  const els={saveSetup:{disabled:false},applySetupSize:{disabled:false},setupTeamCount:{value:'2'},setupGolferCount:{value:'2'},setupSizeMsg:{textContent:''},setup:{style:{display:'block'}},live:{style:{display:'none'}},setupBtn:{},undo:{},pause:{},resetClock:{},dtype:{value:'snake'},tlen:{value:'60'}};
  const pending=[];let renders=0;
  const ctx={S:state,savingDraft:false,commissionerAuthEpoch:0,commissionerUserId:'commissioner-a',

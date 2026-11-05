@@ -1,0 +1,1 @@
+{"name":"elleng-weighted-postgres-tests","private":true,"version":"1.0.0","dependencies":{"@electric-sql/pglite":"0.5.15"}}
