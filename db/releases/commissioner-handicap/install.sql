@@ -32,7 +32,7 @@ BEGIN
  THEN RAISE EXCEPTION 'Scores already exist. Handicap not changed'; END IF;
  h:=btrim(coalesce(p_handicap,'')); b:=upper(btrim(coalesce(p_band,'')));
  IF h<>'' THEN
-   IF length(h)>8 OR h !~ '^[0-9]+([.][0-9]+)? THEN RAISE EXCEPTION 'Invalid handicap'; END IF;
+   IF length(h)>8 OR h !~ '^[0-9]+([.][0-9]+)?
    n:=h::numeric;
    IF n<0 OR n>54 THEN RAISE EXCEPTION 'Handicap must be between 0 and 54'; END IF;
    b:=CASE WHEN n<=9 THEN 'A' WHEN n<=17 THEN 'B' WHEN n<=25 THEN 'C' ELSE 'D' END;
