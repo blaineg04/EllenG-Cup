@@ -47,3 +47,32 @@ test('Gator Hole ties split 5 each and repeat score rows do not duplicate points
  const x=summarize(state,[...rows,rows[0]],Array(18).fill(4),18);
  assert.deepEqual(x.gatorBonus,[5,5]);assert.deepEqual(x.totals.map(t=>t.pts),[8,8]);
 });
+
+test('24 golfers across 18 holes: 432 scores, team attribution, correction and Gator Hole',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const golfers=Array.from({length:24},(_,i)=>({name:'Simulated Golfer '+(i+1),team:i<12?0:1}));
+ const state={golfers,teams:[{roster:Array.from({length:12},(_,i)=>i)},{roster:Array.from({length:12},(_,i)=>i+12)}]};
+ const pars=Array(18).fill(4);
+ const rows=golfers.flatMap((g,i)=>Array.from({length:18},(_,h)=>({golfer_index:i,team_index:g.team,hole:h+1,score:g.team===0?4:5})));
+ assert.equal(rows.length,432);
+ let x=summarize(state,rows,pars,9);
+ assert.equal(x.completeHoles,18);
+ assert.deepEqual(x.totals.map(t=>t.pts),[658,432]);
+ assert.deepEqual(x.gatorBonus,[10,0]);
+ assert(x.players.slice(0,12).every(p=>p.points===54&&p.holes===18));
+ assert(x.players.slice(12).every(p=>p.points===36&&p.holes===18));
+ assert(x.holes.every(h=>h.every(t=>t.entered===12&&t.expected===12&&t.complete)));
+ // A golfer's correction replaces the saved value, never adds another score.
+ const corrected=rows.map(r=>r.golfer_index===0&&r.hole===1?{...r,score:3}:r);
+ x=summarize(state,corrected,pars,9);
+ assert.deepEqual(x.totals.map(t=>t.pts),[659,432]);
+ assert.equal(x.players[0].points,55);
+ // Duplicate data from a stale response cannot inflate a team total.
+ x=summarize(state,[...corrected,corrected[0]],pars,9);
+ assert.deepEqual(x.totals.map(t=>t.pts),[659,432]);
+ // With a single missing submission the selected hole cannot award the bonus.
+ x=summarize(state,rows.filter(r=>!(r.golfer_index===23&&r.hole===9)),pars,9);
+ assert.deepEqual(x.gatorBonus,[0,0]);
+ assert.equal(x.completeHoles,17);
+ assert.deepEqual(x.totals.map(t=>t.pts),[648,430]);
+});
