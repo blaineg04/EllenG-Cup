@@ -3014,6 +3014,12 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
         <span class="tour-chevron">›</span>
       </button>
 
+      <button type="button" class="app-hub-btn tour-card" id="hubTournamentRules">
+        <span class="tour-icon">📖</span>
+        <span class="tour-copy"><small class="tour-kicker">TOURNAMENT</small><strong>Tournament Rules</strong><em>Shamble format, Cup points and Gator Hole</em></span>
+        <span class="tour-chevron">›</span>
+      </button>
+
       <button type="button" class="app-hub-btn tour-card" id="hubClubhouse">
         <span class="tour-icon">⚑</span>
         <span class="tour-copy"><small class="tour-kicker">CLUBHOUSE</small><strong>Clubhouse</strong><em>RSVP, tee times, profiles, course and recaps</em></span>
@@ -6303,6 +6309,11 @@ if($("sharePostRoundRecap"))$("sharePostRoundRecap").addEventListener("click",sh
 if($("hubDraft"))$("hubDraft").addEventListener("click",()=>openHubView("draft"));
 if($("hubCaptain"))$("hubCaptain").addEventListener("click",()=>openHubView("captain"));
 if($("hubScoring"))$("hubScoring").addEventListener("click",()=>openHubView("scoring"));
+if($("hubTournamentRules"))$("hubTournamentRules").addEventListener("click",()=>{
+  openHubView("scoring");
+  const guide=$("scoreGuideInline");
+  if(guide){guide.hidden=false;guide.scrollIntoView({block:"start",behavior:"smooth"});}
+});
 if($("hubClubhouse"))$("hubClubhouse").addEventListener("click",()=>openHubView("clubhouse"));
 if($("hubSignOutBtn"))$("hubSignOutBtn").addEventListener("click",signOutFromHub);
 const globalMenuLink=document.querySelector("#globalMainMenuBar .global-main-menu-btn");
