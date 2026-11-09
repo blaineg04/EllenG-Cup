@@ -4056,7 +4056,7 @@ function projectedTotals(){
    if(!entered||entered===teams.length)continue;
    vals.forEach((v,i)=>{if(Number.isFinite(v))out[i].provisionalHoles++});
  }
- return out.sort((a,b)=>b.projected-a.projected||b.thru-a.thru||a.team-b.team);
+ const ranked=official.map(t=>({team:t.team,rankPoints:t.rankPoints??t.pts,average:t.average,uneven:t.uneven}));return out.map(x=>({...x,...ranked.find(t=>t.team===x.team)})).sort((a,b)=>b.rankPoints-a.rankPoints||b.thru-a.thru||a.team-b.team);
 }
 
 function latestTournamentMoment(){
@@ -4065,9 +4065,9 @@ function latestTournamentMoment(){
  return `${teams[ev.ti]?.name||`Team ${ev.ti+1}`} • Hole ${ev.h} • ${ev.g.rel} ${ev.g.label||''} • ${ev.score} stroke${ev.score===1?'':'s'}`;
 }
 function renderBroadcast(){
- const ov=$("broadcastOverlay");if(!ov)return;const arr=projectedTotals();const official=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team),leader=official[0],hasLeader=leader&&leader.pts>0;
+ const ov=$("broadcastOverlay");if(!ov)return;const arr=projectedTotals();const official=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||b.thru-a.thru||a.team-b.team),leader=official[0],hasLeader=leader&&leader.pts>0;
  $("broadcastTicker").textContent=latestTournamentMoment();
- $("broadcastStandings").innerHTML=arr.map((x,n)=>`<div class="broadcast-row"><div class="b-rank">${n+1}</div><div><strong><span class="mini-team-dot" style="background:${teamAccent(x.team)}"></span>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div style="opacity:.65;font-size:12px">${x.provisionalHoles?'Pending • no points yet':'Official posted holes'}</div></div><div class="b-pts">${x.projected.toFixed(x.projected%1?1:0)} pts</div><div class="b-thru">${x.thru?`Thru ${x.thru}`:'—'}</div></div>`).join('')||'<div style="opacity:.75">Waiting for scores…</div>';
+ $("broadcastStandings").innerHTML=arr.map((x,n)=>`<div class="broadcast-row"><div class="b-rank">${n+1}</div><div><strong><span class="mini-team-dot" style="background:${teamAccent(x.team)}"></span>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div style="opacity:.65;font-size:12px">${x.provisionalHoles?'Pending • no points yet':'Official posted holes'}</div></div><div class="b-pts">${x.uneven?`${x.average.toFixed(2)} avg`:`${x.projected.toFixed(x.projected%1?1:0)} pts`}</div><div class="b-thru">${x.thru?`Thru ${x.thru}`:'—'}</div></div>`).join('')||'<div style="opacity:.75">Waiting for scores…</div>';
  $("broadcastLeader").textContent=hasLeader?(teams[leader.team]?.name||'—'):'—';$("broadcastLeaderSub").textContent=hasLeader?`${leader.pts.toFixed(leader.pts%1?1:0)} official Cup pts • Thru ${leader.thru||0}`:'No official Cup points yet';
  $("broadcastCourse").textContent=tournamentCourseLabel()||"Course not selected";
  let complete=0;for(let h=1;h<=18;h++){if(teams.every((_,ti)=>(typeof isShamblePoints==="function"&&isShamblePoints()?shambleSummary().holes[h-1]?.[ti]?.complete:scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null))))complete++}$("broadcastHoles").textContent=`${complete} / 18`;
@@ -4352,10 +4352,10 @@ function renderTournamentHealth(){
 function renderLeaderboard(){
  if($("pointScaleBadge"))$("pointScaleBadge").textContent=pointScaleText();
  if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • 18 HOLES`;
- const arr=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
+ const arr=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||b.thru-a.thru||a.team-b.team);
  const board=$("leaderboard");
  if(board) board.dataset.teamCount=String(arr.length);
- board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${isFinalCargoTeam(x.team)?` <span class="badge">+${finalCargoBonus()} Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
+ board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${isFinalCargoTeam(x.team)?` <span class="badge">+${finalCargoBonus()} Cargo</span>`:""}</div><div class="pts">${x.uneven?`${x.average.toFixed(2)} avg • ${x.rawPoints} raw + ${x.pts-x.rawPoints} bonus`:`${x.pts.toFixed(x.pts%1?1:0)} pts`}</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
  renderLiveHoleScores();
 }
 function trashTime(ts){
