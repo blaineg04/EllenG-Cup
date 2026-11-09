@@ -117,3 +117,24 @@ test('uneven team with fewer golfers wins on per-golfer average, not raw totals'
  assert.equal(x.totals[1].average,4);
  assert.equal(x.totals[0].uneven,true);
 });
+
+test('uneven Gator Hole winner is determined by average, not roster total',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const golfers=Array.from({length:5},(_,i)=>({name:'Golfer '+i,team:i<3?0:1}));
+ const state={golfers,teams:[{roster:[0,1,2]},{roster:[3,4]}]};
+ const rows=golfers.map((g,i)=>({golfer_index:i,team_index:g.team,hole:7,score:i<3?4:3}));
+ const x=summarize(state,rows,Array(18).fill(4),7);
+ assert.deepEqual(x.holes[6].map(t=>t.points),[9,8]);
+ assert.deepEqual(x.gatorBonus,[0,10]);
+ assert.deepEqual(x.totals.map(t=>t.rankPoints),[9,22]);
+ assert.deepEqual(x.totals.map(t=>t.pts),[9,18]);
+});
+test('equal-sized rosters preserve ordinary total-point winner ranking',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const state={golfers:[{name:'A',team:0},{name:'B',team:0},{name:'C',team:1},{name:'D',team:1}],teams:[{roster:[0,1]},{roster:[2,3]}]};
+ const rows=state.golfers.map((g,i)=>({golfer_index:i,team_index:g.team,hole:4,score:i<2?4:5}));
+ const x=summarize(state,rows,Array(18).fill(4),4);
+ assert.deepEqual(x.gatorBonus,[10,0]);
+ assert.deepEqual(x.totals.map(t=>t.rankPoints),x.totals.map(t=>t.pts));
+ assert(x.totals[0].rankPoints>x.totals[1].rankPoints);
+});
