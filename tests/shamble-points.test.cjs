@@ -88,8 +88,8 @@ test('variable roster sizes from 2 through 40, including odd and uneven teams',(
   assert.equal(rows.length,count*18);
   const x=summarize(state,rows,pars,18);
   assert.equal(x.completeHoles,18,'complete '+count);
-  assert.deepEqual(x.gatorBonus,[5,5],'tied per-golfer scoring '+count);
-  assert.deepEqual(x.totals.map(t=>t.pts),[left*54+5,right*54+5],'team totals '+count);
+  assert.deepEqual(x.gatorBonus,left===right?[5,5]:[10,0],'team Gator scoring '+count);
+  assert.deepEqual(x.totals.map(t=>t.pts),[left*54+(left===right?5:10),right*54+(left===right?5:0)],'team totals '+count);
   assert(x.players.every(p=>p.holes===18&&p.points===54),'player attribution '+count);
   assert(x.holes.every(h=>h[0].entered===left&&h[1].entered===right),'hole coverage '+count);
  }
