@@ -14,3 +14,29 @@ test('score entry does not claim lowest golfer score alone counts',()=>{
  assert.ok(view.includes('Individual Cup points count toward the team total'));
  for(const old of ['LOW SCORE COUNTS','LOW TEAM SCORE','Best tee shot, then everyone plays their own ball.'])assert.ok(!view.includes(old),old);
 });
+
+const {points,summarize}=require('../shamble-points.js');
+test('points follow eagle through double bogey across par 3, 4 and 5',()=>{
+ for(const par of [3,4,5])for(const [relative,expected] of [[-2,5],[-1,4],[0,3],[1,2],[2,1]]){
+  if(par+relative>=1)assert.equal(points(par+relative,par),expected);
+ }
+});
+for(const count of [22,23,24]){
+ test(`${count} golfers: individual points sum across both teams for mixed pars`,()=>{
+  const golfers=Array.from({length:count},(_,i)=>({name:`Golfer ${i}`,team:i%2,participating:true}));
+  const teams=[{roster:[]},{roster:[]}];
+  golfers.forEach((g,i)=>teams[g.team].roster.push(i));
+  const pars=Array.from({length:18},(_,i)=>[3,4,5][i%3]);
+  const rows=[];let expected=[0,0];
+  for(let h=1;h<=18;h++)for(let i=0;i<count;i++){
+   const score=pars[h-1]+(i%3)-1;
+   rows.push({golfer_index:i,team_index:i%2,hole:h,score});
+   expected[i%2]+=points(score,pars[h-1]);
+  }
+  const result=summarize({golfers,teams},rows,pars,null);
+  assert.equal(result.completeHoles,18);
+  assert.deepEqual(result.totals.map(t=>t.rawPoints),expected);
+  assert.deepEqual(result.gatorBonus,[0,0]);
+  assert.equal(result.players.reduce((sum,p)=>sum+p.points,0),expected[0]+expected[1]);
+ });
+}
