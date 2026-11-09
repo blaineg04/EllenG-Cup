@@ -6475,7 +6475,25 @@ document.addEventListener("input",e=>{
    const i=Number(t.dataset.team);ensureDraftShape();if(draftState.teams?.[i])draftState.teams[i].slogan=t.value;
  }
 });
-$("saveTeams").addEventListener("click",async()=>{document.querySelectorAll(".team-color-input").forEach(x=>{const i=Number(x.dataset.team);if(draftState.teams?.[i])draftState.teams[i].color=x.value});document.querySelectorAll(".team-slogan-input").forEach(x=>{const i=Number(x.dataset.team);if(draftState.teams?.[i])draftState.teams[i].slogan=x.value});if(!isCommissioner)return;ensureDraftShape();$("teamEditMsg").textContent="Saving…";document.querySelectorAll("[data-team-name]").forEach(x=>{let i=Number(x.dataset.teamName);draftState.teams[i].name=x.value.trim()||`Team ${i+1}`});document.querySelectorAll("[data-team-captain]").forEach(x=>draftState.teams[Number(x.dataset.teamCaptain)].captain=x.value.trim());document.querySelectorAll("[data-team-email]").forEach(x=>draftState.teams[Number(x.dataset.teamEmail)].captainEmail=x.value.trim());try{await saveDraftState($("teamEditMsg"))}catch(e){}});
+function syncChangedCaptainPicks(changes){
+ for(const {team,oldName,newName} of changes){
+  if(!oldName||!newName||oldName.toLowerCase()===newName.toLowerCase())continue;
+  const golfers=draftState.golfers||[],picks=draftState.picks||[];
+  const oldMatches=golfers.map((g,i)=>({g,i})).filter(x=>String(x.g.name||"").trim().toLowerCase()===oldName.toLowerCase());
+  const newMatches=golfers.map((g,i)=>({g,i})).filter(x=>String(x.g.name||"").trim().toLowerCase()===newName.toLowerCase());
+  if(oldMatches.length!==1||newMatches.length!==1)throw Error("Captain replacement needs an exact, unique golfer name in Players.");
+  const old=oldMatches[0],replacement=newMatches[0];
+  const oldPick=picks.find(p=>Number(p.team)===team&&Number(p.golfer)===old.i);
+  if(!oldPick)continue; // Captain was not drafted; do not change other picks.
+  if(picks.length>activeTeamCount())throw Error("Draft has additional picks. Captain replacement must be reviewed before changing drafted teams.");
+  if(replacement.g.team!=null&&replacement.g.team!=="")throw Error("Replacement captain is already assigned to a team.");
+  if(picks.some(p=>Number(p.golfer)===replacement.i))throw Error("Replacement captain is already drafted.");
+  old.g.team=null;old.g.participating=false;
+  replacement.g.team=team;replacement.g.participating=true;
+  oldPick.golfer=replacement.i;
+ }
+}
+$("saveTeams").addEventListener("click",async()=>{document.querySelectorAll(".team-color-input").forEach(x=>{const i=Number(x.dataset.team);if(draftState.teams?.[i])draftState.teams[i].color=x.value});document.querySelectorAll(".team-slogan-input").forEach(x=>{const i=Number(x.dataset.team);if(draftState.teams?.[i])draftState.teams[i].slogan=x.value});if(!isCommissioner)return;ensureDraftShape();$("teamEditMsg").textContent="Saving…";document.querySelectorAll("[data-team-name]").forEach(x=>{let i=Number(x.dataset.teamName);draftState.teams[i].name=x.value.trim()||`Team ${i+1}`});const captainChanges=Array.from(document.querySelectorAll("[data-team-captain]")).map(x=>({team:Number(x.dataset.teamCaptain),oldName:String(draftState.teams[Number(x.dataset.teamCaptain)]?.captain||"").trim(),newName:x.value.trim()}));try{syncChangedCaptainPicks(captainChanges)}catch(e){$("teamEditMsg").textContent=e.message;await loadBase();return}captainChanges.forEach(x=>draftState.teams[x.team].captain=x.newName);document.querySelectorAll("[data-team-email]").forEach(x=>draftState.teams[Number(x.dataset.teamEmail)].captainEmail=x.value.trim());try{await saveDraftState($("teamEditMsg"))}catch(e){}});
 $("addGolferBtn").addEventListener("click",async()=>{
  const photoUrl=($("newGolferPhoto")?.value||"").trim();
  const photoFile=$("newGolferPhotoFile")?.files?.[0]||null;
