@@ -3473,6 +3473,18 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 </div>
 </section>
 
+<section id="rulesView" class="view hidden" aria-label="Tournament Rules">
+  <div class="card"><h2>Tournament Rules</h2><div id="rulesGuideContent"><div class="card" style="margin-top:16px">
+ <div class="row between"><h2 style="margin:0">📖 How Scoring Works</h2><span class="badge">PLAYER GUIDE</span></div>
+ <p class="status">18-hole individual shamble. Every golfer's points count toward the team total.</p>
+ <div style="display:grid;grid-template-columns:1fr auto;gap:9px 18px;margin-top:14px">
+ <span>Eagle or better</span><strong>5 pts</strong><span>Birdie</span><strong>4 pts</strong>
+ <span>Par</span><strong>3 pts</strong><span>Bogey</span><strong>2 pts</strong>
+ <span>Double Bogey</span><strong>1 pt</strong><span>Triple Bogey or worse</span><strong>0 pts</strong>
+ </div><hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+ <strong>⛳ Shamble format</strong><p class="status">Both golfers in each 2-v-2 pairing tee off. Each side chooses its best drive, then every golfer plays their own ball into the hole. Each golfer’s Cup points count toward their team.</p><strong>🏆 Team standings</strong><p class="status">Equal-sized teams are ranked by total Cup points. When roster sizes differ, standings compare average points per golfer, scaled to the larger roster so the Gator bonus retains its full 10-point value. Raw team totals remain visible.</p><strong>🐊 Gator Hole</strong><p class="status">The Commissioner selects the hole. Once every golfer on both teams has entered their score for that hole, the team with the higher average Cup points per golfer on that hole receives 10 bonus points; a tie splits the 10 points equally.</p>
+</div></div></div>
+</section>
 <section id="scoringView" class="view hidden">
 <div class="card">
 <div class="row between"><div><h2 style="margin:0">Score Entry</h2><div id="entryHint" class="status"></div></div><span id="holeFormat" class="badge"></span></div>
@@ -3484,7 +3496,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
  <span>Par</span><strong>3 pts</strong><span>Bogey</span><strong>2 pts</strong>
  <span>Double Bogey</span><strong>1 pt</strong><span>Triple Bogey or worse</span><strong>0 pts</strong>
  </div><hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
- <strong>🐊 Gator Hole</strong><p class="status">Secret until the Commissioner reveals it. The winning team earns 10 bonus points; tied teams split the bonus equally.</p>
+ <strong>⛳ Shamble format</strong><p class="status">Both golfers in each 2-v-2 pairing tee off. Each side chooses its best drive, then every golfer plays their own ball into the hole. Each golfer’s Cup points count toward their team.</p><strong>🏆 Team standings</strong><p class="status">Equal-sized teams are ranked by total Cup points. When roster sizes differ, standings compare average points per golfer, scaled to the larger roster so the Gator bonus retains its full 10-point value. Raw team totals remain visible.</p><strong>🐊 Gator Hole</strong><p class="status">The Commissioner selects the hole. Once every golfer on both teams has entered their score for that hole, the team with the higher average Cup points per golfer on that hole receives 10 bonus points; a tie splits the 10 points equally.</p>
 </div></div>
 <div id="holebar" class="holebar" style="margin-top:14px"></div>
 <div id="mobileHoleGuide" class="mobile-hole-guide"></div>
@@ -3681,6 +3693,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
       <button class="more-menu-btn" type="button" data-more-view="clubhouse"><span>🏛️</span>Clubhouse</button>
       <button class="more-menu-btn" type="button" data-more-view="trash"><span class="trash-talk-menu-icon"><img src="trash-talk-icon.png" alt="" aria-hidden="true"></span>Trash Talk</button>
       <button id="openBroadcast" class="more-menu-btn" type="button"><span>📺</span>Broadcast</button>
+      <button class="more-menu-btn" type="button" data-more-view="rules"><span>📖</span>Tournament Rules</button>
       <button id="moreScoringBtn" class="more-menu-btn hidden" type="button" data-more-view="scoring"><span>✏️</span>Enter Scores</button>
       <button id="moreAdminBtn" class="more-menu-btn admin-link hidden" type="button" data-more-view="admin"><span>⚙️</span><strong>Commissioner Dashboard</strong><small>Tournament setup • Teams & captains • Add golfers • Player assignments</small></button>
     </div>
