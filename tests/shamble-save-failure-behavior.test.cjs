@@ -8,7 +8,7 @@ function fixture({rpcError=null,loadedScore=4,loadError=null,scoreValue='4'}={})
  isSplitPair:()=>false,isShamblePoints:()=>true,canEditTeam:()=>true,
  teamRosterGolfers:()=>[{index:2}],$:()=>msg,
  db:{rpc:async(name,args)=>{assert.equal(name,'elleng_test_authorized_shamble');assert.equal(args.p_golfer_index,2);return {error:rpcError}}},
- loadScores:async()=>{if(loadError)throw loadError;ctx.playerScores=loadedScore===undefined?[]:[{team_index:0,hole:3,golfer_index:2,score:loadedScore}];},
+ loadScores:async()=>{if(loadError)throw loadError;ctx.playerScores=loadedScore===null?[]:[{team_index:0,hole:3,golfer_index:2,score:loadedScore}];},
  renderAll:()=>{ctx.renderCount++},renderCount:0,
  setSyncStatus:(state)=>status.push(state),globalThis:{EllenGHealth:{report:(code)=>health.push(code)}},
  console};
@@ -25,7 +25,7 @@ test('readback mismatch never claims saved',async()=>{
  const f=fixture({loadedScore:5});await f.run();assert.match(f.msg.textContent,/could not be confirmed/);assert.equal(f.status.at(-1),'error');assert.equal(f.ctx.renderCount,0);
 });
 test('missing readback never claims saved',async()=>{
- const f=fixture({loadedScore:undefined});await f.run();assert.match(f.msg.textContent,/could not be confirmed/);assert.equal(f.status.at(-1),'error');
+ const f=fixture({loadedScore:null});await f.run();assert.match(f.msg.textContent,/could not be confirmed/);assert.equal(f.status.at(-1),'error');
 });
 test('refresh error never claims saved',async()=>{
  const f=fixture({loadError:new Error('Refresh failed')});await f.run();assert.match(f.msg.textContent,/Refresh failed/);assert.equal(f.status.at(-1),'error');
