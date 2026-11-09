@@ -6,11 +6,11 @@
   const teams=Array.isArray(state?.teams)?state.teams:[],golfers=Array.isArray(state?.golfers)?state.golfers:[];
   const owners=new Map(),rosters=teams.map((team,ti)=>(Array.isArray(team?.roster)?team.roster:[]).map(r=>typeof r==='object'&&r!==null?r.golferIndex:r).filter(i=>integer(i,0,golfers.length-1)).map(Number));
   rosters.forEach((roster,ti)=>roster.forEach(i=>owners.set(i,owners.has(i)?-1:ti)));
-  const players=golfers.map((g,i)=>({index:i,team:owners.get(i),points:0,holes:0}));
+  const players=golfers.map((g,i)=>({index:i,team:g?.participating===false?undefined:owners.get(i),points:0,holes:0}));
   const holes=Array.from({length:18},()=>teams.map(()=>({points:0,entered:0,expected:0,complete:false})));
-  rosters.forEach((roster,ti)=>{const valid=roster.filter(i=>owners.get(i)===ti&&String(golfers[i]?.name||'').trim()&&(golfers[i].team==null||String(golfers[i].team)===String(ti)));for(const h of holes)h[ti].expected=valid.length;});
+  rosters.forEach((roster,ti)=>{const valid=roster.filter(i=>owners.get(i)===ti&&golfers[i]?.participating!==false&&String(golfers[i]?.name||'').trim()&&(golfers[i].team==null||String(golfers[i].team)===String(ti)));for(const h of holes)h[ti].expected=valid.length;});
   const saved=new Map();
-  for(const row of rows||[]){if(!integer(row?.golfer_index,0,golfers.length-1)||!integer(row?.team_index,0,teams.length-1)||!integer(row?.hole,1,18))continue;const gi=Number(row.golfer_index),ti=Number(row.team_index),h=Number(row.hole);if(owners.get(gi)!==ti||!String(golfers[gi]?.name||'').trim()||(golfers[gi].team!=null&&String(golfers[gi].team)!==String(ti)))continue;const value=points(row.score,pars?.[h-1]);if(value===null)continue;saved.set(gi+':'+h,{gi,ti,h,value});}
+  for(const row of rows||[]){if(!integer(row?.golfer_index,0,golfers.length-1)||!integer(row?.team_index,0,teams.length-1)||!integer(row?.hole,1,18))continue;const gi=Number(row.golfer_index),ti=Number(row.team_index),h=Number(row.hole);if(owners.get(gi)!==ti||golfers[gi]?.participating===false||!String(golfers[gi]?.name||'').trim()||(golfers[gi].team!=null&&String(golfers[gi].team)!==String(ti)))continue;const value=points(row.score,pars?.[h-1]);if(value===null)continue;saved.set(gi+':'+h,{gi,ti,h,value});}
   for(const {gi,ti,h,value} of saved.values()){players[gi].points+=value;players[gi].holes++;holes[h-1][ti].points+=value;holes[h-1][ti].entered++;}
   const totals=teams.map((_,ti)=>{let pts=0,thru=0;holes.forEach((h,i)=>{const row=h[ti];row.complete=row.expected>0&&row.entered===row.expected;pts+=row.points;if(row.complete)thru=Math.max(thru,i+1);});return {team:ti,pts,thru};});
   // Award the ten-point Gator Hole bonus only after every team has
