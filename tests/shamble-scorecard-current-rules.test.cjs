@@ -40,3 +40,29 @@ for(const count of [22,23,24]){
   assert.equal(result.players.reduce((sum,p)=>sum+p.points,0),expected[0]+expected[1]);
  });
 }
+
+for(const count of [22,23,24]){
+ test(`${count} golfers: Gator Hole compares average golfer points, not roster size`,()=>{
+  const golfers=Array.from({length:count},(_,i)=>({name:`Golfer ${i}`,team:i<12?0:1,participating:true}));
+  const teams=[{roster:Array.from({length:12},(_,i)=>i)},{roster:Array.from({length:count-12},(_,i)=>12+i)}];
+  const pars=Array(18).fill(4);
+  const rows=[];
+  for(let h=1;h<=18;h++)for(let i=0;i<count;i++)rows.push({golfer_index:i,team_index:i<12?0:1,hole:h,score:h===7?(i<12?4:3):4});
+  const result=summarize({golfers,teams},rows,pars,7);
+  assert.equal(result.completeHoles,18);
+  assert.deepEqual(result.gatorBonus,[0,10]);
+  assert.equal(result.totals[0].rawPoints,12*18*3);
+  assert.equal(result.totals[1].rawPoints,(count-12)*(17*3+4));
+  assert.equal(result.totals[1].pts,result.totals[1].rawPoints+10);
+ });
+}
+test('Gator Hole tie splits ten points equally after both teams finish',()=>{
+ const golfers=Array.from({length:23},(_,i)=>({name:`Golfer ${i}`,team:i<12?0:1,participating:true}));
+ const teams=[{roster:Array.from({length:12},(_,i)=>i)},{roster:Array.from({length:11},(_,i)=>12+i)}];
+ const pars=Array(18).fill(4);
+ const rows=golfers.map((g,i)=>({golfer_index:i,team_index:g.team,hole:7,score:4}));
+ let result=summarize({golfers,teams},rows,pars,7);
+ assert.deepEqual(result.gatorBonus,[5,5]);
+ result=summarize({golfers,teams},rows.slice(1),pars,7);
+ assert.deepEqual(result.gatorBonus,[0,0]);
+});
