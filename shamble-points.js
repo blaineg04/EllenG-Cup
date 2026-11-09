@@ -20,11 +20,22 @@
   if(integer(gatorHole,1,18)&&teams.length===2){
    const onHole=holes[Number(gatorHole)-1];
    if(onHole.every(h=>h.complete)){
-    const best=Math.max(...onHole.map(h=>h.points));
-    const winners=onHole.map((h,i)=>h.points===best?i:-1).filter(i=>i>=0);
+    const best=Math.max(...onHole.map(h=>h.points/h.expected));
+    const winners=onHole.map((h,i)=>h.points/h.expected===best?i:-1).filter(i=>i>=0);
     for(const i of winners){bonus[i]=10/winners.length;totals[i].pts+=bonus[i];}
    }
   }
+  // Rank uneven rosters by per-golfer points, preserving the same ten-point
+  // Gator bonus impact by scaling averages to the larger roster.
+  const sizes=holes[0]?.map(h=>h.expected)||[];
+  const largest=Math.max(0,...sizes),uneven=new Set(sizes).size>1;
+  totals.forEach((t,i)=>{
+   t.golfers=sizes[i]||0;
+   t.rawPoints=t.pts-bonus[i];
+   t.average=t.golfers?t.rawPoints/t.golfers+bonus[i]/(largest||1):0;
+   t.rankPoints=t.golfers?t.rawPoints/t.golfers*largest+bonus[i]:0;
+   t.uneven=uneven;
+  });
   const completeHoles=holes.filter(h=>h.length>0&&h.every(x=>x.complete)).length;
   return {players,holes,totals,completeHoles,gatorBonus:bonus};
  }
