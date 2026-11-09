@@ -1,0 +1,20 @@
+name: Captain replacement regression
+on:
+  push:
+    branches:
+      - fix/captain-replacement-sync-20261109
+    paths:
+      - scoring.html
+      - tests/captain-replacement-sync.test.cjs
+      - .github/workflows/captain-replacement-regression.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  captain-replacement:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify captain and roster synchronization
+        run: node --test tests/captain-replacement-sync.test.cjs
