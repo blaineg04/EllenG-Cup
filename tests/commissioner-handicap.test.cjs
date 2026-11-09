@@ -6,7 +6,7 @@ const sql=fs.readFileSync('db/releases/commissioner-handicap/install.sql','utf8'
 test('commissioner editor exposes handicap controls on both player views',()=>{
  assert.match(ui,/function commissionerHandicapControl\(i,g\)/);
  assert.match(ui,/commissionerHandicapControl\(i,g\)/);
- assert.match(ui,/commissionerHandicapControl\(i,draftState\?\.golfers\?\.\[i\]/);
+ assert.match(ui,/draftState\?\.golfers\?\.\[i\]\?\.name\?commissionerHandicapControl\(i,draftState\.golfers\[i\]\)/);
  assert.match(ui,/bindCommissionerHandicaps\(\$\("playerEditor"\)\)/);
 });
 test('commissioner save is a scoped authenticated RPC with stale-write protection',()=>{
