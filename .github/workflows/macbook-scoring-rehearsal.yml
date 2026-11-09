@@ -38,7 +38,7 @@ jobs:
     if: >-
       github.repository == 'blaineg04/EllenG-Cup' &&
       ((github.event_name != 'pull_request' && github.ref == 'refs/heads/development/nov20-release-reconciliation-20261026') ||
-       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (github.event.pull_request.head.ref == 'development/nov20-release-reconciliation-20261026' || github.event.pull_request.head.ref == 'fix/players-directory-preserve-unselected-20261103' || github.event.pull_request.head.ref == 'fix/shamble-gator-bonus-20261109' || github.event.pull_request.head.ref == 'fix/restore-tournament-rules-hub-20261109' || github.event.pull_request.head.ref == 'fix/par-specific-tournament-rules-20261109' || github.event.pull_request.head.ref == 'test/isolated-23-golfer-scoring-20261109')))
+       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (github.event.pull_request.head.ref == 'development/nov20-release-reconciliation-20261026' || github.event.pull_request.head.ref == 'fix/players-directory-preserve-unselected-20261103' || github.event.pull_request.head.ref == 'fix/shamble-gator-bonus-20261109' || github.event.pull_request.head.ref == 'fix/restore-tournament-rules-hub-20261109' || github.event.pull_request.head.ref == 'fix/par-specific-tournament-rules-20261109' || github.event.pull_request.head.ref == 'fix/shamble-scorecard-current-rules-20261109' || github.event.pull_request.head.ref == 'test/isolated-23-golfer-scoring-20261109')))
     runs-on: [self-hosted, macOS]
     timeout-minutes: 25
     steps:
