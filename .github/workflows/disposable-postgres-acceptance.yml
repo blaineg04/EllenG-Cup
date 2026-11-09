@@ -34,6 +34,9 @@ jobs:
           cleanup() { sudo -u postgres dropdb --if-exists "$db" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_negative" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_captain" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_policy" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_shamble_race" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_integrated" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_format_race" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_format" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_shamble_policy" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_rsvp" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_restore" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_splitpair" >/dev/null 2>&1 || true; }
           trap cleanup EXIT
           sudo -u postgres createdb "$db"
+          sudo -u postgres createdb "${db}_handicap"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "${db}_handicap" -f tests/acceptance/commissioner-handicap-native.sql
+          sudo -u postgres dropdb "${db}_handicap"
           # Negative strict-mode proof against a new, empty disposable database.
           # Expected failure must be the gate's explicit missing-RPC exception.
           strict_log="$(mktemp)"
