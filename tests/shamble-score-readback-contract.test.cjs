@@ -1,0 +1,14 @@
+const fs=require('node:fs');const assert=require('node:assert/strict');
+const html=fs.readFileSync('scoring.html','utf8');
+const start=html.indexOf('async function savePlayerShambleScore(');
+const end=html.indexOf('function renderPairScoring(',start);
+assert(start>=0&&end>start,'Shamble score handler must exist');
+const save=html.slice(start,end);
+assert(save.includes('await db.rpc("elleng_test_authorized_shamble"'),'Must save through authorized RPC');
+assert(save.includes('await loadScores();'),'Must refresh from server');
+assert(save.includes('const persisted=playerScores.find('),'Must find reloaded score');
+assert(save.includes('Number(row.team_index)===teamIndex&&Number(row.hole)===scoreHole&&Number(row.golfer_index)===golferIndex'),'Readback must match golfer, team and saved hole');
+assert(save.includes('persistedScore!==score'),'Must reject mismatched persisted score');
+assert(save.indexOf('persistedScore!==score')<save.indexOf('Individual score saved. Team points updated.'),'Success must follow readback');
+assert(save.includes('endScoreSave(false)'),'Failed readback must mark save failed');
+console.log('PASS: shamble score save requires matching persisted readback before success');

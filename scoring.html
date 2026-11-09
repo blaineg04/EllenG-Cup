@@ -4756,14 +4756,18 @@ async function savePlayerShambleScore(teamIndex,golferIndex,val){
  try{
    if(score!==null&&(!Number.isInteger(score)||score<1||score>20))throw new Error("Enter a score from 1 to 20.");
    // Fail closed: never fall back to separate client-side player/team writes.
-   // This RPC has not been installed in production. Release remains blocked
-   // until server-side authorization, RLS and concurrent device tests pass.
+   // An RPC response alone is not proof that the requested score persisted.
    const {error}=await db.rpc("elleng_test_authorized_shamble",{
      p_tournament_id:TOURNAMENT_ID,p_team_index:teamIndex,p_hole:scoreHole,
      p_golfer_index:golferIndex,p_score:score
    });
    if(error)throw error;
    await loadScores();
+   const persisted=playerScores.find(row=>Number(row.team_index)===teamIndex&&Number(row.hole)===scoreHole&&Number(row.golfer_index)===golferIndex);
+   const persistedScore=persisted?.score==null?null:Number(persisted.score);
+   if(score===null?(persistedScore!==null):(persistedScore!==score)){
+     throw new Error("Score could not be confirmed after saving. Please retry or contact the commissioner.");
+   }
    el.textContent=typeof isShamblePoints==="function"&&isShamblePoints()?"Individual score saved. Team points updated.":"Score saved and team low score updated.";
    renderAll();
  }catch(e){globalThis.EllenGHealth?.report("score_save_failed");el.textContent=e?.message||"Unable to save shamble score.";endScoreSave(false);return}
