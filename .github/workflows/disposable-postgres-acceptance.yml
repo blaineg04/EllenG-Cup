@@ -628,3 +628,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Exercise score handler with isolated mocked RPC responses
         run: node --test tests/shamble-save-failure-behavior.test.cjs
+
+  leaderboard-gator-uneven-23:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify 23-golfer leaderboard, corrections and Gator bonus
+        run: node --test tests/leaderboard-gator-uneven-23.test.cjs
