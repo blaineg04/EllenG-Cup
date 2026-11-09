@@ -26,3 +26,24 @@ test('unlimited roster size, missing scores and stale or malformed entries canno
  const rows=golfers.map((g,i)=>({golfer_index:i,team_index:g.team,hole:1,score:4}));rows.push({...rows[0]},{...rows[0],team_index:1},{...rows[0],hole:19},{...rows[0],golfer_index:99});
  const x=summarize(state,rows,Array(18).fill(4));assert.deepEqual(x.totals.map(t=>t.pts),[90,90]);assert.equal(x.completeHoles,1);
 });
+
+test('Gator Hole awards 10 only to the higher scoring team after every golfer finishes',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const state={golfers:[{name:'A',team:0},{name:'B',team:0},{name:'C',team:1},{name:'D',team:1}],teams:[{roster:[0,1]},{roster:[2,3]}]};
+ const pars=Array(18).fill(4);
+ const rows=[{golfer_index:0,team_index:0,hole:7,score:3},{golfer_index:1,team_index:0,hole:7,score:4},{golfer_index:2,team_index:1,hole:7,score:4}];
+ let x=summarize(state,rows,pars,7);
+ assert.deepEqual(x.gatorBonus,[0,0]);assert.deepEqual(x.totals.map(t=>t.pts),[7,3]);
+ rows.push({golfer_index:3,team_index:1,hole:7,score:5});
+ x=summarize(state,rows,pars,7);
+ assert.deepEqual(x.gatorBonus,[10,0]);assert.deepEqual(x.totals.map(t=>t.pts),[17,5]);
+ assert.deepEqual(x.players.map(p=>p.points),[4,3,3,2]);
+ assert.deepEqual(summarize(state,rows,pars,null).totals.map(t=>t.pts),[7,5]);
+});
+test('Gator Hole ties split 5 each and repeat score rows do not duplicate points',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const state={golfers:[{name:'A',team:0},{name:'B',team:1}],teams:[{roster:[0]},{roster:[1]}]};
+ const rows=[{golfer_index:0,team_index:0,hole:18,score:4},{golfer_index:1,team_index:1,hole:18,score:4}];
+ const x=summarize(state,[...rows,rows[0]],Array(18).fill(4),18);
+ assert.deepEqual(x.gatorBonus,[5,5]);assert.deepEqual(x.totals.map(t=>t.pts),[8,8]);
+});
