@@ -25,7 +25,7 @@ BEGIN
  THEN RAISE EXCEPTION 'Golfer not found'; END IF;
  g:=s->'golfers'->p_golfer_index;
  IF coalesce(btrim(g->>'name'),'')='' THEN RAISE EXCEPTION 'Golfer not found'; END IF;
- IF g->>'participating'='false' THEN RAISE EXCEPTION 'Golfer is not playing this tournament'; END IF;
+ -- Inactive registered golfers may also receive a handicap without joining the draft.
  IF EXISTS (SELECT 1 FROM public.elleng_team_scores WHERE tournament_id=p_tournament_id)
  OR EXISTS (SELECT 1 FROM public.elleng_player_hole_scores WHERE tournament_id=p_tournament_id)
  OR EXISTS (SELECT 1 FROM public.elleng_pair_hole_scores WHERE tournament_id=p_tournament_id)
