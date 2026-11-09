@@ -5138,6 +5138,10 @@ function commissionerHandicapControl(i,g){
  <button type="button" class="secondary" data-save-commissioner-handicap="${i}">Save Handicap</button><div class="status" aria-live="polite" data-commissioner-handicap-msg="${i}"></div></div>`;
 }
 function bindCommissionerHandicaps(root){
+ root?.querySelectorAll("[data-commissioner-band]").forEach(select=>select.addEventListener("change",()=>{
+  const exact=root.querySelector(`[data-commissioner-hcp="${select.dataset.commissionerBand}"]`);
+  if(exact)exact.value=""; // An explicitly selected band must not be overridden by a stale numeric handicap.
+ }));
  root?.querySelectorAll("[data-save-commissioner-handicap]").forEach(button=>button.addEventListener("click",async()=>{
   if(!isCommissioner)return;
   const i=Number(button.dataset.saveCommissionerHandicap),band=root.querySelector(`[data-commissioner-band="${i}"]`)?.value||"",handicap=root.querySelector(`[data-commissioner-hcp="${i}"]`)?.value?.trim()||"",msg=root.querySelector(`[data-commissioner-handicap-msg="${i}"]`);
