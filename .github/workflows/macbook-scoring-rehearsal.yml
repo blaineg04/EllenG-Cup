@@ -18,6 +18,7 @@ on:
       - 'tests/realtime-client-reconnect.test.cjs'
       - 'tests/draft-reconnect.test.cjs'
       - 'tests/integration/isolated-auth-scoring-safety.test.cjs'
+      - 'tests/integration/isolated-23-golfer-full-round.test.cjs'
       - 'scoring.html'
   pull_request:
     paths:
@@ -37,7 +38,7 @@ jobs:
     if: >-
       github.repository == 'blaineg04/EllenG-Cup' &&
       ((github.event_name != 'pull_request' && github.ref == 'refs/heads/development/nov20-release-reconciliation-20261026') ||
-       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (github.event.pull_request.head.ref == 'development/nov20-release-reconciliation-20261026' || github.event.pull_request.head.ref == 'fix/players-directory-preserve-unselected-20261103' || github.event.pull_request.head.ref == 'fix/shamble-gator-bonus-20261109' || github.event.pull_request.head.ref == 'fix/restore-tournament-rules-hub-20261109' || github.event.pull_request.head.ref == 'fix/par-specific-tournament-rules-20261109')))
+       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && (github.event.pull_request.head.ref == 'development/nov20-release-reconciliation-20261026' || github.event.pull_request.head.ref == 'fix/players-directory-preserve-unselected-20261103' || github.event.pull_request.head.ref == 'fix/shamble-gator-bonus-20261109' || github.event.pull_request.head.ref == 'fix/restore-tournament-rules-hub-20261109' || github.event.pull_request.head.ref == 'fix/par-specific-tournament-rules-20261109' || github.event.pull_request.head.ref == 'test/isolated-23-golfer-scoring-20261109')))
     runs-on: [self-hosted, macOS]
     timeout-minutes: 25
     steps:
@@ -62,7 +63,7 @@ jobs:
           shasum -a 256 scoring.html Scoring.html
           node -e 'const fs=require("fs");const s=fs.readFileSync("scoring.html","utf8");for(const q of ["function normalPoints(values){","function finalCargoBonus(){","function renderPlayersDirectory()"]){if(!s.includes(q))throw Error("Checked-out scoring source missing: "+q)}console.log("Scoring source markers verified; bytes:",s.length)'
       - name: Run scoring and visual safety contracts
-        run: node --test tests/nov20-production-score-integrity.test.cjs tests/alternate-scoring-validation.test.cjs tests/gator-hole-variable-teams.test.cjs tests/cross-page-points-parity.test.cjs tests/stored-score-completion.test.cjs tests/split-pair-atomic-contract.test.cjs tests/draft-two-client-simulation.test.cjs tests/realtime-client-reconnect.test.cjs tests/draft-reconnect.test.cjs tests/integration/isolated-auth-scoring-safety.test.cjs tests/visual/safety.test.cjs tests/acceptance/score-save-format-guard.test.cjs tests/acceptance/commissioner-format-change-guard.test.cjs tests/acceptance/broadcast-fullscreen-race.test.cjs tests/acceptance/player-home-navigation-race.test.cjs
+        run: node --test tests/nov20-production-score-integrity.test.cjs tests/alternate-scoring-validation.test.cjs tests/gator-hole-variable-teams.test.cjs tests/cross-page-points-parity.test.cjs tests/stored-score-completion.test.cjs tests/split-pair-atomic-contract.test.cjs tests/draft-two-client-simulation.test.cjs tests/realtime-client-reconnect.test.cjs tests/draft-reconnect.test.cjs tests/integration/isolated-auth-scoring-safety.test.cjs tests/integration/isolated-23-golfer-full-round.test.cjs tests/visual/safety.test.cjs tests/acceptance/score-save-format-guard.test.cjs tests/acceptance/commissioner-format-change-guard.test.cjs tests/acceptance/broadcast-fullscreen-race.test.cjs tests/acceptance/player-home-navigation-race.test.cjs
       - name: Install Chromium without Docker
         run: tests/visual/node_modules/.bin/playwright install chromium
       - name: Run local-only isolated seven-width browser rehearsal
