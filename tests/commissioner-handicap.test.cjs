@@ -34,3 +34,9 @@ test('commissioner SQL migration is structurally complete and has an anchored nu
  assert.match(sql,/h !~ '\^\[0-9\]\+\(\[\.\]\[0-9\]\+\)\?\$'/);
  assert.match(sql,/TO authenticated;\s*$/);
 });
+
+test('selecting a commissioner band clears an old exact handicap',()=>{
+ assert.match(ui,/data-commissioner-band/);
+ assert.match(ui,/select\.addEventListener\("change"/);
+ assert.match(ui,/if\(exact\)exact\.value=""/);
+});
