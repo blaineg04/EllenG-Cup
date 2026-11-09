@@ -66,3 +66,11 @@ test('Gator Hole tie splits ten points equally after both teams finish',()=>{
  result=summarize({golfers,teams},rows.slice(1),pars,7);
  assert.deepEqual(result.gatorBonus,[0,0]);
 });
+
+test('active points-entry hint matches par-specific format and individual scoring',()=>{
+ const start=html.indexOf('function renderPointsEntry('),end=html.indexOf('function renderPointsExtras(',start);
+ assert.ok(start>=0&&end>start,'Active points-entry renderer missing');
+ const view=html.slice(start,end);
+ for(const text of ['Par 3: own ball tee-to-cup','Par 4: best drive, then own ball','Par 5: best first two shots, then own ball','Every golfer earns points'])assert.ok(view.includes(text),text);
+ assert.ok(!view.includes('Best team tee shot, then play your own ball.'),'Old misleading instruction remains');
+});
