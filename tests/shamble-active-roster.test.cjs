@@ -22,7 +22,7 @@ for(const count of [22,23,24]){
 }
 test('newly active golfer requires a score before Gator Hole completes',()=>{
  const {state,rows}=scenario(23);
- let s=summarize(state,rows.filter(r=>r.golfer_index!==22),pars,18);
+ let s=summarize(state,rows.filter(r=>!(r.golfer_index===22&&r.hole===18)),pars,18);
  assert.equal(s.completeHoles,17);assert.deepEqual(s.gatorBonus,[0,0]);
  s=summarize(state,rows,pars,18);assert.equal(s.completeHoles,18);assert.deepEqual(s.gatorBonus,[5,5]);
 });
