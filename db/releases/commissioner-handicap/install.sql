@@ -32,7 +32,21 @@ BEGIN
  THEN RAISE EXCEPTION 'Scores already exist. Handicap not changed'; END IF;
  h:=btrim(coalesce(p_handicap,'')); b:=upper(btrim(coalesce(p_band,'')));
  IF h<>'' THEN
-   IF h !~ '^[0-9]+(\\.[0-9]+)?$' THEN RAISE EXCEPTION 'Invalid handicap'; END IF;
+   IF length(h)>8 OR h !~ '^[0-9]+([.][0-9]+)? THEN RAISE EXCEPTION 'Invalid handicap'; END IF;
+   n:=h::numeric;
+   IF n<0 OR n>54 THEN RAISE EXCEPTION 'Handicap must be between 0 and 54'; END IF;
+   b:=CASE WHEN n<=9 THEN 'A' WHEN n<=17 THEN 'B' WHEN n<=25 THEN 'C' ELSE 'D' END;
+ ELSIF b NOT IN ('A','B','C','D') THEN RAISE EXCEPTION 'Choose a handicap range'; END IF;
+ g:=g||jsonb_build_object('hcp',h,'band',b,'self_ranked',true);
+ s:=jsonb_set(s,ARRAY['golfers',p_golfer_index::text],g,false);
+ stamp:=clock_timestamp();
+ UPDATE public.elleng_drafts SET state=s,updated_at=stamp WHERE id=p_draft_id;
+ RETURN jsonb_build_object('ok',true,'band',b,'handicap',h,'updated_at',stamp);
+END;
+$$;
+REVOKE ALL ON FUNCTION public.elleng_set_commissioner_handicap(text,text,integer,text,text,timestamptz) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.elleng_set_commissioner_handicap(text,text,integer,text,text,timestamptz) TO authenticated;
+ THEN RAISE EXCEPTION 'Invalid handicap'; END IF;
    n:=h::numeric;
    IF n<0 OR n>54 THEN RAISE EXCEPTION 'Handicap must be between 0 and 54'; END IF;
    b:=CASE WHEN n<=9 THEN 'A' WHEN n<=17 THEN 'B' WHEN n<=25 THEN 'C' ELSE 'D' END;
