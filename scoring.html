@@ -4946,7 +4946,7 @@ function draftGolferCount(){if(typeof isShamblePoints==="function"&&isShamblePoi
 function draftTeamSize(){let n=Number(draftState?.teamSize||4);return [2,3,4].includes(n)?n:4}
 function playFormat(){return ["split_pair","shamble_points"].includes(draftState?.playFormat)?draftState.playFormat:"standard"}
 function isShamblePoints(){return draftState?.playFormat==="shamble_points"}
-function shambleSummary(){return globalThis.EllenGShamblePoints.summarize({...draftState,teams:(draftState?.teams||[]).slice(0,teams.length)},playerScores,currentPars())}
+function shambleSummary(){return globalThis.EllenGShamblePoints.summarize({...draftState,teams:(draftState?.teams||[]).slice(0,teams.length)},playerScores,currentPars(),tournament?.gator_hole)}
 function isSplitPair(){return playFormat()==="split_pair"}
 function calculatedTeamCount(golfers=draftGolferCount(),size=draftTeamSize()){if(typeof isShamblePoints==="function"&&isShamblePoints())return 2;return Math.ceil(Number(golfers)/Number(size))}
 function ensureDraftShape(){
