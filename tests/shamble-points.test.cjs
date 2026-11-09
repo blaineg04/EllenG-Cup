@@ -76,3 +76,32 @@ test('24 golfers across 18 holes: 432 scores, team attribution, correction and G
  assert.equal(x.completeHoles,17);
  assert.deepEqual(x.totals.map(t=>t.pts),[648,430]);
 });
+
+test('variable roster sizes from 2 through 40, including odd and uneven teams',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const pars=Array(18).fill(4);
+ for(let count=2;count<=40;count++){
+  const left=Math.ceil(count/2),right=count-left;
+  const golfers=Array.from({length:count},(_,i)=>({name:'Golfer '+i,team:i<left?0:1}));
+  const state={golfers,teams:[{roster:Array.from({length:left},(_,i)=>i)},{roster:Array.from({length:right},(_,i)=>i+left)}]};
+  const rows=golfers.flatMap((g,i)=>Array.from({length:18},(_,h)=>({golfer_index:i,team_index:g.team,hole:h+1,score:4})));
+  assert.equal(rows.length,count*18);
+  const x=summarize(state,rows,pars,18);
+  assert.equal(x.completeHoles,18,'complete '+count);
+  assert.deepEqual(x.gatorBonus,[5,5],'tied per-golfer scoring '+count);
+  assert.deepEqual(x.totals.map(t=>t.pts),[left*54+5,right*54+5],'team totals '+count);
+  assert(x.players.every(p=>p.holes===18&&p.points===54),'player attribution '+count);
+  assert(x.holes.every(h=>h[0].entered===left&&h[1].entered===right),'hole coverage '+count);
+ }
+});
+test('uneven teams get no bonus until both rosters have completed the Gator Hole',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const golfers=Array.from({length:5},(_,i)=>({name:'Golfer '+i,team:i<3?0:1}));
+ const state={golfers,teams:[{roster:[0,1,2]},{roster:[3,4]}]};
+ const rows=golfers.map((g,i)=>({golfer_index:i,team_index:g.team,hole:3,score:4}));
+ const partial=summarize(state,rows.slice(0,4),Array(18).fill(4),3);
+ assert.deepEqual(partial.gatorBonus,[0,0]);
+ const full=summarize(state,rows,Array(18).fill(4),3);
+ assert.deepEqual(full.gatorBonus,[10,0]);
+ assert.deepEqual(full.totals.map(t=>t.pts),[19,6]);
+});
