@@ -14,6 +14,8 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
+      - name: Verify commissioner handicap regression contracts
+        run: node --test tests/commissioner-handicap.test.cjs
       - name: Check reference schema RLS and team-size guardrails
         run: node --test tests/acceptance/event-rsvp-rollout.test.cjs tests/acceptance/event-rsvp-client.test.cjs tests/acceptance/event-rsvp-eligibility.test.cjs tests/reference-schema-security.test.cjs tests/realtime-client-reconnect.test.cjs tests/draft-reconnect.test.cjs tests/captain-pick-inflight.test.cjs tests/draft-subscribe-behavior.test.cjs tests/draft-timer-behavior.test.cjs tests/draft-two-client-simulation.test.cjs
       - name: Verify commissioner authorization and RSVP regressions
@@ -32,6 +34,9 @@ jobs:
           cleanup() { sudo -u postgres dropdb --if-exists "$db" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_negative" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_captain" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_policy" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_shamble_race" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_integrated" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_format_race" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_format" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_shamble_policy" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_rsvp" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_restore" >/dev/null 2>&1 || true; sudo -u postgres dropdb --if-exists "${db}_splitpair" >/dev/null 2>&1 || true; }
           trap cleanup EXIT
           sudo -u postgres createdb "$db"
+          sudo -u postgres createdb "${db}_handicap"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "${db}_handicap" -f tests/acceptance/commissioner-handicap-native.sql
+          sudo -u postgres dropdb "${db}_handicap"
           # Negative strict-mode proof against a new, empty disposable database.
           # Expected failure must be the gate's explicit missing-RPC exception.
           strict_log="$(mktemp)"
