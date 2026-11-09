@@ -71,3 +71,12 @@ test('stale captain label reconciles actual drafted captain safely',()=>{
  assert.equal(state.golfers[3].team,1);
  assert.equal(state.golfers[3].band,'A');
 });
+
+test('unchanged captain label repairs a stale initial pick',()=>{
+ const golfers=[{name:'Carl',team:0},{name:'Brian Paredes',team:1},{name:'Jarad Jones',team:null,band:'A'}];
+ const picks=[{team:0,golfer:0},{team:1,golfer:1}];
+ const state=run([{team:1,oldName:'Jarad Jones',newName:'Jarad Jones'}],golfers,picks);
+ assert.equal(state.picks[1].golfer,2);
+ assert.equal(state.golfers[1].participating,false);
+ assert.equal(state.golfers[2].team,1);
+});
