@@ -16,6 +16,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify commissioner handicap regression contracts
         run: node --test tests/commissioner-handicap.test.cjs
+      - name: Verify captain replacement synchronization
+        run: node --test tests/captain-replacement-sync.test.cjs
       - name: Check reference schema RLS and team-size guardrails
         run: node --test tests/acceptance/event-rsvp-rollout.test.cjs tests/acceptance/event-rsvp-client.test.cjs tests/acceptance/event-rsvp-eligibility.test.cjs tests/reference-schema-security.test.cjs tests/realtime-client-reconnect.test.cjs tests/draft-reconnect.test.cjs tests/captain-pick-inflight.test.cjs tests/draft-subscribe-behavior.test.cjs tests/draft-timer-behavior.test.cjs tests/draft-two-client-simulation.test.cjs
       - name: Verify commissioner authorization and RSVP regressions
