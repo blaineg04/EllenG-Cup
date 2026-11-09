@@ -46,9 +46,13 @@ test('roster rebuild uses replacement golfer after saving',()=>{
  const golfers=[{name:'Carl',team:0},{name:'Aaron',team:1},{name:'Brian',team:null}];
  const picks=[{team:0,golfer:0},{team:1,golfer:1}];
  const state=run([{team:1,oldName:'Aaron',newName:'Brian'}],golfers,picks);
- const rosters=[[],[]];
- state.golfers.forEach((g,i)=>{if(g.participating!==false&&Number.isInteger(g.team))rosters[g.team].push(i)});
- assert.deepEqual(rosters,[[0],[2]]);
+ const rosterStart=html.indexOf('function rebuildTeamRosters(){');
+ const rosterEnd=html.indexOf('const TEAM_DEFAULT_COLORS=',rosterStart);
+ assert.ok(rosterStart>=0&&rosterEnd>rosterStart,'production roster rebuild must exist');
+ const context={draftState:{...state,teams:[{roster:[0]},{roster:[1]}]},ensureDraftShape:()=>{}};
+ vm.runInNewContext(html.slice(rosterStart,rosterEnd)+';rebuildTeamRosters();',context);
+ assert.deepEqual(JSON.parse(JSON.stringify(context.draftState.teams.map(t=>t.roster))),[[0],[2]]);
+ assert.equal(context.draftState.golfers[1].team,null);
 });
 test('duplicate golfer names cannot change the draft',()=>{
  const golfers=[{name:'Carl',team:0},{name:'Aaron',team:1},{name:'Brian',team:null},{name:'Brian',team:null}];
