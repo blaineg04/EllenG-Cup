@@ -30,7 +30,7 @@ test('player self-edit flow remains available',()=>{
 
 test('commissioner SQL migration is structurally complete and has an anchored numeric pattern',()=>{
  assert.equal((sql.match(/CREATE OR REPLACE FUNCTION/g)||[]).length,1);
- assert.equal((sql.match(/GRANT EXECUTE ON FUNCTION/g)||[]).length,1);
+ assert.equal((sql.match(/^GRANT EXECUTE ON FUNCTION/gm)||[]).length,1);
  assert.match(sql,/h !~ '\^\[0-9\]\+\(\[\.\]\[0-9\]\+\)\?\$'/);
  assert.match(sql,/TO authenticated;\s*$/);
 });
