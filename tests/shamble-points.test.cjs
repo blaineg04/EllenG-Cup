@@ -88,8 +88,8 @@ test('variable roster sizes from 2 through 40, including odd and uneven teams',(
   assert.equal(rows.length,count*18);
   const x=summarize(state,rows,pars,18);
   assert.equal(x.completeHoles,18,'complete '+count);
-  assert.deepEqual(x.gatorBonus,left===right?[5,5]:[10,0],'team Gator scoring '+count);
-  assert.deepEqual(x.totals.map(t=>t.pts),[left*54+(left===right?5:10),right*54+(left===right?5:0)],'team totals '+count);
+  assert.deepEqual(x.gatorBonus,[5,5],'team Gator scoring '+count);
+  assert.deepEqual(x.totals.map(t=>t.pts),[left*54+5,right*54+5],'team totals '+count);
   assert(x.players.every(p=>p.holes===18&&p.points===54),'player attribution '+count);
   assert(x.holes.every(h=>h[0].entered===left&&h[1].entered===right),'hole coverage '+count);
  }
@@ -102,6 +102,18 @@ test('uneven teams get no bonus until both rosters have completed the Gator Hole
  const partial=summarize(state,rows.slice(0,4),Array(18).fill(4),3);
  assert.deepEqual(partial.gatorBonus,[0,0]);
  const full=summarize(state,rows,Array(18).fill(4),3);
- assert.deepEqual(full.gatorBonus,[10,0]);
- assert.deepEqual(full.totals.map(t=>t.pts),[19,6]);
+ assert.deepEqual(full.gatorBonus,[5,5]);
+ assert.deepEqual(full.totals.map(t=>t.pts),[14,11]);
+});
+
+test('uneven team with fewer golfers wins on per-golfer average, not raw totals',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const golfers=Array.from({length:5},(_,i)=>({name:'Golfer '+i,team:i<3?0:1}));
+ const state={golfers,teams:[{roster:[0,1,2]},{roster:[3,4]}]};
+ const rows=golfers.map((g,i)=>({golfer_index:i,team_index:g.team,hole:1,score:i<3?4:3}));
+ const x=summarize(state,rows,Array(18).fill(4),null);
+ assert.deepEqual(x.totals.map(t=>t.rawPoints),[9,8]);
+ assert.deepEqual(x.totals.map(t=>t.rankPoints),[9,12]);
+ assert.equal(x.totals[1].average,4);
+ assert.equal(x.totals[0].uneven,true);
 });
