@@ -61,3 +61,13 @@ test('duplicate golfer names cannot change the draft',()=>{
  assert.throws(()=>run([{team:1,oldName:'Aaron',newName:'Brian'}],golfers,picks),/exact, unique/);
  assert.equal(JSON.stringify({golfers,picks}),before);
 });
+
+test('stale captain label reconciles actual drafted captain safely',()=>{
+ const golfers=[{name:'Carl',team:0},{name:'Aaron Bird',team:1},{name:'Brian Paredes',team:null},{name:'Jarad Jones',team:null,band:'A'}];
+ const picks=[{team:0,golfer:0},{team:1,golfer:1}];
+ const state=run([{team:1,oldName:'Brian Paredes',newName:'Jarad Jones'}],golfers,picks);
+ assert.equal(state.picks[1].golfer,3);
+ assert.equal(state.golfers[1].participating,false);
+ assert.equal(state.golfers[3].team,1);
+ assert.equal(state.golfers[3].band,'A');
+});
