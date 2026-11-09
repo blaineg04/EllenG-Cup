@@ -6478,24 +6478,28 @@ document.addEventListener("input",e=>{
 function syncChangedCaptainPicks(changes){
  const golfers=draftState.golfers||[],picks=draftState.picks||[],operations=[];
  for(const {team,oldName,newName} of changes){
-  if(oldName.toLowerCase()===newName.toLowerCase())continue;
+  // Even an unchanged captain label may hide a stale initial draft pick.
   if(!oldName||!newName){
    if(picks.some(p=>Number(p.team)===team))throw Error("A drafted captain cannot be cleared without choosing a replacement.");
    continue;
   }
   const matches=name=>golfers.map((g,i)=>({g,i})).filter(x=>String(x.g.name||"").trim().toLowerCase()===name.toLowerCase());
   const oldMatches=matches(oldName),newMatches=matches(newName);
-  if(oldMatches.length!==1||newMatches.length!==1)throw Error("Captain replacement needs an exact, unique golfer name in Players.");
-  const old=oldMatches[0],replacement=newMatches[0];
-  const oldPick=picks.find(p=>Number(p.team)===team&&Number(p.golfer)===old.i);
-  if(!oldPick){
-   if(picks.some(p=>Number(p.team)===team))throw Error("Existing draft picks do not match the previous captain. Review assignments before saving.");
-   continue;
-  }
-  if(picks.length>activeTeamCount())throw Error("Draft has additional picks. Captain replacement must be reviewed before changing drafted teams.");
+  if(newMatches.length!==1)throw Error("Captain replacement needs an exact, unique golfer name in Players.");
+  const replacement=newMatches[0];
+  // The captain label can be stale relative to the first pick. Resolve the
+  // actual drafted captain from the team's initial pick, never from the label.
+  const teamPicks=picks.filter(p=>Number(p.team)===team);
+  if(teamPicks.length>1||picks.length>activeTeamCount())throw Error("Draft has additional picks. Captain replacement must be reviewed before changing drafted teams.");
+  const oldPick=teamPicks[0];
+  if(!oldPick)continue;
+  const draftedIndex=Number(oldPick.golfer);
+  const drafted=golfers[draftedIndex];
+  if(!drafted||!Number.isInteger(draftedIndex))throw Error("Captain draft pick is invalid. Reload and contact the commissioner.");
+  if(replacement.i===draftedIndex)continue;
   if(replacement.g.team!=null&&replacement.g.team!=="")throw Error("Replacement captain is already assigned to a team.");
   if(picks.some(p=>Number(p.golfer)===replacement.i))throw Error("Replacement captain is already drafted.");
-  operations.push({team,old,replacement,oldPick});
+  operations.push({team,old:{g:drafted,i:draftedIndex},replacement,oldPick});
  }
  if(new Set(operations.map(o=>o.replacement.i)).size!==operations.length)throw Error("A replacement golfer cannot captain two teams.");
  // Validate every replacement before mutating any golfer or pick.
