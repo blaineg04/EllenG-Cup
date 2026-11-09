@@ -74,3 +74,11 @@ test('active points-entry hint matches par-specific format and individual scorin
  for(const text of ['Par 3: own ball tee-to-cup','Par 4: best drive, then own ball','Par 5: best first two shots, then own ball','Every golfer earns points'])assert.ok(view.includes(text),text);
  assert.ok(!view.includes('Best team tee shot, then play your own ball.'),'Old misleading instruction remains');
 });
+
+test('incomplete holes show saved partial points without claiming the hole is complete',()=>{
+ const start=html.indexOf('function renderShambleScoring('),end=html.indexOf('function beginScoreSave(',start);
+ assert.ok(start>=0&&end>start);
+ const view=html.slice(start,end);
+ assert.ok(view.includes('Recorded points appear as scores are saved; the hole is complete when every golfer finishes.'));
+ assert.ok(!view.includes('Team total updates after everyone finishes.'));
+});
