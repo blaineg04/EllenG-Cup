@@ -642,3 +642,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify active golfers and stale-score exclusion
         run: node --test tests/shamble-active-roster.test.cjs
+
+  shamble-scorecard-current-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate par-specific scoring instructions and every-golfer points wording
+        run: node --test tests/shamble-scorecard-current-rules.test.cjs
