@@ -19,7 +19,7 @@ BEGIN
  IF (p_new_golfer IS NULL OR p_participating) AND t.status IS DISTINCT FROM 'setup' THEN RAISE EXCEPTION 'Status can only change during tournament setup.'; END IF;
  s:=d.state;gs:=s->'golfers';g:=gs->p_golfer_index;
  IF jsonb_typeof(gs) IS DISTINCT FROM 'array' THEN RAISE EXCEPTION 'Golfer list unavailable'; END IF;
- IF (p_new_golfer IS NULL OR p_participating) AND (s->>'timerPaused'='false' OR jsonb_array_length(coalesce(s->'picks','[]'::jsonb))>0
+ IF (p_new_golfer IS NULL OR p_participating) AND (s->>'timerPaused'='false' OR (NOT p_participating AND jsonb_array_length(coalesce(s->'picks','[]'::jsonb))>0)
  OR EXISTS(SELECT 1 FROM public.elleng_team_scores WHERE tournament_id=p_tournament_id)
  OR EXISTS(SELECT 1 FROM public.elleng_player_hole_scores WHERE tournament_id=p_tournament_id)
  OR EXISTS(SELECT 1 FROM public.elleng_pair_hole_scores WHERE tournament_id=p_tournament_id)
