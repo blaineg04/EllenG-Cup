@@ -48,3 +48,26 @@ test('414 scores: independent sum matches raw points and normalized ranking',()=
   close(result.totals[ti].rankPoints,expected/(ti===0?12:11)*12+result.gatorBonus[ti]);
  }
 });
+
+for(const count of [22,23,24]){
+ test(`${count} active golfers: roster, 18-hole scoring, normalization and Gator bonus`,()=>{
+  const a=Math.ceil(count/2),b=Math.floor(count/2);
+  const gs=Array.from({length:count},(_,i)=>({name:'Active '+i,team:i<a?0:1}));
+  const ts=[{name:'A',roster:Array.from({length:a},(_,i)=>i)},{name:'B',roster:Array.from({length:b},(_,i)=>a+i)}];
+  const rs=[];for(let h=1;h<=18;h++)for(let g=0;g<count;g++)rs.push({golfer_index:g,team_index:g<a?0:1,hole:h,score:g<a?4:3});
+  const result=summarize({golfers:gs,teams:ts},rs,pars,18);
+  assert.equal(rs.length,count*18);
+  assert.equal(result.completeHoles,18);
+  assert.deepEqual(result.gatorBonus,[0,10]);
+  assert.equal(result.totals[0].golfers,a);assert.equal(result.totals[1].golfers,b);
+  assert.equal(result.totals[0].rawPoints,a*18*3);
+  assert.equal(result.totals[1].rawPoints,b*18*4);
+  close(result.totals[0].rankPoints,a*18*3);
+  close(result.totals[1].rankPoints,a*18*4+10);
+  assert.equal(result.totals[0].uneven,count%2===1);
+  assert.equal(result.totals[1].uneven,count%2===1);
+  const incomplete=summarize({golfers:gs,teams:ts},rs.filter(r=>!(r.golfer_index===count-1&&r.hole===18)),pars,18);
+  assert.deepEqual(incomplete.gatorBonus,[0,0]);
+  assert.equal(incomplete.completeHoles,17);
+ });
+}
