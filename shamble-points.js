@@ -2,7 +2,7 @@
  'use strict';
  const integer=(v,min,max)=>v!==null&&v!==undefined&&typeof v!=='boolean'&&String(v).trim()!==''&&Number.isSafeInteger(Number(v))&&Number(v)>=min&&Number(v)<=max;
  function points(strokes,par){if(!integer(strokes,1,20)||!integer(par,3,5))return null;return Math.max(0,Math.min(5,3+Number(par)-Number(strokes)));}
- function summarize(state,rows,pars){
+ function summarize(state,rows,pars,gatorHole=null){
   const teams=Array.isArray(state?.teams)?state.teams:[],golfers=Array.isArray(state?.golfers)?state.golfers:[];
   const owners=new Map(),rosters=teams.map((team,ti)=>(Array.isArray(team?.roster)?team.roster:[]).map(r=>typeof r==='object'&&r!==null?r.golferIndex:r).filter(i=>integer(i,0,golfers.length-1)).map(Number));
   rosters.forEach((roster,ti)=>roster.forEach(i=>owners.set(i,owners.has(i)?-1:ti)));
@@ -13,8 +13,31 @@
   for(const row of rows||[]){if(!integer(row?.golfer_index,0,golfers.length-1)||!integer(row?.team_index,0,teams.length-1)||!integer(row?.hole,1,18))continue;const gi=Number(row.golfer_index),ti=Number(row.team_index),h=Number(row.hole);if(owners.get(gi)!==ti||!String(golfers[gi]?.name||'').trim()||(golfers[gi].team!=null&&String(golfers[gi].team)!==String(ti)))continue;const value=points(row.score,pars?.[h-1]);if(value===null)continue;saved.set(gi+':'+h,{gi,ti,h,value});}
   for(const {gi,ti,h,value} of saved.values()){players[gi].points+=value;players[gi].holes++;holes[h-1][ti].points+=value;holes[h-1][ti].entered++;}
   const totals=teams.map((_,ti)=>{let pts=0,thru=0;holes.forEach((h,i)=>{const row=h[ti];row.complete=row.expected>0&&row.entered===row.expected;pts+=row.points;if(row.complete)thru=Math.max(thru,i+1);});return {team:ti,pts,thru};});
+  // Award the ten-point Gator Hole bonus only after every team has
+  // submitted every participating golfer's score on the selected hole.
+  // Compare total team points for that hole; split ties evenly.
+  const bonus=teams.map(()=>0);
+  if(integer(gatorHole,1,18)&&teams.length===2){
+   const onHole=holes[Number(gatorHole)-1];
+   if(onHole.every(h=>h.complete)){
+    const best=Math.max(...onHole.map(h=>h.points/h.expected));
+    const winners=onHole.map((h,i)=>h.points/h.expected===best?i:-1).filter(i=>i>=0);
+    for(const i of winners){bonus[i]=10/winners.length;totals[i].pts+=bonus[i];}
+   }
+  }
+  // Rank uneven rosters by per-golfer points, preserving the same ten-point
+  // Gator bonus impact by scaling averages to the larger roster.
+  const sizes=holes[0]?.map(h=>h.expected)||[];
+  const largest=Math.max(0,...sizes),uneven=new Set(sizes).size>1;
+  totals.forEach((t,i)=>{
+   t.golfers=sizes[i]||0;
+   t.rawPoints=t.pts-bonus[i];
+   t.average=t.golfers?t.rawPoints/t.golfers+bonus[i]/(largest||1):0;
+   t.rankPoints=t.golfers?t.rawPoints/t.golfers*largest+bonus[i]:0;
+   t.uneven=uneven;
+  });
   const completeHoles=holes.filter(h=>h.length>0&&h.every(x=>x.complete)).length;
-  return {players,holes,totals,completeHoles};
+  return {players,holes,totals,completeHoles,gatorBonus:bonus};
  }
  async function fetchScores(client,tournamentId){
   const rows=[];let offset=0;

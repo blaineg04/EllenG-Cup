@@ -26,3 +26,115 @@ test('unlimited roster size, missing scores and stale or malformed entries canno
  const rows=golfers.map((g,i)=>({golfer_index:i,team_index:g.team,hole:1,score:4}));rows.push({...rows[0]},{...rows[0],team_index:1},{...rows[0],hole:19},{...rows[0],golfer_index:99});
  const x=summarize(state,rows,Array(18).fill(4));assert.deepEqual(x.totals.map(t=>t.pts),[90,90]);assert.equal(x.completeHoles,1);
 });
+
+test('Gator Hole awards 10 only to the higher scoring team after every golfer finishes',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const state={golfers:[{name:'A',team:0},{name:'B',team:0},{name:'C',team:1},{name:'D',team:1}],teams:[{roster:[0,1]},{roster:[2,3]}]};
+ const pars=Array(18).fill(4);
+ const rows=[{golfer_index:0,team_index:0,hole:7,score:3},{golfer_index:1,team_index:0,hole:7,score:4},{golfer_index:2,team_index:1,hole:7,score:4}];
+ let x=summarize(state,rows,pars,7);
+ assert.deepEqual(x.gatorBonus,[0,0]);assert.deepEqual(x.totals.map(t=>t.pts),[7,3]);
+ rows.push({golfer_index:3,team_index:1,hole:7,score:5});
+ x=summarize(state,rows,pars,7);
+ assert.deepEqual(x.gatorBonus,[10,0]);assert.deepEqual(x.totals.map(t=>t.pts),[17,5]);
+ assert.deepEqual(x.players.map(p=>p.points),[4,3,3,2]);
+ assert.deepEqual(summarize(state,rows,pars,null).totals.map(t=>t.pts),[7,5]);
+});
+test('Gator Hole ties split 5 each and repeat score rows do not duplicate points',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const state={golfers:[{name:'A',team:0},{name:'B',team:1}],teams:[{roster:[0]},{roster:[1]}]};
+ const rows=[{golfer_index:0,team_index:0,hole:18,score:4},{golfer_index:1,team_index:1,hole:18,score:4}];
+ const x=summarize(state,[...rows,rows[0]],Array(18).fill(4),18);
+ assert.deepEqual(x.gatorBonus,[5,5]);assert.deepEqual(x.totals.map(t=>t.pts),[8,8]);
+});
+
+test('24 golfers across 18 holes: 432 scores, team attribution, correction and Gator Hole',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const golfers=Array.from({length:24},(_,i)=>({name:'Simulated Golfer '+(i+1),team:i<12?0:1}));
+ const state={golfers,teams:[{roster:Array.from({length:12},(_,i)=>i)},{roster:Array.from({length:12},(_,i)=>i+12)}]};
+ const pars=Array(18).fill(4);
+ const rows=golfers.flatMap((g,i)=>Array.from({length:18},(_,h)=>({golfer_index:i,team_index:g.team,hole:h+1,score:g.team===0?4:5})));
+ assert.equal(rows.length,432);
+ let x=summarize(state,rows,pars,9);
+ assert.equal(x.completeHoles,18);
+ assert.deepEqual(x.totals.map(t=>t.pts),[658,432]);
+ assert.deepEqual(x.gatorBonus,[10,0]);
+ assert(x.players.slice(0,12).every(p=>p.points===54&&p.holes===18));
+ assert(x.players.slice(12).every(p=>p.points===36&&p.holes===18));
+ assert(x.holes.every(h=>h.every(t=>t.entered===12&&t.expected===12&&t.complete)));
+ // A golfer's correction replaces the saved value, never adds another score.
+ const corrected=rows.map(r=>r.golfer_index===0&&r.hole===1?{...r,score:3}:r);
+ x=summarize(state,corrected,pars,9);
+ assert.deepEqual(x.totals.map(t=>t.pts),[659,432]);
+ assert.equal(x.players[0].points,55);
+ // Duplicate data from a stale response cannot inflate a team total.
+ x=summarize(state,[...corrected,corrected[0]],pars,9);
+ assert.deepEqual(x.totals.map(t=>t.pts),[659,432]);
+ // With a single missing submission the selected hole cannot award the bonus.
+ x=summarize(state,rows.filter(r=>!(r.golfer_index===23&&r.hole===9)),pars,9);
+ assert.deepEqual(x.gatorBonus,[0,0]);
+ assert.equal(x.completeHoles,17);
+ assert.deepEqual(x.totals.map(t=>t.pts),[648,430]);
+});
+
+test('variable roster sizes from 2 through 40, including odd and uneven teams',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const pars=Array(18).fill(4);
+ for(let count=2;count<=40;count++){
+  const left=Math.ceil(count/2),right=count-left;
+  const golfers=Array.from({length:count},(_,i)=>({name:'Golfer '+i,team:i<left?0:1}));
+  const state={golfers,teams:[{roster:Array.from({length:left},(_,i)=>i)},{roster:Array.from({length:right},(_,i)=>i+left)}]};
+  const rows=golfers.flatMap((g,i)=>Array.from({length:18},(_,h)=>({golfer_index:i,team_index:g.team,hole:h+1,score:4})));
+  assert.equal(rows.length,count*18);
+  const x=summarize(state,rows,pars,18);
+  assert.equal(x.completeHoles,18,'complete '+count);
+  assert.deepEqual(x.gatorBonus,[5,5],'team Gator scoring '+count);
+  assert.deepEqual(x.totals.map(t=>t.pts),[left*54+5,right*54+5],'team totals '+count);
+  assert(x.players.every(p=>p.holes===18&&p.points===54),'player attribution '+count);
+  assert(x.holes.every(h=>h[0].entered===left&&h[1].entered===right),'hole coverage '+count);
+ }
+});
+test('uneven teams get no bonus until both rosters have completed the Gator Hole',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const golfers=Array.from({length:5},(_,i)=>({name:'Golfer '+i,team:i<3?0:1}));
+ const state={golfers,teams:[{roster:[0,1,2]},{roster:[3,4]}]};
+ const rows=golfers.map((g,i)=>({golfer_index:i,team_index:g.team,hole:3,score:4}));
+ const partial=summarize(state,rows.slice(0,4),Array(18).fill(4),3);
+ assert.deepEqual(partial.gatorBonus,[0,0]);
+ const full=summarize(state,rows,Array(18).fill(4),3);
+ assert.deepEqual(full.gatorBonus,[5,5]);
+ assert.deepEqual(full.totals.map(t=>t.pts),[14,11]);
+});
+
+test('uneven team with fewer golfers wins on per-golfer average, not raw totals',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const golfers=Array.from({length:5},(_,i)=>({name:'Golfer '+i,team:i<3?0:1}));
+ const state={golfers,teams:[{roster:[0,1,2]},{roster:[3,4]}]};
+ const rows=golfers.map((g,i)=>({golfer_index:i,team_index:g.team,hole:1,score:i<3?4:3}));
+ const x=summarize(state,rows,Array(18).fill(4),null);
+ assert.deepEqual(x.totals.map(t=>t.rawPoints),[9,8]);
+ assert.deepEqual(x.totals.map(t=>t.rankPoints),[9,12]);
+ assert.equal(x.totals[1].average,4);
+ assert.equal(x.totals[0].uneven,true);
+});
+
+test('uneven Gator Hole winner is determined by average, not roster total',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const golfers=Array.from({length:5},(_,i)=>({name:'Golfer '+i,team:i<3?0:1}));
+ const state={golfers,teams:[{roster:[0,1,2]},{roster:[3,4]}]};
+ const rows=golfers.map((g,i)=>({golfer_index:i,team_index:g.team,hole:7,score:i<3?4:3}));
+ const x=summarize(state,rows,Array(18).fill(4),7);
+ assert.deepEqual(x.holes[6].map(t=>t.points),[9,8]);
+ assert.deepEqual(x.gatorBonus,[0,10]);
+ assert.deepEqual(x.totals.map(t=>t.rankPoints),[9,22]);
+ assert.deepEqual(x.totals.map(t=>t.pts),[9,18]);
+});
+test('equal-sized rosters preserve ordinary total-point winner ranking',()=>{
+ const {summarize}=require('../shamble-points.js');
+ const state={golfers:[{name:'A',team:0},{name:'B',team:0},{name:'C',team:1},{name:'D',team:1}],teams:[{roster:[0,1]},{roster:[2,3]}]};
+ const rows=state.golfers.map((g,i)=>({golfer_index:i,team_index:g.team,hole:4,score:i<2?4:5}));
+ const x=summarize(state,rows,Array(18).fill(4),4);
+ assert.deepEqual(x.gatorBonus,[10,0]);
+ assert.deepEqual(x.totals.map(t=>t.rankPoints),x.totals.map(t=>t.pts));
+ assert(x.totals[0].rankPoints>x.totals[1].rankPoints);
+});
