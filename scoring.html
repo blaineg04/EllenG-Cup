@@ -4079,7 +4079,7 @@ async function closeBroadcastMode(){const ov=$("broadcastOverlay");if(!ov)return
 function allHolesComplete(){if(typeof isShamblePoints==="function"&&isShamblePoints())return shambleSummary().completeHoles===18;return teams.length>0&&Array.from({length:18},(_,i)=>i+1).every(h=>teams.every((_,ti)=>(typeof isShamblePoints==="function"&&isShamblePoints()?shambleSummary().holes[h-1]?.[ti]?.complete:scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null))))}
 async function createWinnerGraphic(){
  const msg=$("winnerGraphicMsg"),preview=$("winnerGraphicPreview");if(!msg||!preview)return;const complete=String(tournament?.status||'').toUpperCase()==='COMPLETE'||allHolesComplete();if(!complete){msg.textContent='Available after the tournament is complete.';return}
- const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team),win=ranking[0];if(!win){msg.textContent='No final results available yet.';return}
+ const ranking=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||b.thru-a.thru||a.team-b.team),win=ranking[0];if(!win){msg.textContent='No final results available yet.';return}
  const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=675;const ctx=canvas.getContext('2d');
  const grad=ctx.createLinearGradient(0,0,1200,675);grad.addColorStop(0,'#061827');grad.addColorStop(.6,'#08253b');grad.addColorStop(1,'#123d55');ctx.fillStyle=grad;ctx.fillRect(0,0,1200,675);
  ctx.fillStyle='#d5a72c';ctx.fillRect(0,0,1200,12);ctx.fillRect(0,663,1200,12);ctx.textAlign='center';ctx.fillStyle='#d5a72c';ctx.font='900 70px Georgia, serif';ctx.fillText('EllenG Cup',600,120);ctx.fillStyle='#ffffff';ctx.font='700 30px Arial';ctx.fillText('TOURNAMENT CHAMPIONS',600,176);
@@ -4121,7 +4121,7 @@ function teamRoundStats(ti,start=1,end=18){let strokes=0,par=0,count=0,birdies=0
 function bestByRel(start,end){let best=null;teams.forEach((_,ti)=>{const s=teamRoundStats(ti,start,end);if(!s.count)return;if(!best||s.rel<best.rel||(s.rel===best.rel&&s.count>best.count))best={ti,...s}});return best}
 
 function closestTeams(){
- const arr=totals().sort((a,b)=>b.pts-a.pts||a.team-b.team);
+ const arr=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||a.team-b.team);
  if(arr.length<2)return null;
  let best=null;
  for(let i=0;i<arr.length;i++)for(let j=i+1;j<arr.length;j++){
@@ -4225,7 +4225,7 @@ function renderTrophyRoom(){
 }
 function renderSeasonStandings(){
  const root=$("seasonStandings");if(!root)return;
- const live=totals().sort((a,b)=>b.pts-a.pts||a.team-b.team);
+ const live=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||a.team-b.team);
  root.innerHTML=live.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team]?.name||`Team ${x.team+1}`)}</strong><div class="status">Current tournament</div></div><div class="pts">${fmt(x.pts)} pts</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("")||'<div class="note">Season standings begin with the current tournament.</div>';
 }
 function renderRivalryWatch(){
@@ -4276,7 +4276,7 @@ function renderTournamentPulse(){
    return;
  }
  const events=(scores||[]).filter(x=>x&&x.score!=null).map(x=>{const ti=Number(x.team_index),h=Number(x.hole),par=parForHole(h),g=relativeGolf(Number(x.score),par);return{ti,h,score:Number(x.score),g,ts:x.updated_at||x.created_at||""}}).sort((a,b)=>String(b.ts).localeCompare(String(a.ts))||b.h-a.h).slice(0,8);
- const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team),lead=ranking[0];
+ const ranking=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||b.thru-a.thru||a.team-b.team),lead=ranking[0];
  let html="";
  if(lead&&lead.pts>0)html+=`<div class="pulse-item"><div class="pulse-icon">🏆</div><div class="pulse-main"><strong>${esc(teams[lead.team]?.name||`Team ${lead.team+1}`)} leads the EllenG Cup</strong><div class="status">Through ${lead.thru||0} hole${lead.thru===1?"":"s"}</div></div><div class="pulse-score">${lead.pts.toFixed(lead.pts%1?1:0)} Cup Points</div></div>`;
  html+=events.map(e=>{const special=tournament?.gator_revealed&&Number(tournament?.gator_hole)===e.h;const icon=special?"🐊":e.g.label==="Eagle"||e.g.label==="Albatross"?"🦅":e.g.label==="Birdie"?"🐦":e.g.label==="Par"?"⛳":"🏌️";return `<div class="pulse-item"><div class="pulse-icon">${icon}</div><div class="pulse-main"><strong><span class="mini-team-dot" style="background:${teamAccent(e.ti)}"></span>${esc(teams[e.ti]?.name||`Team ${e.ti+1}`)} • Hole ${e.h}</strong><div class="status">${special?"Gator Hole • ":""}${esc(e.g.label||"Score posted")} • ${e.score} stroke${e.score===1?"":"s"}</div></div><div class="pulse-score ${scoreClass(e.g.rel)}">${esc(e.g.rel)}</div></div>`}).join("");
@@ -4285,7 +4285,7 @@ function renderTournamentPulse(){
 
 
 async function sharePostRoundRecap(){
- const msg=$("shareRecapMsg"),ranking=totals().sort((a,b)=>b.pts-a.pts||a.team-b.team),winner=ranking[0];
+ const msg=$("shareRecapMsg"),ranking=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||a.team-b.team),winner=ranking[0];
  const text=`EllenG Cup Recap${winner&&winner.pts>0?`\n🏆 ${teams[winner.team]?.name||`Team ${winner.team+1}`} — ${fmt(winner.pts)} Cup points`:""}\n${ranking.slice(0,3).map((x,i)=>`${i+1}. ${teams[x.team]?.name||`Team ${x.team+1}`} — ${fmt(x.pts)} pts`).join("\n")}`;
  try{if(navigator.share)await navigator.share({title:"EllenG Cup Recap",text});else await navigator.clipboard.writeText(text);if(msg)msg.textContent="Recap ready to share."}catch(e){if(e?.name!=="AbortError"&&msg)msg.textContent="Unable to share recap."}
 }
@@ -4327,7 +4327,7 @@ function renderDigitalScorecard(){
  root.innerHTML=`<table class="digital-scorecard"><thead><tr><th>Hole</th><th>Par</th><th>Strokes</th><th>Golf Score</th><th>Cup Pts</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td><strong>Total</strong></td><td>${entered?parTotal:'—'}</td><td><strong>${entered?strokeTotal:'—'}</strong></td><td class="${totalRel==null?'':totalRel<0?'score-good':totalRel>0?'score-bad':'score-even'}"><strong>${gTotal}</strong> <span class="status">(${entered}/18 entered)</span></td><td><strong>${pointTotal.toFixed(pointTotal%1?1:0)}</strong></td></tr></tfoot></table>`;
 }
 function renderTournamentRecap(){
- const root=$("postRoundRecap");if(!root)return;const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team),played=(scores||[]).filter(x=>x.score!=null).length,status=String(tournament?.status||"setup").toUpperCase(),done=status==="COMPLETE";
+ const root=$("postRoundRecap");if(!root)return;const ranking=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||b.thru-a.thru||a.team-b.team),played=(scores||[]).filter(x=>x.score!=null).length,status=String(tournament?.status||"setup").toUpperCase(),done=status==="COMPLETE";
  if($("recapStatusBadge")){$("recapStatusBadge").textContent=done?"FINAL":"IN PROGRESS";$("recapStatusBadge").style.background=done?"#087c42":"#edf1f3";$("recapStatusBadge").style.color=done?"#fff":"#10202c"}if($("recapSub"))$("recapSub").textContent=done?"The final story of this EllenG Cup.":"Builds automatically as scores are posted.";
  if(!played){root.innerHTML='<div class="note" style="margin-top:12px">The recap will populate once tournament scoring begins.</div>';return}
  const teamsStarted=teams.map((_,ti)=>(scores||[]).some(x=>Number(x.team_index)===ti&&x.score!=null));
@@ -4489,7 +4489,7 @@ function renderCaptainDashboard(){
  const ti=captainTeam;if(ti==null||ti<0||ti>=teams.length){card.classList.add("hidden");root.innerHTML="";return}
  card.classList.remove("hidden");
  const stat=totals().find(x=>x.team===ti)||{pts:0,thru:0};
- const rank=totals().sort((a,b)=>b.pts-a.pts||a.team-b.team).findIndex(x=>x.team===ti)+1;
+ const rank=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||a.team-b.team).findIndex(x=>x.team===ti)+1;
  const roster=(draftState?.teams?.[ti]?.roster||[]).map(Number).filter(Number.isInteger);
  const hole=stat.thru<18?stat.thru+1:18;
  const posted=scores.filter(x=>Number(x.team_index)===ti&&x.score!=null).length;
@@ -5684,7 +5684,7 @@ function pushInAppAlert(title,sub=""){
  const root=$("inAppAlertStack");if(!root)return;const el=document.createElement("div");el.className="app-alert";el.innerHTML=`<strong>${esc(title)}</strong>${sub?`<span>${esc(sub)}</span>`:""}`;root.prepend(el);setTimeout(()=>el.remove(),5500);
 }
 function checkLiveAlerts(){
- const ranking=totals().sort((a,b)=>b.pts-a.pts||a.team-b.team),leader=ranking[0];
+ const ranking=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||a.team-b.team),leader=ranking[0];
  const leaderKey=leader&&leader.pts>0?`${leader.team}:${leader.pts}`:null;
  if(lastAlertLeader&&leaderKey&&leaderKey!==lastAlertLeader)pushInAppAlert(`${teams[leader.team]?.name||`Team ${leader.team+1}`} takes the lead`,`${fmt(leader.pts)} Cup points`);
  lastAlertLeader=leaderKey||lastAlertLeader;
@@ -5698,7 +5698,7 @@ function checkLiveAlerts(){
 function renderLeaderSpotlight(){
  const name=$("leaderSpotlightName"),sub=$("leaderSpotlightSub"),body=$("leaderSpotlightBody"),rank=$("leaderSpotlightRank");
  if(!name||!sub||!body||!rank)return;
- const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
+ const ranking=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||b.thru-a.thru||a.team-b.team);
  const lead=ranking[0];
  if(!lead||!(lead.pts>0)){name.textContent="Waiting for scoring";sub.textContent="The current leader will appear once official Cup points are awarded.";body.innerHTML="";rank.textContent="#1";return}
  const team=teams[lead.team]||{},second=ranking[1],margin=second?lead.pts-second.pts:lead.pts;
@@ -5768,7 +5768,7 @@ function showBigMoment(icon,kicker,title,sub=""){
  overlay.onclick=()=>overlay.classList.add("hidden");
 }
 function checkBigMoments(){
- const ranking=totals().sort((a,b)=>b.pts-a.pts||a.team-b.team),leader=ranking[0],leaderKey=leader&&leader.pts>0?`${leader.team}:${leader.pts}`:null;
+ const ranking=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||a.team-b.team),leader=ranking[0],leaderKey=leader&&leader.pts>0?`${leader.team}:${leader.pts}`:null;
  if(lastBigMomentLeader&&leaderKey&&leaderKey!==lastBigMomentLeader){
    const t=teams[leader.team]?.name||`Team ${leader.team+1}`;
    showBigMoment("🏆","NEW LEADER",`${t} TAKES THE LEAD`,`${fmt(leader.pts)} Cup points`);
@@ -5797,7 +5797,7 @@ function renderHome(){
  if($("homeDateBadge"))$("homeDateBadge").textContent=eventDate?formatTournamentDate(eventDate):"DATE TBD";
  if($("homeHeadline"))$("homeHeadline").textContent=status==="LIVE"?"The EllenG Cup Is Live":status==="COMPLETE"?"Final Results":"EllenG Cup Tournament Hub";
  if($("homeSubline"))$("homeSubline").textContent=status==="LIVE"?"Follow the leaderboard, check teams, view players and keep up with every hole.":status==="COMPLETE"?"The tournament is complete. Review the final leaderboard and results.":"Everything players need before and during tournament day.";
- const ranking=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
+ const ranking=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||b.thru-a.thru||a.team-b.team);
  const lead=ranking[0];
  const hasOfficialLeader=!!(lead&&Number(lead.pts)>0);
  if($("homeLeader"))$("homeLeader").textContent=hasOfficialLeader?(teams[lead.team]?.name||"—"):"—";
@@ -6603,7 +6603,7 @@ $("clearTrashTalk").addEventListener("click",clearTrashTalkFeed);
 $("archiveStartNew").addEventListener("click",archiveAndStartNew);
 $("resetCurrentLeader").addEventListener("click",()=>{
  if(!isCommissioner)return;
- const leader=totals().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team)[0];
+ const leader=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||b.thru-a.thru||a.team-b.team)[0];
  if(leader&&Number(leader.pts)>0){
    $("newTournamentMsg").textContent="Current leader is calculated from official Cup points. Correct or clear the scores to change it.";
    return;
