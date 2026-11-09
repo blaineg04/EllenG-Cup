@@ -6476,18 +6476,30 @@ document.addEventListener("input",e=>{
  }
 });
 function syncChangedCaptainPicks(changes){
+ const golfers=draftState.golfers||[],picks=draftState.picks||[],operations=[];
  for(const {team,oldName,newName} of changes){
-  if(!oldName||!newName||oldName.toLowerCase()===newName.toLowerCase())continue;
-  const golfers=draftState.golfers||[],picks=draftState.picks||[];
-  const oldMatches=golfers.map((g,i)=>({g,i})).filter(x=>String(x.g.name||"").trim().toLowerCase()===oldName.toLowerCase());
-  const newMatches=golfers.map((g,i)=>({g,i})).filter(x=>String(x.g.name||"").trim().toLowerCase()===newName.toLowerCase());
+  if(oldName.toLowerCase()===newName.toLowerCase())continue;
+  if(!oldName||!newName){
+   if(picks.some(p=>Number(p.team)===team))throw Error("A drafted captain cannot be cleared without choosing a replacement.");
+   continue;
+  }
+  const matches=name=>golfers.map((g,i)=>({g,i})).filter(x=>String(x.g.name||"").trim().toLowerCase()===name.toLowerCase());
+  const oldMatches=matches(oldName),newMatches=matches(newName);
   if(oldMatches.length!==1||newMatches.length!==1)throw Error("Captain replacement needs an exact, unique golfer name in Players.");
   const old=oldMatches[0],replacement=newMatches[0];
   const oldPick=picks.find(p=>Number(p.team)===team&&Number(p.golfer)===old.i);
-  if(!oldPick)continue; // Captain was not drafted; do not change other picks.
+  if(!oldPick){
+   if(picks.some(p=>Number(p.team)===team))throw Error("Existing draft picks do not match the previous captain. Review assignments before saving.");
+   continue;
+  }
   if(picks.length>activeTeamCount())throw Error("Draft has additional picks. Captain replacement must be reviewed before changing drafted teams.");
   if(replacement.g.team!=null&&replacement.g.team!=="")throw Error("Replacement captain is already assigned to a team.");
   if(picks.some(p=>Number(p.golfer)===replacement.i))throw Error("Replacement captain is already drafted.");
+  operations.push({team,old,replacement,oldPick});
+ }
+ if(new Set(operations.map(o=>o.replacement.i)).size!==operations.length)throw Error("A replacement golfer cannot captain two teams.");
+ // Validate every replacement before mutating any golfer or pick.
+ for(const {team,old,replacement,oldPick} of operations){
   old.g.team=null;old.g.participating=false;
   replacement.g.team=team;replacement.g.participating=true;
   oldPick.golfer=replacement.i;
