@@ -41,3 +41,19 @@ test('cannot clear drafted captain',()=>{
  const golfers=[{name:'Carl',team:0}],picks=[{team:0,golfer:0}];
  assert.throws(()=>run([{team:0,oldName:'Carl',newName:''}],golfers,picks),/cannot be cleared/);
 });
+
+test('roster rebuild uses replacement golfer after saving',()=>{
+ const golfers=[{name:'Carl',team:0},{name:'Aaron',team:1},{name:'Brian',team:null}];
+ const picks=[{team:0,golfer:0},{team:1,golfer:1}];
+ const state=run([{team:1,oldName:'Aaron',newName:'Brian'}],golfers,picks);
+ const rosters=[[],[]];
+ state.golfers.forEach((g,i)=>{if(g.participating!==false&&Number.isInteger(g.team))rosters[g.team].push(i)});
+ assert.deepEqual(rosters,[[0],[2]]);
+});
+test('duplicate golfer names cannot change the draft',()=>{
+ const golfers=[{name:'Carl',team:0},{name:'Aaron',team:1},{name:'Brian',team:null},{name:'Brian',team:null}];
+ const picks=[{team:0,golfer:0},{team:1,golfer:1}];
+ const before=JSON.stringify({golfers,picks});
+ assert.throws(()=>run([{team:1,oldName:'Aaron',newName:'Brian'}],golfers,picks),/exact, unique/);
+ assert.equal(JSON.stringify({golfers,picks}),before);
+});
