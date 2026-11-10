@@ -30,3 +30,20 @@ test('commissioner display and pick guard use active unassigned roster',()=>{
  assert.match(admin,/const remaining=S\.golfers\.some\(g=>g\?\.name&&g\.participating!==false&&g\.team==null\)/);
  assert.doesNotMatch(admin,/S\.picks\.length>=total/);
 });
+
+test('commissioner Undo Pick preserves protected weighted captain picks and restores only the last drafted golfer',()=>{
+ const admin=fs.readFileSync(require('node:path').join(__dirname,'../admin.html'),'utf8');
+ assert.match(admin,/if\(S\.draftRules==="weighted"&&S\.picks\.length<=2\)return false/);
+ assert.match(admin,/const p=S\.picks\.at\(-1\)/);
+ assert.match(admin,/S\.picks\.pop\(\)/);
+ assert.match(admin,/S\.golfers\[p\.golfer\]\.team=null/);
+ assert.match(admin,/S\.teams\[p\.team\]\.roster=S\.teams\[p\.team\]\.roster\.filter\(x=>x!==p\.golfer\)/);
+ assert.match(admin,/S\.timerEndsAt=new Date\(Date\.now\(\)\+S\.timerLength\*1000\)\.toISOString\(\)/);
+});
+test('commissioner pause and reset clock controls are still wired to authenticated saves',()=>{
+ const admin=fs.readFileSync(require('node:path').join(__dirname,'../admin.html'),'utf8');
+ assert.match(admin,/getElementById\("pause"\)\.onclick=\(\)=>saveCommissionerAction/);
+ assert.match(admin,/getElementById\("resetClock"\)\.onclick=\(\)=>saveCommissionerAction/);
+ assert.match(admin,/if\(S\.timerPaused\)\{S\.timerPaused=false/);
+ assert.match(admin,/S\.timerLength=remaining\(\);S\.timerPaused=true;S\.timerEndsAt=null/);
+});
