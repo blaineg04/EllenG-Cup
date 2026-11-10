@@ -27,6 +27,7 @@ const assert=require('node:assert/strict');
   const hashes=await catalog();
   const candidate=fs.readFileSync('db/releases/weighted-draft/reconcile-production-candidate.sql','utf8');
   await assert.rejects(db.exec(candidate),/Weighted options function changed since preflight/);
+  await db.exec('ROLLBACK'); // The expected preflight error leaves an explicit transaction aborted.
   assert.equal((await db.query("SELECT to_regprocedure('public.elleng_weighted_reachable(integer,integer,integer[],integer[],integer[],boolean)') IS NOT NULL AS exists")).rows[0].exists,false);
   const adapted=candidate.replace('a5f4f264fa29bc7165c3007561c5163c',hashes.options).replace('657ab096b909d2940c1e889c7bd31c18',hashes.guard);
   await db.exec(adapted);
@@ -39,6 +40,7 @@ const assert=require('node:assert/strict');
   const result=(await db.query('SELECT public.elleng_weighted_options($1::jsonb) AS options',[JSON.stringify(state)])).rows[0].options;
   assert.ok(result.eligible,'patched weighted options must return eligibility');
   await assert.rejects(db.exec(adapted),/Reachability function already exists/);
+  await db.exec('ROLLBACK');
   console.log('PASS: synthetic production drift reconciles, fail-closed preflight, guard protection, options callable, replay blocked');
  }finally{await db.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});
