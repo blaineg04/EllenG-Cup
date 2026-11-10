@@ -11,7 +11,7 @@
    if(!Number.isInteger(i)||state.picks?.[t]?.golfer!==i||state.picks[t].team!==t||state.golfers?.[i]?.team!==t||!state.teams[t].roster?.includes(i))throw new Error('Weighted captain seeds must remain assigned.');
   }
   const golfers=state.golfers||[],playing=golfers.map((g,i)=>({...g,i})).filter(active);
-  if(playing.length<2||playing.length>500)throw new Error('Weighted balance requires 2–500 playing golfers.');
+  if(playing.length<2||playing.length>32)throw new Error('Weighted balance requires 2–32 playing golfers.');
   if(playing.some(g=>g.self_ranked!==true||!bands.includes(g.band)))throw new Error('Every playing golfer needs a submitted handicap band.');
   const totals=[0,0,0,0],fixed=[[0,0,0,0],[0,0,0,0]],capacities=[0,0],seen=new Set();
   for(let n=0;n<playing.length;n++){const r=Math.floor(n/2),p=n%2;capacities[state.draftType==='snake'&&r%2?1-p:p]++;}
