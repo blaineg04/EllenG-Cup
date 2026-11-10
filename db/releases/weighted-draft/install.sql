@@ -56,6 +56,11 @@ BEGIN
   END LOOP;END IF;
  END LOOP;END LOOP;END LOOP;
  IF best_gap IS NULL THEN RAISE EXCEPTION 'No valid final roster allocation is possible';END IF;
+ -- Match the client-side first-round premium-band restriction.
+ FOR b IN 1..2 LOOP
+  IF fixed0[b]>0 AND fixed1[b]=0 AND totals[b]>fixed0[b] AND caps[2]>(SELECT sum(x) FROM unnest(fixed1)x) THEN eligible0[b]:=false;END IF;
+  IF fixed1[b]>0 AND fixed0[b]=0 AND totals[b]>fixed1[b] AND caps[1]>(SELECT sum(x) FROM unnest(fixed0)x) THEN eligible1[b]:=false;END IF;
+ END LOOP;
  RETURN jsonb_build_object('version',1,'capacities',to_jsonb(caps),'score',jsonb_build_array(best_gap,best_depth),'eligible',jsonb_build_array(
   coalesce((SELECT jsonb_agg(labels[x] ORDER BY x) FROM generate_series(1,4)x WHERE eligible0[x]),'[]'::jsonb),
   coalesce((SELECT jsonb_agg(labels[x] ORDER BY x) FROM generate_series(1,4)x WHERE eligible1[x]),'[]'::jsonb)),
