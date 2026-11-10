@@ -54,9 +54,11 @@ test('commissioner control actions delegate locking to secureSave without deadlo
  const end=admin.indexOf('document.getElementById("undo").onclick=',start);
  assert.ok(start>=0&&end>start);
  const action=admin.slice(start,end);
- assert.match(action,/if\\(savingDraft\\)return/);
- assert.match(action,/if\\(change\\(\\)===false\\)return;[\\s\\S]*?await save\\(\\)/);
- assert.doesNotMatch(action,/savingDraft=true/);
- assert.match(admin,/async function secureSave\\(\\)\\{\\s*if\\(savingDraft\\)throw new Error/);
- assert.match(admin,/save=secureSave/);
+ assert.ok(action.includes('if(savingDraft)return;'));
+ assert.ok(action.includes('if(change()===false)return;'));
+ assert.ok(action.includes('await save();'));
+ assert.ok(!action.includes('savingDraft=true;'));
+ assert.ok(admin.includes('async function secureSave(){'));
+ assert.ok(admin.includes('if(savingDraft)throw new Error("A draft save is already in progress.")'));
+ assert.ok(admin.includes('save=secureSave;'));
 });
