@@ -12,10 +12,12 @@ const root=path.resolve(__dirname,'../..'),scores=new Map();
      if(req.method!=='POST'){res.writeHead(405);return res.end();}
      let body='';req.on('data',c=>body+=c);req.on('end',()=>{
        try{const data=JSON.parse(body);
-         if(data.actor!=='golfer-a'||data.golfer_index!==0||!Number.isInteger(data.hole)||data.hole<1||data.hole>18)throw Error('Unauthorized synthetic score write');
+         const identities={'synthetic-session-a':0,'synthetic-session-b':1};
+         const golfer=identities[req.headers['x-rehearsal-session']];
+         if(golfer===undefined||data.golfer_index!==golfer||!Number.isInteger(data.hole)||data.hole<1||data.hole>18)throw Error('Unauthorized synthetic score write');
          const key=data.golfer_index+':'+data.hole;
          if(data.score===null)scores.delete(key);
-         else{if(!Number.isInteger(data.score)||data.score<1)throw Error('Invalid strokes');scores.set(key,{golfer_index:0,team_index:0,hole:data.hole,score:data.score});}
+         else{if(!Number.isInteger(data.score)||data.score<1)throw Error('Invalid strokes');scores.set(key,{golfer_index:golfer,team_index:0,hole:data.hole,score:data.score});}
          res.end(JSON.stringify({ok:true}));
        }catch(e){res.writeHead(403);res.end(JSON.stringify({error:e.message}));}
      });return;
@@ -46,7 +48,7 @@ const root=path.resolve(__dirname,'../..'),scores=new Map();
                client.functions.invoke=async(name,options)=>{
                  if(name==='golfer-handicap'&&options?.body?.action==='update_score'){
                    const body=options.body;
-                   const response=await fetch('/__rehearsal/scores',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({actor:'golfer-a',golfer_index:0,hole:Number(body.hole),score:body.score===null?null:Number(body.score)})});
+                   const response=await fetch('/__rehearsal/scores',{method:'POST',headers:{'Content-Type':'application/json','X-Rehearsal-Session':'synthetic-session-a'},body:JSON.stringify({golfer_index:0,hole:Number(body.hole),score:body.score===null?null:Number(body.score)})});
                    const data=await response.json();return response.ok?{data,error:null}:{data:null,error:{message:data.error}};
                  }
                  return oldInvoke(name,options);
@@ -80,8 +82,16 @@ const root=path.resolve(__dirname,'../..'),scores=new Map();
    await second.page.locator('.tab[data-view="leaderboard"]').click();
    await second.page.locator('#selfScoreHole').selectOption('18');
    assert.equal(await second.page.locator('#selfScoreInput').inputValue(),'3','Second browser must see saved score');
+   // Server derives ownership from a synthetic session header, not from the request body.
+   async function attempt(session,golfer,score){const response=await fetch(origin+'/__rehearsal/scores',{method:'POST',headers:{'Content-Type':'application/json','X-Rehearsal-Session':session},body:JSON.stringify({golfer_index:golfer,hole:18,score})});return response.status;}
+   assert.equal(await attempt('synthetic-session-b',0,2),403,'Golfer B must not overwrite golfer A');
+   assert.equal(scores.get('0:18').score,3,'Rejected cross-golfer edit must not change saved score');
+   assert.equal(await attempt('synthetic-session-b',1,5),200,'Golfer B may save own score');
+   assert.equal(scores.get('1:18').score,5);
+   assert.equal(await attempt('invalid-session',0,2),403,'Unknown synthetic session must be denied');
+   assert.equal(scores.size,2,'One score per golfer and hole');
    await first.context.close();await second.context.close();
-   console.log('PASS: two independent scoring browser contexts, one shared disposable local store, save and reload');
+   console.log('PASS: two independent scoring browser contexts, shared save/reload, synthetic cross-golfer authorization and unknown-session denial');
    console.log('LIMITATION: synthetic auth/API adapter, not actual Supabase authenticated production E2E');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}
 })().catch(e=>{console.error(e);process.exitCode=1});
