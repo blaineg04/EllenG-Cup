@@ -16,3 +16,7 @@ for(const count of [2,3,7,21,22,23,24,31,64,100]){
   assert.equal(golfers.filter(g=>g?.name && g.participating!==false).length,count);
  });
 }
+
+test('draft completion must not use historical pick count after withdrawals',()=>{
+ assert.doesNotMatch(draft,/done=S\.picks\.length>=totalGolfers/, 'Historical picks can include withdrawn golfers; derive completion from eligible assigned golfers instead');
+});
