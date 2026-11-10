@@ -31,7 +31,7 @@ test('rejected weighted pause save explains failure and restores local state',as
  const h=harness();h.ctx.S=api.prepare(h.ctx.S);h.ctx.S.timerPaused=true;
  h.ctx.savingDraft=false;h.ctx.alert=message=>{h.ctx.lastAlert=message};
  h.ctx.save=async()=>{throw new Error('Draft was changed by another session')};
- h.elements.pause={};
+ h.elements.pause={};h.elements.undo={};
  vm.runInContext(source.slice(source.indexOf('async function saveCommissionerAction('),source.indexOf('document.getElementById("resetClock").onclick')),h.ctx);
  const before=structuredClone(h.ctx.S);
  await h.elements.pause.onclick();
