@@ -26,3 +26,15 @@ test('rejected weighted preparation leaves local draft unchanged',async()=>{
  const before=structuredClone(h.ctx.S);await h.elements.prepareWeighted.onclick();
  assert.deepEqual(h.ctx.S,before);assert.equal(h.reads(),0);assert.equal(h.ctx.savingDraft,false);assert.match(h.ctx.lastAlert,/Server rejected preparation/);
 });
+
+test('rejected weighted pause save explains failure and restores local state',async()=>{
+ const h=harness();h.ctx.S=api.prepare(h.ctx.S);h.ctx.S.timerPaused=true;
+ h.ctx.savingDraft=false;h.ctx.alert=message=>{h.ctx.lastAlert=message};
+ h.ctx.save=async()=>{throw new Error('Draft was changed by another session')};
+ h.elements.pause={};
+ vm.runInContext(source.slice(source.indexOf('async function saveCommissionerAction('),source.indexOf('document.getElementById("resetClock").onclick')),h.ctx);
+ const before=structuredClone(h.ctx.S);
+ await h.elements.pause.onclick();
+ assert.deepEqual(h.ctx.S,before);
+ assert.match(h.ctx.lastAlert,/changed by another session/);
+});
