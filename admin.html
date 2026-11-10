@@ -354,6 +354,7 @@ async function saveCommissionerAction(change){
   if(!sameCommissionerAction(actionEpoch,actionUserId))return;
   S=before;
   if(liveMode)liveRender();
+  if(before.draftRules==="weighted")alert(error?.message||"Draft change was rejected. Reload the draft before retrying.");
  }
 }
 document.getElementById("undo").onclick=()=>saveCommissionerAction(()=>{

@@ -23,3 +23,20 @@ test('commissioner setup hides an unsubmitted stored band without changing the p
  assert.match(elements.grows.innerHTML,/data-h="0"[^>]*value=""/);
  assert.equal(S.golfers[0].band,'A');
 });
+
+test('captain screen disables weighted-ineligible picks and keeps the server RPC authoritative',()=>{
+ const captain=fs.readFileSync('captain.html','utf8');
+ const common=fs.readFileSync('common.js','utf8');
+ assert.match(captain,/<script src="weighted-draft\.js"><\/script>/);
+ assert.match(captain,/db\.rpc\("elleng_make_pick"/);
+ const start=common.indexOf('function canBand(t,b){'),end=common.indexOf('\nlet latestLoadRequest',start);
+ assert.ok(start>=0&&end>start,'shared canBand integration exists');
+ const api=require('../weighted-draft.js');
+ const S={teams:[{captain:'Jarad',captainGolferIndex:0,roster:[0]},{captain:'Carl',captainGolferIndex:1,roster:[1]}],golfers:[...'ABBBCC'].map((band,i)=>({name:i===0?'Jarad':i===1?'Carl':'Golfer '+i,band,self_ranked:true,team:i<2?i:null})),picks:[{golfer:0,team:0},{golfer:1,team:1}],draftType:'snake',draftRules:'weighted',balanceVersion:1,timerPaused:false};
+ const ctx={S,globalThis:{EllenGWeightedDraft:api}};
+ vm.runInNewContext(common.slice(start,end),ctx);
+ assert.equal(ctx.canBand(1,'B'),false,'Carl cannot select a second B before Jarad gets one');
+ assert.equal(ctx.canBand(1,'C'),true,'Carl may select an eligible C');
+ S.balanceVersion=2;
+ assert.equal(ctx.canBand(1,'C'),false,'unknown balance versions fail closed');
+});

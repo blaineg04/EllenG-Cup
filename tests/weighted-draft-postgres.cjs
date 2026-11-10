@@ -16,6 +16,97 @@ const api=require('../weighted-draft.js');
  let parity=0;
  for(const bands of ['ABBBCC','AABBCCDD','BBBBCCDD','ABDD','ACBBBBCCD','ADDDDD','AB']){const start=make([...bands]);
   for(let attempt=0;attempt<10;attempt++){const s=structuredClone(start);while(true){const js=api.options(s);const result=await db.query('select public.elleng_weighted_options($1::jsonb) as result',[JSON.stringify(s)]);assert.deepEqual(result.rows[0].result,js);parity++;const n=s.picks.length,t=Math.floor(n/2)%2?1-n%2:n%2;const pool=s.golfers.map((g,i)=>({...g,i})).filter(g=>g.team==null&&js.eligible[t].includes(g.band));if(!pool.length)break;const g=pool[(attempt+n)%pool.length];s.golfers[g.i].team=t;s.teams[t].roster.push(g.i);s.picks.push({golfer:g.i,team:t});}}}
+ // Representative tournament-size parity and latency, including the
+ // look-ahead logic. This uses disposable PGlite, never production.
+ const largeBands=['A','B',...Array(4).fill('B'),...Array(14).fill('C'),...Array(4).fill('D')];
+ const largeState=make(largeBands);
+ const started=Date.now();
+ const largeJS=api.options(largeState);
+ const largeDB=(await db.query('select public.elleng_weighted_options($1::jsonb) as result',[JSON.stringify(largeState)])).rows[0].result;
+ const elapsed=Date.now()-started;
+ assert.deepEqual(largeDB,largeJS,'24-golfer first-pick parity');
+ assert.ok(elapsed<30000,'24-golfer parity took '+elapsed+'ms (30s budget)');
+ console.log('PASS: 24-golfer initial-pick parity in '+elapsed+'ms');
+ // Walk all remaining turns for a realistic 24-player draft, comparing
+ // PostgreSQL with JavaScript before every pick.
+ const fullState=structuredClone(largeState);
+ let fullComparisons=0;
+ const fullStart=Date.now();
+ while(fullState.picks.length<largeBands.length){
+  const js=api.options(fullState);
+  const sql=(await db.query('select public.elleng_weighted_options($1::jsonb) as result',[JSON.stringify(fullState)])).rows[0].result;
+  assert.deepEqual(sql,js,'24-player parity at pick '+(fullState.picks.length+1));
+  fullComparisons++;
+  const n=fullState.picks.length,turn=Math.floor(n/2)%2?1-n%2:n%2;
+  const index=fullState.golfers.findIndex(g=>g.team==null&&js.eligible[turn].includes(g.band));
+  assert.ok(index>=0,'24-player draft stalled at pick '+(n+1));
+  fullState.golfers[index].team=turn;
+  fullState.teams[turn].roster.push(index);
+  fullState.picks.push({golfer:index,team:turn});
+ }
+ assert.deepEqual(fullState.teams.map(t=>t.roster.length),[12,12]);
+ console.log('PASS: '+fullComparisons+' full 24-golfer snake picks checked for JS/PostgreSQL parity in '+(Date.now()-fullStart)+'ms');
+
+ // Uneven 23-golfer tournament: both engines must agree on all 21
+ // post-captain picks and finish with the snake-order 11/12 split.
+ const oddBands=['A','B',...Array(4).fill('B'),...Array(13).fill('C'),...Array(4).fill('D')];
+ const oddState=make(oddBands);
+ let oddComparisons=0;
+ while(oddState.picks.length<oddBands.length){
+  const js=api.options(oddState);
+  const sql=(await db.query('select public.elleng_weighted_options($1::jsonb) as result',[JSON.stringify(oddState)])).rows[0].result;
+  assert.deepEqual(sql,js,'23-player parity at pick '+(oddState.picks.length+1));
+  const n=oddState.picks.length,turn=Math.floor(n/2)%2?1-n%2:n%2;
+  const index=oddState.golfers.findIndex(g=>g.team==null&&js.eligible[turn].includes(g.band));
+  assert.ok(index>=0,'23-player draft stalled at pick '+(n+1));
+  oddState.golfers[index].team=turn;
+  oddState.teams[turn].roster.push(index);
+  oddState.picks.push({golfer:index,team:turn});
+  oddComparisons++;
+ }
+ assert.deepEqual(oddState.teams.map(t=>t.roster.length),[11,12]);
+ console.log('PASS: '+oddComparisons+' full 23-golfer snake picks checked for JS/PostgreSQL parity (11/12 split)');
+ // Even 22-golfer tournament: all 20 post-captain selections must remain legal.
+ const evenBands=['A','B',...Array(4).fill('B'),...Array(12).fill('C'),...Array(4).fill('D')];
+ const evenState=make(evenBands);
+ let evenComparisons=0;
+ while(evenState.picks.length<evenBands.length){
+  const js=api.options(evenState);
+  const sql=(await db.query('select public.elleng_weighted_options($1::jsonb) as result',[JSON.stringify(evenState)])).rows[0].result;
+  assert.deepEqual(sql,js,'22-player parity at pick '+(evenState.picks.length+1));
+  const n=evenState.picks.length,turn=Math.floor(n/2)%2?1-n%2:n%2;
+  const index=evenState.golfers.findIndex(g=>g.team==null&&js.eligible[turn].includes(g.band));
+  assert.ok(index>=0,'22-player draft stalled at pick '+(n+1));
+  evenState.golfers[index].team=turn;
+  evenState.teams[turn].roster.push(index);
+  evenState.picks.push({golfer:index,team:turn});
+  evenComparisons++;
+ }
+ assert.deepEqual(evenState.teams.map(t=>t.roster.length),[11,11]);
+ console.log('PASS: '+evenComparisons+' full 22-golfer snake picks checked for JS/PostgreSQL parity (11/11 split)');
+ // Non-playing members stay visible in the golfers directory but cannot enter the draft.
+ const spectatorState=structuredClone(evenState);
+ spectatorState.golfers.push({name:'Non-playing member',band:'A',self_ranked:false,participating:false,team:null});
+ const spectatorJS=api.options(spectatorState);
+ const spectatorSQL=(await db.query('select public.elleng_weighted_options($1::jsonb) as result',[JSON.stringify(spectatorState)])).rows[0].result;
+ assert.deepEqual(spectatorSQL,spectatorJS,'non-playing member must not alter draft options');
+ assert.deepEqual(spectatorJS.capacities,[11,11],'non-playing member must not change team capacities');
+ assert.equal(spectatorState.golfers.at(-1).team,null,'non-playing member must remain unassigned');
+ console.log('PASS: non-playing unranked member excluded from 22-golfer draft eligibility and capacities');
+ // Exercise the largest supported tournament against the actual SQL engine.
+ const maxBands=['A','B',...Array(6).fill('B'),...Array(18).fill('C'),...Array(6).fill('D')];
+ const maxState=make(maxBands),maxStart=Date.now();
+ const maxExpected=api.options(maxState);
+ const maxActual=(await db.query('select public.elleng_weighted_options($1::jsonb) as result',[JSON.stringify(maxState)])).rows[0].result;
+ assert.deepEqual(maxActual,maxExpected,'32-player maximum-size parity');
+ const maxElapsed=Date.now()-maxStart;
+ assert.ok(maxElapsed<30000,'32-player SQL parity exceeded 30s: '+maxElapsed+'ms');
+ console.log('PASS: 32-golfer maximum-size PostgreSQL parity in '+maxElapsed+'ms');
+ // Enforce the same fail-closed roster cap in the installed SQL engine.
+ const oversized=make(['A','B',...Array(31).fill('C')]);
+ assert.throws(()=>api.options(oversized),/2–32 playing golfers/);
+ await assert.rejects(db.query('select public.elleng_weighted_options($1::jsonb)',[JSON.stringify(oversized)]),/2–32 playing golfers/);
+ console.log('PASS: 33-golfer cap enforced by both engines');
  const owner='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',c0='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',c1='cccccccc-cccc-cccc-cccccccccccccccc';
  await db.query('insert into elleng_drafts(id,owner_id,state) values ($1,$2,$3)', ['weighted-test',owner,JSON.stringify(make([...'ABBBCC']))]);
  await db.query('insert into elleng_captains values ($1,$2,0),($1,$3,1)',['weighted-test',c0,c1]);
@@ -23,6 +114,27 @@ const api=require('../weighted-draft.js');
  await actor(c0);await assert.rejects(db.query("select elleng_prepare_weighted_draft('weighted-test')"),/Commissioner/);
  await actor(owner);let s=(await db.query("select elleng_prepare_weighted_draft('weighted-test') as s")).rows[0].s;assert.deepEqual(s,api.prepare(make([...'ABBBCC'])));
  s.timerPaused=false;s.timerEndsAt=new Date(Date.now()+60000).toISOString();await db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(s),'weighted-test']);
+ // A premature timeout callback must never consume a golfer's turn.
+ await actor(owner);
+ const beforeEarlyAuto=(await db.query("select state from elleng_drafts where id='weighted-test'")).rows[0].state;
+ const earlyAuto=(await db.query("select elleng_auto_pick('weighted-test') as s")).rows[0].s;
+ assert.deepEqual(earlyAuto,beforeEarlyAuto,'auto-pick before timer expiry must be a no-op');
+ assert.deepEqual((await db.query("select state from elleng_drafts where id='weighted-test'")).rows[0].state,beforeEarlyAuto);
+ console.log('PASS: early auto-pick does not advance the draft or mutate state');
+ // A non-playing member cannot be selected through the server RPC, even with a submitted band.
+ const spectatorDraft=structuredClone(s);
+ spectatorDraft.golfers.push({name:'Spectator',band:'C',self_ranked:true,participating:false,team:null});
+ await db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(spectatorDraft),'weighted-test']);
+ await actor(c1);
+ await assert.rejects(db.query("select elleng_make_pick('weighted-test',$1)",[spectatorDraft.golfers.length-1]),/Selection would reduce attainable team balance|No eligible golfer/);
+ await actor(owner);
+ await db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(s),'weighted-test']);
+ console.log('PASS: non-playing golfer rejected by authenticated captain pick RPC');
+ // A profile update must not bypass the roster guard by stripping weighted mode.
+ const downgraded=structuredClone(s);downgraded.draftRules='banded';
+ await assert.rejects(db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(downgraded),'weighted-test']),/Weighted draft rules cannot be disabled/);
+ assert.deepEqual((await db.query("select state from elleng_drafts where id='weighted-test'")).rows[0].state,s);
+ console.log('PASS: weighted roster guard rejects draft-rules downgrade');
  const changedBand=structuredClone(s);changedBand.golfers[2].band='A';
  await assert.rejects(db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(changedBand),'weighted-test']),/locked until the draft is complete/);
  const stamp=(await db.query("select updated_at::text as stamp from elleng_drafts where id='weighted-test'")).rows[0].stamp;
@@ -31,10 +143,28 @@ const api=require('../weighted-draft.js');
  const broken=structuredClone(s);broken.picks.pop();broken.golfers[1].team=null;broken.teams[1].roster=[];
  await assert.rejects(db.query('select elleng_weighted_options($1)',[JSON.stringify(broken)]),/captain seeds/);
  await actor(c0);await assert.rejects(db.query("select elleng_make_pick('weighted-test',2)"),/not your team/);
- await actor(c1);await assert.rejects(db.query("select elleng_make_pick('weighted-test',4)"),/reduce attainable/);
- s=(await db.query("select elleng_make_pick('weighted-test',2) as s")).rows[0].s;assert.equal(s.golfers[2].team,1);
- // Commissioner is constrained by exactly the same options.
- await actor(owner);await assert.rejects(db.query("select elleng_weighted_pick('weighted-test',3)"),/reduce attainable/);
+ await actor(c1);
+ const allowedBefore=api.options(s).eligible[1];
+ const deniedBefore=s.golfers.findIndex(g=>g.team==null&&!allowedBefore.includes(g.band));
+ assert.ok(deniedBefore>=0,'fixture must include a forbidden pick');
+ await assert.rejects(db.query("select elleng_make_pick('weighted-test',$1)",[deniedBefore]),/reduce attainable/);
+ // Rejected selections must be atomic: no partial roster, pick, or timestamp write.
+ const afterRejected=(await db.query("select state from elleng_drafts where id='weighted-test'")).rows[0].state;
+ assert.deepEqual(afterRejected,s,'rejected captain selection must not modify persisted draft state');
+ console.log('PASS: rejected captain selection leaves persisted draft unchanged');
+ const acceptedBefore=s.golfers.findIndex(g=>g.team==null&&allowedBefore.includes(g.band));
+ assert.ok(acceptedBefore>=0,'fixture must include an allowed pick');
+ s=(await db.query("select elleng_make_pick('weighted-test',$1) as s",[acceptedBefore])).rows[0].s;assert.equal(s.golfers[acceptedBefore].team,1);
+ // Commissioner is constrained by the current engine options too.
+ // Commissioner can attempt a forbidden pick at the same known-restrictive
+ // state as the captain. Restore the disposable fixture after the allowed pick.
+ const commissionerFixture=structuredClone(s);
+ commissionerFixture.golfers[acceptedBefore].team=null;
+ commissionerFixture.teams[1].roster.pop();
+ commissionerFixture.picks.pop();
+ await db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(commissionerFixture),'weighted-test']);
+ await actor(owner);await assert.rejects(db.query("select elleng_weighted_pick('weighted-test',$1)",[deniedBefore]),/reduce attainable/);
+ await db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(s),'weighted-test']);
  // Force the deadline only in this disposable fixture, then exercise actual auto wrapper.
  s.timerEndsAt='2000-01-01T00:00:00Z';await db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(s),'weighted-test']);
  const options=api.options(s),before=s.picks.length;s=(await db.query("select elleng_auto_pick('weighted-test') as s")).rows[0].s;

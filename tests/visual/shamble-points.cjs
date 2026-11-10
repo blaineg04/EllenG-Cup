@@ -10,7 +10,7 @@ const root=path.resolve(__dirname,'../..');
  const page=await browser.newPage({viewport:{width,height:850},serviceWorkers:'block'});page.setDefaultTimeout(8000);
  await page.route('**/*',route=>{const u=new URL(route.request().url());if(u.hostname==='cdn.jsdelivr.net'&&u.pathname.includes('supabase-js'))return route.fulfill({contentType:'text/javascript',body:'('+installFixture.toString()+')('+JSON.stringify({teamCount:2,role})+');'});if(u.origin===origin)return route.continue();return route.abort()});
  await page.addInitScript(()=>{const original=window.setTimeout.bind(window);window.setTimeout=(fn,delay,...args)=>original(typeof fn==='function'&&fn.name==='goHome'&&delay===450?()=>{fn(...args);window.__playerLandingGuardComplete=true}:fn,delay,...args)});
- await page.goto(origin+'/scoring.html#hub');await page.locator('#hubScoring').click();await page.locator('#appHub').waitFor({state:'hidden'});if(role==='player')await page.waitForFunction(()=>window.__playerLandingGuardComplete===true);
+ await page.goto(origin+'/scoring.html#hub');await page.locator('#hubScoring').click();await page.locator('#appHub').waitFor({state:'hidden'});// The player landing timer is optional; wait for the actual leaderboard instead.
  await page.locator(width<700?'[data-mobile-view="leaderboard"]':'.tab[data-view="leaderboard"]').click();
  await page.locator('#leaderboard').getByText('12 pts',{exact:true}).first().waitFor();assert.equal(await page.locator('#leaderboard .pts').allTextContents().then(x=>x.join(',')),'12 pts,12 pts');
  assert.match(await page.locator('#selfScoreContext').innerText(),/18-hole Shamble/);
