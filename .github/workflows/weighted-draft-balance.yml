@@ -33,3 +33,5 @@ jobs:
         run: tests/visual/node_modules/.bin/playwright install chromium
       - name: Rehearse actual pages with synthetic accounts and blocked network writes
         run: node tests/visual/run.cjs
+      - name: Verify browser score save, points, leaderboard, and clear for all roles
+        run: node tests/visual/shamble-points.cjs
