@@ -47,3 +47,14 @@ test('commissioner pause and reset clock controls are still wired to authenticat
  assert.match(admin,/if\(S\.timerPaused\)\{S\.timerPaused=false/);
  assert.match(admin,/S\.timerLength=remaining\(\);S\.timerPaused=true;S\.timerEndsAt=null/);
 });
+
+test('commissioner controls serialize in-flight saves to avoid overlapping undo and timer actions',()=>{
+ const admin=fs.readFileSync(require('node:path').join(__dirname,'../admin.html'),'utf8');
+ const start=admin.indexOf('async function saveCommissionerAction(change){');
+ const end=admin.indexOf('document.getElementById("undo").onclick=',start);
+ assert.ok(start>=0&&end>start);
+ const action=admin.slice(start,end);
+ assert.match(action,/if\(savingDraft\)return/);
+ assert.match(action,/if\(change\(\)===false\)return;\s*savingDraft=true;\s*await save\(\)/);
+ assert.match(action,/finally\{\s*if\(actionEpoch===commissionerAuthEpoch&&actionUserId===commissionerUserId\)savingDraft=false/);
+});
