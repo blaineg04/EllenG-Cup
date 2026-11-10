@@ -40,7 +40,7 @@ const root=path.resolve(__dirname,'../..'),scores=new Map();
              window.supabase.createClient=(...args)=>{const client=original(...args);
                const oldFrom=client.from.bind(client),oldInvoke=client.functions.invoke.bind(client.functions);
                client.from=(table)=>table==='elleng_player_hole_scores'?{
-                 select(){return this;},eq(){return this;},order(){return this;},
+                 select(){return this;},eq(){return this;},order(){return this;},range(){return this;},limit(){return this;},
                  then(resolve,reject){return fetch('/__rehearsal/scores').then(r=>r.json()).then(data=>resolve({data,error:null}),reject);}
                }:oldFrom(table);
                client.functions.invoke=async(name,options)=>{
