@@ -8,7 +8,7 @@ test('draft count is derived from active named golfers, not fixed event count',(
  assert.doesNotMatch(draft,/totalGolfers\s*=\s*(?:21|22|23|24)\b/);
 });
 test('draft selection hides golfers explicitly marked Not Playing',()=>{
- assert.match(draft,/participating!==false/);
+ assert.match(draft,/S\.golfers\.filter\(g=>g\.name && g\.participating!==false && g\.team==null\)/);
 });
 for(const count of [2,3,7,21,22,23,24,31,64,100]){
  test(`active roster derived correctly for ${count} golfers among inactive accounts`,()=>{
