@@ -18,7 +18,7 @@
   for(let t=0;t<2;t++)for(const i of state.teams[t].roster||[]){if(!Number.isInteger(i)||seen.has(i)||!active(golfers[i])||golfers[i].team!==t)throw new Error('Draft roster assignments are inconsistent.');seen.add(i);}
   for(const g of playing){const b=bands.indexOf(g.band);totals[b]++;if(g.team!=null){if(!Number.isInteger(g.team)||g.team<0||g.team>1||!seen.has(g.i))throw new Error('Draft roster assignments are inconsistent.');fixed[g.team][b]++;}}
   if(fixed.some((row,t)=>row.reduce((a,b)=>a+b,0)>capacities[t]))throw new Error('Team roster exceeds its capacity.');
-  const key=JSON.stringify([totals,fixed,capacities]);if(key===cacheKey)return structuredClone(cacheValue);
+  const key=JSON.stringify([totals,fixed,capacities,state.draftType]);if(key===cacheKey)return structuredClone(cacheValue);
   let best=null,eligible=[new Set(),new Set()];
   const low=fixed[0],high=totals.map((n,b)=>n-fixed[1][b]);
   const totalStrength=totals.reduce((n,c,b)=>n+c*weights[b],0);
