@@ -64,6 +64,8 @@ const root=path.resolve(__dirname,'../..'),scores=new Map();
      console.log('REHEARSAL STATE',await page.evaluate(()=>({hub:document.querySelector('#appHub')?.className,scoring:document.querySelector('#hubScoring')?.outerHTML.slice(0,160),supabase:!!window.supabase,body:document.body.className,loginText:document.querySelector('#loginView')?.innerText?.slice(0,300),url:location.href})));
      await page.locator('#hubScoring').click();
      await page.locator('#appHub').waitFor({state:'hidden'});
+     await page.locator('.tab[data-view="leaderboard"]').click();
+     await page.locator('#selfScoreHole').waitFor({state:'visible'});
      return {page,context};
    }
    const first=await open(),second=await open();
@@ -75,6 +77,7 @@ const root=path.resolve(__dirname,'../..'),scores=new Map();
    await second.page.reload();
    await second.page.locator('#hubScoring').click();
    await second.page.locator('#appHub').waitFor({state:'hidden'});
+   await second.page.locator('.tab[data-view="leaderboard"]').click();
    await second.page.locator('#selfScoreHole').selectOption('18');
    assert.equal(await second.page.locator('#selfScoreInput').inputValue(),'3','Second browser must see saved score');
    await first.context.close();await second.context.close();
