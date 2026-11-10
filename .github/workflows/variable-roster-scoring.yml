@@ -4,6 +4,9 @@ on:
     branches:
       - test/isolated-live-rehearsal-20261110
     paths:
+      - 'draft-setup-config.js'
+      - 'admin.html'
+      - 'tests/commissioner-draft-setup-sizing.test.cjs'
       - 'shamble-points.js'
       - 'tests/leaderboard-gator-uneven-23.test.cjs'
       - '.github/workflows/variable-roster-scoring.yml'
@@ -19,4 +22,4 @@ jobs:
       - name: Confirm checked-out commit
         run: git rev-parse HEAD
       - name: Test variable-size rosters and 18-hole scoring
-        run: node --test tests/leaderboard-gator-uneven-23.test.cjs
+        run: node --test tests/leaderboard-gator-uneven-23.test.cjs tests/commissioner-draft-setup-sizing.test.cjs
