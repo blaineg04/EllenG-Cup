@@ -114,6 +114,13 @@ const api=require('../weighted-draft.js');
  await actor(c0);await assert.rejects(db.query("select elleng_prepare_weighted_draft('weighted-test')"),/Commissioner/);
  await actor(owner);let s=(await db.query("select elleng_prepare_weighted_draft('weighted-test') as s")).rows[0].s;assert.deepEqual(s,api.prepare(make([...'ABBBCC'])));
  s.timerPaused=false;s.timerEndsAt=new Date(Date.now()+60000).toISOString();await db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(s),'weighted-test']);
+ // A premature timeout callback must never consume a golfer's turn.
+ await actor(owner);
+ const beforeEarlyAuto=(await db.query("select state from elleng_drafts where id='weighted-test'")).rows[0].state;
+ const earlyAuto=(await db.query("select elleng_auto_pick('weighted-test') as s")).rows[0].s;
+ assert.deepEqual(earlyAuto,beforeEarlyAuto,'auto-pick before timer expiry must be a no-op');
+ assert.deepEqual((await db.query("select state from elleng_drafts where id='weighted-test'")).rows[0].state,beforeEarlyAuto);
+ console.log('PASS: early auto-pick does not advance the draft or mutate state');
  // A non-playing member cannot be selected through the server RPC, even with a submitted band.
  const spectatorDraft=structuredClone(s);
  spectatorDraft.golfers.push({name:'Spectator',band:'C',self_ranked:true,participating:false,team:null});
