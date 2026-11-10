@@ -27,6 +27,26 @@ const api=require('../weighted-draft.js');
  assert.deepEqual(largeDB,largeJS,'24-golfer first-pick parity');
  assert.ok(elapsed<30000,'24-golfer parity took '+elapsed+'ms (30s budget)');
  console.log('PASS: 24-golfer initial-pick parity in '+elapsed+'ms');
+ // Walk all remaining turns for a realistic 24-player draft, comparing
+ // PostgreSQL with JavaScript before every pick.
+ const fullState=structuredClone(largeState);
+ let fullComparisons=0;
+ const fullStart=Date.now();
+ while(fullState.picks.length<largeBands.length){
+  const js=api.options(fullState);
+  const sql=(await db.query('select public.elleng_weighted_options($1::jsonb) as result',[JSON.stringify(fullState)])).rows[0].result;
+  assert.deepEqual(sql,js,'24-player parity at pick '+(fullState.picks.length+1));
+  fullComparisons++;
+  const n=fullState.picks.length,turn=Math.floor(n/2)%2?1-n%2:n%2;
+  const index=fullState.golfers.findIndex(g=>g.team==null&&js.eligible[turn].includes(g.band));
+  assert.ok(index>=0,'24-player draft stalled at pick '+(n+1));
+  fullState.golfers[index].team=turn;
+  fullState.teams[turn].roster.push(index);
+  fullState.picks.push({golfer:index,team:turn});
+ }
+ assert.deepEqual(fullState.teams.map(t=>t.roster.length),[12,12]);
+ console.log('PASS: '+fullComparisons+' full 24-golfer snake picks checked for JS/PostgreSQL parity in '+(Date.now()-fullStart)+'ms');
+
  const owner='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',c0='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',c1='cccccccc-cccc-cccc-cccccccccccccccc';
  await db.query('insert into elleng_drafts(id,owner_id,state) values ($1,$2,$3)', ['weighted-test',owner,JSON.stringify(make([...'ABBBCC']))]);
  await db.query('insert into elleng_captains values ($1,$2,0),($1,$3,1)',['weighted-test',c0,c1]);
