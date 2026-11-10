@@ -148,5 +148,8 @@ BEGIN
 END;$$;
 
 -- No GRANT changes to pre-existing functions. Restrict new internal recursion helper.
-REVOKE ALL ON FUNCTION public.elleng_weighted_reachable(integer,integer,integer[],integer[],integer[],boolean) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION public.elleng_weighted_reachable(integer,integer,integer[],integer[],integer[],boolean) FROM PUBLIC,anon;
+-- weighted_options is SECURITY INVOKER and authenticated users call it directly.
+-- Its recursive helper must therefore be executable by authenticated callers.
+GRANT EXECUTE ON FUNCTION public.elleng_weighted_reachable(integer,integer,integer[],integer[],integer[],boolean) TO authenticated;
 COMMIT;
