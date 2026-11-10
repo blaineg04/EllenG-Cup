@@ -66,6 +66,24 @@ const api=require('../weighted-draft.js');
  }
  assert.deepEqual(oddState.teams.map(t=>t.roster.length),[11,12]);
  console.log('PASS: '+oddComparisons+' full 23-golfer snake picks checked for JS/PostgreSQL parity (11/12 split)');
+ // Even 22-golfer tournament: all 20 post-captain selections must remain legal.
+ const evenBands=['A','B',...Array(4).fill('B'),...Array(12).fill('C'),...Array(4).fill('D')];
+ const evenState=make(evenBands);
+ let evenComparisons=0;
+ while(evenState.picks.length<evenBands.length){
+  const js=api.options(evenState);
+  const sql=(await db.query('select public.elleng_weighted_options($1::jsonb) as result',[JSON.stringify(evenState)])).rows[0].result;
+  assert.deepEqual(sql,js,'22-player parity at pick '+(evenState.picks.length+1));
+  const n=evenState.picks.length,turn=Math.floor(n/2)%2?1-n%2:n%2;
+  const index=evenState.golfers.findIndex(g=>g.team==null&&js.eligible[turn].includes(g.band));
+  assert.ok(index>=0,'22-player draft stalled at pick '+(n+1));
+  evenState.golfers[index].team=turn;
+  evenState.teams[turn].roster.push(index);
+  evenState.picks.push({golfer:index,team:turn});
+  evenComparisons++;
+ }
+ assert.deepEqual(evenState.teams.map(t=>t.roster.length),[11,11]);
+ console.log('PASS: '+evenComparisons+' full 22-golfer snake picks checked for JS/PostgreSQL parity (11/11 split)');
  // Exercise the largest supported tournament against the actual SQL engine.
  const maxBands=['A','B',...Array(6).fill('B'),...Array(18).fill('C'),...Array(6).fill('D')];
  const maxState=make(maxBands),maxStart=Date.now();
