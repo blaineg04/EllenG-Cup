@@ -236,7 +236,7 @@ async function pick(i){
  if(savingDraft)return;
  const actionEpoch=commissionerAuthEpoch,actionUserId=commissionerUserId;
  if(!sameCommissionerAction(actionEpoch,actionUserId))return;
- const remaining=S.golfers.some(g=>g?.name&&g.participating!==false&&g.team==null);if(S.timerPaused||!remaining||hasWithdrawnDraftPick())return;
+ const remaining=S.golfers.some(g=>g?.name&&g.participating!==false&&g.team==null);if(S.timerPaused||!remaining||(S.picks||[]).some(p=>S.golfers?.[p.golfer]?.participating===false))return;
  let t=order(S.picks.length),g=S.golfers[i];
  if(!g||g.participating===false||g.team!=null||!canBand(t,g.band))return;
  if(S.draftRules==="weighted"){
