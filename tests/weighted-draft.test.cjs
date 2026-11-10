@@ -83,22 +83,20 @@ for(const count of [22,24])test('Jarad/Carl '+count+'-player weighted snake draf
  assert.ok(Math.abs(state.teams[0].roster.length-state.teams[1].roster.length)<=1);
 });
 
-test('ABBBCCDD snake must reserve a first B for team zero before pick seven',()=>{
+test('ABBBCCDD snake must prevent the previously reproduced dead end',()=>{
  const start=make([...'ABBBCCDD']);
- const picks=[{team:1,band:'C'},{team:0,band:'D'},{team:0,band:'D'}];
  let state=structuredClone(start);
- for(const pick of picks){
-  const choice=state.golfers.findIndex(g=>g.team==null&&g.band===pick.band);
-  assert.ok(choice>=0);
-  const n=state.picks.length,team=Math.floor(n/2)%2?1-n%2:n%2;
-  assert.equal(team,pick.team);
-  const eligible=api.options(state).eligible[team];
-  assert.ok(eligible.includes(pick.band),'setup pick '+(n+1)+' should be legal');
-  state.golfers[choice].team=team;state.teams[team].roster.push(choice);state.picks.push({golfer:choice,team});
+ for(const [team,band] of [[1,'C'],[0,'D']]){
+  const n=state.picks.length,turn=Math.floor(n/2)%2?1-n%2:n%2;
+  assert.equal(turn,team);
+  assert.ok(api.options(state).eligible[team].includes(band));
+  const i=state.golfers.findIndex(g=>g.team==null&&g.band===band);
+  state.golfers[i].team=team;state.teams[team].roster.push(i);state.picks.push({golfer:i,team});
  }
- // Team one has already taken B,C; team zero has A,D,D.
- // Taking the final C on team one would leave two B golfers and no
- // remaining team-zero turn, violating the first-B requirement.
- assert.ok(!api.options(state).eligible[1].includes('C'),
-  'must not allow the C pick that strands the first B on team zero');
+ // The second D at pick five would leave team zero with no chance to
+ // claim its first B before team one must select another B.
+ assert.ok(!api.options(state).eligible[0].includes('D'),
+  'pick five must reserve a first B for team zero');
+ assert.ok(api.options(state).eligible[0].includes('B'),
+  'pick five must permit team zero to take its first B');
 });
