@@ -30,6 +30,14 @@
    if(score[0]===best[0]&&score[1]===best[1])for(let i=0;i<4;i++){if(allocation[i]>fixed[0][i])eligible[0].add(bands[i]);if(totals[i]-allocation[i]>fixed[1][i])eligible[1].add(bands[i]);}
   }
   if(!best)throw new Error('No valid final roster allocation is possible.');
+  // First-round A/B protection: a team cannot take its second golfer in
+  // a premium band while the other team has none and can still receive one.
+  // This is evaluated on every pick, including weighted drafts with captains.
+  for(let t=0;t<2;t++)for(let b=0;b<2;b++){
+   const other=1-t,remaining=totals[b]-fixed[0][b]-fixed[1][b];
+   const otherOpen=capacities[other]-fixed[other].reduce((a,n)=>a+n,0);
+   if(fixed[t][b]>0&&fixed[other][b]===0&&remaining>0&&otherOpen>0)eligible[t].delete(bands[b]);
+  }
   const result={version:1,capacities,score:best,eligible:eligible.map(s=>[...s].sort()),strength:fixed.map(row=>row.reduce((n,c,b)=>n+c*weights[b],0))};
   cacheKey=key;cacheValue=structuredClone(result);return result;
  }
