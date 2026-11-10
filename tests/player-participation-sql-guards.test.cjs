@@ -16,5 +16,6 @@ assert.match(sql, /NOT p_participating AND jsonb_array_length/);
 assert.match(sql, /public\.elleng_player_hole_scores/);
 assert.match(sql, /public\.elleng_pair_hole_scores/);
 assert.doesNotMatch(sql, /'team',ti/, 'Do not silently assign or clear team via uninitialized ti');
-assert.doesNotMatch(sql, /IF p_new_golfer IS NOT NULL THEN[\s\S]*ELSIF coalesce\(btrim\(g->>'name'\),' '\)='',/, 'Unexpected nested creation branch');
+assert.equal((sql.match(/IF p_new_golfer IS NOT NULL THEN/g) || []).length, 1, 'Only one new-golfer creation branch is permitted');
+assert.ok(sql.indexOf('Golfer is assigned. Use the commissioner withdrawal workflow.') < sql.indexOf('IF p_new_golfer IS NOT NULL THEN'), 'Assignment guard must precede creation/update logic');
 console.log('Participation SQL structural guards: passed (not an authenticated database test)');
