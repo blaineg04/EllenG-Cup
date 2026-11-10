@@ -31,10 +31,19 @@ const api=require('../weighted-draft.js');
  const broken=structuredClone(s);broken.picks.pop();broken.golfers[1].team=null;broken.teams[1].roster=[];
  await assert.rejects(db.query('select elleng_weighted_options($1)',[JSON.stringify(broken)]),/captain seeds/);
  await actor(c0);await assert.rejects(db.query("select elleng_make_pick('weighted-test',2)"),/not your team/);
- await actor(c1);await assert.rejects(db.query("select elleng_make_pick('weighted-test',4)"),/reduce attainable/);
- s=(await db.query("select elleng_make_pick('weighted-test',2) as s")).rows[0].s;assert.equal(s.golfers[2].team,1);
- // Commissioner is constrained by exactly the same options.
- await actor(owner);await assert.rejects(db.query("select elleng_weighted_pick('weighted-test',3)"),/reduce attainable/);
+ await actor(c1);
+ const allowedBefore=api.options(s).eligible[1];
+ const deniedBefore=s.golfers.findIndex(g=>g.team==null&&!allowedBefore.includes(g.band));
+ assert.ok(deniedBefore>=0,'fixture must include a forbidden pick');
+ await assert.rejects(db.query("select elleng_make_pick('weighted-test',$1)",[deniedBefore]),/reduce attainable/);
+ const acceptedBefore=s.golfers.findIndex(g=>g.team==null&&allowedBefore.includes(g.band));
+ assert.ok(acceptedBefore>=0,'fixture must include an allowed pick');
+ s=(await db.query("select elleng_make_pick('weighted-test',$1) as s",[acceptedBefore])).rows[0].s;assert.equal(s.golfers[acceptedBefore].team,1);
+ // Commissioner is constrained by the current engine options too.
+ const nextTurn=s.picks.length,team=Math.floor(nextTurn/2)%2?1-nextTurn%2:nextTurn%2;
+ const deniedAfter=s.golfers.findIndex(g=>g.team==null&&!api.options(s).eligible[team].includes(g.band));
+ assert.ok(deniedAfter>=0,'fixture must include a forbidden commissioner pick');
+ await actor(owner);await assert.rejects(db.query("select elleng_weighted_pick('weighted-test',$1)",[deniedAfter]),/reduce attainable/);
  // Force the deadline only in this disposable fixture, then exercise actual auto wrapper.
  s.timerEndsAt='2000-01-01T00:00:00Z';await db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(s),'weighted-test']);
  const options=api.options(s),before=s.picks.length;s=(await db.query("select elleng_auto_pick('weighted-test') as s")).rows[0].s;
