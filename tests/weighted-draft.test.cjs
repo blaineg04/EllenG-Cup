@@ -23,6 +23,18 @@ function oracle(s){const active=s.golfers.map((g,i)=>({...g,i})).filter(g=>g.nam
 test('weighted engine exists',()=>assert.equal(typeof api.options,'function'));
 for(const bands of ['ABBBCCDD','AABBCCDD','BBBBCCDD','ABDD','ACBBBBCCD','ADDDDD','AB'])test('optimal completions match independent subsets '+bands,()=>{assert.equal(typeof api.options,'function');const s=make([...bands]);const result=api.options(s),expected=oracle(s);assert.deepEqual(result.score,expected.best);assert.deepEqual(result.eligible,expected.eligible);});
 test('only A on strong captain team is offset by B depth',()=>{assert.equal(typeof api.options,'function');const s=make([...'ABBBCC']);const result=api.options(s);assert.deepEqual(result.eligible[1],['C']);assert.ok(!result.eligible[1].includes('B'),'second B must wait until team zero receives its first B');assert.ok(!result.eligible[1].includes('B'),'team one cannot take its second B on its current turn');});
+test('eligibility cache is isolated between snake and standard turn order',()=>{
+ const state=make([...'ABBBCCDD']);
+ const snake=api.options(state);
+ state.draftType='standard';
+ const standard=api.options(state);
+ const freshContext={module:{exports:{}},exports:{},structuredClone};freshContext.globalThis=freshContext;
+ vm.runInNewContext(fs.readFileSync(file,'utf8'),freshContext);
+ const independent=freshContext.module.exports.options(state);
+ assert.deepEqual(JSON.parse(JSON.stringify(standard)),JSON.parse(JSON.stringify(independent)));
+ assert.deepEqual(standard.capacities,[4,4]);
+ assert.equal(snake.version,standard.version);
+});
 test('excluded golfers do not alter balance',()=>{assert.equal(typeof api.options,'function');const s=make([...'ABBBCC']);const before=api.options(s);s.golfers.push({name:'Not playing',band:'A',self_ranked:false,participating:false});assert.deepEqual(api.options(s),before);});
 test('unsubmitted bands block weighted calculation',()=>{assert.equal(typeof api.options,'function');const s=make([...'ABBBCC']);s.golfers[2].self_ranked=false;assert.throws(()=>api.options(s),/submitted/);});
 test('every legal path finishes at the original optimal score',()=>{assert.equal(typeof api.options,'function');const start=make([...'ABBBCCDD']);const target=api.options(start).score;let leaves=0;function walk(s){const pool=s.golfers.map((g,i)=>({...g,i})).filter(g=>g.team==null);const options=api.options(s);if(!pool.length){assert.deepEqual(options.score,target);leaves++;return;}const n=s.picks.length,t=Math.floor(n/2)%2?1-n%2:n%2;const choices=pool.filter(g=>options.eligible[t].includes(g.band));assert.ok(choices.length,JSON.stringify({failure:'draft dead-end',pick:n+1,team:t,remaining:pool.map(g=>g.band),eligible:options.eligible[t],history:s.picks.map(p=>({team:p.team,band:s.golfers[p.golfer].band}))}));for(const g of choices){const next=structuredClone(s);next.golfers[g.i].team=t;next.teams[t].roster.push(g.i);next.picks.push({golfer:g.i,team:t});walk(next);}}walk(start);assert.ok(leaves>0);});
