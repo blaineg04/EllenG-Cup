@@ -75,3 +75,12 @@ test('commissioner controls use compare-and-swap save and reject stale draft sna
  assert.ok(secure.includes('if(!saved?.updated_at)throw new Error'));
  assert.ok(!secure.includes('.upsert('),'commissioner saves must not overwrite stale draft state with unconditional upsert');
 });
+
+test('commissioner draft blocks picks and shows warning when a previously picked golfer withdraws',()=>{
+ const admin=fs.readFileSync(require('node:path').join(__dirname,'../admin.html'),'utf8');
+ assert.ok(admin.includes('function hasWithdrawnDraftPick(){'));
+ assert.ok(admin.includes('(S.picks||[]).some(p=>S.golfers?.[p.golfer]?.participating===false)'));
+ assert.ok(admin.includes('if(S.timerPaused||!remaining||hasWithdrawnDraftPick())return;'));
+ assert.ok(admin.includes('!done&&!withdrawnPick&&canBand(t,g.band)'));
+ assert.ok(admin.includes('Draft paused for commissioner review: a previously drafted golfer is marked Not Playing.'));
+});
