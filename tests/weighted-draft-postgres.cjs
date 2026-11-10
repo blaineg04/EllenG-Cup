@@ -47,6 +47,11 @@ const api=require('../weighted-draft.js');
  assert.deepEqual(fullState.teams.map(t=>t.roster.length),[12,12]);
  console.log('PASS: '+fullComparisons+' full 24-golfer snake picks checked for JS/PostgreSQL parity in '+(Date.now()-fullStart)+'ms');
 
+ // Enforce the same fail-closed roster cap in the installed SQL engine.
+ const oversized=make(['A','B',...Array(31).fill('C')]);
+ assert.throws(()=>api.options(oversized),/2–32 playing golfers/);
+ await assert.rejects(db.query('select public.elleng_weighted_options($1::jsonb)',[JSON.stringify(oversized)]),/2–32 playing golfers/);
+ console.log('PASS: 33-golfer cap enforced by both engines');
  const owner='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',c0='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',c1='cccccccc-cccc-cccc-cccccccccccccccc';
  await db.query('insert into elleng_drafts(id,owner_id,state) values ($1,$2,$3)', ['weighted-test',owner,JSON.stringify(make([...'ABBBCC']))]);
  await db.query('insert into elleng_captains values ($1,$2,0),($1,$3,1)',['weighted-test',c0,c1]);
