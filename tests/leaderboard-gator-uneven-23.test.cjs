@@ -90,3 +90,22 @@ for(const activeCount of [2,3,7,21,22,23,24,31,64]){
   for(let g=activeCount;g<total;g++)assert.equal(result.players[g].points,0);
  });
 }
+
+test('commissioner withdrawal removes historical scores from active team totals without deleting stored rows',()=>{
+ const gs=Array.from({length:7},(_,i)=>({name:'Golfer '+i,team:i<4?0:1,participating:true}));
+ const ts=[{name:'A',roster:[0,1,2,3]},{name:'B',roster:[4,5,6]}];
+ const rs=[];
+ for(let hole=1;hole<=18;hole++)for(let gi=0;gi<7;gi++)rs.push({golfer_index:gi,team_index:gi<4?0:1,hole,score:gi<4?4:3});
+ const before=summarize({golfers:gs,teams:ts},rs,pars,18);
+ assert.equal(before.totals[0].golfers,4);
+ assert.equal(before.totals[0].rawPoints,216);
+ assert.equal(rs.length,126);
+ gs[3].participating=false;
+ const after=summarize({golfers:gs,teams:ts},rs,pars,18);
+ assert.equal(after.totals[0].golfers,3);
+ assert.equal(after.totals[0].rawPoints,162);
+ assert.equal(after.players[3].points,0);
+ assert.equal(after.completeHoles,18);
+ assert.equal(rs.length,126,'historical score rows are not deleted');
+ assert.deepEqual(after.gatorBonus,[0,10]);
+});
