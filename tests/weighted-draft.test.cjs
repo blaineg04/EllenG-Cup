@@ -100,3 +100,21 @@ test('ABBBCCDD snake must prevent the previously reproduced dead end',()=>{
  assert.ok(api.options(state).eligible[0].includes('B'),
   'pick five must permit team zero to take its first B');
 });
+
+test('32-player weighted draft completes without forbidden first-band picks',()=>{
+ const bands=['A','B',...Array(6).fill('B'),...Array(16).fill('C'),...Array(8).fill('D')];
+ let state=make(bands);
+ for(let n=2;n<bands.length;n++){
+  const team=Math.floor(n/2)%2?1-n%2:n%2;
+  const allowed=api.options(state).eligible[team];
+  const candidates=state.golfers.map((g,i)=>({...g,i})).filter(g=>g.team==null&&allowed.includes(g.band));
+  assert.ok(candidates.length,'no legal pick at '+(n+1));
+  const chosen=candidates[0],next=structuredClone(state);
+  const before=next.teams.map(t=>t.roster.filter(i=>next.golfers[i].band===chosen.band).length);
+  if(['A','B'].includes(chosen.band)&&before[team]>0&&before[1-team]===0)
+   assert.fail('second premium-band pick before opposing first');
+  next.golfers[chosen.i].team=team;next.teams[team].roster.push(chosen.i);next.picks.push({golfer:chosen.i,team});
+  state=next;
+ }
+ assert.deepEqual(state.teams.map(t=>t.roster.length),[16,16]);
+});
