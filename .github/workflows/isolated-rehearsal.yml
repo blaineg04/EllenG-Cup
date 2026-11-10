@@ -16,5 +16,8 @@ jobs:
           node-version: '22'
       - run: npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
       - run: tests/visual/node_modules/.bin/playwright install chromium
+      - run: npm ci --prefix tests/support/weighted-postgres --ignore-scripts --no-audit --no-fund
+      - name: Verify disposable multi-session score persistence
+        run: PGLITE_MODULE="$GITHUB_WORKSPACE/tests/support/weighted-postgres/node_modules/@electric-sql/pglite" node tests/isolated-authenticated-rehearsal/disposable-session-contract.cjs
       - name: Block production and external writes in local browser rehearsal
         run: node tests/isolated-authenticated-rehearsal/safety-gate.cjs
