@@ -23,3 +23,27 @@ test('prepare seeds matching captains exactly once and stays paused',()=>{assert
 test('prepare refuses ambiguous captains and preserves ordinary picks',()=>{assert.equal(typeof api.prepare,'function');const s=make([...'ABBBCC']);s.teams[1].captain=s.teams[0].captain;assert.throws(()=>api.prepare(s),/captain/i);const p=make([...'ABBBCC']);p.golfers[2].team=1;p.teams[1].roster.push(2);p.picks.push({golfer:2,team:1});assert.throws(()=>api.prepare(p),/ordinary picks/);});
 test('common eligibility uses weighted engine and rejects missing module',()=>{const code=fs.readFileSync('common.js','utf8');const ctx={window:{ELLENG_CONFIG:{supabaseUrl:'https://example.invalid',supabaseAnonKey:'test'},supabase:{createClient:()=>({})}},console,structuredClone,Set,Date};ctx.globalThis=ctx;vm.createContext(ctx);vm.runInContext(code,ctx);assert.equal(typeof api.options,'function');ctx.EllenGWeightedDraft=api;ctx.fixture=api.prepare(make([...'ABBBCC']));vm.runInContext('S=fixture',ctx);assert.equal(vm.runInContext("canBand(0,'B')",ctx),false);assert.equal(vm.runInContext("canBand(1,'B')",ctx),true);delete ctx.EllenGWeightedDraft;assert.equal(vm.runInContext("canBand(1,'B')",ctx),false);});
 test('weighted mode refuses missing captain seeds',()=>{const s=api.prepare(make([...'ABBBCC']));s.picks.pop();s.golfers[1].team=null;s.teams[1].roster=[];assert.throws(()=>api.options(s),/captain seeds/i);});
+
+test('23-player Jarad A / Carl B snake draft gives both teams a first B before any second B',()=>{
+ const bands=['A','B',...Array(4).fill('B'),...Array(13).fill('C'),...Array(4).fill('D')];
+ const s=make(bands);
+ s.teams[0].captain='Jarad';s.golfers[0].name='Jarad';
+ s.teams[1].captain='Carl';s.golfers[1].name='Carl';
+ const start=api.prepare({...s,teams:s.teams.map(t=>({...t,roster:[]})),golfers:s.golfers.map(g=>({...g,team:null})),picks:[]});
+ let state=start;
+ while(state.picks.length<23){
+  const n=state.picks.length,team=Math.floor(n/2)%2?1-n%2:n%2;
+  const allowed=api.options(state).eligible[team];
+  const choices=state.golfers.map((g,i)=>({...g,i})).filter(g=>g.team==null&&allowed.includes(g.band));
+  assert.ok(choices.length,'legal pick exists at '+n);
+  const bCounts=state.teams.map(t=>t.roster.filter(i=>state.golfers[i].band==='B').length);
+  if(bCounts[team]>0&&bCounts[1-team]===0&&bCounts[0]+bCounts[1]<5)
+   assert.ok(!allowed.includes('B'),'second B blocked until opposing first B');
+  const next=structuredClone(state),chosen=choices[0];
+  next.golfers[chosen.i].team=team;next.teams[team].roster.push(chosen.i);next.picks.push({golfer:chosen.i,team});
+  state=next;
+ }
+ assert.deepEqual(state.teams.map(t=>t.roster.length),[11,12]);
+ const strengths=state.teams.map(t=>t.roster.reduce((n,i)=>n+[5,3,2,1]['ABCD'.indexOf(state.golfers[i].band)],0));
+ assert.ok(Math.abs(strengths[0]/11-strengths[1]/12)<=0.1,'normalized team strength remains close: '+strengths);
+});
