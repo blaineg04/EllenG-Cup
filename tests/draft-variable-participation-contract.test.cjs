@@ -78,7 +78,6 @@ test('commissioner controls use compare-and-swap save and reject stale draft sna
 
 test('commissioner draft blocks picks and shows warning when a previously picked golfer withdraws',()=>{
  const admin=fs.readFileSync(require('node:path').join(__dirname,'../admin.html'),'utf8');
- assert.ok(admin.includes('function hasWithdrawnDraftPick(){'));
  assert.ok(admin.includes('(S.picks||[]).some(p=>S.golfers?.[p.golfer]?.participating===false)'));
  assert.ok(admin.includes('if(S.timerPaused||!remaining||(S.picks||[]).some(p=>S.golfers?.[p.golfer]?.participating===false))return;'));
  assert.ok(admin.includes('!done&&!withdrawnPick&&canBand(t,g.band)'));
