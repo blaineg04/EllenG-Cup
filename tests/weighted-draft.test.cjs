@@ -65,3 +65,20 @@ test('Jarad/Carl first post-captain pick must allow C and prohibit Carl second B
  assert.ok(choices.includes('C'),'Carl must be able to take a C at pick 3');
  assert.ok(!choices.includes('B'),'Carl cannot take a second B before Jarad has one');
 });
+
+for(const count of [22,24])test('Jarad/Carl '+count+'-player weighted snake draft cannot dead-end',()=>{
+ const extra=count-23;
+ const bands=['A','B',...Array(4).fill('B'),...Array(13+extra).fill('C'),...Array(4).fill('D')];
+ const s=make(bands);
+ s.teams[0].captain='Jarad';s.golfers[0].name='Jarad';
+ s.teams[1].captain='Carl';s.golfers[1].name='Carl';
+ let state=api.prepare({...s,teams:s.teams.map(t=>({...t,roster:[]})),golfers:s.golfers.map(g=>({...g,team:null})),picks:[]});
+ for(let n=2;n<count;n++){
+  const team=Math.floor(n/2)%2?1-n%2:n%2,allowed=api.options(state).eligible[team];
+  const choice=state.golfers.findIndex(g=>g.team==null&&allowed.includes(g.band));
+  assert.ok(choice>=0,'no eligible golfer at pick '+(n+1)+' for '+count+' players');
+  state.golfers[choice].team=team;state.teams[team].roster.push(choice);state.picks.push({golfer:choice,team});
+ }
+ assert.equal(state.picks.length,count);
+ assert.ok(Math.abs(state.teams[0].roster.length-state.teams[1].roster.length)<=1);
+});
