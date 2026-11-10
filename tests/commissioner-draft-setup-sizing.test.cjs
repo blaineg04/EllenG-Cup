@@ -107,3 +107,15 @@ test('commissioner setup shows read-only fields while picks exist',()=>{
  assert.match(html,/querySelectorAll\("input,select,button"\)\.forEach\(el=>el\.disabled=locked\)/);
  assert.match(html,/Setup is read-only; undo all picks/);
 });
+
+test('commissioner setup supports every integer roster size from 2 through 500 without dropping golfers',()=>{
+ for(let count=2;count<=500;count++){
+  const s=initial();
+  const updated=resizeDraftSetup(s,2,count);
+  assert.equal(updated.golfers.length,count,`roster size ${count}`);
+  assert.equal(updated.teams.length,2);
+  assert.equal(updated.golfers[0].name,'Alice');
+  assert.equal(updated.golfers[1].name,'Bob');
+  assert.equal(updated.picks.length,0);
+ }
+});
