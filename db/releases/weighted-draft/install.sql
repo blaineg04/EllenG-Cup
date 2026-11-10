@@ -213,7 +213,8 @@ CREATE OR REPLACE FUNCTION public.elleng_guard_weighted_roster()
 RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$
 DECLARE old_field jsonb;new_field jsonb;playing_count integer;
 BEGIN
- IF OLD.state->>'draftRules' IS DISTINCT FROM 'weighted' OR NEW.state->>'draftRules' IS DISTINCT FROM 'weighted' THEN RETURN NEW;END IF;
+ IF OLD.state->>'draftRules' IS DISTINCT FROM 'weighted' THEN RETURN NEW;END IF;
+ IF NEW.state->>'draftRules' IS DISTINCT FROM 'weighted' THEN RAISE EXCEPTION 'Weighted draft rules cannot be disabled through roster updates';END IF;
  SELECT count(*) INTO playing_count FROM jsonb_array_elements(OLD.state->'golfers') WHERE btrim(coalesce(value->>'name',''))<>'' AND coalesce((value->>'participating')::boolean,true);
  IF jsonb_array_length(OLD.state->'picks')>=playing_count THEN RETURN NEW;END IF;
  SELECT jsonb_agg(jsonb_build_array(ordinality,value->'name',value->'band',value->'self_ranked') ORDER BY ordinality) INTO old_field FROM jsonb_array_elements(OLD.state->'golfers') WITH ORDINALITY WHERE btrim(coalesce(value->>'name',''))<>'' AND coalesce((value->>'participating')::boolean,true);
