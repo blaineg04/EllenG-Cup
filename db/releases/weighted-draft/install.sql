@@ -1,6 +1,29 @@
 -- REVIEW CANDIDATE. Install functions before publishing the weighted-draft client.
 -- No tournament rows are modified by installation. Legacy drafts retain their rules.
 BEGIN;
+-- Search remaining snake turns using the same first-A/B rule as the client.
+-- This is an isolated release candidate, not an installation.
+CREATE OR REPLACE FUNCTION public.elleng_weighted_reachable(
+ p_n integer,p_total integer,p_left integer[],p_a integer[],p_b integer[],p_snake boolean
+) RETURNS boolean LANGUAGE plpgsql IMMUTABLE SET search_path=public AS $reach$
+DECLARE turn integer; band integer; left_next integer[]; a_next integer[]; b_next integer[];
+BEGIN
+ IF p_n=p_total THEN RETURN p_left=ARRAY[0,0,0,0];END IF;
+ turn:=p_n%2;
+ IF p_snake AND (p_n/2)%2=1 THEN turn:=1-turn;END IF;
+ FOR band IN 1..4 LOOP
+  IF p_left[band]<=0 THEN CONTINUE;END IF;
+  IF band<=2 AND ((turn=0 AND p_a[band]>0 AND p_b[band]=0) OR
+                   (turn=1 AND p_b[band]>0 AND p_a[band]=0)) THEN CONTINUE;END IF;
+  left_next:=p_left;a_next:=p_a;b_next:=p_b;
+  left_next[band]:=left_next[band]-1;
+  IF turn=0 THEN a_next[band]:=a_next[band]+1;
+  ELSE b_next[band]:=b_next[band]+1;END IF;
+  IF public.elleng_weighted_reachable(p_n+1,p_total,left_next,a_next,b_next,p_snake) THEN RETURN true;END IF;
+ END LOOP;
+ RETURN false;
+END;$reach$;
+
 CREATE OR REPLACE FUNCTION public.elleng_weighted_options(p_state jsonb)
 RETURNS jsonb LANGUAGE plpgsql IMMUTABLE SET search_path=public AS $$
 DECLARE
@@ -8,6 +31,7 @@ DECLARE
  caps integer[]:=ARRAY[0,0]; weights integer[]:=ARRAY[5,3,2,1]; labels text[]:=ARRAY['A','B','C','D'];
  g jsonb; r jsonb; t integer; i integer; n integer:=0; b integer; idx integer; seen integer[]:='{}';
  a integer; bb integer; c integer; d integer; counts integer[]; high integer[]; strength integer; total_strength integer:=0;
+ assigned integer; turn integer; remaining integer[]; aa integer[]; ab integer[]; candidate integer; feasible boolean[]:=ARRAY[false,false,false,false]; overlap boolean:=false; snake boolean;
  gap bigint; depth bigint; best_gap bigint; best_depth bigint; eligible0 boolean[]:=ARRAY[false,false,false,false]; eligible1 boolean[]:=ARRAY[false,false,false,false];
 BEGIN
  IF jsonb_array_length(coalesce(p_state->'teams','[]'))<>2 THEN RAISE EXCEPTION 'Weighted balance requires two teams'; END IF;
@@ -61,6 +85,32 @@ BEGIN
   IF fixed0[b]>0 AND fixed1[b]=0 AND totals[b]>fixed0[b] AND caps[2]>(SELECT sum(x) FROM unnest(fixed1)x) THEN eligible0[b]:=false;END IF;
   IF fixed1[b]>0 AND fixed0[b]=0 AND totals[b]>fixed1[b] AND caps[1]>(SELECT sum(x) FROM unnest(fixed0)x) THEN eligible1[b]:=false;END IF;
  END LOOP;
+ -- Future-pick feasibility: reject a choice that strands the other team.
+ IF n<=32 THEN
+  assigned:=(SELECT sum(x) FROM unnest(fixed0)x)+(SELECT sum(x) FROM unnest(fixed1)x);
+  IF assigned<n THEN
+   remaining:=ARRAY[totals[1]-fixed0[1]-fixed1[1],totals[2]-fixed0[2]-fixed1[2],totals[3]-fixed0[3]-fixed1[3],totals[4]-fixed0[4]-fixed1[4]];
+   snake:=p_state->>'draftType'='snake';
+   turn:=assigned%2;IF snake AND (assigned/2)%2=1 THEN turn:=1-turn;END IF;
+   FOR candidate IN 1..4 LOOP
+    IF remaining[candidate]<=0 THEN CONTINUE;END IF;
+    IF candidate<=2 AND ((turn=0 AND fixed0[candidate]>0 AND fixed1[candidate]=0) OR
+                         (turn=1 AND fixed1[candidate]>0 AND fixed0[candidate]=0)) THEN CONTINUE;END IF;
+    aa:=fixed0;ab:=fixed1;remaining[candidate]:=remaining[candidate]-1;
+    IF turn=0 THEN aa[candidate]:=aa[candidate]+1;ELSE ab[candidate]:=ab[candidate]+1;END IF;
+    feasible[candidate]:=public.elleng_weighted_reachable(assigned+1,n,remaining,aa,ab,snake);
+    remaining[candidate]:=remaining[candidate]+1;
+   END LOOP;
+   FOR candidate IN 1..4 LOOP
+    IF turn=0 AND eligible0[candidate] AND feasible[candidate] THEN overlap:=true;END IF;
+    IF turn=1 AND eligible1[candidate] AND feasible[candidate] THEN overlap:=true;END IF;
+   END LOOP;
+   FOR candidate IN 1..4 LOOP
+    IF turn=0 THEN eligible0[candidate]:=feasible[candidate] AND (NOT overlap OR eligible0[candidate]);
+    ELSE eligible1[candidate]:=feasible[candidate] AND (NOT overlap OR eligible1[candidate]);END IF;
+   END LOOP;
+  END IF;
+ END IF;
  RETURN jsonb_build_object('version',1,'capacities',to_jsonb(caps),'score',jsonb_build_array(best_gap,best_depth),'eligible',jsonb_build_array(
   coalesce((SELECT jsonb_agg(labels[x] ORDER BY x) FROM generate_series(1,4)x WHERE eligible0[x]),'[]'::jsonb),
   coalesce((SELECT jsonb_agg(labels[x] ORDER BY x) FROM generate_series(1,4)x WHERE eligible1[x]),'[]'::jsonb)),
