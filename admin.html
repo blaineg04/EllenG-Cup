@@ -347,7 +347,7 @@ async function saveCommissionerAction(change){
  const before=structuredClone(S);
  try{
   if(change()===false)return;
-  savingDraft=true;
+  // secureSave owns the in-flight lock; setting it here would reject this save.
   await save();
   if(!sameCommissionerAction(actionEpoch,actionUserId))return;
   if(liveMode)liveRender();
@@ -356,8 +356,6 @@ async function saveCommissionerAction(change){
   S=before;
   if(liveMode)liveRender();
   if(before.draftRules==="weighted")alert(error?.message||"Draft change was rejected. Reload the draft before retrying.");
- }finally{
-  if(actionEpoch===commissionerAuthEpoch&&actionUserId===commissionerUserId)savingDraft=false;
  }
 }
 document.getElementById("undo").onclick=()=>saveCommissionerAction(()=>{
