@@ -216,9 +216,6 @@ function setupRender(){document.getElementById("grows").innerHTML=S.golfers.map(
  if(locked)status.textContent="Draft picks exist. Setup is read-only; undo all picks before editing golfers, teams or draft format.";
  else if(status.textContent.startsWith("Draft picks exist."))status.textContent="Setup unlocked. Changes must be saved before going live.";
 }
-function hasWithdrawnDraftPick(){
- return (S.picks||[]).some(p=>S.golfers?.[p.golfer]?.participating===false);
-}
 function liveRender(){
  const balanceButton=document.getElementById("prepareWeighted");
  const weightedStatus=document.getElementById("weightedStatus");
