@@ -1,7 +1,7 @@
 name: Weighted draft balance
 on:
   pull_request:
-    paths: ['weighted-draft.js', 'common.js', 'admin.html', 'captain.html', 'draft.html', 'db/releases/weighted-draft/**', 'tests/weighted-draft*', 'tests/weighted-admin-behavior.test.cjs', 'tests/support/weighted-postgres/**', '.github/workflows/weighted-draft-balance.yml']
+    paths: ['weighted-draft.js', 'common.js', 'admin.html', 'captain.html', 'draft.html', 'db/releases/weighted-draft/**', 'tests/weighted-draft*', 'tests/weighted-admin-behavior.test.cjs', 'tests/draft-submitted-band.test.cjs', 'tests/draft-turn-order.test.cjs', 'tests/commissioner-session-fence.test.cjs', 'tests/draft-participant-scope.test.cjs', 'tests/support/weighted-postgres/**', '.github/workflows/weighted-draft-balance.yml']
   workflow_dispatch:
 permissions:
   contents: read
