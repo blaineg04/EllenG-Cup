@@ -22,3 +22,11 @@ test('draft completion must not use historical pick count after withdrawals',()=
  assert.match(draft,/done=totalGolfers>0&&remainingGolfers===0/);
  assert.doesNotMatch(draft,/done=S\.picks\.length>=totalGolfers/);
 });
+
+test('commissioner display and pick guard use active unassigned roster',()=>{
+ const admin=fs.readFileSync(require('node:path').join(__dirname,'../admin.html'),'utf8');
+ assert.match(admin,/remaining=S\.golfers\.filter\(g=>g\.name&&g\.name\.trim\(\)&&g\.participating!==false&&g\.team==null\)\.length/);
+ assert.match(admin,/done=total>0&&remaining===0/);
+ assert.match(admin,/const remaining=S\.golfers\.some\(g=>g\?\.name&&g\.participating!==false&&g\.team==null\)/);
+ assert.doesNotMatch(admin,/S\.picks\.length>=total/);
+});
