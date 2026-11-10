@@ -4704,7 +4704,7 @@ function teamRosterGolfers(teamIndex){
    const idx=Number(raw);
    if(!Number.isSafeInteger(idx)||idx<0||idx>=golfers.length||seen.has(idx))return null;
    const golfer=golfers[idx];
-   if(!golfer||golfer.participating===false||!String(golfer.name||"").trim())return null;
+   if(!golfer||golfer.participating===false||!String(golfer.name||"").trim()||(golfer.team!=null&&String(golfer.team)!==String(teamIndex)))return null;
    seen.add(idx);
    return {index:idx,name:String(golfer.name).trim()};
  }).filter(Boolean);
