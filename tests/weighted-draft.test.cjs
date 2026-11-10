@@ -12,6 +12,13 @@ function oracle(s){const active=s.golfers.map((g,i)=>({...g,i})).filter(g=>g.nam
  const counts=allocation.map(a=>'ABCD'.split('').map(b=>a.filter(g=>g.band===b).length));const weights=allocation.map(a=>a.reduce((n,g)=>n+[5,3,2,1]['ABCD'.indexOf(g.band)],0));const score=[Math.abs(weights[0]*cap[1]-weights[1]*cap[0]),counts[0].reduce((n,c,b)=>n+(c*cap[1]-counts[1][b]*cap[0])**2,0)];
  if(!best||score[0]<best[0]||score[0]===best[0]&&score[1]<best[1]){best=score;allowed=[new Set(),new Set()];}
  if(score[0]===best[0]&&score[1]===best[1])pool.forEach((g,i)=>allowed[(mask>>i)&1].add(g.band));}
+ for(let t=0;t<2;t++)for(const band of ['A','B']){
+  const other=1-t,remaining=active.filter(g=>g.team==null&&g.band===band).length;
+  if(fixed.filter(g=>g.team===t&&g.band===band).length>0&&
+     fixed.filter(g=>g.team===other&&g.band===band).length===0&&
+     remaining>0&&allocationCapacity(other)>0)allowed[t].delete(band);
+ }
+ function allocationCapacity(t){return cap[t]-fixed.filter(g=>g.team===t).length;}
  return {best,eligible:allowed.map(x=>[...x].sort())};}
 test('weighted engine exists',()=>assert.equal(typeof api.options,'function'));
 for(const bands of ['ABBBCCDD','AABBCCDD','BBBBCCDD','ABDD','ACBBBBCCD','ADDDDD','AB'])test('optimal completions match independent subsets '+bands,()=>{assert.equal(typeof api.options,'function');const s=make([...bands]);const result=api.options(s),expected=oracle(s);assert.deepEqual(result.score,expected.best);assert.deepEqual(result.eligible,expected.eligible);});
