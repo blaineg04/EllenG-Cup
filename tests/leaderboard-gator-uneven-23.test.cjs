@@ -49,7 +49,8 @@ test('414 scores: independent sum matches raw points and normalized ranking',()=
  }
 });
 
-for(const count of [21,22,23,24]){
+// Exercise varied small, medium, odd, even, and larger fields without a fixed event roster size.
+for(const count of [2,3,4,5,7,8,11,12,16,19,20,21,22,23,24,25,31,32,40,48,64,100]){
  test(`${count} active golfers: roster, 18-hole scoring, normalization and Gator bonus`,()=>{
   const a=Math.ceil(count/2),b=Math.floor(count/2);
   const gs=Array.from({length:count},(_,i)=>({name:'Active '+i,team:i<a?0:1}));
