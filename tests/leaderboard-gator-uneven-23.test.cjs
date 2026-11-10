@@ -49,7 +49,7 @@ test('414 scores: independent sum matches raw points and normalized ranking',()=
  }
 });
 
-for(const count of [22,23,24]){
+for(const count of [21,22,23,24]){
  test(`${count} active golfers: roster, 18-hole scoring, normalization and Gator bonus`,()=>{
   const a=Math.ceil(count/2),b=Math.floor(count/2);
   const gs=Array.from({length:count},(_,i)=>({name:'Active '+i,team:i<a?0:1}));
