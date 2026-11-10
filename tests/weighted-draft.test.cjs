@@ -54,3 +54,14 @@ test('23-player Jarad A / Carl B snake draft gives both teams a first B before a
  const strengths=state.teams.map(t=>t.roster.reduce((n,i)=>n+[5,3,2,1]['ABCD'.indexOf(state.golfers[i].band)],0));
  assert.ok(Math.abs(strengths[0]/11-strengths[1]/12)<=0.1,'normalized team strength remains close: '+strengths);
 });
+
+test('Jarad/Carl first post-captain pick must allow C and prohibit Carl second B',()=>{
+ const bands=['A','B',...Array(4).fill('B'),...Array(13).fill('C'),...Array(4).fill('D')];
+ const s=make(bands);
+ s.teams[0].captain='Jarad';s.golfers[0].name='Jarad';
+ s.teams[1].captain='Carl';s.golfers[1].name='Carl';
+ const prepared=api.prepare({...s,teams:s.teams.map(t=>({...t,roster:[]})),golfers:s.golfers.map(g=>({...g,team:null})),picks:[]});
+ const choices=api.options(prepared).eligible[1];
+ assert.ok(choices.includes('C'),'Carl must be able to take a C at pick 3');
+ assert.ok(!choices.includes('B'),'Carl cannot take a second B before Jarad has one');
+});
