@@ -136,6 +136,10 @@ const api=require('../weighted-draft.js');
  const deniedBefore=s.golfers.findIndex(g=>g.team==null&&!allowedBefore.includes(g.band));
  assert.ok(deniedBefore>=0,'fixture must include a forbidden pick');
  await assert.rejects(db.query("select elleng_make_pick('weighted-test',$1)",[deniedBefore]),/reduce attainable/);
+ // Rejected selections must be atomic: no partial roster, pick, or timestamp write.
+ const afterRejected=(await db.query("select state from elleng_drafts where id='weighted-test'")).rows[0].state;
+ assert.deepEqual(afterRejected,s,'rejected captain selection must not modify persisted draft state');
+ console.log('PASS: rejected captain selection leaves persisted draft unchanged');
  const acceptedBefore=s.golfers.findIndex(g=>g.team==null&&allowedBefore.includes(g.band));
  assert.ok(acceptedBefore>=0,'fixture must include an allowed pick');
  s=(await db.query("select elleng_make_pick('weighted-test',$1) as s",[acceptedBefore])).rows[0].s;assert.equal(s.golfers[acceptedBefore].team,1);
