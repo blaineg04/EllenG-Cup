@@ -130,6 +130,11 @@ const api=require('../weighted-draft.js');
  await actor(owner);
  await db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(s),'weighted-test']);
  console.log('PASS: non-playing golfer rejected by authenticated captain pick RPC');
+ // A profile update must not bypass the roster guard by stripping weighted mode.
+ const downgraded=structuredClone(s);downgraded.draftRules='banded';
+ await assert.rejects(db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(downgraded),'weighted-test']),/Weighted draft rules cannot be disabled/);
+ assert.deepEqual((await db.query("select state from elleng_drafts where id='weighted-test'")).rows[0].state,s);
+ console.log('PASS: weighted roster guard rejects draft-rules downgrade');
  const changedBand=structuredClone(s);changedBand.golfers[2].band='A';
  await assert.rejects(db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(changedBand),'weighted-test']),/locked until the draft is complete/);
  const stamp=(await db.query("select updated_at::text as stamp from elleng_drafts where id='weighted-test'")).rows[0].stamp;
