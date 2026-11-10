@@ -72,3 +72,21 @@ for(const count of [2,3,4,5,7,8,11,12,16,19,20,21,22,23,24,25,31,32,40,48,64,100
   assert.equal(incomplete.completeHoles,17);
  });
 }
+
+for(const activeCount of [2,3,7,21,22,23,24,31,64]){
+ test(`inactive golfers are excluded from ${activeCount}-golfer leaderboard and Gator bonus`,()=>{
+  const a=Math.ceil(activeCount/2),b=Math.floor(activeCount/2),total=activeCount+4;
+  const gs=Array.from({length:total},(_,i)=>({name:'Golfer '+i,team:i<a?0:1,participating:i<activeCount}));
+  const ts=[{name:'A',roster:Array.from({length:a},(_,i)=>i)},{name:'B',roster:Array.from({length:total-a},(_,i)=>a+i)}];
+  const rs=[];
+  for(let h=1;h<=18;h++)for(let g=0;g<total;g++)rs.push({golfer_index:g,team_index:g<a?0:1,hole:h,score:g<a?4:3});
+  const result=summarize({golfers:gs,teams:ts},rs,pars,18);
+  assert.equal(result.completeHoles,18);
+  assert.equal(result.totals[0].golfers,a);
+  assert.equal(result.totals[1].golfers,b);
+  assert.equal(result.totals[0].rawPoints,a*18*3);
+  assert.equal(result.totals[1].rawPoints,b*18*4);
+  assert.deepEqual(result.gatorBonus,[0,10]);
+  for(let g=activeCount;g<total;g++)assert.equal(result.players[g].points,0);
+ });
+}
