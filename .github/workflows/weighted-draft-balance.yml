@@ -18,6 +18,8 @@ jobs:
       - run: npm ci --prefix tests/support/weighted-postgres --ignore-scripts --no-audit --no-fund
       - name: Verify isolated PostgreSQL parity and authorization
         run: PGLITE_MODULE="$GITHUB_WORKSPACE/tests/support/weighted-postgres/node_modules/@electric-sql/pglite" node tests/weighted-draft-postgres.cjs
+      - name: Rehearse guarded production reconciliation on disposable PostgreSQL
+        run: PGLITE_MODULE="$GITHUB_WORKSPACE/tests/support/weighted-postgres/node_modules/@electric-sql/pglite" node tests/weighted-reconciliation-postgres.cjs
 
   isolated-browser-rehearsal:
     runs-on: [self-hosted, macOS, X64]
