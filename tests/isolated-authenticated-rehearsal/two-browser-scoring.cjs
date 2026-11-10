@@ -56,6 +56,7 @@ const root=path.resolve(__dirname,'../..'),scores=new Map();
        if(u.origin===origin)return route.continue();
        return route.abort('blockedbyclient');
      });
+     await page.addInitScript(()=>{const original=window.setTimeout.bind(window);window.setTimeout=(fn,delay,...args)=>original(typeof fn==='function'&&fn.name==='goHome'&&delay===450?()=>fn(...args):fn,delay,...args)});
      await page.goto(origin+'/scoring.html#hub');
      await page.locator('#hubScoring').click();
      await page.locator('#appHub').waitFor({state:'hidden'});
