@@ -31,6 +31,7 @@ const root=path.resolve(__dirname,'../..'),scores=new Map();
      const context=await browser.newContext({serviceWorkers:'block'});
      const page=await context.newPage();page.setDefaultTimeout(9000);
      page.on('pageerror',error=>console.error('REHEARSAL PAGE ERROR:',error.message));
+     page.on('console',message=>{if(message.type()==='error')console.error('REHEARSAL CONSOLE:',message.text());});
      await page.route('**/*',route=>{
        const u=new URL(route.request().url());
        if(u.hostname==='cdn.jsdelivr.net'&&u.pathname.includes('supabase-js')){
