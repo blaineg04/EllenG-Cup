@@ -62,3 +62,16 @@ test('commissioner control actions delegate locking to secureSave without deadlo
  assert.ok(admin.includes('if(savingDraft)throw new Error("A draft save is already in progress.")'));
  assert.ok(admin.includes('save=secureSave;'));
 });
+
+test('commissioner controls use compare-and-swap save and reject stale draft snapshots',()=>{
+ const admin=fs.readFileSync(require('node:path').join(__dirname,'../admin.html'),'utf8');
+ const start=admin.indexOf('async function secureSave(){');
+ const end=admin.indexOf('save=secureSave;',start);
+ assert.ok(start>=0&&end>start);
+ const secure=admin.slice(start,end);
+ assert.ok(secure.includes('p_expected_updated_at:draftUpdatedAt'));
+ assert.ok(secure.includes('elleng_save_state_if_fresh'));
+ assert.ok(secure.includes('draftUpdatedAt=saved.updated_at'));
+ assert.ok(secure.includes('if(!saved?.updated_at)throw new Error'));
+ assert.ok(!secure.includes('.upsert('),'commissioner saves must not overwrite stale draft state with unconditional upsert');
+});
