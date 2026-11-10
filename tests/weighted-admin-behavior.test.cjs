@@ -17,12 +17,12 @@ test('weighted commissioner pick refreshes roster and concurrency timestamp',asy
 test('undo does not remove a captain seed',()=>{const h=harness();h.ctx.S=api.prepare(h.ctx.S);h.elements.undo={};vm.runInContext(source.slice(source.indexOf('document.getElementById("undo").onclick'),source.indexOf('document.getElementById("pause").onclick')),h.ctx);h.elements.undo.onclick();assert.equal(h.ctx.S.picks.length,2);assert.equal(h.ctx.S.golfers[1].team,1);});
 
 test('rejected weighted commissioner pick leaves local draft unchanged',async()=>{
- const h=harness();const prepared=api.prepare(h.ctx.S);prepared.timerPaused=false;h.ctx.S=prepared;h.setServer(structuredClone(prepared));h.setRpcError(new Error('Server rejected selection'));
+ const h=harness();const prepared=api.prepare(h.ctx.S);prepared.timerPaused=false;h.ctx.S=prepared;h.setServer(structuredClone(prepared));h.setRpcError(new Error('Server rejected selection'));h.ctx.alert=message=>{h.ctx.lastAlert=message};
  const before=structuredClone(h.ctx.S);await h.ctx.pick(2);
- assert.deepEqual(h.ctx.S,before);assert.equal(h.reads(),0);assert.equal(h.ctx.savingDraft,false);
+ assert.deepEqual(h.ctx.S,before);assert.equal(h.reads(),0);assert.equal(h.ctx.savingDraft,false);assert.match(h.ctx.lastAlert,/Server rejected selection/);
 });
 test('rejected weighted preparation leaves local draft unchanged',async()=>{
- const h=harness();h.setRpcError(new Error('Server rejected preparation'));
+ const h=harness();h.setRpcError(new Error('Server rejected preparation'));h.ctx.alert=message=>{h.ctx.lastAlert=message};
  const before=structuredClone(h.ctx.S);await h.elements.prepareWeighted.onclick();
- assert.deepEqual(h.ctx.S,before);assert.equal(h.reads(),0);assert.equal(h.ctx.savingDraft,false);
+ assert.deepEqual(h.ctx.S,before);assert.equal(h.reads(),0);assert.equal(h.ctx.savingDraft,false);assert.match(h.ctx.lastAlert,/Server rejected preparation/);
 });
