@@ -84,6 +84,15 @@ const api=require('../weighted-draft.js');
  }
  assert.deepEqual(evenState.teams.map(t=>t.roster.length),[11,11]);
  console.log('PASS: '+evenComparisons+' full 22-golfer snake picks checked for JS/PostgreSQL parity (11/11 split)');
+ // Non-playing members stay visible in the golfers directory but cannot enter the draft.
+ const spectatorState=structuredClone(evenState);
+ spectatorState.golfers.push({name:'Non-playing member',band:'A',self_ranked:false,participating:false,team:null});
+ const spectatorJS=api.options(spectatorState);
+ const spectatorSQL=(await db.query('select public.elleng_weighted_options($1::jsonb) as result',[JSON.stringify(spectatorState)])).rows[0].result;
+ assert.deepEqual(spectatorSQL,spectatorJS,'non-playing member must not alter draft options');
+ assert.deepEqual(spectatorJS.capacities,[11,11],'non-playing member must not change team capacities');
+ assert.equal(spectatorState.golfers.at(-1).team,null,'non-playing member must remain unassigned');
+ console.log('PASS: non-playing unranked member excluded from 22-golfer draft eligibility and capacities');
  // Exercise the largest supported tournament against the actual SQL engine.
  const maxBands=['A','B',...Array(6).fill('B'),...Array(18).fill('C'),...Array(6).fill('D')];
  const maxState=make(maxBands),maxStart=Date.now();
