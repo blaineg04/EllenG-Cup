@@ -1,0 +1,23 @@
+name: EllenG participation SQL guards
+on:
+  push:
+    branches:
+      - fix/pre-draft-roster-promotion-20261109
+  pull_request:
+    paths:
+      - 'db/releases/player-participation/status.sql'
+      - 'tests/player-participation-sql-guards.test.cjs'
+      - '.github/workflows/participation-sql-guards.yml'
+  workflow_dispatch:
+jobs:
+  participation-sql-guards:
+    runs-on: [self-hosted, macOS]
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Node runtime
+        run: node --version
+      - name: Validate participation SQL structural safeguards
+        run: node --test tests/player-participation-sql-guards.test.cjs

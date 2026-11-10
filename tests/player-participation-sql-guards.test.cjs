@@ -1,0 +1,21 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const sql = fs.readFileSync(path.join(__dirname, '../db/releases/player-participation/status.sql'), 'utf8');
+
+const guard = sql.indexOf("THEN RAISE EXCEPTION 'Golfer is assigned. Use the commissioner withdrawal workflow.'");
+const write = sql.indexOf("UPDATE public.elleng_drafts SET state=s");
+assert.ok(guard > 0 && guard < write, 'Assigned golfer must be rejected before any state write');
+assert.match(sql, /g->>'team' IS NOT NULL/);
+assert.match(sql, /jsonb_array_elements_text\(coalesce\(tm->'roster'/);
+assert.match(sql, /public\.elleng_group_assignments/);
+assert.match(sql, /d\.owner_id IS DISTINCT FROM auth\.uid\(\)/);
+assert.match(sql, /d\.updated_at IS DISTINCT FROM p_expected_updated_at/);
+assert.match(sql, /s->>'timerPaused'='false'/);
+assert.match(sql, /NOT p_participating AND jsonb_array_length/);
+assert.match(sql, /public\.elleng_player_hole_scores/);
+assert.match(sql, /public\.elleng_pair_hole_scores/);
+assert.doesNotMatch(sql, /'team',ti/, 'Do not silently assign or clear team via uninitialized ti');
+assert.equal((sql.match(/IF p_new_golfer IS NOT NULL THEN/g) || []).length, 1, 'Only one new-golfer creation branch is permitted');
+assert.ok(sql.indexOf('Golfer is assigned. Use the commissioner withdrawal workflow.') < sql.indexOf('IF p_new_golfer IS NOT NULL THEN'), 'Assignment guard must precede creation/update logic');
+console.log('Participation SQL structural guards: passed (not an authenticated database test)');

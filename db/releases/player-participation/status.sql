@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION public.elleng_set_player_participation(
  p_draft_id text,p_tournament_id text,p_golfer_index integer,p_participating boolean,p_expected_updated_at timestamptz,p_new_golfer jsonb DEFAULT NULL
 ) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE d public.elleng_drafts%ROWTYPE; t public.elleng_tournaments%ROWTYPE;
- a public.elleng_player_accounts%ROWTYPE; s jsonb; g jsonb; gs jsonb; stamp timestamptz; ti integer;
+ a public.elleng_player_accounts%ROWTYPE; s jsonb; g jsonb; gs jsonb; stamp timestamptz;
 BEGIN
  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Sign in required' USING ERRCODE='42501'; END IF;
  IF p_draft_id IS DISTINCT FROM 'elleng-cup' OR p_tournament_id IS DISTINCT FROM 'elleng-cup-live'
@@ -19,39 +19,28 @@ BEGIN
  IF (p_new_golfer IS NULL OR p_participating) AND t.status IS DISTINCT FROM 'setup' THEN RAISE EXCEPTION 'Status can only change during tournament setup.'; END IF;
  s:=d.state;gs:=s->'golfers';g:=gs->p_golfer_index;
  IF jsonb_typeof(gs) IS DISTINCT FROM 'array' THEN RAISE EXCEPTION 'Golfer list unavailable'; END IF;
- IF (p_new_golfer IS NULL OR p_participating) AND (s->>'timerPaused'='false' OR jsonb_array_length(coalesce(s->'picks','[]'::jsonb))>0
+ -- Never silently remove an already drafted golfer; a separate explicit withdrawal flow is required.
+ IF (g->>'team' IS NOT NULL AND g->>'team'<>'')
+ OR EXISTS(SELECT 1 FROM jsonb_array_elements(coalesce(s->'teams','[]'::jsonb)) tm,
+ jsonb_array_elements_text(coalesce(tm->'roster','[]'::jsonb)) ri WHERE ri=p_golfer_index::text)
+ OR EXISTS(SELECT 1 FROM public.elleng_group_assignments WHERE draft_id=p_draft_id AND golfer_index=p_golfer_index)
+ THEN RAISE EXCEPTION 'Golfer is assigned. Use the commissioner withdrawal workflow.'; END IF;
+ IF (p_new_golfer IS NULL OR p_participating) AND (s->>'timerPaused'='false'
+ OR (NOT p_participating AND jsonb_array_length(coalesce(s->'picks','[]'::jsonb))>0)
  OR EXISTS(SELECT 1 FROM public.elleng_team_scores WHERE tournament_id=p_tournament_id)
  OR EXISTS(SELECT 1 FROM public.elleng_player_hole_scores WHERE tournament_id=p_tournament_id)
- OR EXISTS(SELECT 1 FROM public.elleng_pair_hole_scores WHERE tournament_id=p_tournament_id)
- OR EXISTS(SELECT 1 FROM public.elleng_group_assignments WHERE draft_id=p_draft_id AND golfer_index=p_golfer_index)
- OR (g->>'team' IS NOT NULL AND g->>'team'<>'')
- OR EXISTS(SELECT 1 FROM jsonb_array_elements(coalesce(s->'teams','[]'::jsonb)) tm,
- jsonb_array_elements_text(coalesce(tm->'roster','[]'::jsonb)) ri WHERE ri=p_golfer_index::text)) THEN
- RAISE EXCEPTION 'Draft picks, assignments or scores exist. Status was not changed.'; END IF;
+ OR EXISTS(SELECT 1 FROM public.elleng_pair_hole_scores WHERE tournament_id=p_tournament_id)) THEN
+ RAISE EXCEPTION 'Draft picks or scores exist, or draft is running. Status was not changed.'; END IF;
  IF p_new_golfer IS NOT NULL THEN
   IF coalesce(btrim(g->>'name'),'')<>'' OR EXISTS(SELECT 1 FROM public.elleng_player_accounts WHERE draft_id=p_draft_id AND golfer_index=p_golfer_index) THEN RAISE EXCEPTION 'Golfer slot changed. Refresh and try again.' USING ERRCODE='40001'; END IF;
   IF jsonb_typeof(p_new_golfer) IS DISTINCT FROM 'object' OR length(btrim(coalesce(p_new_golfer->>'name','')))<2 OR length(p_new_golfer->>'name')>100 THEN RAISE EXCEPTION 'Enter a full golfer name'; END IF;
   g:=jsonb_build_object('name',btrim(p_new_golfer->>'name'),'hcp',coalesce(p_new_golfer->>'hcp',''),'band',coalesce(p_new_golfer->>'band',''),'self_ranked',coalesce((p_new_golfer->>'self_ranked')::boolean,false),'photo_url',coalesce(p_new_golfer->>'photo_url',''),'team',NULL);
-  IF p_participating AND p_new_golfer->>'team' IS NOT NULL THEN
-   ti:=(p_new_golfer->>'team')::integer;
-   IF ti<0 OR ti>=jsonb_array_length(s->'teams') THEN RAISE EXCEPTION 'Invalid team'; END IF;
-  END IF;
  ELSIF coalesce(btrim(g->>'name'),'')='' THEN
   SELECT * INTO a FROM public.elleng_player_accounts WHERE draft_id=p_draft_id AND golfer_index=p_golfer_index FOR SHARE;
   IF NOT FOUND THEN RAISE EXCEPTION 'Registered golfer unavailable'; END IF;
   g:=jsonb_build_object('name',coalesce(nullif(btrim(a.display_name),''),a.username),'photo_url',coalesce(a.photo_url,''),'team',NULL,'band','','hcp','','self_ranked',false);
-  IF p_new_golfer IS NOT NULL THEN
-  IF coalesce(btrim(g->>'name'),'')<>'' OR EXISTS(SELECT 1 FROM public.elleng_player_accounts WHERE draft_id=p_draft_id AND golfer_index=p_golfer_index) THEN RAISE EXCEPTION 'Golfer slot changed. Refresh and try again.' USING ERRCODE='40001'; END IF;
-  IF jsonb_typeof(p_new_golfer) IS DISTINCT FROM 'object' OR length(btrim(coalesce(p_new_golfer->>'name','')))<2 OR length(p_new_golfer->>'name')>100 THEN RAISE EXCEPTION 'Enter a full golfer name'; END IF;
-  g:=jsonb_build_object('name',btrim(p_new_golfer->>'name'),'hcp',coalesce(p_new_golfer->>'hcp',''),'band',coalesce(p_new_golfer->>'band',''),'self_ranked',coalesce((p_new_golfer->>'self_ranked')::boolean,false),'photo_url',coalesce(p_new_golfer->>'photo_url',''),'team',NULL);
-  IF p_participating AND p_new_golfer->>'team' IS NOT NULL THEN
-   ti:=(p_new_golfer->>'team')::integer;
-   IF ti<0 OR ti>=jsonb_array_length(s->'teams') THEN RAISE EXCEPTION 'Invalid team'; END IF;
-  END IF;
- ELSIF coalesce(btrim(g->>'name'),'')='' THEN RAISE EXCEPTION 'Save the golfer name first'; END IF;
  END IF;
- g:=g||jsonb_build_object('participating',p_participating,'team',ti);
- IF ti IS NOT NULL THEN s:=jsonb_set(s,ARRAY['teams',ti::text,'roster'],coalesce(s#>ARRAY['teams',ti::text,'roster'],'[]'::jsonb)||to_jsonb(p_golfer_index),true); END IF;
+ g:=g||jsonb_build_object('participating',p_participating,'team',NULL);
  WHILE jsonb_array_length(gs)<=p_golfer_index LOOP gs:=gs||jsonb_build_array(jsonb_build_object('name','','team',NULL,'participating',false)); END LOOP;
  gs:=jsonb_set(gs,ARRAY[p_golfer_index::text],g,false);
  s:=jsonb_set(s,'{golfers}',gs,false);stamp:=clock_timestamp();
