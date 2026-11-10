@@ -40,10 +40,15 @@ const api=require('../weighted-draft.js');
  assert.ok(acceptedBefore>=0,'fixture must include an allowed pick');
  s=(await db.query("select elleng_make_pick('weighted-test',$1) as s",[acceptedBefore])).rows[0].s;assert.equal(s.golfers[acceptedBefore].team,1);
  // Commissioner is constrained by the current engine options too.
- const nextTurn=s.picks.length,team=Math.floor(nextTurn/2)%2?1-nextTurn%2:nextTurn%2;
- const deniedAfter=s.golfers.findIndex(g=>g.team==null&&!api.options(s).eligible[team].includes(g.band));
- assert.ok(deniedAfter>=0,'fixture must include a forbidden commissioner pick');
- await actor(owner);await assert.rejects(db.query("select elleng_weighted_pick('weighted-test',$1)",[deniedAfter]),/reduce attainable/);
+ // Commissioner can attempt a forbidden pick at the same known-restrictive
+ // state as the captain. Restore the disposable fixture after the allowed pick.
+ const commissionerFixture=structuredClone(s);
+ commissionerFixture.golfers[acceptedBefore].team=null;
+ commissionerFixture.teams[1].roster.pop();
+ commissionerFixture.picks.pop();
+ await db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(commissionerFixture),'weighted-test']);
+ await actor(owner);await assert.rejects(db.query("select elleng_weighted_pick('weighted-test',$1)",[deniedBefore]),/reduce attainable/);
+ await db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(s),'weighted-test']);
  // Force the deadline only in this disposable fixture, then exercise actual auto wrapper.
  s.timerEndsAt='2000-01-01T00:00:00Z';await db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(s),'weighted-test']);
  const options=api.options(s),before=s.picks.length;s=(await db.query("select elleng_auto_pick('weighted-test') as s")).rows[0].s;
