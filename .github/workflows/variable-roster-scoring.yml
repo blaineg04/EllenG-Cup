@@ -1,0 +1,27 @@
+name: EllenG variable roster scoring regression
+on:
+  push:
+    branches:
+      - test/isolated-live-rehearsal-20261110
+    paths:
+      - 'draft-setup-config.js'
+      - 'admin.html'
+      - 'tests/commissioner-draft-setup-sizing.test.cjs'
+      - 'tests/draft-variable-participation-contract.test.cjs'
+      - 'draft.html'
+      - 'shamble-points.js'
+      - 'tests/leaderboard-gator-uneven-23.test.cjs'
+      - '.github/workflows/variable-roster-scoring.yml'
+  workflow_dispatch:
+jobs:
+  variable-roster-scoring:
+    runs-on: [self-hosted, macOS]
+    permissions:
+      contents: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm checked-out commit
+        run: git rev-parse HEAD
+      - name: Test variable-size rosters and 18-hole scoring
+        run: node --test tests/leaderboard-gator-uneven-23.test.cjs tests/commissioner-draft-setup-sizing.test.cjs tests/draft-variable-participation-contract.test.cjs

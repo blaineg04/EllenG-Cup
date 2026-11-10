@@ -136,3 +136,27 @@ test('33-player draft fails closed rather than skipping future-pick protection',
  const s=make(['A','B',...Array(31).fill('C')]);
  assert.throws(()=>api.options(s),/2–32 playing golfers/);
 });
+
+test('weighted draft refuses silent turn-order rebalance when a picked golfer withdraws',()=>{
+ const state=make(['A','B','C','D','C','D']);
+ state.draftRules='weighted';
+ state.teams[0].captainGolferIndex=0;
+ state.teams[1].captainGolferIndex=1;
+ // First ordinary pick belongs to team 0 after the two protected captain seeds.
+ state.golfers[2].team=0;
+ state.teams[0].roster.push(2);
+ state.picks.push({golfer:2,team:0});
+ assert.doesNotThrow(()=>api.options(state));
+ state.golfers[2].participating=false;
+ assert.throws(()=>api.options(state),/Draft roster assignments are inconsistent/);
+ assert.equal(state.picks.length,3,'the historical pick remains available for commissioner review');
+ assert.equal(state.golfers[2].team,0,'withdrawal does not silently change team assignments');
+});
+test('weighted draft refuses withdrawal of a protected captain',()=>{
+ const state=make(['A','B','C','D']);
+ state.draftRules='weighted';
+ state.teams[0].captainGolferIndex=0;
+ state.teams[1].captainGolferIndex=1;
+ state.golfers[0].participating=false;
+ assert.throws(()=>api.options(state),/Draft roster assignments are inconsistent/);
+});

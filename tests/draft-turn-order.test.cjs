@@ -24,3 +24,27 @@ test('reject invalid team count and pick index',()=>{
  assert.throws(()=>onClock(0,0),RangeError);
  assert.throws(()=>onClock(-1,4),RangeError);
 });
+
+test('undo restores the previous team turn without touching captain seed positions',()=>{
+ for(const type of ['snake','standard']){
+  const picks=[{golfer:0,team:0,captain:true},{golfer:1,team:1,captain:true}];
+  for(let i=2;i<14;i++)picks.push({golfer:i,team:onClock(i,2,type)});
+  const before=onClock(picks.length,2,type);
+  const last=picks.pop();
+  assert.equal(onClock(picks.length,2,type),last.team);
+  picks.push(last);
+  assert.equal(onClock(picks.length,2,type),before);
+  assert.deepEqual(picks.slice(0,2).map(p=>p.golfer),[0,1]);
+ }
+});
+test('withdrawal keeps historical turn index until commissioner explicitly repairs the draft',()=>{
+ for(const type of ['snake','standard']){
+  const picks=Array.from({length:7},(_,i)=>({golfer:i,team:onClock(i,2,type)}));
+  const next=onClock(picks.length,2,type);
+  const withdrawn=3;
+  const active=picks.filter(p=>p.golfer!==withdrawn);
+  assert.equal(picks.length,7,'historical picks are retained');
+  assert.equal(onClock(picks.length,2,type),next);
+  assert.notEqual(active.length,picks.length,'active roster and historical picks are different concepts');
+ }
+});

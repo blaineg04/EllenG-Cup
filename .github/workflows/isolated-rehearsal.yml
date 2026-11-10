@@ -1,0 +1,27 @@
+name: Isolated authenticated rehearsal safety gate
+on:
+  pull_request:
+    paths: ['tests/isolated-authenticated-rehearsal/**', '.github/workflows/isolated-rehearsal.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  local-browser-safety:
+    runs-on: [self-hosted, macOS, X64]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: npm ci --prefix tests/visual --ignore-scripts --no-audit --no-fund
+      - run: tests/visual/node_modules/.bin/playwright install chromium
+      - run: npm ci --prefix tests/support/weighted-postgres --ignore-scripts --no-audit --no-fund
+      - name: Verify disposable multi-session score persistence
+        run: PGLITE_MODULE="$GITHUB_WORKSPACE/tests/support/weighted-postgres/node_modules/@electric-sql/pglite" node tests/isolated-authenticated-rehearsal/disposable-session-contract.cjs
+      - name: Verify actual scoring page with synthetic roles and point calculations
+        run: node tests/visual/shamble-points.cjs
+      - name: Verify two independent browsers share disposable scoring persistence
+        run: node tests/isolated-authenticated-rehearsal/two-browser-scoring.cjs
+      - name: Block production and external writes in local browser rehearsal
+        run: node tests/isolated-authenticated-rehearsal/safety-gate.cjs
