@@ -114,6 +114,15 @@ const api=require('../weighted-draft.js');
  await actor(c0);await assert.rejects(db.query("select elleng_prepare_weighted_draft('weighted-test')"),/Commissioner/);
  await actor(owner);let s=(await db.query("select elleng_prepare_weighted_draft('weighted-test') as s")).rows[0].s;assert.deepEqual(s,api.prepare(make([...'ABBBCC'])));
  s.timerPaused=false;s.timerEndsAt=new Date(Date.now()+60000).toISOString();await db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(s),'weighted-test']);
+ // A non-playing member cannot be selected through the server RPC, even with a submitted band.
+ const spectatorDraft=structuredClone(s);
+ spectatorDraft.golfers.push({name:'Spectator',band:'C',self_ranked:true,participating:false,team:null});
+ await db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(spectatorDraft),'weighted-test']);
+ await actor(c1);
+ await assert.rejects(db.query("select elleng_make_pick('weighted-test',$1)",[spectatorDraft.golfers.length-1]),/Selection would reduce attainable team balance|No eligible golfer/);
+ await actor(owner);
+ await db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(s),'weighted-test']);
+ console.log('PASS: non-playing golfer rejected by authenticated captain pick RPC');
  const changedBand=structuredClone(s);changedBand.golfers[2].band='A';
  await assert.rejects(db.query('update elleng_drafts set state=$1 where id=$2',[JSON.stringify(changedBand),'weighted-test']),/locked until the draft is complete/);
  const stamp=(await db.query("select updated_at::text as stamp from elleng_drafts where id='weighted-test'")).rows[0].stamp;
