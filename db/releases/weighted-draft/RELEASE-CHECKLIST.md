@@ -3,7 +3,7 @@
 **Status:** Review checklist only. Do not run this migration against production or merge the PR without explicit commissioner approval.
 
 ## Verified in isolated CI
-- 107 Node tests, including rejected commissioner RPC safety; complete 23-golfer (11/12) and 24-golfer (12/12) snake simulations.
+- 107 Node tests, including rejected commissioner RPC safety; complete 22-golfer (11/11), 23-golfer (11/12), and 24-golfer (12/12) snake simulations, confirmed by MacBook CI run #36.
 - 360 JS/PostgreSQL state comparisons, authorization and timeout paths.
 - Maximum 32-golfer initial calculation and 33-golfer rejection.
 - PGlite migration installation twice in disposable test database.
