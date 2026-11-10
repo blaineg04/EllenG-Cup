@@ -24,15 +24,16 @@ test('weighted engine exists',()=>assert.equal(typeof api.options,'function'));
 for(const bands of ['ABBBCCDD','AABBCCDD','BBBBCCDD','ABDD','ACBBBBCCD','ADDDDD','AB'])test('optimal completions match independent subsets '+bands,()=>{assert.equal(typeof api.options,'function');const s=make([...bands]);const result=api.options(s),expected=oracle(s);assert.deepEqual(result.score,expected.best);assert.deepEqual(result.eligible,expected.eligible);});
 test('only A on strong captain team is offset by B depth',()=>{assert.equal(typeof api.options,'function');const s=make([...'ABBBCC']);const result=api.options(s);assert.deepEqual(result.eligible[1],['C']);assert.ok(!result.eligible[1].includes('B'),'second B must wait until team zero receives its first B');assert.ok(!result.eligible[1].includes('B'),'team one cannot take its second B on its current turn');});
 test('eligibility cache is isolated between snake and standard turn order',()=>{
- const state=make([...'ABBBCCDD']);
+ const state=make(['A','B',...Array(10).fill('B'),...Array(11).fill('C')]);
  const snake=api.options(state);
+ assert.deepEqual(snake.capacities,[11,12]);
  state.draftType='standard';
  const standard=api.options(state);
  const freshContext={module:{exports:{}},exports:{},structuredClone};freshContext.globalThis=freshContext;
  vm.runInNewContext(fs.readFileSync(file,'utf8'),freshContext);
  const independent=freshContext.module.exports.options(state);
  assert.deepEqual(JSON.parse(JSON.stringify(standard)),JSON.parse(JSON.stringify(independent)));
- assert.deepEqual(standard.capacities,[4,4]);
+ assert.deepEqual(standard.capacities,[12,11]);
  assert.equal(snake.version,standard.version);
 });
 test('excluded golfers do not alter balance',()=>{assert.equal(typeof api.options,'function');const s=make([...'ABBBCC']);const before=api.options(s);s.golfers.push({name:'Not playing',band:'A',self_ranked:false,participating:false});assert.deepEqual(api.options(s),before);});
