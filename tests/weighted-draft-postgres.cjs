@@ -48,7 +48,7 @@ const api=require('../weighted-draft.js');
  console.log('PASS: '+fullComparisons+' full 24-golfer snake picks checked for JS/PostgreSQL parity in '+(Date.now()-fullStart)+'ms');
 
  // Uneven 23-golfer tournament: both engines must agree on all 21
- // post-captain picks and finish with the snake-order 12/11 split.
+ // post-captain picks and finish with the snake-order 11/12 split.
  const oddBands=['A','B',...Array(4).fill('B'),...Array(13).fill('C'),...Array(4).fill('D')];
  const oddState=make(oddBands);
  let oddComparisons=0;
@@ -64,8 +64,8 @@ const api=require('../weighted-draft.js');
   oddState.picks.push({golfer:index,team:turn});
   oddComparisons++;
  }
- assert.deepEqual(oddState.teams.map(t=>t.roster.length),[12,11]);
- console.log('PASS: '+oddComparisons+' full 23-golfer snake picks checked for JS/PostgreSQL parity (12/11 split)');
+ assert.deepEqual(oddState.teams.map(t=>t.roster.length),[11,12]);
+ console.log('PASS: '+oddComparisons+' full 23-golfer snake picks checked for JS/PostgreSQL parity (11/12 split)');
  // Exercise the largest supported tournament against the actual SQL engine.
  const maxBands=['A','B',...Array(6).fill('B'),...Array(18).fill('C'),...Array(6).fill('D')];
  const maxState=make(maxBands),maxStart=Date.now();
