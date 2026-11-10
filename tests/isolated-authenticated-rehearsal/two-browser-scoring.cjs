@@ -30,6 +30,7 @@ const root=path.resolve(__dirname,'../..'),scores=new Map();
    async function open(){
      const context=await browser.newContext({serviceWorkers:'block'});
      const page=await context.newPage();page.setDefaultTimeout(9000);
+     page.on('pageerror',error=>console.error('REHEARSAL PAGE ERROR:',error.message));
      await page.route('**/*',route=>{
        const u=new URL(route.request().url());
        if(u.hostname==='cdn.jsdelivr.net'&&u.pathname.includes('supabase-js')){
@@ -58,6 +59,7 @@ const root=path.resolve(__dirname,'../..'),scores=new Map();
      });
      await page.addInitScript(()=>{const original=window.setTimeout.bind(window);window.setTimeout=(fn,delay,...args)=>original(typeof fn==='function'&&fn.name==='goHome'&&delay===450?()=>fn(...args):fn,delay,...args)});
      await page.goto(origin+'/scoring.html#hub');
+     console.log('REHEARSAL STATE',await page.evaluate(()=>({hub:document.querySelector('#appHub')?.className,scoring:document.querySelector('#hubScoring')?.outerHTML.slice(0,160),supabase:!!window.supabase,body:document.body.className})));
      await page.locator('#hubScoring').click();
      await page.locator('#appHub').waitFor({state:'hidden'});
      return {page,context};
