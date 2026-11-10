@@ -21,5 +21,7 @@ jobs:
         run: PGLITE_MODULE="$GITHUB_WORKSPACE/tests/support/weighted-postgres/node_modules/@electric-sql/pglite" node tests/isolated-authenticated-rehearsal/disposable-session-contract.cjs
       - name: Verify actual scoring page with synthetic roles and point calculations
         run: node tests/visual/shamble-points.cjs
+      - name: Verify two independent browsers share disposable scoring persistence
+        run: node tests/isolated-authenticated-rehearsal/two-browser-scoring.cjs
       - name: Block production and external writes in local browser rehearsal
         run: node tests/isolated-authenticated-rehearsal/safety-gate.cjs
