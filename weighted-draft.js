@@ -38,6 +38,45 @@
    const otherOpen=capacities[other]-fixed[other].reduce((a,n)=>a+n,0);
    if(fixed[t][b]>0&&fixed[other][b]===0&&remaining>0&&otherOpen>0)eligible[t].delete(bands[b]);
   }
+  // For ordinary-sized tournaments, verify that every offered next pick
+  // has at least one complete legal snake-order continuation. The final
+  // allocation optimizer alone cannot guarantee this.
+  if(playing.length<=32){
+   const assigned=fixed[0].reduce((n,v)=>n+v,0)+fixed[1].reduce((n,v)=>n+v,0);
+   const remaining=totals.map((v,b)=>v-fixed[0][b]-fixed[1][b]);
+   const memo=new Map();
+   function reachable(n,left,a,b){
+    if(n===playing.length)return left.every(v=>v===0);
+    const key=n+'|'+left.join(',')+'|'+a.join(',')+'|'+b.join(',');
+    if(memo.has(key))return memo.get(key);
+    const round=Math.floor(n/2),p=n%2,t=state.draftType==='snake'&&round%2?1-p:p;
+    const own=t===0?a:b,other=t===0?b:a;
+    for(let band=0;band<4;band++){
+     if(!left[band])continue;
+     if(band<2&&own[band]>0&&other[band]===0)continue;
+     left[band]--;own[band]++;
+     const ok=reachable(n+1,left,a,b);
+     own[band]--;left[band]++;
+     if(ok){memo.set(key,true);return true;}
+    }
+    memo.set(key,false);return false;
+   }
+   const round=Math.floor(assigned/2),p=assigned%2,turn=state.draftType==='snake'&&round%2?1-p:p;
+   const feasible=new Set();
+   for(let band=0;band<4;band++){
+    if(!remaining[band])continue;
+    const own=fixed[turn],other=fixed[1-turn];
+    if(band<2&&own[band]>0&&other[band]===0)continue;
+    remaining[band]--;own[band]++;
+    const ok=reachable(assigned+1,remaining,fixed[0],fixed[1]);
+    own[band]--;remaining[band]++;
+    if(ok)feasible.add(bands[band]);
+   }
+   // Prefer weighted-optimal picks that are actually reachable; if the
+   // unconstrained optimum is impossible, allow a legal continuation.
+   const intersection=[...eligible[turn]].filter(b=>feasible.has(b));
+   eligible[turn]=new Set(intersection.length?intersection:feasible);
+  }
   const result={version:1,capacities,score:best,eligible:eligible.map(s=>[...s].sort()),strength:fixed.map(row=>row.reduce((n,c,b)=>n+c*weights[b],0))};
   cacheKey=key;cacheValue=structuredClone(result);return result;
  }
