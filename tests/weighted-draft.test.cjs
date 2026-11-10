@@ -118,3 +118,8 @@ test('32-player weighted draft completes without forbidden first-band picks',()=
  }
  assert.deepEqual(state.teams.map(t=>t.roster.length),[16,16]);
 });
+
+test('33-player draft fails closed rather than skipping future-pick protection',()=>{
+ const s=make(['A','B',...Array(31).fill('C')]);
+ assert.throws(()=>api.options(s),/2–32 playing golfers/);
+});
