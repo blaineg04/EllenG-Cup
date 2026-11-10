@@ -29,3 +29,16 @@
 
 ## Remaining release blocker
 Authenticated browser end-to-end verification of commissioner and captain pages has **not** been completed. Isolated VM and PostgreSQL tests do not establish browser or production readiness.
+
+## Authenticated browser acceptance — not yet executed
+Run these steps in a separate staging environment with dedicated test accounts and disposable draft data, **not** against the live November 20 tournament:
+1. Sign in as commissioner, confirm the active golfer count and all submitted bands, and verify that preparation is blocked while any participating golfer is unranked.
+2. Prepare a snake draft with Jarad (A) and Carl (B) as captains; verify both are preassigned, each team starts with one golfer, and the first selectable team follows the configured snake order.
+3. On Carl's first eligible turn, verify a second B is unavailable while Jarad has no B; confirm an allowed C can be selected. Check that the captain page, commissioner page, and public draft view agree after refresh.
+4. Sign in as the wrong captain and try a pick; verify the server refuses it and neither browser displays an extra golfer. Repeat while offline and after signing out.
+5. Confirm timer pause/resume and timeout selection preserve legal eligibility; test a concurrent commissioner/captain pick to ensure only one authoritative result is saved.
+6. Finish a 23-player draft (11/12) and a 24-player draft (12/12); verify all participants are assigned exactly once and spectators/non-playing golfers are never drafted.
+7. Refresh each page and verify state persists. Check desktop and mobile widths for readable band badges, full names, and usable controls.
+8. Record browser, commit SHA, test account roles, pass/fail evidence, and any unresolved issues before marking this gate complete.
+
+A successful Node/PGlite CI run is **not** a substitute for these authenticated browser checks.
