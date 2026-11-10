@@ -32,7 +32,7 @@ test('captain screen disables weighted-ineligible picks and keeps the server RPC
  const start=common.indexOf('function canBand(t,b){'),end=common.indexOf('\nlet latestLoadRequest',start);
  assert.ok(start>=0&&end>start,'shared canBand integration exists');
  const api=require('../weighted-draft.js');
- const S={teams:[{captain:'Jarad',roster:[0]},{captain:'Carl',roster:[1]}],golfers:[...'ABBBCC'].map((band,i)=>({name:i===0?'Jarad':i===1?'Carl':'Golfer '+i,band,self_ranked:true,team:i<2?i:null})),picks:[{golfer:0,team:0},{golfer:1,team:1}],draftType:'snake',draftRules:'weighted',balanceVersion:1,timerPaused:false};
+ const S={teams:[{captain:'Jarad',captainGolferIndex:0,roster:[0]},{captain:'Carl',captainGolferIndex:1,roster:[1]}],golfers:[...'ABBBCC'].map((band,i)=>({name:i===0?'Jarad':i===1?'Carl':'Golfer '+i,band,self_ranked:true,team:i<2?i:null})),picks:[{golfer:0,team:0},{golfer:1,team:1}],draftType:'snake',draftRules:'weighted',balanceVersion:1,timerPaused:false};
  const ctx={S,globalThis:{EllenGWeightedDraft:api}};
  vm.runInNewContext(common.slice(start,end),ctx);
  assert.equal(ctx.canBand(1,'B'),false,'Carl cannot select a second B before Jarad gets one');
