@@ -656,3 +656,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validate invalid strokes and cleared-score readback
         run: node --test tests/shamble-save-failure-behavior.test.cjs
+
+  scoring-roster-team-consistency:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate roster ownership alongside points entry
+        run: node --test tests/scoring-roster-team-consistency.test.cjs tests/shamble-scorecard-current-rules.test.cjs tests/shamble-save-failure-behavior.test.cjs
