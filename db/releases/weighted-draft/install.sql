@@ -47,7 +47,7 @@ BEGIN
   t:=n%2; IF p_state->>'draftType'='snake' AND (n/2)%2=1 THEN t:=1-t; END IF;
   caps[t+1]:=caps[t+1]+1;n:=n+1;
  END LOOP;
- IF n<2 OR n>500 THEN RAISE EXCEPTION 'Weighted balance requires 2–500 playing golfers'; END IF;
+ IF n<2 OR n>32 THEN RAISE EXCEPTION 'Weighted balance requires 2–32 playing golfers'; END IF;
  FOR t IN 0..1 LOOP
   FOR r IN SELECT value FROM jsonb_array_elements(coalesce(p_state->'teams'->t->'roster','[]')) LOOP
    idx:=(r#>>'{}')::integer;g:=p_state->'golfers'->idx;
