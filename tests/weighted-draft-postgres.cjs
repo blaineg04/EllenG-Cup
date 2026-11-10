@@ -47,6 +47,15 @@ const api=require('../weighted-draft.js');
  assert.deepEqual(fullState.teams.map(t=>t.roster.length),[12,12]);
  console.log('PASS: '+fullComparisons+' full 24-golfer snake picks checked for JS/PostgreSQL parity in '+(Date.now()-fullStart)+'ms');
 
+ // Exercise the largest supported tournament against the actual SQL engine.
+ const maxBands=['A','B',...Array(6).fill('B'),...Array(18).fill('C'),...Array(6).fill('D')];
+ const maxState=make(maxBands),maxStart=Date.now();
+ const maxExpected=api.options(maxState);
+ const maxActual=(await db.query('select public.elleng_weighted_options($1::jsonb) as result',[JSON.stringify(maxState)])).rows[0].result;
+ assert.deepEqual(maxActual,maxExpected,'32-player maximum-size parity');
+ const maxElapsed=Date.now()-maxStart;
+ assert.ok(maxElapsed<30000,'32-player SQL parity exceeded 30s: '+maxElapsed+'ms');
+ console.log('PASS: 32-golfer maximum-size PostgreSQL parity in '+maxElapsed+'ms');
  // Enforce the same fail-closed roster cap in the installed SQL engine.
  const oversized=make(['A','B',...Array(31).fill('C')]);
  assert.throws(()=>api.options(oversized),/2–32 playing golfers/);
