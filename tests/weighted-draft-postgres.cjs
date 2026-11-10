@@ -16,6 +16,17 @@ const api=require('../weighted-draft.js');
  let parity=0;
  for(const bands of ['ABBBCC','AABBCCDD','BBBBCCDD','ABDD','ACBBBBCCD','ADDDDD','AB']){const start=make([...bands]);
   for(let attempt=0;attempt<10;attempt++){const s=structuredClone(start);while(true){const js=api.options(s);const result=await db.query('select public.elleng_weighted_options($1::jsonb) as result',[JSON.stringify(s)]);assert.deepEqual(result.rows[0].result,js);parity++;const n=s.picks.length,t=Math.floor(n/2)%2?1-n%2:n%2;const pool=s.golfers.map((g,i)=>({...g,i})).filter(g=>g.team==null&&js.eligible[t].includes(g.band));if(!pool.length)break;const g=pool[(attempt+n)%pool.length];s.golfers[g.i].team=t;s.teams[t].roster.push(g.i);s.picks.push({golfer:g.i,team:t});}}}
+ // Representative tournament-size parity and latency, including the
+ // look-ahead logic. This uses disposable PGlite, never production.
+ const largeBands=['A','B',...Array(4).fill('B'),...Array(14).fill('C'),...Array(4).fill('D')];
+ const largeState=make(largeBands);
+ const started=Date.now();
+ const largeJS=api.options(largeState);
+ const largeDB=(await db.query('select public.elleng_weighted_options($1::jsonb) as result',[JSON.stringify(largeState)])).rows[0].result;
+ const elapsed=Date.now()-started;
+ assert.deepEqual(largeDB,largeJS,'24-golfer first-pick parity');
+ assert.ok(elapsed<30000,'24-golfer parity took '+elapsed+'ms (30s budget)');
+ console.log('PASS: 24-golfer initial-pick parity in '+elapsed+'ms');
  const owner='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',c0='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',c1='cccccccc-cccc-cccc-cccccccccccccccc';
  await db.query('insert into elleng_drafts(id,owner_id,state) values ($1,$2,$3)', ['weighted-test',owner,JSON.stringify(make([...'ABBBCC']))]);
  await db.query('insert into elleng_captains values ($1,$2,0),($1,$3,1)',['weighted-test',c0,c1]);
