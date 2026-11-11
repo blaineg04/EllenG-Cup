@@ -28,5 +28,16 @@
   if(playing.length%2)capacities[weaker===null?0:weaker]++;
   return {version:1,playing:playing.length,captains,weakerCaptainTeam:weaker,firstOrdinaryPickTeam:firstPick,capacities,requiresTiebreak:weaker===null};
  }
- return Object.freeze({plan});
+ function turnAtPick(state,pickCount){
+  const p=plan(state),n=p.playing;
+  if(!Number.isInteger(pickCount)||pickCount<2||pickCount>=n)throw new Error('Pick must be an ordinary draft selection.');
+  if(p.requiresTiebreak)throw new Error('Equal captain strengths require a neutral first-pick tiebreak.');
+  // Captains are seeded separately. The weaker team makes the first ordinary pick,
+  // then snake alternates paired rounds: W,S,S,W,W,S,S,W...
+  const ordinary=pickCount-2;
+  const round=Math.floor(ordinary/2),position=ordinary%2;
+  const team=round%2===0?position:1-position;
+  return team===0?p.firstOrdinaryPickTeam:1-p.firstOrdinaryPickTeam;
+ }
+ return Object.freeze({plan,turnAtPick});
 });
