@@ -37,3 +37,8 @@ test('every supported field allocates all golfers exactly once',()=>{
   assert.ok(Math.abs(p.capacities[0]-p.capacities[1])<=1);
  }
 });
+
+test('rejects fields outside the currently supported draft range',()=>{
+ assert.throws(()=>plan(draft(1)),/2–32/);
+ assert.throws(()=>plan(draft(33)),/2–32/);
+});
