@@ -9,7 +9,6 @@ create table if not exists elleng_internal.draft_reset_backups (
 );
 revoke all on schema elleng_internal from public, anon, authenticated;
 revoke all on elleng_internal.draft_reset_backups from public, anon, authenticated;
-revoke all on sequence elleng_internal.draft_reset_backups_id_seq from public, anon, authenticated;
 
 create or replace function public.elleng_reset_entire_draft(
  p_draft_id text,
