@@ -1,0 +1,31 @@
+// Disposable PostgreSQL reset contract. Never connects to production.
+const {PGlite}=require(process.env.PGLITE_MODULE||'@electric-sql/pglite');
+const fs=require('node:fs'),assert=require('node:assert/strict');
+(async()=>{
+ const db=new PGlite();
+ await db.exec("create role anon; create role authenticated; create schema auth; create table auth.session(uid uuid); create function auth.uid() returns uuid language sql stable as $$select uid from auth.session limit 1$$;");
+ await db.exec("create table public.elleng_drafts(id text primary key,owner_id uuid,state jsonb,updated_at timestamptz); create table public.elleng_tournaments(id text primary key,draft_id text,status text); create table public.elleng_team_scores(tournament_id text); create table public.elleng_player_hole_scores(tournament_id text); create table public.elleng_pair_hole_scores(tournament_id text); create table public.elleng_group_assignments(draft_id text);");
+ await db.exec(fs.readFileSync('supabase/migrations/20261111000000_commissioner_draft_reset.sql','utf8'));
+ const uid='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222';
+ const golfers=[{name:'Carl',band:'B',self_ranked:true,participating:true,team:0},{name:'Jarad',band:'A',self_ranked:true,participating:true,team:1},{name:'Brian Paredes',band:'B',self_ranked:true,participating:false,team:null},{name:'Extra',band:'C',self_ranked:true,participating:true,team:0}];
+ const state={draftRules:'weighted',draftType:'snake',timerPaused:false,timerEndsAt:new Date().toISOString(),timerLength:60,golfers,teams:[{captain:'Carl',captainGolferIndex:0,roster:[0,3]},{captain:'Jarad',captainGolferIndex:1,roster:[1]}],picks:[{golfer:0,team:0,captain:true},{golfer:1,team:1,captain:true},{golfer:3,team:0}]};
+ await db.query("insert into public.elleng_drafts values('elleng-cup',$1,$2::jsonb,'2026-11-11T00:00:00Z')",[uid,JSON.stringify(state)]);
+ await db.query("insert into public.elleng_tournaments values('elleng-cup-live','elleng-cup','setup')");
+ const call=()=>db.query("select public.elleng_reset_entire_draft('elleng-cup','2026-11-11T00:00:00Z'::timestamptz)");
+ await db.query('insert into auth.session values($1)',[other]);
+ await assert.rejects(call(),/Commissioner access required/);
+ await db.query('update auth.session set uid=$1',[uid]);
+ await db.query("insert into public.elleng_player_hole_scores values('elleng-cup-live')");
+ await assert.rejects(call(),/scores or group assignments/);
+ await db.exec('delete from public.elleng_player_hole_scores');
+ await call();
+ const r=await db.query("select state from public.elleng_drafts where id='elleng-cup'");
+ const s=r.rows[0].state;
+ assert.equal(s.picks.length,2);assert.deepEqual(s.teams.map(t=>t.roster),[[0],[1]]);
+ assert.equal(s.golfers[3].team,null);assert.equal(s.golfers[2].participating,false);
+ assert.equal(s.timerPaused,true);assert.equal(s.timerEndsAt,null);assert.equal(s.timerLength,60);
+ const backup=await db.query('select state from elleng_internal.draft_reset_backups');
+ assert.equal(backup.rows.length,1);assert.equal(backup.rows[0].state.picks.length,3);
+ await assert.rejects(call(),/Draft changed on another device/);
+ await db.close();console.log('Commissioner reset: permissions, score guard, backup, captains, stale-write check passed');
+})().catch(e=>{console.error(e);process.exitCode=1;});

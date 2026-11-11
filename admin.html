@@ -10,7 +10,7 @@
 <input id="password" type="password" autocomplete="current-password" placeholder="Password" style="max-width:240px">
 <button id="login" class="gold">Sign In</button>
 </div><div id="authMsg" class="muted"></div></div>
-<div id="adminApp" style="display:none"><div class="card"><div class="actions"><button id="setupBtn" class="alt">Setup</button><button id="undo" class="gold">Undo Pick</button><button id="prepareWeighted" class="gold">Prepare Balanced Draft</button><button id="pause" class="alt">Pause/Resume</button><button id="resetClock" class="alt">Reset Clock</button></div></div>
+<div id="adminApp" style="display:none"><div class="card"><div class="actions"><button id="setupBtn" class="alt">Setup</button><button id="undo" class="gold">Undo Pick</button><button id="prepareWeighted" class="gold">Prepare Balanced Draft</button><button id="pause" class="alt">Pause/Resume</button><button id="resetClock" class="alt">Reset Clock</button><button id="resetEntireDraft" class="alt" type="button">Reset Entire Draft</button></div></div>
 <section class="card" aria-labelledby="rsvpPreviewHeading"><h3 id="rsvpPreviewHeading">Approved RSVP cross-check</h3>
 <p id="rsvpReadinessStatus" class="muted" role="status" aria-live="polite">Event RSVP preview is disabled until the reviewed migration and authenticated rehearsal are approved.</p>
 <button id="refreshRsvpPreview" type="button" class="alt" disabled>Check approved RSVPs (read-only)</button></section>
@@ -380,6 +380,27 @@ async function saveCommissionerAction(change){
   if(before.draftRules==="weighted")alert(error?.message||"Draft change was rejected. Reload the draft before retrying.");
  }
 }
+const resetEntireDraftButton=document.getElementById("resetEntireDraft");
+if(resetEntireDraftButton)resetEntireDraftButton.onclick=async()=>{
+ if(savingDraft||!commissionerUserId)return;
+ if(!confirm("RESET ENTIRE DRAFT? All non-captain picks will be cleared. Golfer accounts, handicaps and captain assignments remain. This cannot be undone from the app."))return;
+ const confirmation=prompt("Type RESET DRAFT to confirm the full restart:");
+ if(confirmation!=="RESET DRAFT")return;
+ const epoch=commissionerAuthEpoch,userId=commissionerUserId;
+ savingDraft=true;
+ const button=document.getElementById("resetEntireDraft");button.disabled=true;
+ try{
+  const {error}=await db.rpc("elleng_reset_entire_draft",{p_draft_id:cfg.draftId,p_expected_updated_at:draftUpdatedAt});
+  if(error)throw error;
+  let applied=false;
+  await load(()=>sameCommissionerAction(epoch,userId),()=>{applied=true;},true);
+  if(!applied||!sameCommissionerAction(epoch,userId))throw new Error("Draft reset saved; refresh to verify latest state.");
+  liveMode=false;document.getElementById("live").style.display="none";
+  document.getElementById("setup").style.display="block";setupRender();
+  alert("Draft reset. Captains retained and clock paused. Update the playing roster in Commissioner → Players and Assignments (including Brian Paredes), then return here to prepare the balanced draft.");
+ }catch(error){if(sameCommissionerAction(epoch,userId))alert(error?.message||"Draft reset failed; no changes confirmed.");}
+ finally{if(epoch===commissionerAuthEpoch&&userId===commissionerUserId){savingDraft=false;button.disabled=false;}}
+};
 document.getElementById("undo").onclick=()=>saveCommissionerAction(()=>{
  if(S.draftRules==="weighted"&&S.picks.length<=2)return false;
  const p=S.picks.at(-1);

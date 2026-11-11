@@ -803,7 +803,22 @@ function stopCaptainDrawTimer(){
 }
 // Reconcile with the authoritative draft even if a Realtime event is missed.
 // The existing role recheck verifies captain identity and team before enabling picks.
-let captainLastReconcile=0,captainTimeoutInFlight=false;
+let captainLastReconcile=0,captainLastRoleCheck=0,captainSilentPollInFlight=false,captainTimeoutInFlight=false;
+async function captainSilentPoll(){
+ if(captainSilentPollInFlight||!captainUserId||!captainSessionForegroundOnline()||
+    captainRoleRefreshPending||pickInFlight||captainTimeoutInFlight||
+    document.getElementById("connection")?.textContent!=="LIVE")return;
+ captainSilentPollInFlight=true;
+ const epoch=captainAuthEpoch,userId=captainUserId,subscriptionEpoch=captainSubscriptionEpoch;
+ const current=()=>epoch===captainAuthEpoch&&userId===captainUserId&&subscriptionEpoch===captainSubscriptionEpoch&&
+  captainSessionForegroundOnline()&&!captainRoleRefreshPending&&
+  document.getElementById("connection")?.textContent==="LIVE";
+ try{
+  const before=JSON.stringify(S);
+  await load(current,()=>{if(current()&&JSON.stringify(S)!==before)render();});
+ }catch(error){console.error("Captain background draft refresh failed",error)}
+ finally{captainSilentPollInFlight=false}
+}
 async function captainAdvanceExpiredPick(){
  if(captainTimeoutInFlight||!captainUserId||!S||S.draftRules!=="weighted"||
     S.timerPaused||S.picks.length>=totalPicks()||!S.timerEndsAt||
@@ -822,12 +837,18 @@ async function captainAdvanceExpiredPick(){
 function startCaptainDrawTimer(){
  stopCaptainDrawTimer();
  captainLastReconcile=Date.now();
+ captainLastRoleCheck=Date.now();
  captainDrawTimer=setInterval(()=>{
   if(!captainUserId)return;
   draw();
   if(typeof captainSessionForegroundOnline!=="function"||!captainSessionForegroundOnline())return;
-  if(Date.now()-captainLastReconcile>=3000&&!captainRoleRefreshPending&&!pickInFlight&&!captainTimeoutInFlight){
+  if(Date.now()-captainLastReconcile>=3000){
    captainLastReconcile=Date.now();
+   void captainSilentPoll();
+  }
+  // Verify role and account periodically without disabling controls on every poll.
+  if(Date.now()-captainLastRoleCheck>=30000&&!captainRoleRefreshPending&&!pickInFlight&&!captainTimeoutInFlight){
+   captainLastRoleCheck=Date.now();
    if(captainRoleRecheck)void captainRoleRecheck(true);
   }
   if(remaining()===0)void captainAdvanceExpiredPick();
