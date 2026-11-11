@@ -814,7 +814,8 @@ async function captainSilentPoll(){
   captainSessionForegroundOnline()&&!captainRoleRefreshPending&&
   document.getElementById("connection")?.textContent==="LIVE";
  try{
-  await load(current,()=>{if(current())render();});
+  const before=JSON.stringify(S);
+  await load(current,()=>{if(current()&&JSON.stringify(S)!==before)render();});
  }catch(error){console.error("Captain background draft refresh failed",error)}
  finally{captainSilentPollInFlight=false}
 }
