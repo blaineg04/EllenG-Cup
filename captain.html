@@ -801,9 +801,37 @@ let captainDrawTimer=null;
 function stopCaptainDrawTimer(){
  if(captainDrawTimer!==null){clearInterval(captainDrawTimer);captainDrawTimer=null;}
 }
+// Reconcile with the authoritative draft even if a Realtime event is missed.
+// The existing role recheck verifies captain identity and team before enabling picks.
+let captainLastReconcile=0,captainTimeoutInFlight=false;
+async function captainAdvanceExpiredPick(){
+ if(captainTimeoutInFlight||!captainUserId||!S||S.draftRules!=="weighted"||
+    S.timerPaused||S.picks.length>=totalPicks()||!S.timerEndsAt||
+    Date.parse(S.timerEndsAt)>Date.now()||!captainSessionForegroundOnline()||
+    document.getElementById("connection")?.textContent!=="LIVE"||
+    captainRoleRefreshPending||pickInFlight)return;
+ captainTimeoutInFlight=true;
+ const epoch=captainAuthEpoch,userId=captainUserId;
+ try{
+  const {error}=await db.rpc("elleng_weighted_pick",{p_draft_id:cfg.draftId,p_golfer_index:null});
+  if(error)throw error;
+  if(epoch===captainAuthEpoch&&userId===captainUserId&&captainRoleRecheck)await captainRoleRecheck(true);
+ }catch(error){console.error("Captain timeout advance failed",error)}
+ finally{captainTimeoutInFlight=false}
+}
 function startCaptainDrawTimer(){
  stopCaptainDrawTimer();
- captainDrawTimer=setInterval(()=>{if(captainUserId)draw();},500);
+ captainLastReconcile=Date.now();
+ captainDrawTimer=setInterval(()=>{
+  if(!captainUserId)return;
+  draw();
+  if(typeof captainSessionForegroundOnline!=="function"||!captainSessionForegroundOnline())return;
+  if(Date.now()-captainLastReconcile>=3000&&!captainRoleRefreshPending&&!pickInFlight&&!captainTimeoutInFlight){
+   captainLastReconcile=Date.now();
+   if(captainRoleRecheck)void captainRoleRecheck(true);
+  }
+  if(remaining()===0)void captainAdvanceExpiredPick();
+ },500);
 }
 function stopCaptainSubscription(){
  captainSubscriptionEpoch++;captainRoleRefreshEpoch++;captainRoleRefreshPending=false;
