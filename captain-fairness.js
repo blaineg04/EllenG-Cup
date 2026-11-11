@@ -8,7 +8,7 @@
   if(!Array.isArray(state?.teams)||state.teams.length!==2)throw new Error('Exactly two teams required.');
   const golfers=state.golfers||[];
   const playing=golfers.filter(g=>String(g?.name||'').trim()&&g.participating!==false);
-  if(playing.length<2)throw new Error('At least two playing golfers required.');
+  if(playing.length<2||playing.length>32)throw new Error('Two-team drafts require 2–32 playing golfers.');
   const captains=state.teams.map((team,t)=>{
    const index=team.captainGolferIndex;
    const golfer=golfers[index];
