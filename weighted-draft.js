@@ -44,7 +44,7 @@
   // For ordinary-sized tournaments, verify that every offered next pick
   // has at least one complete legal snake-order continuation. The final
   // allocation optimizer alone cannot guarantee this.
-  if(playing.length<=32){
+  if(playing.length<=32&&seen.size<playing.length){
    const assigned=fixed[0].reduce((n,v)=>n+v,0)+fixed[1].reduce((n,v)=>n+v,0);
    const remaining=totals.map((v,b)=>v-fixed[0][b]-fixed[1][b]);
    const memo=new Map();
