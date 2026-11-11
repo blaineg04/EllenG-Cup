@@ -380,7 +380,8 @@ async function saveCommissionerAction(change){
   if(before.draftRules==="weighted")alert(error?.message||"Draft change was rejected. Reload the draft before retrying.");
  }
 }
-document.getElementById("resetEntireDraft").onclick=async()=>{
+const resetEntireDraftButton=document.getElementById("resetEntireDraft");
+if(resetEntireDraftButton)resetEntireDraftButton.onclick=async()=>{
  if(savingDraft||!commissionerUserId)return;
  if(!confirm("RESET ENTIRE DRAFT? All non-captain picks will be cleared. Golfer accounts, handicaps and captain assignments remain. This cannot be undone from the app."))return;
  const confirmation=prompt("Type RESET DRAFT to confirm the full restart:");
