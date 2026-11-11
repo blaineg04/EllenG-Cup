@@ -2,10 +2,12 @@ name: EllenG draft and scoring fairness
 on:
   pull_request:
     paths:
+      - 'weighted-draft.js'
       - 'captain-fairness.js'
       - 'fair-scoring.js'
       - 'shamble-points.js'
       - 'scoring.html'
+      - 'tests/weighted-fairness-integration.test.js'
       - 'tests/captain-fairness.test.js'
       - 'tests/fair-scoring.test.js'
       - 'tests/shamble-fairness-integration.test.js'
@@ -18,4 +20,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Run captain allocation, snake order, and actual shamble fairness tests
-        run: node --test tests/captain-fairness.test.js tests/fair-scoring.test.js tests/shamble-fairness-integration.test.js
+        run: node --test tests/captain-fairness.test.js tests/fair-scoring.test.js tests/shamble-fairness-integration.test.js tests/weighted-fairness-integration.test.js
