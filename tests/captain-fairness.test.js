@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict');
 const {test}=require('node:test');
-const {plan}=require('../captain-fairness.js');
+const {plan,turnAtPick}=require('../captain-fairness.js');
 function draft(n,a='B',b='A'){
  const golfers=Array.from({length:n},(_,i)=>({name:'Golfer '+i,participating:true,self_ranked:true,band:i===0?a:i===1?b:'C'}));
  return {golfers,teams:[{captainGolferIndex:0},{captainGolferIndex:1}]};
@@ -41,4 +41,20 @@ test('every supported field allocates all golfers exactly once',()=>{
 test('rejects fields outside the currently supported draft range',()=>{
  assert.throws(()=>plan(draft(1)),/2–32/);
  assert.throws(()=>plan(draft(33)),/2–32/);
+});
+
+test('captains do not consume ordinary snake pick positions',()=>{
+ const d=draft(11);
+ assert.deepEqual(Array.from({length:9},(_,i)=>turnAtPick(d,i+2)),[0,1,1,0,0,1,1,0,0]);
+});
+test('ordinary snake sequence respects reversed captain advantage',()=>{
+ const d=draft(13,'A','B');
+ assert.deepEqual(Array.from({length:11},(_,i)=>turnAtPick(d,i+2)),[1,0,0,1,1,0,0,1,1,0,0]);
+});
+test('odd fields give weaker captain the extra ordinary pick',()=>{
+ for(let n=3;n<=31;n+=2){
+  const d=draft(n),p=plan(d),count=[1,1];
+  for(let i=2;i<n;i++)count[turnAtPick(d,i)]++;
+  assert.deepEqual(count,p.capacities,'field '+n);
+ }
 });
