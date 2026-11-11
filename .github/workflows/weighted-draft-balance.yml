@@ -1,7 +1,7 @@
 name: Weighted draft balance
 on:
   pull_request:
-    paths: ['weighted-draft.js', 'common.js', 'admin.html', 'captain.html', 'draft.html', 'db/releases/weighted-draft/**', 'tests/weighted-draft*', 'tests/weighted-admin-behavior.test.cjs', 'tests/draft-submitted-band.test.cjs', 'tests/draft-turn-order.test.cjs', 'tests/commissioner-session-fence.test.cjs', 'tests/draft-participant-scope.test.cjs', 'tests/support/weighted-postgres/**', 'tests/visual/**', '.github/workflows/weighted-draft-balance.yml']
+    paths: ['weighted-draft.js', 'common.js', 'admin.html', 'captain.html', 'draft.html', 'db/releases/weighted-draft/**', 'tests/weighted-draft*', 'tests/commissioner-draft-reset-postgres.cjs', 'supabase/migrations/20261111000000_commissioner_draft_reset.sql', 'tests/weighted-admin-behavior.test.cjs', 'tests/draft-submitted-band.test.cjs', 'tests/draft-turn-order.test.cjs', 'tests/commissioner-session-fence.test.cjs', 'tests/draft-participant-scope.test.cjs', 'tests/support/weighted-postgres/**', 'tests/visual/**', '.github/workflows/weighted-draft-balance.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -18,6 +18,8 @@ jobs:
       - run: npm ci --prefix tests/support/weighted-postgres --ignore-scripts --no-audit --no-fund
       - name: Verify isolated PostgreSQL parity and authorization
         run: PGLITE_MODULE="$GITHUB_WORKSPACE/tests/support/weighted-postgres/node_modules/@electric-sql/pglite" node tests/weighted-draft-postgres.cjs
+      - name: Verify commissioner reset on disposable PostgreSQL
+        run: PGLITE_MODULE="$GITHUB_WORKSPACE/tests/support/weighted-postgres/node_modules/@electric-sql/pglite" node tests/commissioner-draft-reset-postgres.cjs
       - name: Rehearse guarded production reconciliation on disposable PostgreSQL
         run: PGLITE_MODULE="$GITHUB_WORKSPACE/tests/support/weighted-postgres/node_modules/@electric-sql/pglite" node tests/weighted-reconciliation-postgres.cjs
 
