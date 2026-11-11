@@ -37,7 +37,11 @@
   const ordinary=pickCount-2;
   const round=Math.floor(ordinary/2),position=ordinary%2;
   const team=round%2===0?position:1-position;
-  // On certain odd field sizes (5, 9, 13, ...), an unmodified snake\n  // would award the final extra spot to the stronger captain. Redirect\n  // that last pick to the weaker captain to honor roster capacities.\n  if(n%2===1&&pickCount===n-1&&team!==0)return p.firstOrdinaryPickTeam;\n  return team===0?p.firstOrdinaryPickTeam:1-p.firstOrdinaryPickTeam;
+  // On certain odd field sizes (5, 9, 13, ...), an unmodified snake
+  // would award the final extra spot to the stronger captain. Redirect
+  // that last pick to the weaker captain to honor roster capacities.
+  if(n%2===1&&pickCount===n-1&&team!==0)return p.firstOrdinaryPickTeam;
+  return team===0?p.firstOrdinaryPickTeam:1-p.firstOrdinaryPickTeam;
  }
  return Object.freeze({plan,turnAtPick});
 });
