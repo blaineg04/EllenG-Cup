@@ -825,7 +825,7 @@ function startCaptainDrawTimer(){
  captainDrawTimer=setInterval(()=>{
   if(!captainUserId)return;
   draw();
-  if(!captainSessionForegroundOnline())return;
+  if(typeof captainSessionForegroundOnline!=="function"||!captainSessionForegroundOnline())return;
   if(Date.now()-captainLastReconcile>=3000&&!captainRoleRefreshPending&&!pickInFlight&&!captainTimeoutInFlight){
    captainLastReconcile=Date.now();
    if(captainRoleRecheck)void captainRoleRecheck(true);
