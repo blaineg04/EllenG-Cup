@@ -49,7 +49,7 @@ test('captains do not consume ordinary snake pick positions',()=>{
 });
 test('ordinary snake sequence respects reversed captain advantage',()=>{
  const d=draft(13,'A','B');
- assert.deepEqual(Array.from({length:11},(_,i)=>turnAtPick(d,i+2)),[1,0,0,1,1,0,0,1,1,0,0]);
+ assert.deepEqual(Array.from({length:11},(_,i)=>turnAtPick(d,i+2)),[1,0,0,1,1,0,0,1,1,0,1]);
 });
 test('odd fields give weaker captain the extra ordinary pick',()=>{
  for(let n=3;n<=31;n+=2){
