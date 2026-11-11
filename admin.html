@@ -395,9 +395,9 @@ if(resetEntireDraftButton)resetEntireDraftButton.onclick=async()=>{
   let applied=false;
   await load(()=>sameCommissionerAction(epoch,userId),()=>{applied=true;},true);
   if(!applied||!sameCommissionerAction(epoch,userId))throw new Error("Draft reset saved; refresh to verify latest state.");
-  liveMode=true;document.getElementById("setup").style.display="none";
-  document.getElementById("live").style.display="grid";liveRender();
-  alert("Draft reset. Captains retained, clock paused. Update the playing roster before starting.");
+  liveMode=false;document.getElementById("live").style.display="none";
+  document.getElementById("setup").style.display="block";setupRender();
+  alert("Draft reset. Captains retained and clock paused. Update the playing roster in Commissioner → Players and Assignments (including Brian Paredes), then return here to prepare the balanced draft.");
  }catch(error){if(sameCommissionerAction(epoch,userId))alert(error?.message||"Draft reset failed; no changes confirmed.");}
  finally{if(epoch===commissionerAuthEpoch&&userId===commissionerUserId){savingDraft=false;button.disabled=false;}}
 };
