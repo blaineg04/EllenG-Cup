@@ -33,6 +33,12 @@ begin
  if not has_function_privilege('authenticated','public.elleng_prepare_fair_draft(text)','EXECUTE') then
   raise exception 'Authenticated role cannot execute commissioner fair preparation';
  end if;
+ if has_function_privilege('anon','public.elleng_weighted_pick(text,integer)','EXECUTE') then
+  raise exception 'Anonymous role can execute weighted draft picks';
+ end if;
+ if not has_function_privilege('authenticated','public.elleng_weighted_pick(text,integer)','EXECUTE') then
+  raise exception 'Authenticated role cannot execute weighted draft picks';
+ end if;
  if has_function_privilege('anon','public.elleng_fair_turn(integer,integer,integer)','EXECUTE') then
   raise exception 'Anonymous role can execute internal fair turn helper';
  end if;
