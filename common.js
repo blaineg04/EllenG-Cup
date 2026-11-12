@@ -70,7 +70,7 @@ function bandPenalty(t,b){
 }
 function canBand(t,b){
   if(S.draftRules==="weighted"){
-    try{return S.balanceVersion===1&&globalThis.EllenGWeightedDraft.options(S).eligible[t]?.includes(b)===true;}
+    try{return (S.balanceVersion===1||S.balanceVersion===2)&&globalThis.EllenGWeightedDraft.options(S).eligible[t]?.includes(b)===true;}
     catch(error){return false;}
   }
   if(String(S?.draftRules||"banded")==="open") return !!S.teams?.[t];
