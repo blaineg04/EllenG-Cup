@@ -70,5 +70,5 @@ begin
    end if;
   end loop;
  end loop;
-end$;
+end$draft$;
 rollback;
