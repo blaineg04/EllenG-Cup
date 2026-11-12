@@ -1,5 +1,6 @@
 -- Disposable PostgreSQL-only acceptance checks; no production draft data.
 begin;
+do $begin if not exists(select 1 from pg_roles where rolname='anon') then create role anon;end if; if not exists(select 1 from pg_roles where rolname='authenticated') then create role authenticated;end if;end$;
 create schema if not exists auth;
 create or replace function auth.uid() returns uuid language sql stable as $$select null::uuid$$;
 create table if not exists public.elleng_drafts(id text primary key,owner_id uuid,state jsonb,updated_at timestamptz);
