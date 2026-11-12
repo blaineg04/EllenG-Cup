@@ -42,3 +42,8 @@ BEGIN
  UPDATE public.elleng_drafts SET state=s,updated_at=clock_timestamp() WHERE id=p_draft_id;RETURN s;
 END;$function$
 ;
+
+-- Draft picks require a signed-in commissioner or assigned captain.
+-- Keep the function's owner/team authorization checks as a second layer.
+revoke all on function public.elleng_weighted_pick(text,integer) from public, anon, authenticated;
+grant execute on function public.elleng_weighted_pick(text,integer) to authenticated;
