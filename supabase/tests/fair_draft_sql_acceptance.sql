@@ -131,6 +131,15 @@ begin
     or (after_prepare->>'timerPaused')::boolean is distinct from true then
   raise exception 'Commissioner fair preparation did not persist safe v2 captain seeds';
  end if;
+ -- Repeating a successful opt-in must fail without modifying prepared state.
+ begin
+  perform public.elleng_prepare_fair_draft('rpc-prepare-test');
+  raise exception 'SAFETY TEST FAILED: repeated fair preparation was accepted';
+ exception when others then
+  if sqlerrm <> 'Fair draft is already prepared' then raise; end if;
+ end;
+ select state into st from public.elleng_drafts where id='rpc-prepare-test';
+ if st<>after_prepare then raise exception 'Repeated fair preparation modified state';end if;
  perform set_config('elleng.test_uid','00000000-0000-0000-0000-000000000002',true);
  begin
   perform public.elleng_prepare_fair_draft('rpc-prepare-test');
