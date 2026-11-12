@@ -10,6 +10,7 @@ BEGIN
  IF uid IS NULL THEN RAISE EXCEPTION 'Sign in required';END IF;
  SELECT state INTO s FROM public.elleng_drafts WHERE id=p_draft_id AND owner_id=uid FOR UPDATE;
  IF s IS NULL THEN RAISE EXCEPTION 'Commissioner access required';END IF;
+ IF s->>'balanceVersion'='2' THEN RAISE EXCEPTION 'Fair draft is already prepared';END IF;
  IF jsonb_array_length(s->'teams')<>2 THEN RAISE EXCEPTION 'Weighted balance requires two teams';END IF;
  IF NOT coalesce((s->>'timerPaused')::boolean,true) THEN RAISE EXCEPTION 'Pause the draft before preparing weighted balance';END IF;
  FOR t IN 0..1 LOOP
