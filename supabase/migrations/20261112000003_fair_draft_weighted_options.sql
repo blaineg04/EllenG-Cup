@@ -2,6 +2,7 @@
 CREATE OR REPLACE FUNCTION public.elleng_weighted_options(p_state jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
+ SECURITY DEFINER
  IMMUTABLE
  SET search_path TO 'public'
 AS $function$
