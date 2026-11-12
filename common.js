@@ -15,6 +15,10 @@ function fresh(){
 }
 let S=fresh();
 function order(n){
+ if(S.draftRules==="weighted"&&S.balanceVersion===2&&n>=2){
+  if(!globalThis.EllenGCaptainFairness)throw new Error("Captain fairness policy is unavailable.");
+  return globalThis.EllenGCaptainFairness.turnAtPick(S,n);
+ }
  const teamCount=Math.max(1,S.teams?.length||Number(cfg?.defaultTeamCount||7));
  let r=Math.floor(n/teamCount),p=n%teamCount;
  return S.draftType==="snake"&&r%2?(teamCount-1-p):p;
@@ -33,6 +37,10 @@ function totalPicks(){
  Example: 27 golfers / 7 snake-draft teams => [3,4,4,4,4,4,4].
 */
 function teamCapacity(teamIndex){
+  if(S.draftRules==="weighted"&&S.balanceVersion===2){
+   if(!globalThis.EllenGCaptainFairness)throw new Error("Captain fairness policy is unavailable.");
+   return globalThis.EllenGCaptainFairness.plan(S).capacities[teamIndex]||0;
+  }
   const total=totalPicks();
   let count=0;
   for(let n=0;n<total;n++) if(order(n)===teamIndex) count++;
