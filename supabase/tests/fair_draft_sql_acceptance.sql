@@ -101,4 +101,43 @@ begin
   end loop;
  end loop;
 end$draft$;
+-- Authenticated RPC pick-save rehearsal with disposable owner and 5 golfers.
+create or replace function auth.uid() returns uuid language sql stable as $auth_test$
+ select nullif(current_setting('elleng.test_uid',true),'')::uuid
+$auth_test$;
+select set_config('elleng.test_uid','00000000-0000-0000-0000-000000000001',true);
+do $pick_save$
+declare st jsonb; opts jsonb; turn integer; chosen integer; i integer; p integer;
+begin
+ st:=jsonb_build_object(
+  'golfers',jsonb_build_array(
+   jsonb_build_object('name','Captain B','band','B','self_ranked',true,'participating',true,'team',0),
+   jsonb_build_object('name','Captain A','band','A','self_ranked',true,'participating',true,'team',1),
+   jsonb_build_object('name','Golfer 2','band','C','self_ranked',true,'participating',true,'team','null'::jsonb),
+   jsonb_build_object('name','Golfer 3','band','C','self_ranked',true,'participating',true,'team','null'::jsonb),
+   jsonb_build_object('name','Golfer 4','band','C','self_ranked',true,'participating',true,'team','null'::jsonb)),
+  'teams',jsonb_build_array(jsonb_build_object('captainGolferIndex',0,'roster',jsonb_build_array(0)),
+                           jsonb_build_object('captainGolferIndex',1,'roster',jsonb_build_array(1))),
+  'picks',jsonb_build_array(jsonb_build_object('golfer',0,'team',0),jsonb_build_object('golfer',1,'team',1)),
+  'draftRules','weighted','balanceVersion',2,'draftType','snake','timerPaused',false,'timerLength',60);
+ insert into public.elleng_drafts(id,owner_id,state) values ('rpc-pick-test',auth.uid(),st);
+ for p in 2..4 loop
+  select state into st from public.elleng_drafts where id='rpc-pick-test';
+  opts:=public.elleng_weighted_options(st);
+  turn:=public.elleng_fair_turn(p,5,0);
+  chosen:=null;
+  for i in 2..4 loop
+   if st->'golfers'->i->'team'='null'::jsonb and (opts->'eligible'->turn)?'C' then chosen:=i;exit;end if;
+  end loop;
+  if chosen is null then raise exception 'RPC test cannot select eligible golfer at pick %',p;end if;
+  perform public.elleng_weighted_pick('rpc-pick-test',chosen);
+  select state into st from public.elleng_drafts where id='rpc-pick-test';
+  if jsonb_array_length(st->'picks')<>p+1 or (st->'golfers'->chosen->>'team')::integer<>turn then
+   raise exception 'RPC pick did not persist at pick %',p;
+  end if;
+ end loop;
+ if jsonb_array_length(st->'teams'->0->'roster')<>3 or jsonb_array_length(st->'teams'->1->'roster')<>2 then
+  raise exception 'RPC draft did not preserve weaker captain extra golfer';
+ end if;
+end$pick_save$;
 rollback;
