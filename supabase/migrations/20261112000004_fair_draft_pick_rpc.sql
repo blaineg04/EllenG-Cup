@@ -12,7 +12,7 @@ BEGIN
  IF s IS NULL THEN RAISE EXCEPTION 'Draft not found';END IF;
  SELECT team_index INTO captain_team FROM public.elleng_captains WHERE draft_id=p_draft_id AND user_id=uid;
  IF uid IS DISTINCT FROM owner_uid AND (captain_team IS NULL OR captain_team NOT IN (0,1)) THEN RAISE EXCEPTION 'Not authorized for this draft';END IF;
- IF s->>'draftRules' IS DISTINCT FROM 'weighted' OR s->>'balanceVersion' NOT IN ('1','2') THEN RAISE EXCEPTION 'Weighted draft is not prepared';END IF;
+ IF s->>'draftRules' IS DISTINCT FROM 'weighted' OR s->>'balanceVersion' IS NULL OR s->>'balanceVersion' NOT IN ('1','2') THEN RAISE EXCEPTION 'Weighted draft is not prepared';END IF;
  IF coalesce((s->>'timerPaused')::boolean,true) THEN IF automatic THEN RETURN s;ELSE RAISE EXCEPTION 'Draft is paused';END IF;END IF;
  IF automatic AND (coalesce(s->>'timerEndsAt','')='' OR now()<(s->>'timerEndsAt')::timestamptz) THEN RETURN s;END IF;
  opt:=public.elleng_weighted_options(s);cnt:=jsonb_array_length(s->'picks');total:=(opt->'capacities'->>0)::integer+(opt->'capacities'->>1)::integer;
