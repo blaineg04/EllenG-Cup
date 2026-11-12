@@ -141,6 +141,22 @@ begin
  perform set_config('elleng.test_uid','00000000-0000-0000-0000-000000000001',true);
  select state into st from public.elleng_drafts where id='rpc-prepare-test';
  if st<>after_prepare then raise exception 'Unauthorized preparation modified state';end if;
+ -- Continue from the actual prepared state into the real pick RPC.
+ update public.elleng_drafts set state=jsonb_set(state,'{timerPaused}','false'::jsonb) where id='rpc-prepare-test';
+ perform public.elleng_weighted_pick('rpc-prepare-test',2);
+ select state into st from public.elleng_drafts where id='rpc-prepare-test';
+ if jsonb_array_length(st->'picks')<>3 or (st->'golfers'->2->>'team')::integer<>0 then
+  raise exception 'Prepared fair draft did not save weaker captain first pick';
+ end if;
+ update public.elleng_drafts set state=jsonb_set(state,'{timerPaused}','true'::jsonb) where id='rpc-prepare-test';
+ begin
+  perform public.elleng_prepare_fair_draft('rpc-prepare-test');
+  raise exception 'SAFETY TEST FAILED: preparation allowed after an ordinary pick';
+ exception when others then
+  if sqlerrm <> 'Cannot change balancing after ordinary picks' then raise; end if;
+ end;
+ select state into st from public.elleng_drafts where id='rpc-prepare-test';
+ if jsonb_array_length(st->'picks')<>3 then raise exception 'Re-preparation modified existing picks';end if;
 end$prepare_save$;
 -- Authenticated RPC pick-save rehearsal with disposable owner and 5 golfers.
 create or replace function auth.uid() returns uuid language sql stable as $auth_test$
