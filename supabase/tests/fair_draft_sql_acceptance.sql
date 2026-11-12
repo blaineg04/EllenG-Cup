@@ -101,6 +101,47 @@ begin
   end loop;
  end loop;
 end$draft$;
+-- Commissioner preparation RPC: opt in, persist v2, and reject re-preparation after a pick.
+create or replace function auth.uid() returns uuid language sql stable as $auth_test$
+ select nullif(current_setting('elleng.test_uid',true),'')::uuid
+$auth_test$;
+select set_config('elleng.test_uid','00000000-0000-0000-0000-000000000001',true);
+do $prepare_save$
+declare st jsonb; after_prepare jsonb; golfer jsonb; i integer;
+begin
+ st:=jsonb_build_object(
+  'golfers',jsonb_build_array(
+   jsonb_build_object('name','Captain B','band','B','self_ranked',true,'participating',true,'team',0),
+   jsonb_build_object('name','Captain A','band','A','self_ranked',true,'participating',true,'team',1),
+   jsonb_build_object('name','Golfer 2','band','C','self_ranked',true,'participating',true,'team','null'::jsonb),
+   jsonb_build_object('name','Golfer 3','band','C','self_ranked',true,'participating',true,'team','null'::jsonb),
+   jsonb_build_object('name','Golfer 4','band','C','self_ranked',true,'participating',true,'team','null'::jsonb)),
+  'teams',jsonb_build_array(jsonb_build_object('captain','Captain B','roster',jsonb_build_array(0)),
+                           jsonb_build_object('captain','Captain A','roster',jsonb_build_array(1))),
+  'picks',jsonb_build_array(jsonb_build_object('golfer',0,'team',0,'captain',true),
+                            jsonb_build_object('golfer',1,'team',1,'captain',true)),
+  'draftRules','weighted','balanceVersion',1,'draftType','snake','timerPaused',true);
+ insert into public.elleng_drafts(id,owner_id,state) values ('rpc-prepare-test',auth.uid(),st);
+ perform public.elleng_prepare_fair_draft('rpc-prepare-test');
+ select state into after_prepare from public.elleng_drafts where id='rpc-prepare-test';
+ if (after_prepare->>'balanceVersion')::integer<>2
+    or jsonb_array_length(after_prepare->'picks')<>2
+    or (after_prepare->'teams'->0->>'captainGolferIndex')::integer<>0
+    or (after_prepare->'teams'->1->>'captainGolferIndex')::integer<>1
+    or (after_prepare->>'timerPaused')::boolean is distinct from true then
+  raise exception 'Commissioner fair preparation did not persist safe v2 captain seeds';
+ end if;
+ perform set_config('elleng.test_uid','00000000-0000-0000-0000-000000000002',true);
+ begin
+  perform public.elleng_prepare_fair_draft('rpc-prepare-test');
+  raise exception 'SECURITY TEST FAILED: non-owner prepared draft';
+ exception when others then
+  if sqlerrm <> 'Commissioner access required' then raise; end if;
+ end;
+ perform set_config('elleng.test_uid','00000000-0000-0000-0000-000000000001',true);
+ select state into st from public.elleng_drafts where id='rpc-prepare-test';
+ if st<>after_prepare then raise exception 'Unauthorized preparation modified state';end if;
+end$prepare_save$;
 -- Authenticated RPC pick-save rehearsal with disposable owner and 5 golfers.
 create or replace function auth.uid() returns uuid language sql stable as $auth_test$
  select nullif(current_setting('elleng.test_uid',true),'')::uuid
