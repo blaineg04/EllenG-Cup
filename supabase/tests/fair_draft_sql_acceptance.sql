@@ -10,7 +10,7 @@ returns boolean language sql immutable as $$select true$$;
 \ir ../migrations/20261112000002_fair_draft_turn_primitives.sql
 \ir ../migrations/20261112000003_fair_draft_weighted_options.sql
 \ir ../migrations/20261112000004_fair_draft_pick_rpc.sql
-do $$
+do $first$
 declare n integer; weaker integer; p integer; turn integer; count0 integer; count1 integer; expected0 integer; expected1 integer;
 begin
  for n in 2..32 loop
@@ -30,7 +30,7 @@ begin
  if public.elleng_fair_turn(2,23,0)<>0 or public.elleng_fair_turn(2,23,1)<>1 then
   raise exception 'Weaker captain did not get first ordinary pick';
  end if;
-end$;
+end$first$;
 do $draft$
 declare n integer; weaker integer; i integer; p integer; t integer; chosen integer; golfer jsonb; golfers jsonb; teams jsonb; state jsonb; opts jsonb; selected integer[]; capacities jsonb;
 begin
