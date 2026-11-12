@@ -132,6 +132,17 @@ begin
  select state into st from public.elleng_drafts where id='rpc-pick-test';
  if jsonb_array_length(st->'picks')<>2 then raise exception 'Unauthorized pick modified draft';end if;
  perform set_config('elleng.test_uid','00000000-0000-0000-0000-000000000001',true);
+ -- A paused draft must reject a manual pick without writing state.
+ update public.elleng_drafts set state=jsonb_set(state,'{timerPaused}','true'::jsonb) where id='rpc-pick-test';
+ begin
+  perform public.elleng_weighted_pick('rpc-pick-test',2);
+  raise exception 'SAFETY TEST FAILED: paused draft accepted a manual pick';
+ exception when others then
+  if sqlerrm <> 'Draft is paused' then raise; end if;
+ end;
+ select state into st from public.elleng_drafts where id='rpc-pick-test';
+ if jsonb_array_length(st->'picks')<>2 then raise exception 'Paused draft was modified';end if;
+ update public.elleng_drafts set state=jsonb_set(state,'{timerPaused}','false'::jsonb) where id='rpc-pick-test';
  for p in 2..4 loop
   select state into st from public.elleng_drafts where id='rpc-pick-test';
   opts:=public.elleng_weighted_options(st);
