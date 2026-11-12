@@ -11,6 +11,19 @@ returns boolean language sql immutable as $$select true$$;
 \ir ../migrations/20261112000003_fair_draft_weighted_options.sql
 \ir ../migrations/20261112000004_fair_draft_pick_rpc.sql
 \ir ../migrations/20261112000005_prepare_fair_draft_opt_in.sql
+-- The new commissioner entry point must exist, while the legacy entry point stays available.
+do $rpc_contract$
+begin
+ if to_regprocedure('public.elleng_prepare_fair_draft(text)') is null then
+  raise exception 'Fair draft preparation RPC is missing';
+ end if;
+ if to_regprocedure('public.elleng_prepare_weighted_draft(text)') is not null then
+  raise exception 'Unexpected legacy preparation stub in disposable fixture';
+ end if;
+ if (select prosecdef from pg_proc where oid='public.elleng_prepare_fair_draft(text)'::regprocedure) is distinct from true then
+  raise exception 'Fair draft preparation must enforce commissioner authorization';
+ end if;
+end$rpc_contract$;
 do $first$
 declare n integer; weaker integer; p integer; turn integer; count0 integer; count1 integer; expected0 integer; expected1 integer;
 begin
