@@ -33,3 +33,8 @@ BEGIN
  UPDATE public.elleng_drafts SET state=s,updated_at=clock_timestamp() WHERE id=p_draft_id;RETURN s;
 END;$function$
 ;
+
+-- Only signed-in users can invoke the commissioner opt-in endpoint;
+-- the function also enforces draft ownership using auth.uid().
+revoke all on function public.elleng_prepare_fair_draft(text) from public, anon, authenticated;
+grant execute on function public.elleng_prepare_fair_draft(text) to authenticated;
