@@ -10,7 +10,7 @@
 <input id="password" type="password" autocomplete="current-password" placeholder="Password" style="max-width:240px">
 <button id="login" class="gold">Sign In</button>
 </div><div id="authMsg" class="muted"></div></div>
-<div id="adminApp" style="display:none"><div class="card"><div class="actions"><button id="setupBtn" class="alt">Setup</button><button id="undo" class="gold">Undo Pick</button><button id="prepareWeighted" class="gold">Prepare Balanced Draft</button><button id="pause" class="alt">Pause/Resume</button><button id="resetClock" class="alt">Reset Clock</button><button id="resetEntireDraft" class="alt" type="button">Reset Entire Draft</button></div></div>
+<div id="adminApp" style="display:none"><div class="card"><div class="actions"><button id="setupBtn" class="alt">Setup</button><button id="undo" class="gold">Undo Pick</button><button id="prepareWeighted" class="gold">Prepare Balanced Draft</button><button id="prepareFairDraft" class="gold" type="button">Prepare Fair Draft (v2)</button><button id="pause" class="alt">Pause/Resume</button><button id="resetClock" class="alt">Reset Clock</button><button id="resetEntireDraft" class="alt" type="button">Reset Entire Draft</button></div></div>
 <section class="card" aria-labelledby="rsvpPreviewHeading"><h3 id="rsvpPreviewHeading">Approved RSVP cross-check</h3>
 <p id="rsvpReadinessStatus" class="muted" role="status" aria-live="polite">Event RSVP preview is disabled until the reviewed migration and authenticated rehearsal are approved.</p>
 <button id="refreshRsvpPreview" type="button" class="alt" disabled>Check approved RSVPs (read-only)</button></section>
@@ -360,6 +360,26 @@ if(document.getElementById("prepareWeighted"))document.getElementById("prepareWe
   if(!applied)throw new Error("Draft prepared, but the latest state could not be verified. Reload before continuing.");
   if(sameCommissionerAction(epoch,userId)){liveMode=true;document.getElementById("setup").style.display="none";document.getElementById("live").style.display="grid";liveRender();}
  }catch(error){if(sameCommissionerAction(epoch,userId))alert(error.message||"Balanced draft could not be prepared.");}
+ finally{if(epoch===commissionerAuthEpoch&&userId===commissionerUserId)savingDraft=false;}
+};
+if(document.getElementById("prepareFairDraft"))document.getElementById("prepareFairDraft").onclick=async()=>{
+ if(savingDraft)return;
+ const epoch=commissionerAuthEpoch,userId=commissionerUserId;
+ if(!sameCommissionerAction(epoch,userId))return;
+ try{
+  if(S.teams.length!==2)throw new Error("Fair draft requires exactly two teams.");
+  if(!S.timerPaused)throw new Error("Pause the draft before preparing fair balance.");
+  if((S.picks||[]).length>2)throw new Error("Cannot change fairness after ordinary picks.");
+  if(!confirm("Prepare the new captain-strength fair draft? This updates the draft version and captain seeds. No ordinary picks will be made."))return;
+  savingDraft=true;
+  const {error}=await db.rpc("elleng_prepare_fair_draft",{p_draft_id:cfg.draftId});
+  if(error)throw error;
+  let applied=false;
+  await load(()=>sameCommissionerAction(epoch,userId),()=>{applied=true;},true);
+  if(!sameCommissionerAction(epoch,userId))return;
+  if(!applied||S.balanceVersion!==2)throw new Error("Fair draft state could not be verified. Reload before continuing.");
+  liveMode=true;document.getElementById("setup").style.display="none";document.getElementById("live").style.display="grid";liveRender();
+ }catch(error){if(sameCommissionerAction(epoch,userId))alert(error.message||"Fair draft could not be prepared.");}
  finally{if(epoch===commissionerAuthEpoch&&userId===commissionerUserId)savingDraft=false;}
 };
 document.getElementById("setupBtn").onclick=()=>{liveMode=false;document.getElementById("live").style.display="none";document.getElementById("setup").style.display="block";setupRender()};
