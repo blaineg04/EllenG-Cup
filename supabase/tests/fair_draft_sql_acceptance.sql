@@ -30,8 +30,8 @@ begin
  if public.elleng_fair_turn(2,23,0)<>0 or public.elleng_fair_turn(2,23,1)<>1 then
   raise exception 'Weaker captain did not get first ordinary pick';
  end if;
-end$$;
-do $
+end$;
+do $draft$
 declare n integer; weaker integer; i integer; p integer; t integer; chosen integer; golfer jsonb; golfers jsonb; teams jsonb; state jsonb; opts jsonb; selected integer[]; capacities jsonb;
 begin
  for n in select unnest(array[11,13,15,22,23,24]) loop
