@@ -4,6 +4,9 @@
  const bands=['A','B','C','D'],weights=[5,3,2,1];
  const active=g=>!!String(g?.name||'').trim()&&g.participating!==false;
  let cacheKey=null,cacheValue=null;
+ function fairMode(state){return state.draftRules==='weighted'&&state.balanceVersion===2;}
+ function fairPlan(state){if(!globalThis.EllenGCaptainFairness)throw new Error('Captain fairness policy is unavailable.');return globalThis.EllenGCaptainFairness.plan(state);}
+ function pickTurn(state,n){return fairMode(state)?globalThis.EllenGCaptainFairness.turnAtPick(state,n):(state.draftType==='snake'&&Math.floor(n/2)%2?1-n%2:n%2);}
  function options(state){
   if(state.teams?.length!==2)throw new Error('Weighted balance requires two teams.');
   if(state.draftRules==='weighted')for(let t=0;t<2;t++){
@@ -14,11 +17,11 @@
   if(playing.length<2||playing.length>32)throw new Error('Weighted balance requires 2–32 playing golfers.');
   if(playing.some(g=>g.self_ranked!==true||!bands.includes(g.band)))throw new Error('Every playing golfer needs a submitted handicap band.');
   const totals=[0,0,0,0],fixed=[[0,0,0,0],[0,0,0,0]],capacities=[0,0],seen=new Set();
-  for(let n=0;n<playing.length;n++){const r=Math.floor(n/2),p=n%2;capacities[state.draftType==='snake'&&r%2?1-p:p]++;}
+  if(fairMode(state)){const policy=fairPlan(state);if(policy.requiresTiebreak)throw new Error('Equal captains require a neutral tiebreak before preparation.');capacities.splice(0,2,...policy.capacities);}else for(let n=0;n<playing.length;n++){const r=Math.floor(n/2),p=n%2;capacities[state.draftType==='snake'&&r%2?1-p:p]++;}
   for(let t=0;t<2;t++)for(const i of state.teams[t].roster||[]){if(!Number.isInteger(i)||seen.has(i)||!active(golfers[i])||golfers[i].team!==t)throw new Error('Draft roster assignments are inconsistent.');seen.add(i);}
   for(const g of playing){const b=bands.indexOf(g.band);totals[b]++;if(g.team!=null){if(!Number.isInteger(g.team)||g.team<0||g.team>1||!seen.has(g.i))throw new Error('Draft roster assignments are inconsistent.');fixed[g.team][b]++;}}
   if(fixed.some((row,t)=>row.reduce((a,b)=>a+b,0)>capacities[t]))throw new Error('Team roster exceeds its capacity.');
-  const key=JSON.stringify([totals,fixed,capacities,state.draftType]);if(key===cacheKey)return structuredClone(cacheValue);
+  const key=JSON.stringify([totals,fixed,capacities,state.draftType,state.balanceVersion,fairMode(state)?fairPlan(state).weakerCaptainTeam:null]);if(key===cacheKey)return structuredClone(cacheValue);
   let best=null,eligible=[new Set(),new Set()];
   const low=fixed[0],high=totals.map((n,b)=>n-fixed[1][b]);
   const totalStrength=totals.reduce((n,c,b)=>n+c*weights[b],0);
@@ -41,7 +44,7 @@
   // For ordinary-sized tournaments, verify that every offered next pick
   // has at least one complete legal snake-order continuation. The final
   // allocation optimizer alone cannot guarantee this.
-  if(playing.length<=32){
+  if(playing.length<=32&&seen.size<playing.length){
    const assigned=fixed[0].reduce((n,v)=>n+v,0)+fixed[1].reduce((n,v)=>n+v,0);
    const remaining=totals.map((v,b)=>v-fixed[0][b]-fixed[1][b]);
    const memo=new Map();
@@ -49,7 +52,7 @@
     if(n===playing.length)return left.every(v=>v===0);
     const key=n+'|'+left.join(',')+'|'+a.join(',')+'|'+b.join(',');
     if(memo.has(key))return memo.get(key);
-    const round=Math.floor(n/2),p=n%2,t=state.draftType==='snake'&&round%2?1-p:p;
+    const t=pickTurn(state,n);
     const own=t===0?a:b,other=t===0?b:a;
     for(let band=0;band<4;band++){
      if(!left[band])continue;
@@ -61,7 +64,7 @@
     }
     memo.set(key,false);return false;
    }
-   const round=Math.floor(assigned/2),p=assigned%2,turn=state.draftType==='snake'&&round%2?1-p:p;
+   const turn=pickTurn(state,assigned);
    const feasible=new Set();
    for(let band=0;band<4;band++){
     if(!remaining[band])continue;

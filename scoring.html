@@ -4105,10 +4105,11 @@ function completedHoles(){
  return Array.from({length:18},(_,i)=>i+1).filter(h=>teams.length>0&&teams.every((_,ti)=>(typeof isShamblePoints==="function"&&isShamblePoints()?shambleSummary().holes[h-1]?.[ti]?.complete:scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null))));
 }
 function leaderSnapshot(){
- const arr=totals().slice().sort((a,b)=>b.pts-a.pts||b.thru-a.thru||a.team-b.team);
+ const arr=totals().slice().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||b.thru-a.thru||a.team-b.team);
  if(!arr.length||arr[0].pts<=0)return null;
- const topPts=arr[0].pts, tied=arr.filter(x=>x.pts===topPts);
- return {team:arr[0].team,pts:topPts,thru:arr[0].thru,tied:tied.length>1};
+ const topRank=arr[0].rankPoints??arr[0].pts;
+ const tied=arr.filter(x=>Math.abs((x.rankPoints??x.pts)-topRank)<1e-9);
+ return {team:arr[0].team,pts:arr[0].uneven?arr[0].average:arr[0].pts,thru:arr[0].thru,tied:tied.length>1,uneven:!!arr[0].uneven};
 }
 function renderLeadChangeAlert(){
  const box=$("leadChangeAlert"),main=$("leadChangeMain"),sub=$("leadChangeSub");if(!box||!main||!sub)return;

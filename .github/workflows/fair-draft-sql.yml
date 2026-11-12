@@ -1,0 +1,34 @@
+name: Fair draft PostgreSQL migration acceptance
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/20261112000002_fair_draft_turn_primitives.sql'
+      - 'supabase/migrations/20261112000003_fair_draft_weighted_options.sql'
+      - 'supabase/migrations/20261112000004_fair_draft_pick_rpc.sql'
+      - 'supabase/migrations/20261112000005_prepare_fair_draft_opt_in.sql'
+      - 'supabase/tests/fair_draft_sql_acceptance.sql'
+      - '.github/workflows/fair-draft-sql.yml'
+  workflow_dispatch:
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: elleng_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d elleng_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile all fair-draft migrations and validate capacities for 2–32 golfers
+        env:
+          PGPASSWORD: postgres
+        run: psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d elleng_test -f supabase/tests/fair_draft_sql_acceptance.sql
