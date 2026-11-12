@@ -24,6 +24,19 @@ begin
   raise exception 'Fair draft preparation must enforce commissioner authorization';
  end if;
 end$rpc_contract$;
+-- Verify SQL EXECUTE permissions, not only the function's internal auth.uid check.
+do $permissions$
+begin
+ if has_function_privilege('anon','public.elleng_prepare_fair_draft(text)','EXECUTE') then
+  raise exception 'Anonymous role can execute commissioner fair preparation';
+ end if;
+ if not has_function_privilege('authenticated','public.elleng_prepare_fair_draft(text)','EXECUTE') then
+  raise exception 'Authenticated role cannot execute commissioner fair preparation';
+ end if;
+ if has_function_privilege('anon','public.elleng_fair_turn(integer,integer,integer)','EXECUTE') then
+  raise exception 'Anonymous role can execute internal fair turn helper';
+ end if;
+end$permissions$;
 -- An unauthenticated caller must never modify an isolated commissioner draft.
 insert into public.elleng_drafts(id,owner_id,state)
 values ('unauth-fair-test','00000000-0000-0000-0000-000000000001'::uuid,
