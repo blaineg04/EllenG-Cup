@@ -162,7 +162,7 @@ begin
   perform public.elleng_prepare_fair_draft('rpc-prepare-test');
   raise exception 'SAFETY TEST FAILED: preparation allowed after an ordinary pick';
  exception when others then
-  if sqlerrm <> 'Cannot change balancing after ordinary picks' then raise; end if;
+  if sqlerrm <> 'Fair draft is already prepared' then raise; end if;
  end;
  select state into st from public.elleng_drafts where id='rpc-prepare-test';
  if jsonb_array_length(st->'picks')<>3 then raise exception 'Re-preparation modified existing picks';end if;
