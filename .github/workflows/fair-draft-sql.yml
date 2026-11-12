@@ -5,6 +5,7 @@ on:
       - 'supabase/migrations/20261112000002_fair_draft_turn_primitives.sql'
       - 'supabase/migrations/20261112000003_fair_draft_weighted_options.sql'
       - 'supabase/migrations/20261112000004_fair_draft_pick_rpc.sql'
+      - 'supabase/migrations/20261112000005_prepare_fair_draft_opt_in.sql'
       - 'supabase/tests/fair_draft_sql_acceptance.sql'
       - '.github/workflows/fair-draft-sql.yml'
   workflow_dispatch:
