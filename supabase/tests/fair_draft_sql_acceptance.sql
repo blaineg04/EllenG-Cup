@@ -24,6 +24,22 @@ begin
   raise exception 'Fair draft preparation must enforce commissioner authorization';
  end if;
 end$rpc_contract$;
+-- An unauthenticated caller must never modify an isolated commissioner draft.
+insert into public.elleng_drafts(id,owner_id,state)
+values ('unauth-fair-test','00000000-0000-0000-0000-000000000001'::uuid,
+        '{"marker":"unchanged"}'::jsonb);
+do $deny_unauth$
+begin
+ begin
+  perform public.elleng_prepare_fair_draft('unauth-fair-test');
+  raise exception 'SECURITY TEST FAILED: unauthenticated preparation was accepted';
+ exception when others then
+  if sqlerrm <> 'Sign in required' then raise; end if;
+ end;
+ if (select state from public.elleng_drafts where id='unauth-fair-test') <> '{"marker":"unchanged"}'::jsonb then
+  raise exception 'Unauthenticated preparation modified a draft';
+ end if;
+end$deny_unauth$;
 do $first$
 declare n integer; weaker integer; p integer; turn integer; count0 integer; count1 integer; expected0 integer; expected1 integer;
 begin
