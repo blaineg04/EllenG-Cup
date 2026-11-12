@@ -31,4 +31,44 @@ begin
   raise exception 'Weaker captain did not get first ordinary pick';
  end if;
 end$$;
+do $
+declare n integer; weaker integer; i integer; p integer; t integer; chosen integer; golfer jsonb; golfers jsonb; teams jsonb; state jsonb; opts jsonb; selected integer[]; capacities jsonb;
+begin
+ for n in select unnest(array[11,13,15,22,23,24]) loop
+  for weaker in 0..1 loop
+   golfers:='[]'::jsonb;
+   for i in 0..n-1 loop
+    golfer:=jsonb_build_object('name','Test golfer '||i,'participating',true,'self_ranked',true,
+      'band',case when i=0 then case when weaker=0 then 'B' else 'A' end
+                  when i=1 then case when weaker=1 then 'B' else 'A' end else 'C' end,
+      'team',case when i<2 then to_jsonb(i) else 'null'::jsonb end);
+    golfers:=golfers||jsonb_build_array(golfer);
+   end loop;
+   teams:=jsonb_build_array(jsonb_build_object('captainGolferIndex',0,'roster',jsonb_build_array(0)),
+                            jsonb_build_object('captainGolferIndex',1,'roster',jsonb_build_array(1)));
+   state:=jsonb_build_object('golfers',golfers,'teams',teams,'draftType','snake','draftRules','weighted',
+    'balanceVersion',2,'picks',jsonb_build_array(jsonb_build_object('golfer',0,'team',0),
+                                                jsonb_build_object('golfer',1,'team',1)));
+   for p in 2..n-1 loop
+    opts:=public.elleng_weighted_options(state);
+    t:=public.elleng_fair_turn(p,n,weaker);
+    chosen:=null;
+    for i in 2..n-1 loop
+     if state->'golfers'->i->'team'='null'::jsonb
+        and (opts->'eligible'->t)?(state->'golfers'->i->>'band') then chosen:=i;exit;end if;
+    end loop;
+    if chosen is null then raise exception 'No eligible continuation for % golfers weaker % pick %',n,weaker,p;end if;
+    state:=jsonb_set(state,array['golfers',chosen::text,'team'],to_jsonb(t));
+    state:=jsonb_set(state,array['teams',t::text,'roster'],state->'teams'->t->'roster'||to_jsonb(chosen));
+    state:=jsonb_set(state,'{picks}',state->'picks'||jsonb_build_object('golfer',chosen,'team',t));
+   end loop;
+   capacities:=public.elleng_weighted_options(state)->'capacities';
+   if jsonb_array_length(state->'teams'->0->'roster')<>(capacities->>0)::integer
+      or jsonb_array_length(state->'teams'->1->'roster')<>(capacities->>1)::integer
+      or jsonb_array_length(state->'picks')<>n then
+    raise exception 'Full-draft mismatch for % golfers weaker %',n,weaker;
+   end if;
+  end loop;
+ end loop;
+end$;
 rollback;
