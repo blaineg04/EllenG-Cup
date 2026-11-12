@@ -10,6 +10,7 @@ returns boolean language sql immutable as $$select true$$;
 \ir ../migrations/20261112000002_fair_draft_turn_primitives.sql
 \ir ../migrations/20261112000003_fair_draft_weighted_options.sql
 \ir ../migrations/20261112000004_fair_draft_pick_rpc.sql
+\ir ../migrations/20261112000005_prepare_fair_draft_opt_in.sql
 do $first$
 declare n integer; weaker integer; p integer; turn integer; count0 integer; count1 integer; expected0 integer; expected1 integer;
 begin
