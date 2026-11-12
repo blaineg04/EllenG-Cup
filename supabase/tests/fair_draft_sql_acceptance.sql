@@ -121,6 +121,17 @@ begin
   'picks',jsonb_build_array(jsonb_build_object('golfer',0,'team',0),jsonb_build_object('golfer',1,'team',1)),
   'draftRules','weighted','balanceVersion',2,'draftType','snake','timerPaused',false,'timerLength',60);
  insert into public.elleng_drafts(id,owner_id,state) values ('rpc-pick-test',auth.uid(),st);
+ -- A different signed-in user must not pick for this commissioner-owned draft.
+ perform set_config('elleng.test_uid','00000000-0000-0000-0000-000000000002',true);
+ begin
+  perform public.elleng_weighted_pick('rpc-pick-test',2);
+  raise exception 'SECURITY TEST FAILED: unauthorized pick was accepted';
+ exception when others then
+  if sqlerrm <> 'Not authorized for this draft' then raise; end if;
+ end;
+ select state into st from public.elleng_drafts where id='rpc-pick-test';
+ if jsonb_array_length(st->'picks')<>2 then raise exception 'Unauthorized pick modified draft';end if;
+ perform set_config('elleng.test_uid','00000000-0000-0000-0000-000000000001',true);
  for p in 2..4 loop
   select state into st from public.elleng_drafts where id='rpc-pick-test';
   opts:=public.elleng_weighted_options(st);
