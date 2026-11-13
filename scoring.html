@@ -4399,7 +4399,7 @@ function renderLeaderboard(){
  const arr=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||b.thru-a.thru||a.team-b.team);
  const board=$("leaderboard");
  if(board) board.dataset.teamCount=String(arr.length);
- board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${isFinalCargoTeam(x.team)?` <span class="badge">+${finalCargoBonus()} Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} Total Points${x.uneven?` <small style="display:block;font-size:11px;font-weight:500;line-height:1.3">${x.average.toFixed(2)} avg per golfer · ${x.rawPoints} raw + ${x.pts-x.rawPoints} bonus</small>`:""}</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
+ board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${isFinalCargoTeam(x.team)?` <span class="badge">+${finalCargoBonus()} Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} Total Points</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
  renderLiveHoleScores();
 }
 function trashTime(ts){
@@ -7095,6 +7095,19 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
  body:not(.login-mode) #myScoreEntryCard > .row:last-of-type {display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;}
  body:not(.login-mode) #myScoreEntryCard #saveSelfScore,
  body:not(.login-mode) #myScoreEntryCard #clearSelfScore {min-width:0!important;width:100%!important;white-space:normal!important;}
+}
+</style>
+
+<style id="my-score-leaderboard-total-only-20261112">
+@media(max-width:650px){
+ body:not(.login-mode) #myScoreLeaderboardCard .leader-row .pts{
+   min-width:0!important;max-width:100%!important;overflow:hidden!important;
+   white-space:nowrap!important;text-overflow:ellipsis!important;
+   font-size:11px!important;font-weight:800!important;line-height:1.2!important;
+ }
+ body:not(.login-mode) #myScoreLeaderboardCard .leader-row{
+   grid-template-rows:minmax(0,auto) minmax(0,auto)!important;
+ }
 }
 </style>
 </body>
