@@ -3003,6 +3003,28 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   #teamsView:not(.hidden) #teamCards .team-points-holes{font-size:12px!important;}
 }
 </style>
+<style id="my-score-points-leaderboard-fit">
+/* My Score only: keep the individual total on one line and both leaderboard point rows readable. */
+@media (max-width:650px){
+ body:not(.login-mode) #leaderboardView:not(.hidden) #selfScoreContext{
+   display:flex!important;align-items:center!important;gap:8px!important;
+   flex:0 0 33px!important;height:33px!important;max-height:33px!important;
+   overflow:hidden!important;white-space:nowrap!important;
+ }
+ body:not(.login-mode) #leaderboardView:not(.hidden) #myScoreLeaderboardCard #leaderboard[data-team-count="2"]{
+   grid-template-rows:repeat(2,minmax(40px,auto))!important;
+   align-content:start!important;align-items:start!important;
+   flex:0 0 auto!important;overflow:visible!important;
+ }
+ body:not(.login-mode) #leaderboardView:not(.hidden) #myScoreLeaderboardCard #leaderboard[data-team-count="2"] .leader-row{
+   height:40px!important;min-height:40px!important;overflow:visible!important;
+   align-content:center!important;grid-template-rows:14px 14px!important;
+ }
+ body:not(.login-mode) #leaderboardView:not(.hidden) #myScoreLeaderboardCard #leaderboard[data-team-count="2"] .leader-row .pts{
+   line-height:14px!important;display:block!important;overflow:visible!important;
+ }
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -5475,7 +5497,7 @@ function renderSelfScoreContext(){
    const pair=pos>=0&&pos<2?1:pos>=2&&pos<4?2:null;
    box.textContent=pair?`${g.name} • ${teamName} • Pair ${pair}. Your login can update your 2-man pair score for Hole ${h}.`:`${g.name} • ${teamName}. Your split-pair assignment is not finalized yet.`;
  }else if(typeof isShamblePoints==="function"&&isShamblePoints()){
-   const personal=shambleSummary().players[idx];box.textContent=`${g.name} • ${teamName} • 18-hole Shamble. Enter only your own strokes. Every golfer’s points count. Your total: ${personal?.points||0} pts from ${personal?.holes||0}/18 holes.`;
+   const personal=shambleSummary().players[idx];box.innerHTML=`<span style="display:inline-block;background:#e5f3ea;color:#11683b;border:1px solid #a8d5b8;border-radius:7px;padding:3px 8px;margin-right:7px;font-size:15px;font-weight:900;white-space:nowrap">MY POINTS: ${Number(personal?.points||0)}</span><span style="font-size:11px;font-weight:750;white-space:nowrap">${Number(personal?.holes||0)} of 18 Holes Scored</span>`;
  }else if(h<=9){
    const row=scores.find(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null);
    box.textContent=`${g.name} • ${teamName} • Front 9 Scramble. Your login can update your team's score for Hole ${h}${row?` (current team score: ${row.score})`:""}.`;
