@@ -7073,11 +7073,13 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
 /* Scoped to My Score Entry: do not alter Teams, other pages or scoring logic. */
 @media (max-width: 650px) {
  body:not(.login-mode) #myScoreEntryCard #selfScoreContext {
-   height:auto!important;min-height:0!important;max-height:none!important;
+   display:block!important;flex:none!important;flex-basis:auto!important;align-self:stretch!important;
+   height:auto!important;min-height:max-content!important;max-height:none!important;
    overflow:visible!important;white-space:normal!important;overflow-wrap:break-word!important;
    line-height:1.35!important;padding:8px 10px!important;
  }
  body:not(.login-mode) #myScoreEntryCard .admin-grid {
+   position:relative!important;clear:both!important;margin-top:12px!important;
    display:grid!important;grid-template-columns:minmax(0,1.15fr) minmax(0,.7fr) minmax(0,1fr)!important;
    gap:10px!important;align-items:end!important;
  }
