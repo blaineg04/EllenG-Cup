@@ -7068,6 +7068,33 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
 </style>
 
 
+
+<style id="my-score-layout-only-20261112">
+/* Scoped to My Score Entry: do not alter Teams, other pages or scoring logic. */
+@media (max-width: 650px) {
+ body:not(.login-mode) #myScoreEntryCard #selfScoreContext {
+   height:auto!important;min-height:0!important;max-height:none!important;
+   overflow:visible!important;white-space:normal!important;overflow-wrap:break-word!important;
+   line-height:1.35!important;padding:8px 10px!important;
+ }
+ body:not(.login-mode) #myScoreEntryCard .admin-grid {
+   display:grid!important;grid-template-columns:minmax(0,1.15fr) minmax(0,.7fr) minmax(0,1fr)!important;
+   gap:10px!important;align-items:end!important;
+ }
+ body:not(.login-mode) #myScoreEntryCard .admin-grid label {display:block!important;min-width:0!important;width:100%!important;}
+ body:not(.login-mode) #myScoreEntryCard .admin-grid select,
+ body:not(.login-mode) #myScoreEntryCard .admin-grid input {
+   box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;
+   height:40px!important;min-height:40px!important;font-size:14px!important;
+ }
+ body:not(.login-mode) #myScoreEntryCard #selfScoreInput::placeholder {font-size:12px!important;}
+ body:not(.login-mode) #myScoreEntryCard .self-score-summary {min-width:0!important;}
+ body:not(.login-mode) #myScoreEntryCard .self-score-box {max-width:100%!important;box-sizing:border-box!important;}
+ body:not(.login-mode) #myScoreEntryCard > .row:last-of-type {display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;}
+ body:not(.login-mode) #myScoreEntryCard #saveSelfScore,
+ body:not(.login-mode) #myScoreEntryCard #clearSelfScore {min-width:0!important;width:100%!important;white-space:normal!important;}
+}
+</style>
 </body>
 
 <style id="v2766-handicap-restore">
