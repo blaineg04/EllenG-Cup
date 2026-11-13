@@ -1597,14 +1597,11 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 </style>
 
 <style id="full-roster-mobile-layout">
-/* Full-roster mobile layout: keep team cards and golfer rows in normal flow. */
-#teamsView #teamCards{grid-template-columns:minmax(0,1fr)!important;align-items:start;}
-#teamsView #teamCards>.team-accent{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;position:relative;min-width:0;}
-#teamsView #teamCards>.team-accent>div{height:auto;min-height:0;}
-#teamsView #teamCards>.team-accent .row{flex-wrap:wrap;min-width:0;}
-#teamsView #teamCards>.team-accent strong{overflow-wrap:anywhere;}
-#teamsView #teamCards>.team-accent>div:not(.row){box-sizing:border-box;max-width:100%;overflow-wrap:anywhere;}
-#teamsView #teamCards>.team-accent>div:not(.row) strong{display:inline;}
+/* Teams page only. Never alter other views or scoring. */
+#teamsView #teamCards{display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-items:start!important;gap:14px!important;width:100%;min-width:0;}
+#teamsView #teamCards>.team-accent{display:block!important;position:static!important;float:none!important;grid-column:auto!important;width:100%!important;min-width:0!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;box-sizing:border-box;}
+#teamsView #teamCards .elleng-roster-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;min-width:0;}
+#teamsView #teamCards .elleng-roster-player{display:block!important;position:static!important;float:none!important;width:100%!important;min-height:0!important;height:auto!important;line-height:1.45;overflow-wrap:anywhere;white-space:normal;}
 @media(min-width:850px){#teamsView #teamCards{grid-template-columns:repeat(2,minmax(0,1fr))!important;}}
 </style>
 </head>
@@ -3068,8 +3065,8 @@ function renderTeams(){
  $("teamCards").innerHTML=list.map(({t,i})=>{
   const roster=Array.isArray(t.roster)?t.roster:[];
   const captain=t.captain||"Captain not assigned";
-  const players=roster.length?roster.map((n,j)=>`<div style="padding:7px 0;border-top:1px solid var(--line)"><strong>${j+1}.</strong> ${esc(n)}</div>`).join(""):`<div class="note" style="padding-top:9px;border-top:1px solid var(--line)">No golfers assigned yet.</div>`;
-  return `<div class="team-accent" style="--team-accent:${teamAccent(i)};border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff"><div class="row between"><strong style="font-size:17px"><span class="mini-team-dot" style="background:${teamAccent(i)}"></span>${esc(t.name)}</strong><span class="badge">Team ${i+1}</span></div><div class="status" style="margin:5px 0 10px">Captain: ${esc(captain)}</div>${players}</div>`;
+  const players=roster.length?roster.map((n,j)=>`<div class="elleng-roster-player" style="padding:9px 0;border-top:1px solid var(--line)"><strong>${j+1}.</strong> ${esc(n)}</div>`).join(""):`<div class="note" style="padding-top:9px;border-top:1px solid var(--line)">No golfers assigned yet.</div>`;
+  return `<div class="team-accent" style="--team-accent:${teamAccent(i)};border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff"><div class="elleng-roster-header"><strong style="font-size:17px"><span class="mini-team-dot" style="background:${teamAccent(i)}"></span>${esc(t.name)}</strong><span class="badge">Team ${i+1}</span></div><div class="status" style="margin:5px 0 10px">Captain: ${esc(captain)}</div>${players}</div>`;
  }).join("");
 }
 
