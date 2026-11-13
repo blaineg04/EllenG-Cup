@@ -2974,6 +2974,20 @@ body.my-profile-open #myProfilePhotoCard #selfPhotoPlayerName{color:#10202c!impo
 body.my-profile-open #myProfilePhotoCard .self-photo-choose{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-height:48px!important;background:#edf2f5!important;border:2px solid #607787!important;color:#10202c!important;-webkit-text-fill-color:#10202c!important;font-size:16px!important;font-weight:900!important;opacity:1!important;visibility:visible!important}
 body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!important}
 </style>
+
+<style id="teams-roster-overflow-fix-20261112">
+/* Production PWA Teams view only. Preserve every other view and all scoring logic. */
+@media (max-width:650px){
+  body:not(.login-mode) #teamsView:not(.hidden){overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;height:auto!important;min-height:0!important;max-height:100%!important;display:block!important;}
+  body:not(.login-mode) #teamsView:not(.hidden) > .card:first-child{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;display:block!important;}
+  body:not(.login-mode) #teamsView:not(.hidden) #teamCards{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:none!important;grid-auto-rows:auto!important;align-items:start!important;align-content:start!important;flex:none!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;gap:12px!important;}
+  body:not(.login-mode) #teamsView:not(.hidden) #teamCards > .team-accent{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;display:block!important;position:static!important;padding:12px!important;}
+  body:not(.login-mode) #teamsView:not(.hidden) #teamCards > .team-accent > .compact-roster{display:block!important;-webkit-line-clamp:unset!important;overflow:visible!important;white-space:normal!important;overflow-wrap:anywhere!important;font-size:12px!important;line-height:1.5!important;margin-top:8px!important;}
+  body:not(.login-mode) #teamsView:not(.hidden) #teamCards > .team-accent > .status{font-size:11px!important;line-height:1.35!important;white-space:normal!important;overflow:visible!important;}
+  body:not(.login-mode) #teamsView:not(.hidden) #teamCards > .team-accent .row strong{font-size:14px!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.35!important;}
+  body:not(.login-mode) #teamsView:not(.hidden) #teamCards > .team-accent .badge{font-size:10px!important;}
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
