@@ -2974,6 +2974,35 @@ body.my-profile-open #myProfilePhotoCard #selfPhotoPlayerName{color:#10202c!impo
 body.my-profile-open #myProfilePhotoCard .self-photo-choose{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;min-height:48px!important;background:#edf2f5!important;border:2px solid #607787!important;color:#10202c!important;-webkit-text-fill-color:#10202c!important;font-size:16px!important;font-weight:900!important;opacity:1!important;visibility:visible!important}
 body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!important}
 </style>
+
+<style id="teams-roster-overflow-fix-20261112">
+/* Production PWA Teams view only. Preserve every other view and all scoring logic. */
+@media (max-width:650px){
+  body:not(.login-mode) #teamsView:not(.hidden){overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;height:auto!important;min-height:0!important;max-height:100%!important;display:block!important;}
+  body:not(.login-mode) #teamsView:not(.hidden) > .card:first-child{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;display:block!important;}
+  body:not(.login-mode) #teamsView:not(.hidden) #teamCards{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:none!important;grid-auto-rows:auto!important;align-items:start!important;align-content:start!important;flex:none!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;gap:12px!important;}
+  body:not(.login-mode) #teamsView:not(.hidden) #teamCards > .team-accent{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;display:block!important;position:static!important;padding:12px!important;}
+  body:not(.login-mode) #teamsView:not(.hidden) #teamCards > .team-accent > .compact-roster{display:block!important;-webkit-line-clamp:unset!important;overflow:visible!important;white-space:normal!important;overflow-wrap:anywhere!important;font-size:12px!important;line-height:1.5!important;margin-top:8px!important;}
+  body:not(.login-mode) #teamsView:not(.hidden) #teamCards > .team-accent > .status{font-size:11px!important;line-height:1.35!important;white-space:normal!important;overflow:visible!important;}
+  body:not(.login-mode) #teamsView:not(.hidden) #teamCards > .team-accent .row strong{font-size:14px!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.35!important;}
+  body:not(.login-mode) #teamsView:not(.hidden) #teamCards > .team-accent .badge{font-size:10px!important;}
+}
+</style>
+
+<style id="teams-points-alignment-20261112">
+/* Only the points roster shown in the installed app's Teams tab. */
+#teamsView #teamCards > .team-points-card{box-sizing:border-box!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;}
+#teamsView #teamCards .team-points-row{display:grid!important;grid-template-columns:minmax(0,1fr) 76px 92px!important;align-items:center!important;gap:8px!important;padding:9px 0!important;min-height:44px!important;box-sizing:border-box!important;}
+#teamsView #teamCards .team-points-name{min-width:0!important;overflow-wrap:anywhere!important;text-align:left!important;}
+#teamsView #teamCards .team-points-value{white-space:nowrap!important;text-align:center!important;}
+#teamsView #teamCards .team-points-holes{white-space:nowrap!important;text-align:right!important;}
+@media(max-width:650px){
+  #teamsView:not(.hidden) #teamCards > .team-points-card{margin:0!important;padding:14px!important;}
+  #teamsView:not(.hidden) #teamCards .team-points-row{grid-template-columns:minmax(0,1fr) 58px 82px!important;gap:5px!important;font-size:13px!important;}
+  #teamsView:not(.hidden) #teamCards .team-points-value{font-size:13px!important;}
+  #teamsView:not(.hidden) #teamCards .team-points-holes{font-size:12px!important;}
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -3997,7 +4026,7 @@ function renderPointsExtras(){
  const x=shambleSummary(),set=(id,value)=>{const el=$(id);if(el)el.textContent=value;};
  set("homeHolesComplete",x.completeHoles+" / 18");set("broadcastHoles",x.completeHoles+" / 18");set("homeSpecialText","Gator Hole: Secret until the Commissioner reveals it. The winning team earns 10 bonus points; tied teams split the bonus equally.");
  set("broadcastSpecial","18-hole shamble • Every golfer counts");
- const chosen=$("teamRosterSelect")?.value||"all";$("teamCards").innerHTML=teams.map((t,ti)=>({t,ti})).filter(({ti})=>chosen==="all"||String(ti)===chosen).map(({t,ti})=>`<div class="card"><h3>${esc(t.name)} • ${x.totals[ti].pts} pts</h3>${teamRosterGolfers(ti).map(g=>`<div class="row between" style="padding:8px 0"><span>${esc(g.name)}</span><strong>${x.players[g.index].points} pts</strong><span>${x.players[g.index].holes}/18 holes</span></div>`).join("")||"No golfers assigned yet."}</div>`).join("");
+ const chosen=$("teamRosterSelect")?.value||"all";$("teamCards").innerHTML=teams.map((t,ti)=>({t,ti})).filter(({ti})=>chosen==="all"||String(ti)===chosen).map(({t,ti})=>`<div class="card team-points-card"><h3>${esc(t.name)} • ${x.totals[ti].pts} pts</h3>${teamRosterGolfers(ti).map(g=>`<div class="team-points-row"><span class="team-points-name">${esc(g.name)}</span><strong class="team-points-value">${x.players[g.index].points} pts</strong><span class="team-points-holes">${x.players[g.index].holes}/18 holes</span></div>`).join("")||"No golfers assigned yet."}</div>`).join("");
  const ranked=x.players.filter(p=>p.holes).sort((a,b)=>b.points-a.points||a.index-b.index);
  if($("tournamentMvpCard"))$("tournamentMvpCard").innerHTML=ranked.length?`<strong>${esc(draftState.golfers[ranked[0].index].name)}</strong><div>${ranked[0].points} individual points • ${ranked[0].holes}/18 holes</div>`:'<div class="note">Individual points will appear once scores are saved.</div>';
  if($("postRoundRecap"))$("postRoundRecap").innerHTML=x.totals.slice().sort((a,b)=>b.pts-a.pts).map(t=>`<div class="row between"><strong>${esc(teams[t.team].name)}</strong><span>${t.pts} pts</span></div>`).join("");
@@ -4370,7 +4399,7 @@ function renderLeaderboard(){
  const arr=totals().sort((a,b)=>(b.rankPoints??b.pts)-(a.rankPoints??a.pts)||b.thru-a.thru||a.team-b.team);
  const board=$("leaderboard");
  if(board) board.dataset.teamCount=String(arr.length);
- board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${isFinalCargoTeam(x.team)?` <span class="badge">+${finalCargoBonus()} Cargo</span>`:""}</div><div class="pts">${x.uneven?`${x.average.toFixed(2)} avg • ${x.rawPoints} raw + ${x.pts-x.rawPoints} bonus`:`${x.pts.toFixed(x.pts%1?1:0)} pts`}</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
+ board.innerHTML=arr.map((x,n)=>`<div class="leader-row"><div class="place">${n+1}</div><div><strong>${esc(teams[x.team].name)}</strong>${isFinalCargoTeam(x.team)?` <span class="badge">+${finalCargoBonus()} Cargo</span>`:""}</div><div class="pts">${x.pts.toFixed(x.pts%1?1:0)} Total Points</div><div class="thru">${x.thru?`Thru ${x.thru}`:"—"}</div></div>`).join("");
  renderLiveHoleScores();
 }
 function trashTime(ts){
@@ -7039,6 +7068,48 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
 </style>
 
 
+
+<style id="my-score-layout-only-20261112">
+/* Scoped to My Score Entry: do not alter Teams, other pages or scoring logic. */
+@media (max-width: 650px) {
+ body:not(.login-mode) #myScoreEntryCard #selfScoreContext {
+   display:block!important;flex:none!important;flex-basis:auto!important;align-self:stretch!important;
+   height:auto!important;min-height:max-content!important;max-height:none!important;
+   overflow:visible!important;white-space:normal!important;overflow-wrap:break-word!important;
+   line-height:1.35!important;padding:8px 10px!important;
+ }
+ body:not(.login-mode) #myScoreEntryCard .admin-grid {
+   position:relative!important;clear:both!important;margin-top:12px!important;
+   display:grid!important;grid-template-columns:minmax(0,1.15fr) minmax(0,.7fr) minmax(0,1fr)!important;
+   gap:10px!important;align-items:end!important;
+ }
+ body:not(.login-mode) #myScoreEntryCard .admin-grid label {display:block!important;min-width:0!important;width:100%!important;}
+ body:not(.login-mode) #myScoreEntryCard .admin-grid select,
+ body:not(.login-mode) #myScoreEntryCard .admin-grid input {
+   box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;
+   height:40px!important;min-height:40px!important;font-size:14px!important;
+ }
+ body:not(.login-mode) #myScoreEntryCard #selfScoreInput::placeholder {font-size:12px!important;}
+ body:not(.login-mode) #myScoreEntryCard .self-score-summary {min-width:0!important;}
+ body:not(.login-mode) #myScoreEntryCard .self-score-box {max-width:100%!important;box-sizing:border-box!important;}
+ body:not(.login-mode) #myScoreEntryCard > .row:last-of-type {display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;}
+ body:not(.login-mode) #myScoreEntryCard #saveSelfScore,
+ body:not(.login-mode) #myScoreEntryCard #clearSelfScore {min-width:0!important;width:100%!important;white-space:normal!important;}
+}
+</style>
+
+<style id="my-score-leaderboard-total-only-20261112">
+@media(max-width:650px){
+ body:not(.login-mode) #myScoreLeaderboardCard .leader-row .pts{
+   min-width:0!important;max-width:100%!important;overflow:hidden!important;
+   white-space:nowrap!important;text-overflow:ellipsis!important;
+   font-size:11px!important;font-weight:800!important;line-height:1.2!important;
+ }
+ body:not(.login-mode) #myScoreLeaderboardCard .leader-row{
+   grid-template-rows:minmax(0,auto) minmax(0,auto)!important;
+ }
+}
+</style>
 </body>
 
 <style id="v2766-handicap-restore">
