@@ -1601,8 +1601,10 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
 #teamsView #teamCards{grid-template-columns:minmax(0,1fr)!important;align-items:start;}
 #teamsView #teamCards>.team-accent{height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;position:relative;min-width:0;}
 #teamsView #teamCards>.team-accent>div{height:auto;min-height:0;}
-#teamsView #teamCards .row{flex-wrap:wrap;min-width:0;}
-#teamsView #teamCards strong{overflow-wrap:anywhere;}
+#teamsView #teamCards>.team-accent .row{flex-wrap:wrap;min-width:0;}
+#teamsView #teamCards>.team-accent strong{overflow-wrap:anywhere;}
+#teamsView #teamCards>.team-accent>div:not(.row){box-sizing:border-box;max-width:100%;overflow-wrap:anywhere;}
+#teamsView #teamCards>.team-accent>div:not(.row) strong{display:inline;}
 @media(min-width:850px){#teamsView #teamCards{grid-template-columns:repeat(2,minmax(0,1fr))!important;}}
 </style>
 </head>
