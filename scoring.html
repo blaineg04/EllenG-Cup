@@ -3821,7 +3821,7 @@ const db=window.supabase.createClient(cfg.supabaseUrl,supabaseKey);
 window.EllenGResetRequests?.init(db);
 globalThis.EllenGHealth?.attach(db);
 connection("✓ App connected — live scoring ready.",true);
-const TOURNAMENT_ID="elleng-cup-live", DRAFT_ID="elleng-cup";
+const TOURNAMENT_ID="elleng-nov20-rehearsal-20261103", DRAFT_ID="elleng-nov20-rehearsal-draft-20261103";
 let tournament=null, scores=[], playerScores=[], pairScores=[], trashMessages=[], playerAccounts=[], publicRoster=[], publicRosterUnavailable=false, teams=Array.from({length:6},(_,i)=>({name:`Team ${i+1}`})), draftState=null, draftUpdatedAt=null, user=null, captainTeam=null, isCommissioner=false, currentGolferIndex=null, currentUsername="", mustChangePassword=false, hole=1;
 let scoreSaveBusy=false, lastSuccessfulSyncAt=null;
 let tournamentArchives=[], trashReactions=[];
