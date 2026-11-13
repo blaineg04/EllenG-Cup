@@ -2988,6 +2988,21 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   body:not(.login-mode) #teamsView:not(.hidden) #teamCards > .team-accent .badge{font-size:10px!important;}
 }
 </style>
+
+<style id="teams-points-alignment-20261112">
+/* Only the points roster shown in the installed app's Teams tab. */
+#teamsView #teamCards > .team-points-card{box-sizing:border-box!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;}
+#teamsView #teamCards .team-points-row{display:grid!important;grid-template-columns:minmax(0,1fr) 76px 92px!important;align-items:center!important;gap:8px!important;padding:9px 0!important;min-height:44px!important;box-sizing:border-box!important;}
+#teamsView #teamCards .team-points-name{min-width:0!important;overflow-wrap:anywhere!important;text-align:left!important;}
+#teamsView #teamCards .team-points-value{white-space:nowrap!important;text-align:center!important;}
+#teamsView #teamCards .team-points-holes{white-space:nowrap!important;text-align:right!important;}
+@media(max-width:650px){
+  #teamsView:not(.hidden) #teamCards > .team-points-card{margin:0!important;padding:14px!important;}
+  #teamsView:not(.hidden) #teamCards .team-points-row{grid-template-columns:minmax(0,1fr) 58px 82px!important;gap:5px!important;font-size:13px!important;}
+  #teamsView:not(.hidden) #teamCards .team-points-value{font-size:13px!important;}
+  #teamsView:not(.hidden) #teamCards .team-points-holes{font-size:12px!important;}
+}
+</style>
 </head>
 <body class="login-mode">
 <script>try{if(window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true){document.documentElement.classList.add("installed-app")}}catch(e){}</script>
@@ -4011,7 +4026,7 @@ function renderPointsExtras(){
  const x=shambleSummary(),set=(id,value)=>{const el=$(id);if(el)el.textContent=value;};
  set("homeHolesComplete",x.completeHoles+" / 18");set("broadcastHoles",x.completeHoles+" / 18");set("homeSpecialText","Gator Hole: Secret until the Commissioner reveals it. The winning team earns 10 bonus points; tied teams split the bonus equally.");
  set("broadcastSpecial","18-hole shamble • Every golfer counts");
- const chosen=$("teamRosterSelect")?.value||"all";$("teamCards").innerHTML=teams.map((t,ti)=>({t,ti})).filter(({ti})=>chosen==="all"||String(ti)===chosen).map(({t,ti})=>`<div class="card"><h3>${esc(t.name)} • ${x.totals[ti].pts} pts</h3>${teamRosterGolfers(ti).map(g=>`<div class="row between" style="padding:8px 0"><span>${esc(g.name)}</span><strong>${x.players[g.index].points} pts</strong><span>${x.players[g.index].holes}/18 holes</span></div>`).join("")||"No golfers assigned yet."}</div>`).join("");
+ const chosen=$("teamRosterSelect")?.value||"all";$("teamCards").innerHTML=teams.map((t,ti)=>({t,ti})).filter(({ti})=>chosen==="all"||String(ti)===chosen).map(({t,ti})=>`<div class="card team-points-card"><h3>${esc(t.name)} • ${x.totals[ti].pts} pts</h3>${teamRosterGolfers(ti).map(g=>`<div class="team-points-row"><span class="team-points-name">${esc(g.name)}</span><strong class="team-points-value">${x.players[g.index].points} pts</strong><span class="team-points-holes">${x.players[g.index].holes}/18 holes</span></div>`).join("")||"No golfers assigned yet."}</div>`).join("");
  const ranked=x.players.filter(p=>p.holes).sort((a,b)=>b.points-a.points||a.index-b.index);
  if($("tournamentMvpCard"))$("tournamentMvpCard").innerHTML=ranked.length?`<strong>${esc(draftState.golfers[ranked[0].index].name)}</strong><div>${ranked[0].points} individual points • ${ranked[0].holes}/18 holes</div>`:'<div class="note">Individual points will appear once scores are saved.</div>';
  if($("postRoundRecap"))$("postRoundRecap").innerHTML=x.totals.slice().sort((a,b)=>b.pts-a.pts).map(t=>`<div class="row between"><strong>${esc(teams[t.team].name)}</strong><span>${t.pts} pts</span></div>`).join("");
