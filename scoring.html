@@ -3018,6 +3018,14 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
  body.player-simple-home #teamsView #teamCards{flex:0 0 auto!important;min-height:max-content!important;height:auto!important;overflow:visible!important;grid-auto-rows:max-content!important;gap:16px!important;padding-bottom:16px!important;}
 }
 </style>
+<style id="teams-installed-app-roster-layout-20261116">
+/* Teams only: use intrinsic vertical layout instead of grid row sizing in iOS standalone. */
+@media(max-width:650px){
+ body.player-simple-home #teamsView #teamCards{display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:16px!important;}
+ body.player-simple-home #teamsView #teamCards > .team-points-card{display:block!important;flex:0 0 auto!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;contain:none!important;overflow:visible!important;}
+ body.player-simple-home #teamsView #teamCards > .team-points-card .team-points-row{display:grid!important;min-height:44px!important;}
+}
+</style>
 <style id="my-score-points-leaderboard-fit">
 /* My Score only: keep the individual total on one line and both leaderboard point rows readable. */
 @media (max-width:650px){
