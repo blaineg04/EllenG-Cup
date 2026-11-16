@@ -1953,12 +1953,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   body:not(.login-mode) #teamsView .badge{font-size:8px!important;padding:3px 6px!important}
   body:not(.login-mode) #teamsView label{font-size:10px!important;margin-top:4px!important}
   body:not(.login-mode) #teamsView #teamRosterSelect{min-height:30px!important;height:30px!important;padding:2px 7px!important;font-size:12px!important;max-width:140px!important}
-  body:not(.login-mode) #teamsView #teamCards{
-    flex:1 1 auto!important;min-height:0!important;overflow:hidden!important;
-    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
-    grid-auto-rows:minmax(0,1fr)!important;align-items:stretch!important;align-content:stretch!important;
-    gap:5px!important;margin-top:5px!important;padding:0!important;
-  }
+  /* Legacy fixed-size roster grid removed: roster cards must use intrinsic heights. */
   body:not(.login-mode) #teamsView #teamCards.teams-dense{
     grid-template-columns:repeat(3,minmax(0,1fr))!important;
   }
@@ -2020,42 +2015,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
     padding:2px 6px!important;
     font-size:11px!important;
   }
-  #teamsView:not(.hidden) #teamCards{
-    display:grid!important;
-    flex:1 1 auto!important;
-    min-height:0!important;
-    width:100%!important;
-    overflow:hidden!important;
-    gap:5px!important;
-    margin-top:5px!important;
-    padding:0!important;
-    align-content:stretch!important;
-    align-items:stretch!important;
-  }
-  #teamsView:not(.hidden) #teamCards[data-team-count="7"],
-  #teamsView:not(.hidden) #teamCards[data-team-count="8"],
-  #teamsView:not(.hidden) #teamCards[data-team-count="9"]{
-    grid-template-columns:repeat(3,minmax(0,1fr))!important;
-    grid-template-rows:repeat(3,minmax(0,1fr))!important;
-  }
-  #teamsView:not(.hidden) #teamCards[data-team-count="4"],
-  #teamsView:not(.hidden) #teamCards[data-team-count="5"],
-  #teamsView:not(.hidden) #teamCards[data-team-count="6"]{
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
-    grid-template-rows:repeat(3,minmax(0,1fr))!important;
-  }
-  #teamsView:not(.hidden) #teamCards[data-team-count="1"],
-  #teamsView:not(.hidden) #teamCards[data-team-count="2"],
-  #teamsView:not(.hidden) #teamCards[data-team-count="3"]{
-    grid-template-columns:repeat(1,minmax(0,1fr))!important;
-    grid-template-rows:repeat(3,minmax(0,1fr))!important;
-  }
-  #teamsView:not(.hidden) #teamCards[data-team-count="10"],
-  #teamsView:not(.hidden) #teamCards[data-team-count="11"],
-  #teamsView:not(.hidden) #teamCards[data-team-count="12"]{
-    grid-template-columns:repeat(3,minmax(0,1fr))!important;
-    grid-template-rows:repeat(4,minmax(0,1fr))!important;
-  }
+  /* Legacy fixed row counts (including 3x and 4x minmax(0,1fr)) removed. */
   #teamsView:not(.hidden) #teamCards > .team-accent{
     box-sizing:border-box!important;
     min-width:0!important;
