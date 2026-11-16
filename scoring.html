@@ -4073,6 +4073,21 @@ function renderPointsExtras(){
  set("homeHolesComplete",x.completeHoles+" / 18");set("broadcastHoles",x.completeHoles+" / 18");set("homeSpecialText","Gator Hole: Secret until the Commissioner reveals it. The winning team earns 10 bonus points; tied teams split the bonus equally.");
  set("broadcastSpecial","18-hole shamble • Every golfer counts");
  const chosen=$("teamRosterSelect")?.value||"all";$("teamCards").innerHTML=teams.map((t,ti)=>({t,ti})).filter(({ti})=>chosen==="all"||String(ti)===chosen).map(({t,ti})=>`<div class="card team-points-card"><h3>${esc(t.name)} • ${x.totals[ti].pts} pts</h3>${teamRosterGolfers(ti).map(g=>`<div class="team-points-row"><span class="team-points-name">${esc(g.name)}</span><strong class="team-points-value">${x.players[g.index].points} pts</strong><span class="team-points-holes">${x.players[g.index].holes}/18 holes</span></div>`).join("")||"No golfers assigned yet."}</div>`).join("");
+ // Teams presentation safeguard: measure the last roster row after layout and keep it inside its own card.
+ // No scoring, roster, or draft state is changed.
+ requestAnimationFrame(()=>{
+  const root=$("teamCards");if(!root||!root.closest("#teamsView:not(.hidden)"))return;
+  root.querySelectorAll(":scope > .team-points-card").forEach(card=>{
+   card.style.removeProperty("min-height");
+   const rows=card.querySelectorAll(".team-points-row");
+   const last=rows[rows.length-1];if(!last)return;
+   const top=card.getBoundingClientRect().top;
+   const bottom=last.getBoundingClientRect().bottom;
+   const padding=parseFloat(getComputedStyle(card).paddingBottom)||0;
+   const needed=Math.ceil(bottom-top+padding+2);
+   if(needed>card.getBoundingClientRect().height+2)card.style.setProperty("min-height",needed+"px","important");
+  });
+ });
  const ranked=x.players.filter(p=>p.holes).sort((a,b)=>b.points-a.points||a.index-b.index);
  if($("tournamentMvpCard"))$("tournamentMvpCard").innerHTML=ranked.length?`<strong>${esc(draftState.golfers[ranked[0].index].name)}</strong><div>${ranked[0].points} individual points • ${ranked[0].holes}/18 holes</div>`:'<div class="note">Individual points will appear once scores are saved.</div>';
  if($("postRoundRecap"))$("postRoundRecap").innerHTML=x.totals.slice().sort((a,b)=>b.pts-a.pts).map(t=>`<div class="row between"><strong>${esc(teams[t.team].name)}</strong><span>${t.pts} pts</span></div>`).join("");
