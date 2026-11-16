@@ -3027,12 +3027,19 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 }
 </style>
 <style id="golfer-teams-scroll-boundary-20261116">
-/* Golfer-only Teams: scroll the panel, never shrink or clip individual team cards. */
+/* Golfer Teams: one bounded roster scroller; team cards retain their natural heights. */
 @media(max-width:650px){
- body.player-simple-home #teamsView > .card:first-child{overflow-y:auto!important;overflow-x:hidden!important;min-height:0!important;}
- body.player-simple-home #teamsView #teamCards{display:block!important;flex:0 0 auto!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;}
- body.player-simple-home #teamsView #teamCards > .team-points-card{display:block!important;position:static!important;float:none!important;clear:both!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;contain:none!important;margin:0 0 16px!important;}
+ body.player-simple-home #teamsView > .card:first-child{overflow:hidden!important;min-height:0!important;}
+ body.player-simple-home #teamsView #teamCards{display:block!important;flex:1 1 auto!important;min-height:0!important;height:auto!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;padding-bottom:18px!important;}
+ body.player-simple-home #teamsView #teamCards > .team-points-card{display:block!important;position:relative!important;float:none!important;clear:both!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;contain:none!important;margin:0 0 16px!important;}
  body.player-simple-home #teamsView #teamCards > .team-points-card:last-child{margin-bottom:0!important;}
+ /* Golfer Home: avoid clipping long tournament labels and date badges. */
+ body.player-simple-home #homeView{overflow-y:auto!important;overflow-x:hidden!important;}
+ body.player-simple-home #homeView .home-hero{height:auto!important;min-height:0!important;overflow:visible!important;}
+ body.player-simple-home #homeView .home-hero .row{flex-wrap:wrap!important;overflow:visible!important;align-items:flex-start!important;}
+ body.player-simple-home #homeView .home-hero .badge{white-space:normal!important;max-width:100%!important;overflow-wrap:anywhere!important;}
+ body.player-simple-home #homeView .home-hero .status{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;}
+ body.player-simple-home #homeView .home-hero h2{overflow-wrap:anywhere!important;}
 }
 </style>
 <style id="my-score-points-leaderboard-fit">
