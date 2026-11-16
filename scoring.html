@@ -3026,6 +3026,15 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
  body.player-simple-home #teamsView #teamCards > .team-points-card .team-points-row{display:grid!important;min-height:44px!important;}
 }
 </style>
+<style id="golfer-teams-scroll-boundary-20261116">
+/* Golfer-only Teams: scroll the panel, never shrink or clip individual team cards. */
+@media(max-width:650px){
+ body.player-simple-home #teamsView > .card:first-child{overflow-y:auto!important;overflow-x:hidden!important;min-height:0!important;}
+ body.player-simple-home #teamsView #teamCards{display:block!important;flex:0 0 auto!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;}
+ body.player-simple-home #teamsView #teamCards > .team-points-card{display:block!important;position:static!important;float:none!important;clear:both!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;contain:none!important;margin:0 0 16px!important;}
+ body.player-simple-home #teamsView #teamCards > .team-points-card:last-child{margin-bottom:0!important;}
+}
+</style>
 <style id="my-score-points-leaderboard-fit">
 /* My Score only: keep the individual total on one line and both leaderboard point rows readable. */
 @media (max-width:650px){
