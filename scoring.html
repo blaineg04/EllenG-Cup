@@ -3003,6 +3003,12 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   #teamsView:not(.hidden) #teamCards .team-points-holes{font-size:12px!important;}
 }
 </style>
+<style id="teams-card-natural-height-20261116">
+/* Teams tab only: keep every roster row inside its own card at all screen sizes. */
+#teamsView:not(.hidden) #teamCards{display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-items:start!important;grid-auto-rows:max-content!important;gap:16px!important;overflow:visible!important;}
+#teamsView:not(.hidden) #teamCards > .team-points-card{display:flow-root!important;position:relative!important;float:none!important;clear:both!important;align-self:start!important;height:max-content!important;min-height:max-content!important;max-height:none!important;overflow:visible!important;box-sizing:border-box!important;margin:0!important;}
+#teamsView:not(.hidden) #teamCards > .team-points-card .team-points-row{position:relative!important;float:none!important;clear:both!important;box-sizing:border-box!important;}
+</style>
 <style id="my-score-points-leaderboard-fit">
 /* My Score only: keep the individual total on one line and both leaderboard point rows readable. */
 @media (max-width:650px){
