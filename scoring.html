@@ -3002,6 +3002,31 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
  body.player-simple-home #homeView .home-hero h2{overflow-wrap:anywhere!important;}
 }
 </style>
+<style id="golfer-teams-card-intrinsic-grid-20261116">
+/* Teams roster only: each heading and golfer row contributes to the cream card's own height. */
+@media(max-width:650px){
+ body.player-simple-home #teamsView:not(.hidden) #teamCards > .team-points-card{
+   display:grid!important;
+   grid-template-columns:minmax(0,1fr)!important;
+   grid-template-rows:none!important;
+   grid-auto-rows:max-content!important;
+   align-content:start!important;
+   align-items:stretch!important;
+   height:max-content!important;
+   min-height:max-content!important;
+   max-height:none!important;
+   overflow:visible!important;
+   box-sizing:border-box!important;
+ }
+ body.player-simple-home #teamsView:not(.hidden) #teamCards > .team-points-card > h3,
+ body.player-simple-home #teamsView:not(.hidden) #teamCards > .team-points-card > .team-points-row{
+   grid-column:1!important;
+   min-width:0!important;
+   position:relative!important;
+ }
+}
+</style>
+
 <style id="my-score-points-leaderboard-fit">
 /* My Score only: keep the individual total on one line and both leaderboard point rows readable. */
 @media (max-width:650px){
