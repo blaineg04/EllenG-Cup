@@ -3002,6 +3002,14 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
  body.player-simple-home #homeView .home-hero h2{overflow-wrap:anywhere!important;}
 }
 </style>
+<style id="golfer-roster-isolated-shell-20261116">
+/* The roster shell intentionally does not use .card or .team-points-card: legacy board CSS targets those classes. */
+@media(max-width:650px){
+ body.player-simple-home #teamsView:not(.hidden) #teamCards{display:block!important;overflow-y:auto!important;overflow-x:hidden!important;min-height:0!important;max-height:none!important;padding:0 2px 24px!important;}
+ body.player-simple-home #teamsView:not(.hidden) #teamCards > .golfer-roster-shell{display:block!important;position:relative!important;box-sizing:border-box!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;contain:none!important;float:none!important;clear:both!important;}
+ body.player-simple-home #teamsView:not(.hidden) #teamCards > .golfer-roster-shell > .team-points-row{display:grid!important;position:static!important;float:none!important;clear:both!important;min-height:44px!important;}
+}
+</style>
 <style id="golfer-teams-card-intrinsic-grid-20261116">
 /* Teams roster only: each heading and golfer row contributes to the cream card's own height. */
 @media(max-width:650px){
@@ -4072,22 +4080,7 @@ function renderPointsExtras(){
  const x=shambleSummary(),set=(id,value)=>{const el=$(id);if(el)el.textContent=value;};
  set("homeHolesComplete",x.completeHoles+" / 18");set("broadcastHoles",x.completeHoles+" / 18");set("homeSpecialText","Gator Hole: Secret until the Commissioner reveals it. The winning team earns 10 bonus points; tied teams split the bonus equally.");
  set("broadcastSpecial","18-hole shamble • Every golfer counts");
- const chosen=$("teamRosterSelect")?.value||"all";$("teamCards").innerHTML=teams.map((t,ti)=>({t,ti})).filter(({ti})=>chosen==="all"||String(ti)===chosen).map(({t,ti})=>`<div class="card team-points-card"><h3>${esc(t.name)} • ${x.totals[ti].pts} pts</h3>${teamRosterGolfers(ti).map(g=>`<div class="team-points-row"><span class="team-points-name">${esc(g.name)}</span><strong class="team-points-value">${x.players[g.index].points} pts</strong><span class="team-points-holes">${x.players[g.index].holes}/18 holes</span></div>`).join("")||"No golfers assigned yet."}</div>`).join("");
- // Teams presentation safeguard: measure the last roster row after layout and keep it inside its own card.
- // No scoring, roster, or draft state is changed.
- requestAnimationFrame(()=>{
-  const root=$("teamCards");if(!root||!root.closest("#teamsView:not(.hidden)"))return;
-  root.querySelectorAll(":scope > .team-points-card").forEach(card=>{
-   card.style.removeProperty("min-height");
-   const rows=card.querySelectorAll(".team-points-row");
-   const last=rows[rows.length-1];if(!last)return;
-   const top=card.getBoundingClientRect().top;
-   const bottom=last.getBoundingClientRect().bottom;
-   const padding=parseFloat(getComputedStyle(card).paddingBottom)||0;
-   const needed=Math.ceil(bottom-top+padding+2);
-   if(needed>card.getBoundingClientRect().height+2)card.style.setProperty("min-height",needed+"px","important");
-  });
- });
+ const chosen=$("teamRosterSelect")?.value||"all";$("teamCards").innerHTML=teams.map((t,ti)=>({t,ti})).filter(({ti})=>chosen==="all"||String(ti)===chosen).map(({t,ti})=>`<div class="golfer-roster-shell" style="display:block;position:relative;box-sizing:border-box;width:100%;height:auto;min-height:0;max-height:none;overflow:visible;background:#fffdf6;border:1px solid #e4d7ad;border-radius:16px;padding:16px 14px;margin:0 0 16px;box-shadow:0 9px 24px rgba(0,0,0,.16)"><h3>${esc(t.name)} • ${x.totals[ti].pts} pts</h3>${teamRosterGolfers(ti).map(g=>`<div class="team-points-row"><span class="team-points-name">${esc(g.name)}</span><strong class="team-points-value">${x.players[g.index].points} pts</strong><span class="team-points-holes">${x.players[g.index].holes}/18 holes</span></div>`).join("")||"No golfers assigned yet."}</div>`).join("");
  const ranked=x.players.filter(p=>p.holes).sort((a,b)=>b.points-a.points||a.index-b.index);
  if($("tournamentMvpCard"))$("tournamentMvpCard").innerHTML=ranked.length?`<strong>${esc(draftState.golfers[ranked[0].index].name)}</strong><div>${ranked[0].points} individual points • ${ranked[0].holes}/18 holes</div>`:'<div class="note">Individual points will appear once scores are saved.</div>';
  if($("postRoundRecap"))$("postRoundRecap").innerHTML=x.totals.slice().sort((a,b)=>b.pts-a.pts).map(t=>`<div class="row between"><strong>${esc(teams[t.team].name)}</strong><span>${t.pts} pts</span></div>`).join("");
