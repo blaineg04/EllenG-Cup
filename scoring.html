@@ -3009,6 +3009,15 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 #teamsView:not(.hidden) #teamCards > .team-points-card{display:flow-root!important;position:relative!important;float:none!important;clear:both!important;align-self:start!important;height:max-content!important;min-height:max-content!important;max-height:none!important;overflow:visible!important;box-sizing:border-box!important;margin:0!important;}
 #teamsView:not(.hidden) #teamCards > .team-points-card .team-points-row{position:relative!important;float:none!important;clear:both!important;box-sizing:border-box!important;}
 </style>
+<style id="home-extras-and-teams-container-20261116">
+/* Home only: Tournament Extras remains accessible from More, never Home. */
+#homeView #playerExtrasToggleCard{display:none!important;}
+/* Teams only: scroll the containing panel instead of allowing its roster to escape its card. */
+@media(max-width:650px){
+ body.player-simple-home #teamsView > .card:first-child{overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;}
+ body.player-simple-home #teamsView #teamCards{flex:0 0 auto!important;min-height:max-content!important;height:auto!important;overflow:visible!important;grid-auto-rows:max-content!important;gap:16px!important;padding-bottom:16px!important;}
+}
+</style>
 <style id="my-score-points-leaderboard-fit">
 /* My Score only: keep the individual total on one line and both leaderboard point rows readable. */
 @media (max-width:650px){
