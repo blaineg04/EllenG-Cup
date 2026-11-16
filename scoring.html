@@ -3002,6 +3002,37 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
  body.player-simple-home #homeView .home-hero h2{overflow-wrap:anywhere!important;}
 }
 </style>
+
+<style id="golfer-teams-outer-panel-scroll-20261116">
+/* The outer Teams panel, not the roster card, was visually ending mid-roster on iPhone. */
+@media(max-width:650px){
+ body.player-simple-home #teamsView:not(.hidden){
+   display:block!important;height:100%!important;min-height:0!important;
+   overflow-y:auto!important;overflow-x:hidden!important;
+   -webkit-overflow-scrolling:touch!important;overscroll-behavior-y:contain!important;
+   padding-bottom:24px!important;
+ }
+ body.player-simple-home #teamsView:not(.hidden) > .card:first-child{
+   display:block!important;position:relative!important;
+   flex:none!important;height:auto!important;min-height:0!important;max-height:none!important;
+   overflow:visible!important;contain:none!important;
+   box-sizing:border-box!important;
+ }
+ body.player-simple-home #teamsView:not(.hidden) #teamCards{
+   display:block!important;position:relative!important;flex:none!important;
+   height:auto!important;min-height:0!important;max-height:none!important;
+   overflow:visible!important;contain:none!important;
+ }
+ body.player-simple-home #teamsView:not(.hidden) #teamCards > .golfer-roster-shell{
+   display:flow-root!important;height:auto!important;min-height:0!important;max-height:none!important;
+   overflow:visible!important;margin-bottom:16px!important;
+ }
+ body.player-simple-home #homeView:not(.hidden){overflow-y:auto!important;overflow-x:hidden!important;}
+ body.player-simple-home #homeView .home-hero .row{flex-wrap:wrap!important;}
+ body.player-simple-home #homeView .home-hero .badge,
+ body.player-simple-home #homeView .home-hero .status{white-space:normal!important;overflow-wrap:anywhere!important;max-width:100%!important;}
+}
+</style>
 <style id="golfer-roster-isolated-shell-20261116">
 /* The roster shell intentionally does not use .card or .team-points-card: legacy board CSS targets those classes. */
 @media(max-width:650px){
