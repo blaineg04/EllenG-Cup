@@ -89,3 +89,9 @@ test('server validates late golfer handicap before any draft row mutation',()=>{
  assert.match(sql,/p_hcp::numeric NOT BETWEEN 0 AND 54/);
  assert.ok(sql.indexOf('Invalid numeric handicap')<sql.indexOf('SELECT * INTO t FROM public.elleng_tournaments'));
 });
+
+test('staged migration contains exactly one function definition and ends at its grant',()=>{
+ assert.equal((sql.match(/CREATE OR REPLACE FUNCTION public\\.elleng_add_late_golfer/g)||[]).length,1);
+ assert.equal((sql.match(/GRANT EXECUTE ON FUNCTION public\\.elleng_add_late_golfer/g)||[]).length,1);
+ assert.match(sql.trimEnd(),/TO authenticated;$/);
+});
