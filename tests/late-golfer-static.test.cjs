@@ -73,3 +73,12 @@ test('late golfer numeric handicap determines its band when provided',()=>{
  assert.match(html,/const band=derivedBand\|\|selectedBand/);
  assert.match(html,/if\(hcp&&!derivedBand\)/);
 });
+
+test('mobile personal score context can wrap without clipping, scoped to My Score',()=>{
+ const html=fs.readFileSync('scoring.html','utf8');
+ const style=html.match(/<style id="my-score-personal-summary-clip-fix-20261117">([\s\S]*?)<\/style>/)?.[1];
+ assert.ok(style);
+ assert.match(style,/#leaderboardView:not\(\.hidden\) #myScoreEntryCard #selfScoreContext/);
+ assert.match(style,/white-space:normal!important/);
+ assert.match(style,/overflow:visible!important/);
+});
