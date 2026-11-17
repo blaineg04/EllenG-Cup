@@ -52,3 +52,10 @@ test('safe slot selection rejects occupied indexes and respects 40-player cap',(
  assert.match(sql,/p->>'golfer'=\(ord-1\)::text/);
  assert.doesNotMatch(sql,/gs\|\|jsonb_build_array\(golfer\)/);
 });
+
+test('post-commit refresh failure cannot be mistaken for failed enrollment',()=>{
+ const html=fs.readFileSync('scoring.html','utf8');
+ assert.match(html,/database transaction is already committed/);
+ assert.match(html,/do not add the golfer twice/);
+ assert.match(html,/Late addition was not confirmed\. Refresh before retrying/);
+});
