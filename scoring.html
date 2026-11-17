@@ -6666,10 +6666,16 @@ $("addLateGolferBtn").addEventListener("click",async()=>{
   });
   if(error)throw error;
   if(!data?.ok)throw new Error("Database did not confirm the addition.");
-  await loadBase();await loadPublicRoster();renderAll();
-  const linked=playerAccounts.some(a=>Number(a.golfer_index)===Number(data.golfer_index)&&!!a.user_id);
-  msg.textContent=linked?`${name} added to Team ${teamIndex+1}; player account found. Have golfer verify sign-in before play.`:`${name} added to Team ${teamIndex+1}, but player login was not confirmed. Create/verify the account before play.`;
- }catch(e){msg.textContent=e?.message||"Late addition failed. Draft was not saved."}
+  // The database transaction is already committed; a refresh/login error must not report it as failed.
+  msg.textContent=`${name} added to Team ${teamIndex+1}. Verifying player account…`;
+  try{
+   await loadBase();await loadPublicRoster();renderAll();
+   const linked=playerAccounts.some(a=>Number(a.golfer_index)===Number(data.golfer_index)&&!!a.user_id);
+   msg.textContent=linked?`${name} added to Team ${teamIndex+1}; player account found. Have golfer verify sign-in before play.`:`${name} added to Team ${teamIndex+1}, but player login was not confirmed. Create/verify the account before play.`;
+  }catch(refreshError){
+   msg.textContent=`${name} was added to Team ${teamIndex+1}, but the screen/account refresh failed. Refresh before retrying; do not add the golfer twice.`;
+  }
+ }catch(e){msg.textContent=e?.message||"Late addition was not confirmed. Refresh before retrying."}
  finally{button.disabled=false}
 });
 $("addGolferBtn").addEventListener("click",async()=>{
