@@ -45,7 +45,7 @@ const mixedCount = vm.runInNewContext(`${golferCountFunction}; draftGolferCount(
 });
 assert.equal(mixedCount, 23, '23 participants plus 13 preserved nonparticipants must yield 23');
 const draftHtml = fs.readFileSync('draft.html', 'utf8');
-assert.match(draftHtml, /S\.golfers\.filter\(g=>g\?\.name && g\.participating!==false\)/, 'draft completion excludes nonparticipants');
+assert.match(draftHtml, /S\.golfers\.filter\(g=>g\?\.name && g\.participating!==false && g\.late_added!==true\)/, 'draft completion excludes nonparticipants and late additions');
 assert.match(draftHtml, /S\.golfers\.filter\(g=>g\.name && g\.participating!==false && g\.team==null\)/, 'available pool excludes nonparticipants');
 
 assert.equal(countFor('standard', ['A', 'B', 'C'], 24), 24, 'standard setup count remains unchanged');
