@@ -36,3 +36,10 @@ test('active scoring page wires commissioner late add without broad draft save',
  assert.match(html,/p_expected_updated_at:draftUpdatedAt/);
  assert.match(html,/await loadPublicRoster\(\)/);
 });
+
+test('new golfer account is checked after commissioner reload',()=>{
+ const html=fs.readFileSync('scoring.html','utf8');
+ assert.match(html,/await ensureAutomaticPlayerAccounts\(\)/);
+ assert.match(html,/Number\(a\.golfer_index\)===Number\(data\.golfer_index\)&&!!a\.user_id/);
+ assert.match(html,/player login was not confirmed/);
+});
