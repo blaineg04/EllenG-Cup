@@ -7,7 +7,7 @@ DECLARE
  d public.elleng_drafts%ROWTYPE;
  t public.elleng_tournaments%ROWTYPE;
  s jsonb; gs jsonb; ts jsonb; roster jsonb; golfer jsonb;
- idx integer; stamp timestamptz; clean_name text;
+ idx integer; playing_count integer; stamp timestamptz; clean_name text;
 BEGIN
  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Sign in required' USING ERRCODE='42501'; END IF;
  IF p_draft_id IS DISTINCT FROM 'elleng-cup' OR p_tournament_id IS DISTINCT FROM 'elleng-cup-live'
@@ -43,17 +43,28 @@ BEGIN
  IF EXISTS(SELECT 1 FROM jsonb_array_elements(gs) g
    WHERE lower(btrim(coalesce(g->>'name','')))=lower(clean_name))
  THEN RAISE EXCEPTION 'Golfer already exists'; END IF;
- idx:=jsonb_array_length(gs);
- IF idx>=40 THEN RAISE EXCEPTION 'Golfer capacity reached'; END IF;
- IF EXISTS(SELECT 1 FROM public.elleng_player_accounts
-           WHERE draft_id=p_draft_id AND golfer_index=idx)
- THEN RAISE EXCEPTION 'Next golfer index reserved for an account'; END IF;
+ SELECT count(*) INTO playing_count FROM jsonb_array_elements(gs) g
+ WHERE coalesce(btrim(g->>'name'),'')<>'' AND coalesce((g->>'participating')::boolean,true);
+ IF playing_count>=40 THEN RAISE EXCEPTION 'Playing golfer capacity reached'; END IF;
+ -- Existing golfer indexes and registered account slots must never be shifted.
+ SELECT ord::integer-1 INTO idx
+ FROM jsonb_array_elements(gs) WITH ORDINALITY x(g,ord)
+ WHERE coalesce(btrim(g->>'name'),'')=''
+   AND NOT EXISTS(SELECT 1 FROM public.elleng_player_accounts a
+       WHERE a.draft_id=p_draft_id AND a.golfer_index=ord-1)
+   AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(ts) tm,
+       jsonb_array_elements_text(coalesce(tm->'roster','[]'::jsonb)) ri
+       WHERE ri=(ord-1)::text)
+   AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(s->'picks') p
+       WHERE p->>'golfer'=(ord-1)::text)
+ ORDER BY ord LIMIT 1;
+ IF idx IS NULL THEN RAISE EXCEPTION 'No safe unreserved golfer slot available'; END IF;
  roster:=ts#>ARRAY[p_team_index::text,'roster'];
  IF jsonb_typeof(roster) IS DISTINCT FROM 'array'
  THEN RAISE EXCEPTION 'Team roster unavailable'; END IF;
  golfer:=jsonb_build_object('name',clean_name,'hcp',coalesce(p_hcp,''),
   'band',p_band,'self_ranked',false,'photo_url','','participating',true,'late_added',true,'team',p_team_index);
- s:=jsonb_set(s,'{golfers}',gs||jsonb_build_array(golfer),false);
+ s:=jsonb_set(s,'{golfers}',jsonb_set(gs,ARRAY[idx::text],golfer,false),false);
  s:=jsonb_set(s,ARRAY['teams',p_team_index::text,'roster'],roster||to_jsonb(idx),false);
  stamp:=clock_timestamp();
  UPDATE public.elleng_drafts SET state=s,updated_at=stamp WHERE id=p_draft_id;
