@@ -28,3 +28,11 @@ test('permissions fail closed for anonymous users',()=>{
  assert.match(sql,/REVOKE ALL ON FUNCTION public\.elleng_add_late_golfer/);
  assert.match(sql,/FROM PUBLIC,anon/);
 });
+
+test('active scoring page wires commissioner late add without broad draft save',()=>{
+ const html=fs.readFileSync('scoring.html','utf8');
+ assert.match(html,/id="addLateGolferBtn"/);
+ assert.match(html,/db\.rpc\("elleng_add_late_golfer"/);
+ assert.match(html,/p_expected_updated_at:draftUpdatedAt/);
+ assert.match(html,/await loadPublicRoster\(\)/);
+});
