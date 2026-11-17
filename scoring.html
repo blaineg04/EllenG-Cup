@@ -6663,8 +6663,11 @@ $("addLateGolferBtn").addEventListener("click",async()=>{
  const name=($("newGolferName")?.value||"").trim();
  const teamVal=$("newGolferTeam")?.value;
  const teamIndex=teamVal===""?null:Number(teamVal);
- const band=$("newGolferBand")?.value||"";
  const hcp=($("newGolferHcp")?.value||"").trim();
+ const selectedBand=$("newGolferBand")?.value||"";
+ const derivedBand=hcp?bandFromHandicapValue(hcp):"";
+ const band=derivedBand||selectedBand;
+ if(hcp&&!derivedBand){msg.textContent="Enter a valid handicap or leave it blank and select a band.";return}
  if(name.length<2||!Number.isInteger(teamIndex)||teamIndex<0||teamIndex>1||!band){
   msg.textContent="Enter a full name, handicap band, and Team 1 or Team 2.";return;
  }
