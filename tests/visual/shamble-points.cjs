@@ -15,7 +15,7 @@ const root=path.resolve(__dirname,'../..');
  await page.locator('#leaderboard .pts').first().waitFor();
  const initial=await page.locator('#leaderboard .pts').allTextContents();
  assert.equal(initial.length,2,'two shamble teams must be visible');
- assert(initial.every(x=>/^\\d+(?:\\.\\d+)? Total Points$/.test(x)),`Unexpected leaderboard labels: ${initial.join(', ')}`);
+ assert(initial.every(x=>/^\d+(?:\.\d+)? Total Points$/.test(x)),`Unexpected leaderboard labels: ${initial.join(', ')}`);
  const initialPoints=initial.map(x=>Number.parseFloat(x));
  assert.match(await page.locator('#selfScoreContext').innerText(),/MY POINTS:/);
  await page.locator('#selfScoreHole').selectOption('18');await page.locator('#selfScoreInput').fill('3');await page.locator('#saveSelfScore').click();await page.locator('#selfScoreMsg').getByText(/Saved/).waitFor();
