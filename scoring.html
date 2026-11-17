@@ -3982,9 +3982,12 @@ async function ensureAutomaticPlayerAccounts(statusEl=null){
    }catch(e){failed.push({name:String(g.name||`Player ${i+1}`),message:e?.message||"Unable to create login"});}
  }
  const {data:listData,error:listError}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});
- if(!listError&&!listData?.error)playerAccounts=listData?.accounts||[];
+ const listVerified=!listError&&!listData?.error&&Array.isArray(listData?.accounts);
+ if(listVerified)playerAccounts=listData.accounts;
  if(statusEl){
-   statusEl.textContent=failed.length?`${created} login${created===1?"":"s"} created. ${failed.length} failed: ${failed.map(x=>x.name).join(", ")}.`:`${created} missing login${created===1?"":"s"} created. All current golfers now have accounts.`;
+   statusEl.textContent=!listVerified?`${created} login creation request${created===1?"":"s"} completed, but account verification failed. Refresh and check player logins before play.`:
+     failed.length?`${created} login${created===1?"":"s"} created. ${failed.length} failed: ${failed.map(x=>x.name).join(", ")}.`:
+     `${created} missing login${created===1?"":"s"} created. Account list refreshed; verify the golfer can sign in.`;
  }
  return {created,failed};
 }
