@@ -95,3 +95,8 @@ test('staged migration contains exactly one function definition and ends at its 
  assert.equal((sql.match(/GRANT EXECUTE ON FUNCTION public\\.elleng_add_late_golfer/g)||[]).length,1);
  assert.match(sql.trimEnd(),/TO authenticated;$/);
 });
+
+test('commissioner login provisioning does not claim verified accounts if account list fails',()=>{
+ assert.match(scoring,/const listVerified=!listError&&!listData\\?\\.error&&Array\\.isArray\\(listData\\?\\.accounts\\)/);
+ assert.match(scoring,/account verification failed\\. Refresh and check player logins before play/);
+});
