@@ -199,6 +199,7 @@ async function main() {
         if(result.fixedNavOcclusions.length)await page.screenshot({path:path.join(output,`${width}-${name}-scrolled.png`),animations:'disabled'});
         report.checks.push({width,page:name,...result});
         console.log(`${width} ${name}: ${result.horizontalOverflow?'OVERFLOW':'bounded'}, ${result.outsideControls.length} outside controls, ${result.clippedText.length} clipped labels, ${result.overlappingControls.length} control overlaps`);
+        if(result.clippedText.length)console.log(`${width} ${name} clipped label details: ${JSON.stringify(result.clippedText)}`);
       };
       try{
         await page.goto(host.origin+'/scoring.html#hub');
