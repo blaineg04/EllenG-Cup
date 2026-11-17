@@ -30,7 +30,9 @@ BEGIN
     OR jsonb_array_length(ts)<>2 OR jsonb_typeof(s->'picks') IS DISTINCT FROM 'array'
  THEN RAISE EXCEPTION 'Draft structure unavailable'; END IF;
  -- Fail closed until the deployed draft's authoritative completion marker is verified.
- IF jsonb_array_length(s->'picks')=0 OR\n    jsonb_array_length(s->'picks') IS DISTINCT FROM\n      (SELECT count(*)::integer FROM jsonb_array_elements(gs) g WHERE coalesce(btrim(g->>'name'),'')<>'' AND coalesce((g->>'participating')::boolean,true) AND coalesce((g->>'late_added')::boolean,false)=false)
+ IF jsonb_array_length(s->'picks')=0 OR
+    jsonb_array_length(s->'picks') IS DISTINCT FROM
+      (SELECT count(*)::integer FROM jsonb_array_elements(gs) g WHERE coalesce(btrim(g->>'name'),'')<>'' AND coalesce((g->>'participating')::boolean,true) AND coalesce((g->>'late_added')::boolean,false)=false)
  THEN RAISE EXCEPTION 'Verified completed draft required'; END IF;
  IF coalesce(s->>'playFormat','') NOT IN ('shamble_points','shamble')
  THEN RAISE EXCEPTION 'Unsupported tournament format'; END IF;
