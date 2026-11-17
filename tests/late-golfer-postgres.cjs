@@ -33,6 +33,15 @@ const fs=require('node:fs'),assert=require('node:assert/strict');
   assert.equal(next.golfers[23].late_added,true);
   assert.equal(next.golfers[23].participating,true);
   await assert.rejects(call(),/Tournament changed/);
-  console.log('PASS: exact staged late golfer RPC authorization, handicap, score guard, append-only roster, unchanged picks and stale-write rejection');
+  const freshStamp=saved.rows[0].result.updated_at;
+  await assert.rejects(call('  maxwell lebeouf  ','C','20',freshStamp),/Golfer already exists/);
+  await db.query("INSERT INTO public.elleng_player_accounts VALUES('elleng-cup',24,$1)",[other]);
+  const second=await call('Another Late Golfer','C','20',freshStamp);
+  assert.equal(second.rows[0].result.golfer_index,25,'must skip account-reserved blank golfer slot');
+  const final=(await db.query("SELECT state FROM public.elleng_drafts WHERE id='elleng-cup'")).rows[0].state;
+  assert.deepEqual(final.picks,picks,'additional late enrollments must not alter picks');
+  assert.deepEqual(final.teams[1].roster,[...teams[1].roster,23,25]);
+  assert.equal(final.golfers[24].name,'','account-reserved blank slot must remain untouched');
+  console.log('PASS: exact staged late golfer RPC authorization, handicap, score guard, append-only roster, unchanged picks, duplicate rejection, reserved account slots and stale-write rejection');
  }finally{await db.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});
