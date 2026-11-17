@@ -63,7 +63,7 @@ BEGIN
  IF jsonb_typeof(roster) IS DISTINCT FROM 'array'
  THEN RAISE EXCEPTION 'Team roster unavailable'; END IF;
  golfer:=jsonb_build_object('name',clean_name,'hcp',coalesce(p_hcp,''),
-  'band',p_band,'self_ranked',false,'photo_url','','participating',true,'late_added',true,'team',p_team_index);
+  'band',p_band,'self_ranked',true,'photo_url','','participating',true,'late_added',true,'team',p_team_index);
  s:=jsonb_set(s,'{golfers}',jsonb_set(gs,ARRAY[idx::text],golfer,false),false);
  s:=jsonb_set(s,ARRAY['teams',p_team_index::text,'roster'],roster||to_jsonb(idx),false);
  stamp:=clock_timestamp();
