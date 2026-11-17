@@ -30,7 +30,7 @@ BEGIN
     OR jsonb_array_length(ts)<>2 OR jsonb_typeof(s->'picks') IS DISTINCT FROM 'array'
  THEN RAISE EXCEPTION 'Draft structure unavailable'; END IF;
  -- Fail closed until the deployed draft's authoritative completion marker is verified.
- IF s->>'draftComplete' IS DISTINCT FROM 'true'
+ IF jsonb_array_length(s->'picks')=0 OR\n    jsonb_array_length(s->'picks') IS DISTINCT FROM\n      (SELECT count(*)::integer FROM jsonb_array_elements(gs) g WHERE coalesce(btrim(g->>'name'),'')<>'' AND coalesce((g->>'participating')::boolean,true) AND coalesce((g->>'late_added')::boolean,false)=false)
  THEN RAISE EXCEPTION 'Verified completed draft required'; END IF;
  IF coalesce(s->>'playFormat','') NOT IN ('shamble_points','shamble')
  THEN RAISE EXCEPTION 'Unsupported tournament format'; END IF;
@@ -50,7 +50,7 @@ BEGIN
  IF jsonb_typeof(roster) IS DISTINCT FROM 'array'
  THEN RAISE EXCEPTION 'Team roster unavailable'; END IF;
  golfer:=jsonb_build_object('name',clean_name,'hcp',coalesce(p_hcp,''),
-  'band',p_band,'self_ranked',false,'photo_url','','participating',true,'team',p_team_index);
+  'band',p_band,'self_ranked',false,'photo_url','','participating',true,'late_added',true,'team',p_team_index);
  s:=jsonb_set(s,'{golfers}',gs||jsonb_build_array(golfer),false);
  s:=jsonb_set(s,ARRAY['teams',p_team_index::text,'roster'],roster||to_jsonb(idx),false);
  stamp:=clock_timestamp();
