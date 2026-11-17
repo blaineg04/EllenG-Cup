@@ -21,10 +21,11 @@ BEGIN
  IF btrim(coalesce(p_hcp,''))<>'' THEN
    IF btrim(p_hcp) !~ '^[0-9]+([.][0-9]+)?$'
    THEN RAISE EXCEPTION 'Invalid numeric handicap' USING ERRCODE='22023'; END IF;
-   IF p_hcp::numeric NOT BETWEEN 0 AND 54 OR p_band IS DISTINCT FROM
-     CASE WHEN p_hcp::numeric<=9 THEN 'A'
-          WHEN p_hcp::numeric<=17 THEN 'B'
-          WHEN p_hcp::numeric<=25 THEN 'C' ELSE 'D' END
+   IF p_hcp::numeric NOT BETWEEN 0 AND 54
+      OR (p_hcp::numeric<=9 AND p_band<>'A')
+      OR (p_hcp::numeric>9 AND p_hcp::numeric<=17 AND p_band<>'B')
+      OR (p_hcp::numeric>17 AND p_hcp::numeric<=25 AND p_band<>'C')
+      OR (p_hcp::numeric>25 AND p_band<>'D')
    THEN RAISE EXCEPTION 'Handicap and band do not match' USING ERRCODE='22023'; END IF;
  END IF;
  SELECT * INTO t FROM public.elleng_tournaments WHERE id=p_tournament_id FOR UPDATE;
