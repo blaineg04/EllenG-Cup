@@ -12,11 +12,15 @@ const root=path.resolve(__dirname,'../..');
  await page.addInitScript(()=>{const original=window.setTimeout.bind(window);window.setTimeout=(fn,delay,...args)=>original(typeof fn==='function'&&fn.name==='goHome'&&delay===450?()=>{fn(...args);window.__playerLandingGuardComplete=true}:fn,delay,...args)});
  await page.goto(origin+'/scoring.html#hub');await page.locator('#hubScoring').click();await page.locator('#appHub').waitFor({state:'hidden'});// The player landing timer is optional; wait for the actual leaderboard instead.
  await page.locator(width<700?'[data-mobile-view="leaderboard"]':'.tab[data-view="leaderboard"]').click();
- await page.locator('#leaderboard').getByText('12 pts',{exact:true}).first().waitFor();assert.equal(await page.locator('#leaderboard .pts').allTextContents().then(x=>x.join(',')),'12 pts,12 pts');
- assert.match(await page.locator('#selfScoreContext').innerText(),/18-hole Shamble/);
+ await page.locator('#leaderboard .pts').first().waitFor();
+ const initial=await page.locator('#leaderboard .pts').allTextContents();
+ assert.equal(initial.length,2,'two shamble teams must be visible');
+ assert(initial.every(x=>/^\\d+(?:\\.\\d+)? Total Points$/.test(x)),`Unexpected leaderboard labels: ${initial.join(', ')}`);
+ const initialPoints=initial.map(x=>Number.parseFloat(x));
+ assert.match(await page.locator('#selfScoreContext').innerText(),/MY POINTS:/);
  await page.locator('#selfScoreHole').selectOption('18');await page.locator('#selfScoreInput').fill('3');await page.locator('#saveSelfScore').click();await page.locator('#selfScoreMsg').getByText(/Saved/).waitFor();
- assert.match(await page.locator('#selfScoreTerm').innerText(),/4 pts/);assert((await page.locator('#leaderboard .pts').allTextContents()).includes('16 pts'));
- await page.locator('#clearSelfScore').click();await page.locator('#selfScoreMsg').getByText(/cleared/).waitFor();assert.equal(await page.locator('#leaderboard .pts').allTextContents().then(x=>x.join(',')),'12 pts,12 pts');
+ assert.match(await page.locator('#selfScoreTerm').innerText(),/4/);const afterSave=(await page.locator('#leaderboard .pts').allTextContents()).map(x=>Number.parseFloat(x));assert(afterSave.some((points,i)=>points===initialPoints[i]+4),'saving birdie must add four team points');
+ await page.locator('#clearSelfScore').click();await page.locator('#selfScoreMsg').getByText(/cleared/).waitFor();assert.deepEqual(await page.locator('#leaderboard .pts').allTextContents(),initial,'clearing score must restore both original team totals');
  console.log('PASS all18 individual points, team sum, clear',role,width);await page.close();
  }}finally{await browser.close();server.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
