@@ -19,7 +19,15 @@ BEGIN
  THEN RAISE EXCEPTION 'Invalid golfer details' USING ERRCODE='22023'; END IF;
  -- Enforce the same handicap bands as the commissioner UI even for direct RPC callers.
  IF btrim(coalesce(p_hcp,''))<>'' THEN
-   IF btrim(p_hcp) !~ '^[0-9]+(\\.[0-9]+)?
+   IF btrim(p_hcp) !~ '^[0-9]+([.][0-9]+)?$'
+   THEN RAISE EXCEPTION 'Invalid numeric handicap' USING ERRCODE='22023'; END IF;
+   IF p_hcp::numeric NOT BETWEEN 0 AND 54 OR p_band IS DISTINCT FROM
+     CASE WHEN p_hcp::numeric<=9 THEN 'A'
+          WHEN p_hcp::numeric<=17 THEN 'B'
+          WHEN p_hcp::numeric<=25 THEN 'C' ELSE 'D' END
+   THEN RAISE EXCEPTION 'Handicap and band do not match' USING ERRCODE='22023'; END IF;
+ END IF;
+ SELECT * INTO t FROM public.elleng_tournaments WHERE id=p_tournament_id FOR UPDATE;
  IF NOT FOUND OR t.draft_id IS DISTINCT FROM p_draft_id OR t.status NOT IN ('setup','live')
  THEN RAISE EXCEPTION 'Tournament unavailable for late enrollment'; END IF;
  SELECT * INTO d FROM public.elleng_drafts WHERE id=p_draft_id FOR UPDATE;
