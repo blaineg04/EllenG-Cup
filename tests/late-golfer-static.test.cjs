@@ -59,3 +59,10 @@ test('post-commit refresh failure cannot be mistaken for failed enrollment',()=>
  assert.match(html,/do not add the golfer twice/);
  assert.match(html,/Late addition was not confirmed\. Refresh before retrying/);
 });
+
+test('commissioner can explicitly retry provisioning missing player logins',()=>{
+ const html=fs.readFileSync('scoring.html','utf8');
+ assert.match(html,/\$\("createMissingLogins"\)\?\.addEventListener\("click"/);
+ assert.match(html,/const result=await ensureAutomaticPlayerAccounts\(msg\)/);
+ assert.match(html,/if\(!isCommissioner\)/);
+});
