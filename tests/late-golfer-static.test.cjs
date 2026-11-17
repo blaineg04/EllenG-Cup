@@ -66,3 +66,10 @@ test('commissioner can explicitly retry provisioning missing player logins',()=>
  assert.match(html,/const result=await ensureAutomaticPlayerAccounts\(msg\)/);
  assert.match(html,/if\(!isCommissioner\)/);
 });
+
+test('late golfer numeric handicap determines its band when provided',()=>{
+ const html=fs.readFileSync('scoring.html','utf8');
+ assert.match(html,/const derivedBand=hcp\?bandFromHandicapValue\(hcp\):""/);
+ assert.match(html,/const band=derivedBand\|\|selectedBand/);
+ assert.match(html,/if\(hcp&&!derivedBand\)/);
+});
