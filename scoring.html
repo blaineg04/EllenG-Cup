@@ -6646,6 +6646,17 @@ function syncChangedCaptainPicks(changes){
  }
 }
 $("saveTeams").addEventListener("click",async()=>{document.querySelectorAll(".team-color-input").forEach(x=>{const i=Number(x.dataset.team);if(draftState.teams?.[i])draftState.teams[i].color=x.value});document.querySelectorAll(".team-slogan-input").forEach(x=>{const i=Number(x.dataset.team);if(draftState.teams?.[i])draftState.teams[i].slogan=x.value});if(!isCommissioner)return;ensureDraftShape();$("teamEditMsg").textContent="Saving…";document.querySelectorAll("[data-team-name]").forEach(x=>{let i=Number(x.dataset.teamName);draftState.teams[i].name=x.value.trim()||`Team ${i+1}`});const captainChanges=Array.from(document.querySelectorAll("[data-team-captain]")).map(x=>({team:Number(x.dataset.teamCaptain),oldName:String(draftState.teams[Number(x.dataset.teamCaptain)]?.captain||"").trim(),newName:x.value.trim()}));try{syncChangedCaptainPicks(captainChanges)}catch(e){$("teamEditMsg").textContent=e.message;await loadBase();return}captainChanges.forEach(x=>draftState.teams[x.team].captain=x.newName);document.querySelectorAll("[data-team-email]").forEach(x=>draftState.teams[Number(x.dataset.teamEmail)].captainEmail=x.value.trim());try{await saveDraftState($("teamEditMsg"))}catch(e){}});
+$("createMissingLogins")?.addEventListener("click",async()=>{
+ const button=$("createMissingLogins"),msg=$("createMissingLoginsMsg");
+ if(!isCommissioner){msg.textContent="Commissioner sign-in required.";return}
+ button.disabled=true;msg.textContent="Checking missing player logins…";
+ try{
+  const result=await ensureAutomaticPlayerAccounts(msg);
+  if(result.failed?.length)msg.textContent=`${result.created} created; ${result.failed.length} account(s) need attention: ${result.failed.map(x=>x.name).join(", ")}.`;
+  renderAll();
+ }catch(e){msg.textContent=e?.message||"Unable to verify missing logins."}
+ finally{button.disabled=false}
+});
 $("addLateGolferBtn").addEventListener("click",async()=>{
  const msg=$("addLateGolferMsg"),button=$("addLateGolferBtn");
  if(!isCommissioner){msg.textContent="Commissioner sign-in required.";return}
