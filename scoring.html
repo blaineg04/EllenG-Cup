@@ -3737,6 +3737,8 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   </div>
   <div class="row" style="margin-top:12px"><button id="addGolferBtn" class="primary save-wide">Add Golfer</button></div>
   <div id="addGolferMsg" class="status" style="margin-top:9px"></div>
+  <div class="row" style="margin-top:12px"><button id="addLateGolferBtn" type="button" class="secondary save-wide">Add Late Golfer (After Draft)</button></div>
+  <div id="addLateGolferMsg" class="status" style="margin-top:9px">Commissioner only. Preserves draft picks and existing assignments.</div>
 </div>
 
 <div id="adminPlayers" class="card admin-card">
@@ -6644,6 +6646,31 @@ function syncChangedCaptainPicks(changes){
  }
 }
 $("saveTeams").addEventListener("click",async()=>{document.querySelectorAll(".team-color-input").forEach(x=>{const i=Number(x.dataset.team);if(draftState.teams?.[i])draftState.teams[i].color=x.value});document.querySelectorAll(".team-slogan-input").forEach(x=>{const i=Number(x.dataset.team);if(draftState.teams?.[i])draftState.teams[i].slogan=x.value});if(!isCommissioner)return;ensureDraftShape();$("teamEditMsg").textContent="Saving…";document.querySelectorAll("[data-team-name]").forEach(x=>{let i=Number(x.dataset.teamName);draftState.teams[i].name=x.value.trim()||`Team ${i+1}`});const captainChanges=Array.from(document.querySelectorAll("[data-team-captain]")).map(x=>({team:Number(x.dataset.teamCaptain),oldName:String(draftState.teams[Number(x.dataset.teamCaptain)]?.captain||"").trim(),newName:x.value.trim()}));try{syncChangedCaptainPicks(captainChanges)}catch(e){$("teamEditMsg").textContent=e.message;await loadBase();return}captainChanges.forEach(x=>draftState.teams[x.team].captain=x.newName);document.querySelectorAll("[data-team-email]").forEach(x=>draftState.teams[Number(x.dataset.teamEmail)].captainEmail=x.value.trim());try{await saveDraftState($("teamEditMsg"))}catch(e){}});
+$("addLateGolferBtn").addEventListener("click",async()=>{
+ const msg=$("addLateGolferMsg"),button=$("addLateGolferBtn");
+ if(!isCommissioner){msg.textContent="Commissioner sign-in required.";return}
+ const name=($("newGolferName")?.value||"").trim();
+ const teamVal=$("newGolferTeam")?.value;
+ const teamIndex=teamVal===""?null:Number(teamVal);
+ const band=$("newGolferBand")?.value||"";
+ const hcp=($("newGolferHcp")?.value||"").trim();
+ if(name.length<2||!Number.isInteger(teamIndex)||teamIndex<0||teamIndex>1||!band){
+  msg.textContent="Enter a full name, handicap band, and Team 1 or Team 2.";return;
+ }
+ if(!confirm(`Add ${name} as Playing to Team ${teamIndex+1} after the completed draft? Existing picks will be preserved.`))return;
+ button.disabled=true;msg.textContent="Adding late golfer…";
+ try{
+  const {data,error}=await db.rpc("elleng_add_late_golfer",{
+   p_draft_id:DRAFT_ID,p_tournament_id:TOURNAMENT_ID,
+   p_expected_updated_at:draftUpdatedAt,p_name:name,p_team_index:teamIndex,p_band:band,p_hcp:hcp
+  });
+  if(error)throw error;
+  if(!data?.ok)throw new Error("Database did not confirm the addition.");
+  await loadBase();await loadPublicRoster();renderAll();
+  msg.textContent=`${name} added to Team ${teamIndex+1}. Create or link their login using commissioner player account controls.`;
+ }catch(e){msg.textContent=e?.message||"Late addition failed. Draft was not saved."}
+ finally{button.disabled=false}
+});
 $("addGolferBtn").addEventListener("click",async()=>{
  const photoUrl=($("newGolferPhoto")?.value||"").trim();
  const photoFile=$("newGolferPhotoFile")?.files?.[0]||null;
