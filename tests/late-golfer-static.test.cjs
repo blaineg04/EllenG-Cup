@@ -15,8 +15,8 @@ test('commissioner and stale-state guards',()=>{
 test('all score types prevent late enrollment',()=>{
  for(const table of ['elleng_team_scores','elleng_player_hole_scores','elleng_pair_hole_scores'])assert.ok(sql.includes(table));
 });
-test('only appends golfer and roster, never rewrites picks',()=>{
- assert.match(sql,/gs\|\|jsonb_build_array\(golfer\)/);
+test('only fills unreserved golfer slot and appends roster, never rewrites picks',()=>{
+ assert.match(sql,/jsonb_set\(gs,ARRAY\[idx::text\],golfer,false\)/);
  assert.match(sql,/roster\|\|to_jsonb\(idx\)/);
  assert.doesNotMatch(sql,/jsonb_set\(s,\s*'\{picks\}'/);
 });
