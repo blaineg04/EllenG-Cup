@@ -6667,7 +6667,7 @@ $("addLateGolferBtn").addEventListener("click",async()=>{
   if(error)throw error;
   if(!data?.ok)throw new Error("Database did not confirm the addition.");
   await loadBase();await loadPublicRoster();renderAll();
-  msg.textContent=`${name} added to Team ${teamIndex+1}. Create or link their login using commissioner player account controls.`;
+  msg.textContent=`${name} added to Team ${teamIndex+1}. Golfer login has NOT been created; account setup must be verified separately before scoring.`;
  }catch(e){msg.textContent=e?.message||"Late addition failed. Draft was not saved."}
  finally{button.disabled=false}
 });
