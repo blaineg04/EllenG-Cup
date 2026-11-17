@@ -43,3 +43,12 @@ test('new golfer account is checked after commissioner reload',()=>{
  assert.match(html,/Number\(a\.golfer_index\)===Number\(data\.golfer_index\)&&!!a\.user_id/);
  assert.match(html,/player login was not confirmed/);
 });
+
+test('safe slot selection rejects occupied indexes and respects 40-player cap',()=>{
+ assert.match(sql,/playing_count>=40/);
+ assert.match(sql,/coalesce\(btrim\(g->>'name'\),'\s*'\)='\s*'/);
+ assert.match(sql,/a\.golfer_index=ord-1/);
+ assert.match(sql,/ri=\(ord-1\)::text/);
+ assert.match(sql,/p->>'golfer'=\(ord-1\)::text/);
+ assert.doesNotMatch(sql,/gs\|\|jsonb_build_array\(golfer\)/);
+});
