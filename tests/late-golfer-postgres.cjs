@@ -20,9 +20,11 @@ const fs=require('node:fs'),assert=require('node:assert/strict');
   await db.query('UPDATE auth.session SET uid=$1',[owner]);
   await assert.rejects(call('Maxwell LeBeouf','C','abc'),/Invalid numeric handicap/);
   await assert.rejects(call('Maxwell LeBeouf','B','20'),/Handicap and band do not match/);
-  await db.exec("INSERT INTO public.elleng_player_hole_scores VALUES('elleng-cup-live')");
-  await assert.rejects(call(),/Scores already exist/);
-  await db.exec('DELETE FROM public.elleng_player_hole_scores');
+  for(const table of ['elleng_team_scores','elleng_player_hole_scores','elleng_pair_hole_scores']){
+    await db.exec(`INSERT INTO public.${table} VALUES('elleng-cup-live')`);
+    await assert.rejects(call(),/Scores already exist/,`${table} must block late enrollment`);
+    await db.exec(`DELETE FROM public.${table}`);
+  }
   const untouched=(await db.query("SELECT state,updated_at FROM public.elleng_drafts WHERE id='elleng-cup'")).rows[0];
   assert.deepEqual(untouched.state,state,'rejected requests must leave all draft state unchanged');
   assert.equal(new Date(untouched.updated_at).getTime(),new Date('2026-11-13T12:51:47Z').getTime(),'rejected requests must not change draft timestamp');
