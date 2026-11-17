@@ -82,3 +82,10 @@ test('mobile personal score context can wrap without clipping, scoped to My Scor
  assert.match(style,/white-space:normal!important/);
  assert.match(style,/overflow:visible!important/);
 });
+
+test('server validates late golfer handicap before any draft row mutation',()=>{
+ assert.match(sql,/Invalid numeric handicap/);
+ assert.match(sql,/Handicap and band do not match/);
+ assert.match(sql,/p_hcp::numeric NOT BETWEEN 0 AND 54/);
+ assert.ok(sql.indexOf('Invalid numeric handicap')<sql.indexOf('SELECT * INTO t FROM public.elleng_tournaments'));
+});
