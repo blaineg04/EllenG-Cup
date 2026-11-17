@@ -2206,6 +2206,8 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   </div>
   <div class="row" style="margin-top:12px"><button id="addGolferBtn" class="primary save-wide">Add Golfer</button></div>
   <div id="addGolferMsg" class="status" style="margin-top:9px"></div>
+  <div class="row" style="margin-top:12px"><button id="addLateGolferBtn" class="secondary save-wide" type="button">Add Late Golfer (After Draft)</button></div>
+  <div id="addLateGolferMsg" class="status" style="margin-top:9px">Commissioner only. Preserves the completed draft and existing scores.</div>
 </div>
 
 <div id="adminPlayers" class="card admin-card">
@@ -4658,6 +4660,31 @@ $("addGolferBtn").addEventListener("click",async()=>{
    renderPlayerEditor();
    if(!autoResult.failed.length)$("addGolferMsg").textContent=`Golfer added with automatic login. Setup is now ${draftGolferCount()} golfers and ${activeTeamCount()} teams.${splitNote}`;
  }catch(e){$("addGolferMsg").textContent=e?.message||"Unable to add golfer."}
+});
+$("addLateGolferBtn")?.addEventListener("click",async()=>{
+ const msg=$("addLateGolferMsg"),btn=$("addLateGolferBtn");
+ if(!isCommissioner||!draftState){msg.textContent="Commissioner sign-in required.";return}
+ const name=($("newGolferName")?.value||"").trim();
+ const teamValue=$("newGolferTeam")?.value;
+ const teamIndex=teamValue===""?null:Number(teamValue);
+ const band=$("newGolferBand")?.value;
+ const hcp=($("newGolferHcp")?.value||"").trim();
+ if(name.length<2||!Number.isInteger(teamIndex)||teamIndex<0||teamIndex>1){
+   msg.textContent="Enter the golfer's full name and select Team 1 or Team 2.";return;
+ }
+ if(!confirm(`Add ${name} as a late Playing golfer to ${teams[teamIndex]?.name||"Team "+(teamIndex+1)}? The completed draft will not be reopened.`))return;
+ btn.disabled=true;msg.textContent="Saving late golfer…";
+ try{
+   const {data,error}=await db.rpc("elleng_add_late_golfer",{
+     p_draft_id:DRAFT_ID,p_tournament_id:TOURNAMENT_ID,p_expected_updated_at:draftUpdatedAt,
+     p_name:name,p_team_index:teamIndex,p_band:band,p_hcp:hcp
+   });
+   if(error)throw error;
+   if(!data?.ok)throw new Error("Late golfer save was not confirmed.");
+   await loadBase();renderAll();
+   msg.textContent=`${name} added to ${teams[teamIndex]?.name||"Team "+(teamIndex+1)}. Create their player login using the existing commissioner login controls.`;
+ }catch(e){msg.textContent=e?.message||"Unable to add late golfer. No fallback draft save was attempted."}
+ finally{btn.disabled=false}
 });
 $("savePlayers").addEventListener("click",async()=>{
  if(!isCommissioner)return;ensureDraftShape();
