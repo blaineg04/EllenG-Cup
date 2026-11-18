@@ -1,0 +1,31 @@
+name: Withdrawal commissioner mobile layout smoke
+on:
+  push:
+    branches: [feature/commissioner-post-draft-withdrawal]
+    paths:
+      - 'scoring.html'
+      - 'tests/acceptance/withdrawal-mobile.cjs'
+      - '.github/workflows/withdrawal-mobile.yml'
+  pull_request:
+    paths:
+      - 'scoring.html'
+      - 'tests/acceptance/withdrawal-mobile.cjs'
+      - '.github/workflows/withdrawal-mobile.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser tooling
+        run: npm install --no-save --no-package-lock playwright@1.56.1
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Check commissioner control layout at mobile and desktop widths
+        run: node tests/acceptance/withdrawal-mobile.cjs
