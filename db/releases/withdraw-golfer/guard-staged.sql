@@ -8,7 +8,7 @@ AS $$
 DECLARE
  old_field jsonb; new_field jsonb; playing_count integer;
  idx integer; before_g jsonb; after_g jsonb; before_base jsonb; after_base jsonb;
- differences integer:=0;
+ differences integer:=0; original_count integer;
 BEGIN
  IF old.state->>'draftRules' IS DISTINCT FROM 'weighted' THEN RETURN new; END IF;
  IF new.state->>'draftRules' IS DISTINCT FROM 'weighted' THEN
@@ -35,10 +35,13 @@ BEGIN
  AND NOT EXISTS(SELECT 1 FROM public.elleng_group_assignments WHERE draft_id='elleng-cup')
  AND EXISTS(SELECT 1 FROM public.elleng_tournaments WHERE id='elleng-cup-live' AND status='setup')
  THEN RETURN new; END IF;
- -- Narrow single-golfer withdrawal or restore exception, for completed 23-pick tournament.
+ -- Narrow single-golfer withdrawal or restore exception for a completed variable-size draft.
+ SELECT count(*) INTO original_count FROM jsonb_array_elements(old.state->'golfers') original_g
+ WHERE btrim(coalesce(original_g->>'name',''))<>''
+ AND coalesce((original_g->>'late_added')::boolean,false)=false;
  IF old.id='elleng-cup'
  AND auth.uid() IS NOT NULL AND old.owner_id=auth.uid()
- AND jsonb_array_length(old.state->'picks')=23
+ AND jsonb_array_length(old.state->'picks')>=original_count
  AND old.state->'picks'=new.state->'picks'
  AND old.state->'teams'=new.state->'teams'
  AND old.state - 'golfers'=new.state - 'golfers'
