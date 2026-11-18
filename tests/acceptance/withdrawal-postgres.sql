@@ -78,6 +78,12 @@ BEGIN
    RAISE EXCEPTION 'Withdrawn golfer score UPDATE unexpectedly allowed';
  EXCEPTION WHEN insufficient_privilege THEN NULL;
  END;
+ IF EXISTS (SELECT 1 FROM public.elleng_player_hole_scores WHERE tournament_id='elleng-cup-live') THEN
+   RAISE EXCEPTION 'Rejected score UPDATE left a live tournament score behind';
+ END IF;
+ IF (SELECT count(*) FROM public.elleng_player_hole_scores WHERE tournament_id='score-guard-test-other') <> 1 THEN
+   RAISE EXCEPTION 'Rejected score UPDATE did not preserve the original score';
+ END IF;
  DELETE FROM public.elleng_player_hole_scores WHERE tournament_id='score-guard-test-other';
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,13);
