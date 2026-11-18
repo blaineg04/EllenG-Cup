@@ -49,6 +49,24 @@ BEGIN
    IF SQLERRM='Captain withdrawal unexpectedly allowed' THEN RAISE; END IF;
    IF SQLERRM NOT LIKE '%Captain withdrawal%' THEN RAISE; END IF;
  END;
+ -- Stale commissioner clients must not overwrite a newer draft revision.
+ BEGIN
+   PERFORM public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp - interval '1 second',13,'stale');
+   RAISE EXCEPTION 'Stale withdrawal unexpectedly allowed';
+ EXCEPTION WHEN OTHERS THEN
+   IF SQLERRM='Stale withdrawal unexpectedly allowed' THEN RAISE; END IF;
+   IF SQLERRM NOT LIKE '%Tournament changed%' THEN RAISE; END IF;
+ END;
+ -- A signed-in non-commissioner must not be allowed to withdraw a golfer.
+ PERFORM set_config('test.uid','22222222-2222-4222-8222-222222222222',true);
+ BEGIN
+   PERFORM public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,13,'unauthorized');
+   RAISE EXCEPTION 'Unauthorized withdrawal unexpectedly allowed';
+ EXCEPTION WHEN OTHERS THEN
+   IF SQLERRM='Unauthorized withdrawal unexpectedly allowed' THEN RAISE; END IF;
+   IF SQLERRM NOT LIKE '%Commissioner access required%' THEN RAISE; END IF;
+ END;
+ PERFORM set_config('test.uid','11111111-1111-4111-8111-111111111111',true);
  -- Once any player score exists, withdrawals must be rejected.
  INSERT INTO public.elleng_player_hole_scores VALUES('elleng-cup-live',13,1,1,4);
  BEGIN
