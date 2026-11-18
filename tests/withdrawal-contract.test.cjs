@@ -43,3 +43,13 @@ test("UI keeps commissioner controls and active-roster filtering",()=>{
  assert.match(ui,/if\(typeof r==="number"\)return golfers\[r\]\?\.participating===false/);
  assert.match(ui,/Withdrawn — /);
 });
+
+test("commissioner withdrawal refreshes both dropdowns after successful reload",()=>{
+ const withdraw=ui.indexOf('$("withdrawGolferBtn").addEventListener("click"');
+ const addLate=ui.indexOf('$("addLateGolferBtn").addEventListener("click"',withdraw);
+ assert.ok(withdraw>=0&&addLate>withdraw,"withdrawal click handler missing");
+ const handler=ui.slice(withdraw,addLate);
+ assert.match(handler,/await loadBase\(\);renderAll\(\);refreshWithdrawalChoices\(\);refreshRestoreChoices\(\);/);
+ assert.match(handler,/if\(!confirm\(/,"withdrawal must require confirmation");
+ assert.match(handler,/if\(!isCommissioner\)/,"withdrawal must check commissioner role");
+});
