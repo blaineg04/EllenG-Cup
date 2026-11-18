@@ -40,6 +40,22 @@ BEGIN
  result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,13);
  IF result->>'ok'<>'true' THEN RAISE EXCEPTION 'Restore failed'; END IF;
  IF (SELECT state->'golfers'->13->>'participating' FROM public.elleng_drafts WHERE id='elleng-cup')<>'true' THEN RAISE EXCEPTION 'Restore did not reactivate golfer'; END IF;
+ -- The 24th golfer was added after the 23-pick draft; withdrawing and
+ -- restoring that golfer must not require an additional draft pick.
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
+ result:=public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,23,'late-addition');
+ IF result->>'ok'<>'true' OR
+ (SELECT state#>>'{golfers,23,participating}' FROM public.elleng_drafts WHERE id='elleng-cup')<>'false'
+ THEN RAISE EXCEPTION 'Late-added golfer withdrawal failed'; END IF;
+ IF (SELECT jsonb_array_length(state->'picks') FROM public.elleng_drafts WHERE id='elleng-cup')<>23
+ THEN RAISE EXCEPTION 'Late addition altered draft picks'; END IF;
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
+ result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,23);
+ IF result->>'ok'<>'true' OR
+ (SELECT state#>>'{golfers,23,participating}' FROM public.elleng_drafts WHERE id='elleng-cup')<>'true'
+ THEN RAISE EXCEPTION 'Late-added golfer restore failed'; END IF;
+ IF (SELECT state->'teams' FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM state_before->'teams'
+ THEN RAISE EXCEPTION 'Late-added golfer restore altered team rosters'; END IF;
  -- Sequential withdrawals must preserve all original draft picks and team rosters.
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  result:=public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,14,'first');
