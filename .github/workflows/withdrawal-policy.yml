@@ -1,5 +1,7 @@
 name: Withdrawal policy isolated tests
 on:
+  push:
+    branches: [feature/commissioner-post-draft-withdrawal]
   pull_request:
     paths:
       - 'lib/withdrawal-policy.cjs'
