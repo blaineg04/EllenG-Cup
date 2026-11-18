@@ -5059,8 +5059,10 @@ async function loadBase(){
   const roster=Array.isArray(x.roster)?x.roster:[];
   const rosterNames=roster.map(r=>{
    if(typeof r==="string")return r;
-   if(typeof r==="number")return golfers[r]?.name||"";
-   return r?.name||golfers[r?.golferIndex]?.name||"";
+   if(typeof r==="number")return golfers[r]?.participating===false?"":(golfers[r]?.name||"");
+   if(r&&typeof r==="object"&&Number.isInteger(Number(r.golferIndex)))
+    return golfers[Number(r.golferIndex)]?.participating===false?"":(r.name||golfers[Number(r.golferIndex)]?.name||"");
+   return r?.name||"";
   }).filter(Boolean);
   return {name:x.name||`Team ${i+1}`,captain:x.captain||"",roster:rosterNames};
  });
