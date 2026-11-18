@@ -3746,6 +3746,10 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
     <select id="withdrawGolferSelect" style="width:100%;margin:6px 0"><option value="">Choose golfer</option></select>
     <button id="withdrawGolferBtn" type="button" class="secondary save-wide">Withdraw Golfer</button>
     <div id="withdrawGolferMsg" class="status" role="status" style="margin-top:8px"></div>
+    <label for="restoreGolferSelect">Restore a withdrawn golfer</label>
+    <select id="restoreGolferSelect" style="width:100%;margin:6px 0"><option value="">Choose withdrawn golfer</option></select>
+    <button id="restoreGolferBtn" type="button" class="secondary save-wide">Restore Golfer (Before Scoring)</button>
+    <div id="restoreGolferMsg" class="status" role="status" style="margin-top:8px"></div>
   </div>
 </div>
 
@@ -6679,6 +6683,39 @@ function refreshWithdrawalChoices(){
  if(options.some(({i})=>String(i)===prior))sel.value=prior;
 }
 $("withdrawGolferSelect").addEventListener("focus",refreshWithdrawalChoices);
+function refreshRestoreChoices(){
+ const sel=$("restoreGolferSelect");if(!sel||!draftState)return;
+ const prior=sel.value;
+ const options=(draftState.golfers||[]).map((g,i)=>({g,i}))
+  .filter(({g})=>g&&g.name&&g.withdrawn===true&&g.participating===false);
+ sel.innerHTML='<option value="">Choose withdrawn golfer</option>'+options.map(({g,i})=>`<option value="${i}">${esc(g.name)}</option>`).join("");
+ if(options.some(({i})=>String(i)===prior))sel.value=prior;
+}
+$("restoreGolferSelect").addEventListener("focus",refreshRestoreChoices);
+$("restoreGolferBtn").addEventListener("click",async()=>{
+ const msg=$("restoreGolferMsg"),button=$("restoreGolferBtn");
+ if(!isCommissioner){msg.textContent="Commissioner sign-in required.";return}
+ const raw=$("restoreGolferSelect")?.value,index=Number(raw);
+ if(!raw||!Number.isSafeInteger(index)){msg.textContent="Choose a withdrawn golfer.";return}
+ const g=draftState?.golfers?.[index];
+ if(!g||g.withdrawn!==true){msg.textContent="Golfer unavailable; refresh.";return}
+ if(!confirm(`Restore ${g.name} to their original team before scoring?`))return;
+ button.disabled=true;msg.textContent="Restoring golfer…";
+ try{
+  const {data,error}=await db.rpc("elleng_restore_golfer",{
+   p_draft_id:DRAFT_ID,p_tournament_id:TOURNAMENT_ID,
+   p_expected_updated_at:draftUpdatedAt,p_golfer_index:index
+  });
+  if(error)throw error;
+  if(!data?.ok)throw new Error("Database did not confirm restoration.");
+  msg.textContent="Restoration saved. Refreshing…";
+  try{await loadBase();renderAll();refreshRestoreChoices();refreshWithdrawalChoices();
+   msg.textContent=`${g.name} restored to their original team.`;
+  }catch(refreshError){msg.textContent="Restoration saved; refresh the page to verify."}
+ }catch(e){msg.textContent=e?.message||"Restoration failed; no changes confirmed."}
+ finally{button.disabled=false}
+});
+
 $("withdrawGolferBtn").addEventListener("click",async()=>{
  const msg=$("withdrawGolferMsg"),button=$("withdrawGolferBtn");
  if(!isCommissioner){msg.textContent="Commissioner sign-in required.";return}
