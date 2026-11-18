@@ -94,7 +94,7 @@ BEGIN
  SELECT jsonb_agg(jsonb_build_array(ordinality,value->'name',value->'band',value->'self_ranked') ORDER BY ordinality)
  INTO new_field FROM jsonb_array_elements(new.state->'golfers') WITH ORDINALITY
  WHERE btrim(coalesce(value->>'name',''))<>'' AND coalesce((value->>'participating')::boolean,true);
- IF jsonb_array_length(old.state->'picks')>=playing_count
+ IF jsonb_array_length(old.state->'picks')>=original_count
     AND old.state->'golfers' IS DISTINCT FROM new.state->'golfers'
  THEN
    RAISE EXCEPTION 'Completed draft golfer changes require an authorized withdrawal or restore';
