@@ -23,7 +23,9 @@ CREATE TRIGGER guard_draft BEFORE UPDATE ON public.elleng_drafts FOR EACH ROW EX
 \i db/releases/withdraw-golfer/staged.sql
 \i db/releases/withdraw-golfer/restore-staged.sql
 \i db/releases/withdraw-golfer/score-guard-staged.sql
-DO $$
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT UPDATE ON public.elleng_drafts TO authenticated;
+DO $
 DECLARE stamp timestamptz; result jsonb; state_before jsonb;
 BEGIN
  SELECT updated_at,state INTO stamp,state_before FROM public.elleng_drafts WHERE id='elleng-cup';
@@ -131,11 +133,12 @@ BEGIN
    IF SQLERRM='Direct commissioner withdrawal unexpectedly allowed' THEN RAISE; END IF;
    IF SQLERRM NOT LIKE '%Completed draft golfer changes%' THEN RAISE; END IF;
  END;
- -- A caller-controlled transaction setting must not authorize a direct roster update.
+ -- An authenticated caller must not bypass the RPC by spoofing its former transaction marker.
  -- This is an intentional security release gate: PostgreSQL custom settings are not secrets.
  BEGIN
    PERFORM set_config('elleng.withdrawal_rpc_authorized','yes',true);
    BEGIN
+     EXECUTE 'SET LOCAL ROLE authenticated';
      UPDATE public.elleng_drafts
      SET state=jsonb_set(state,'{golfers,13}',(state#>'{golfers,13}') ||
         jsonb_build_object('participating',false,'withdrawn',true,'withdrawn_at',clock_timestamp()))
@@ -143,8 +146,9 @@ BEGIN
      RAISE EXCEPTION 'SECURITY GATE FAILED: caller-controlled setting bypassed withdrawal RPC';
    EXCEPTION WHEN OTHERS THEN
      IF SQLERRM LIKE 'SECURITY GATE FAILED:%' THEN RAISE; END IF;
-     IF SQLERRM NOT LIKE '%Completed draft golfer changes%' AND SQLERRM NOT LIKE '%Unauthorized roster change%' THEN RAISE; END IF;
+     IF SQLERRM NOT LIKE '%Completed draft golfer changes%' AND SQLERRM NOT LIKE '%Unauthorized roster change%' AND SQLSTATE <> '42501' THEN RAISE; END IF;
    END;
+   EXECUTE 'RESET ROLE';
    PERFORM set_config('elleng.withdrawal_rpc_authorized','',true);
  END;
  -- Direct updates cannot bypass the RPC to withdraw a captain.
