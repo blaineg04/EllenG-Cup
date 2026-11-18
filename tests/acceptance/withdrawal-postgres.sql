@@ -47,6 +47,12 @@ BEGIN
  IF result->>'ok'<>'true' OR
  (SELECT state#>>'{golfers,23,participating}' FROM public.elleng_drafts WHERE id='elleng-cup')<>'false'
  THEN RAISE EXCEPTION 'Late-added golfer withdrawal failed'; END IF;
+ -- Late-added withdrawn golfers must also be blocked from scoring.
+ BEGIN
+   INSERT INTO public.elleng_player_hole_scores VALUES('elleng-cup-live',23,1,1,4);
+   RAISE EXCEPTION 'Late-added withdrawn golfer scored unexpectedly';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
  IF (SELECT jsonb_array_length(state->'picks') FROM public.elleng_drafts WHERE id='elleng-cup')<>23
  THEN RAISE EXCEPTION 'Late addition altered draft picks'; END IF;
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
