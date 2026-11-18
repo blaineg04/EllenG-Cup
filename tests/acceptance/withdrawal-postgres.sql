@@ -213,6 +213,23 @@ BEGIN
    IF SQLERRM='Stale withdrawal unexpectedly allowed' THEN RAISE; END IF;
    IF SQLERRM NOT LIKE '%Tournament changed%' THEN RAISE; END IF;
  END;
+ -- An unauthenticated request cannot invoke either commissioner action, even if the SQL caller is privileged.
+ PERFORM set_config('test.uid','',true);
+ BEGIN
+   PERFORM public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,13,'anonymous');
+   RAISE EXCEPTION 'Unauthenticated withdrawal unexpectedly allowed';
+ EXCEPTION WHEN OTHERS THEN
+   IF SQLERRM='Unauthenticated withdrawal unexpectedly allowed' THEN RAISE; END IF;
+   IF SQLERRM NOT LIKE '%Sign in required%' THEN RAISE; END IF;
+ END;
+ BEGIN
+   PERFORM public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,13);
+   RAISE EXCEPTION 'Unauthenticated restoration unexpectedly allowed';
+ EXCEPTION WHEN OTHERS THEN
+   IF SQLERRM='Unauthenticated restoration unexpectedly allowed' THEN RAISE; END IF;
+   IF SQLERRM NOT LIKE '%Sign in required%' THEN RAISE; END IF;
+ END;
+ PERFORM set_config('test.uid','11111111-1111-4111-8111-111111111111',true);
  -- A signed-in non-commissioner must not be allowed to withdraw a golfer.
  PERFORM set_config('test.uid','22222222-2222-4222-8222-222222222222',true);
  BEGIN
