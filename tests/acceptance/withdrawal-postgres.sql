@@ -23,7 +23,7 @@ CREATE TRIGGER guard_draft BEFORE UPDATE ON public.elleng_drafts FOR EACH ROW EX
 \i db/releases/withdraw-golfer/staged.sql
 \i db/releases/withdraw-golfer/restore-staged.sql
 \i db/releases/withdraw-golfer/score-guard-staged.sql
--- The score guard must be installed for both INSERT and UPDATE, not just one path.
+-- The score guard must be installed for INSERT, UPDATE and DELETE, not just one path.
 DO $scoreguard$
 BEGIN
  IF NOT EXISTS (
@@ -33,8 +33,8 @@ BEGIN
    WHERE n.nspname='public' AND c.relname='elleng_player_hole_scores'
    AND tr.tgname='elleng_reject_inactive_player_score_trg'
    AND NOT tr.tgisinternal AND tr.tgenabled <> 'D'
-   AND (tr.tgtype & 4) = 4 AND (tr.tgtype & 16) = 16
- ) THEN RAISE EXCEPTION 'Inactive score guard missing INSERT or UPDATE protection'; END IF;
+   AND (tr.tgtype & 4) = 4 AND (tr.tgtype & 16) = 16 AND (tr.tgtype & 8) = 8
+ ) THEN RAISE EXCEPTION 'Inactive score guard missing INSERT, UPDATE or DELETE protection'; END IF;
  IF has_function_privilege('authenticated','public.elleng_reject_inactive_player_score()','EXECUTE')
  OR has_function_privilege('anon','public.elleng_reject_inactive_player_score()','EXECUTE')
  THEN RAISE EXCEPTION 'Score guard trigger function directly executable by clients'; END IF;
