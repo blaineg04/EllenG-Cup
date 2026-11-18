@@ -16,7 +16,8 @@ test("commissioner RPCs require authentication, ownership, setup and optimistic 
   assert.match(sql,/d\.owner_id IS DISTINCT FROM auth\.uid\(\)/);
   assert.match(sql,/t\.status IS DISTINCT FROM 'setup'/);
   assert.match(sql,/d\.updated_at IS DISTINCT FROM p_expected_updated_at/);
-  assert.match(sql,/jsonb_array_length\(s->'picks'\)\s*(?:<>|=)\s*23/);
+  assert.match(sql,/jsonb_array_length\(s->'picks'\)\s*<\s*(?:active_original|original_count)/);
+  assert.doesNotMatch(sql,/jsonb_array_length\(s->'picks'\)\s*(?:<>|=)\s*23/,"must not hard-code tournament size");
   for(const table of ["elleng_team_scores","elleng_player_hole_scores","elleng_pair_hole_scores"])
    assert.ok(sql.includes(table),`missing score guard ${table}`);
  }
