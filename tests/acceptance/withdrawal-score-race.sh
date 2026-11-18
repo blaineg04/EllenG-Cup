@@ -29,3 +29,29 @@ if [[ "$withdraw_status" -eq 0 ]] || ! grep -q 'Scores exist; withdrawal blocked
 fi
 psql -v ON_ERROR_STOP=1 -At -c "SELECT (state->'golfers'->13->>'participating')='true' FROM public.elleng_drafts WHERE id='elleng-cup';" | grep -qx t
 echo 'PASS: committed score blocked concurrent withdrawal; golfer remains active'
+
+# Reverse order: commissioner withdrawal commits before a stale score submission.
+psql -v ON_ERROR_STOP=1 <<'SQL' > /tmp/elleng-score-race-c.log 2>&1 &
+SELECT set_config('test.uid','11111111-1111-4111-8111-111111111111',false);
+BEGIN;
+SELECT id FROM public.elleng_tournaments WHERE id='elleng-cup-live' FOR UPDATE;
+SELECT pg_sleep(4);
+SELECT public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',(SELECT updated_at FROM public.elleng_drafts WHERE id='elleng-cup'),14,'race-first');
+COMMIT;
+SQL
+withdraw_pid=$!
+sleep 1
+set +e
+psql -v ON_ERROR_STOP=1 <<'SQL' > /tmp/elleng-score-race-d.log 2>&1
+INSERT INTO public.elleng_player_hole_scores VALUES('elleng-cup-live',14,1,3,4);
+SQL
+score_status=$?
+set -e
+wait "$withdraw_pid"
+if [[ "$score_status" -eq 0 ]] || ! grep -q 'Withdrawn golfer cannot be scored' /tmp/elleng-score-race-d.log; then
+  cat /tmp/elleng-score-race-c.log /tmp/elleng-score-race-d.log
+  echo 'FAIL: withdrawal-first scenario allowed stale score' >&2
+  exit 1
+fi
+psql -v ON_ERROR_STOP=1 -At -c "SELECT (state->'golfers'->14->>'participating')='false' FROM public.elleng_drafts WHERE id='elleng-cup';" | grep -qx t
+echo 'PASS: withdrawal-first scenario rejects stale score'
