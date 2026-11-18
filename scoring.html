@@ -6736,7 +6736,7 @@ $("withdrawGolferBtn").addEventListener("click",async()=>{
   if(error)throw error;
   if(!data?.ok)throw new Error("Database did not confirm withdrawal.");
   msg.textContent="Withdrawal saved. Refreshing active teams…";
-  try{await loadBase();renderAll();refreshWithdrawalChoices();
+  try{await loadBase();renderAll();refreshWithdrawalChoices();refreshRestoreChoices();
    msg.textContent=`${g.name} withdrawn. Draft picks and player account retained.`;
   }catch(refreshError){msg.textContent="Withdrawal saved; refresh the page to verify team counts."}
  }catch(e){msg.textContent=e?.message||"Withdrawal failed; no changes confirmed."}
