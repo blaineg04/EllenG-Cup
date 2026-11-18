@@ -44,3 +44,16 @@ test("active roster counts ignore withdrawn golfers and duplicates",()=>{
  const s=makeState();s.golfers[13].participating=false;s.teams[1].roster.push(14);
  assert.equal(activeRoster(s,1).length,11);
 });
+
+test("two sequential withdrawals remain valid with uneven teams",()=>{
+ const first=previewWithdrawal(args(makeState(),13));
+ assert.equal(first.ok,true);
+ const second=previewWithdrawal(args(first.state,14));
+ assert.equal(second.ok,true);
+ assert.deepEqual(second.activeCounts,[12,10]);
+ assert.equal(second.state.picks.length,23);
+});
+test("unstarted draft is rejected",()=>{
+ const state=makeState();state.picks=state.picks.slice(0,8);
+ assert.equal(preflightWithdrawal(args(state,13)).ok,false);
+});
