@@ -73,3 +73,13 @@ test("commissioner restore confirms and refreshes both golfer dropdowns",()=>{
  assert.match(handler,/button\.disabled=true/);
  assert.match(handler,/finally\{button\.disabled=false\}/);
 });
+
+test("golfer dropdown filters retain late additions and hide captains and withdrawn golfers",()=>{
+ const withdraw=ui.slice(ui.indexOf("function refreshWithdrawalChoices(){"),ui.indexOf('$("withdrawGolferSelect").addEventListener("focus"'));
+ const restore=ui.slice(ui.indexOf("function refreshRestoreChoices(){"),ui.indexOf('$("restoreGolferSelect").addEventListener("focus"'));
+ assert.match(withdraw,/g\.participating!==false/);
+ assert.match(withdraw,/t\.captain/);
+ assert.match(withdraw,/t\.roster/);
+ assert.doesNotMatch(withdraw,/late_added===false/,"late additions must remain eligible");
+ assert.match(restore,/g\.withdrawn===true&&g\.participating===false/);
+});
