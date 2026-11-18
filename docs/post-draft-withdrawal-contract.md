@@ -33,3 +33,16 @@
 
 ## Release gate
 Do not deploy to the November 20 live tournament until the RPC, trigger, UI, score-write protections, and isolated end-to-end tests are implemented and pass. No live golfer is to be withdrawn for testing.
+
+## Isolated authenticated release rehearsal (required; not yet completed)
+1. Create a **separate disposable Supabase database** and deploy the staged SQL there in dependency order: weighted-roster guard, withdraw RPC, restore RPC, then inactive-score trigger. Never use the live EllenG Cup project for test writes.
+2. Seed a representative **two-team, 23-pick shamble draft** with 24 active golfers (one late addition), two captains, stable golfer indexes, and no scores. Capture baseline draft JSON, team rosters, account links, and score-row counts.
+3. Sign in as the commissioner using an isolated test account. In a real browser at 320px and 390px, verify both selectors populate on opening the commissioner screen. Withdraw a noncaptain on Team 2, accept confirmation, and verify 12 vs 11 active golfers, zero compensating points, original 23 picks and team rosters unchanged, and the golfer marked Withdrawn in Players.
+4. Sign in as a different authenticated golfer. Verify commissioner controls are inaccessible and direct withdrawal/restore RPC requests are denied. Verify scoring as the withdrawn golfer is rejected by the database.
+5. Sign back in as commissioner. Restore the golfer, confirm 12 vs 12 active roster, unchanged draft picks and account link, and both dropdowns refresh.
+6. Repeat withdrawal and restore with a Team 1 noncaptain, plus cancel confirmation, stale timestamp, captain selection, duplicate withdrawal/restore, and simulated network errors. Confirm errors are visible and buttons recover.
+7. Begin scoring for a different active golfer. Verify **both** withdrawal and restore are blocked, and the score remains intact. Test score-first and withdrawal-first races with separate database sessions.
+8. Verify the mobile Home, Teams, My Score, Players, and commissioner layouts have not regressed. Confirm all relevant CI workflows pass for the exact proposed release commit.
+9. Record environment ID, commit SHA, screenshots, actual browser results, tester, and timestamp. Only after all gates pass should a separate, explicit production release decision be made.
+
+**Rollback:** Do not delete golfer rows, picks, or scores. If a release is later authorized, capture the deployed SQL definitions and deployment version before changes; prepare a reviewed, reversible rollback for the newly introduced functions and trigger while preserving any legitimately withdrawn golfer state. Never run an unreviewed rollback on the live tournament.
