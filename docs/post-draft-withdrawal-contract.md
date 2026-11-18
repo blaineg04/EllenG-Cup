@@ -54,3 +54,9 @@ Do not deploy to the November 20 live tournament until the RPC, trigger, UI, sco
 - New `elleng_withdraw_golfer` and `elleng_restore_golfer` RPCs are not installed in production.
 - Staged guard's `current_user` role check is tested in disposable PostgreSQL. It still needs a real authenticated Supabase/PostgREST rehearsal on a separate environment before release; no live score or roster changes permitted.
 - All six executed GitHub CI workflows passed on commit `8462e6c`; two optional workflows skipped. Passing CI does not authorize a merge or deployment.
+
+### Read-only RLS policy verification (2026-11-18)
+- Production `public.elleng_drafts` SELECT policy permits authenticated read (`qual=true`).
+- UPDATE policy `elleng_owner_update` is restricted to `auth.uid() = owner_id` in **both** USING and WITH CHECK.
+- INSERT policies likewise require `auth.uid() = owner_id`.
+- These observations are read-only and do not validate PostgREST/RPC end-to-end behavior. No production writes, schema updates, or deployment performed.
