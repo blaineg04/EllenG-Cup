@@ -3737,6 +3737,8 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   </div>
   <div class="row" style="margin-top:12px"><button id="addGolferBtn" class="primary save-wide">Add Golfer</button></div>
   <div id="addGolferMsg" class="status" style="margin-top:9px"></div>
+  <div class="row" style="margin-top:12px"><button id="addLateGolferBtn" type="button" class="secondary save-wide">Add Late Golfer (After Draft)</button></div>
+  <div id="addLateGolferMsg" class="status" style="margin-top:9px">Commissioner only. Preserves draft picks and existing assignments.</div>
 </div>
 
 <div id="adminPlayers" class="card admin-card">
@@ -3980,9 +3982,12 @@ async function ensureAutomaticPlayerAccounts(statusEl=null){
    }catch(e){failed.push({name:String(g.name||`Player ${i+1}`),message:e?.message||"Unable to create login"});}
  }
  const {data:listData,error:listError}=await db.functions.invoke("player-admin",{body:{action:"list",draft_id:DRAFT_ID}});
- if(!listError&&!listData?.error)playerAccounts=listData?.accounts||[];
+ const listVerified=!listError&&!listData?.error&&Array.isArray(listData?.accounts);
+ if(listVerified)playerAccounts=listData.accounts;
  if(statusEl){
-   statusEl.textContent=failed.length?`${created} login${created===1?"":"s"} created. ${failed.length} failed: ${failed.map(x=>x.name).join(", ")}.`:`${created} missing login${created===1?"":"s"} created. All current golfers now have accounts.`;
+   statusEl.textContent=!listVerified?`${created} login creation request${created===1?"":"s"} completed, but account verification failed. Refresh and check player logins before play.`:
+     failed.length?`${created} login${created===1?"":"s"} created. ${failed.length} failed: ${failed.map(x=>x.name).join(", ")}.`:
+     `${created} missing login${created===1?"":"s"} created. Account list refreshed; verify the golfer can sign in.`;
  }
  return {created,failed};
 }
@@ -6644,6 +6649,52 @@ function syncChangedCaptainPicks(changes){
  }
 }
 $("saveTeams").addEventListener("click",async()=>{document.querySelectorAll(".team-color-input").forEach(x=>{const i=Number(x.dataset.team);if(draftState.teams?.[i])draftState.teams[i].color=x.value});document.querySelectorAll(".team-slogan-input").forEach(x=>{const i=Number(x.dataset.team);if(draftState.teams?.[i])draftState.teams[i].slogan=x.value});if(!isCommissioner)return;ensureDraftShape();$("teamEditMsg").textContent="Saving…";document.querySelectorAll("[data-team-name]").forEach(x=>{let i=Number(x.dataset.teamName);draftState.teams[i].name=x.value.trim()||`Team ${i+1}`});const captainChanges=Array.from(document.querySelectorAll("[data-team-captain]")).map(x=>({team:Number(x.dataset.teamCaptain),oldName:String(draftState.teams[Number(x.dataset.teamCaptain)]?.captain||"").trim(),newName:x.value.trim()}));try{syncChangedCaptainPicks(captainChanges)}catch(e){$("teamEditMsg").textContent=e.message;await loadBase();return}captainChanges.forEach(x=>draftState.teams[x.team].captain=x.newName);document.querySelectorAll("[data-team-email]").forEach(x=>draftState.teams[Number(x.dataset.teamEmail)].captainEmail=x.value.trim());try{await saveDraftState($("teamEditMsg"))}catch(e){}});
+$("createMissingLogins")?.addEventListener("click",async()=>{
+ const button=$("createMissingLogins"),msg=$("createMissingLoginsMsg");
+ if(!isCommissioner){msg.textContent="Commissioner sign-in required.";return}
+ button.disabled=true;msg.textContent="Checking missing player logins…";
+ try{
+  const result=await ensureAutomaticPlayerAccounts(msg);
+  if(result.failed?.length)msg.textContent=`${result.created} created; ${result.failed.length} account(s) need attention: ${result.failed.map(x=>x.name).join(", ")}.`;
+  renderAll();
+ }catch(e){msg.textContent=e?.message||"Unable to verify missing logins."}
+ finally{button.disabled=false}
+});
+$("addLateGolferBtn").addEventListener("click",async()=>{
+ const msg=$("addLateGolferMsg"),button=$("addLateGolferBtn");
+ if(!isCommissioner){msg.textContent="Commissioner sign-in required.";return}
+ const name=($("newGolferName")?.value||"").trim();
+ const teamVal=$("newGolferTeam")?.value;
+ const teamIndex=teamVal===""?null:Number(teamVal);
+ const hcp=($("newGolferHcp")?.value||"").trim();
+ const selectedBand=$("newGolferBand")?.value||"";
+ const derivedBand=hcp?bandFromHandicapValue(hcp):"";
+ const band=derivedBand||selectedBand;
+ if(hcp&&!derivedBand){msg.textContent="Enter a valid handicap or leave it blank and select a band.";return}
+ if(name.length<2||!Number.isInteger(teamIndex)||teamIndex<0||teamIndex>1||!band){
+  msg.textContent="Enter a full name, handicap band, and Team 1 or Team 2.";return;
+ }
+ if(!confirm(`Add ${name} as Playing to Team ${teamIndex+1} after the completed draft? Existing picks will be preserved.`))return;
+ button.disabled=true;msg.textContent="Adding late golfer…";
+ try{
+  const {data,error}=await db.rpc("elleng_add_late_golfer",{
+   p_draft_id:DRAFT_ID,p_tournament_id:TOURNAMENT_ID,
+   p_expected_updated_at:draftUpdatedAt,p_name:name,p_team_index:teamIndex,p_band:band,p_hcp:hcp
+  });
+  if(error)throw error;
+  if(!data?.ok)throw new Error("Database did not confirm the addition.");
+  // The database transaction is already committed; a refresh/login error must not report it as failed.
+  msg.textContent=`${name} added to Team ${teamIndex+1}. Verifying player account…`;
+  try{
+   await loadBase();await loadPublicRoster();renderAll();
+   const linked=playerAccounts.some(a=>Number(a.golfer_index)===Number(data.golfer_index)&&!!a.user_id);
+   msg.textContent=linked?`${name} added to Team ${teamIndex+1}; player account found. Have golfer verify sign-in before play.`:`${name} added to Team ${teamIndex+1}, but player login was not confirmed. Create/verify the account before play.`;
+  }catch(refreshError){
+   msg.textContent=`${name} was added to Team ${teamIndex+1}, but the screen/account refresh failed. Refresh before retrying; do not add the golfer twice.`;
+  }
+ }catch(e){msg.textContent=e?.message||"Late addition was not confirmed. Refresh before retrying."}
+ finally{button.disabled=false}
+});
 $("addGolferBtn").addEventListener("click",async()=>{
  const photoUrl=($("newGolferPhoto")?.value||"").trim();
  const photoFile=$("newGolferPhotoFile")?.files?.[0]||null;
@@ -7184,6 +7235,23 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
 }
 </style>
 
+<style id="my-score-personal-summary-clip-fix-20261117">
+/* Only the My Score personal points summary: let both score labels fit on narrow phones. */
+@media(max-width:650px){
+ body:not(.login-mode) #leaderboardView:not(.hidden) #myScoreEntryCard #selfScoreContext{
+  display:flex!important;align-items:center!important;justify-content:flex-start!important;
+  flex-wrap:wrap!important;column-gap:6px!important;row-gap:0!important;
+  white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
+  min-width:0!important;max-width:100%!important;
+  height:auto!important;max-height:none!important;min-height:33px!important;
+  flex:0 0 auto!important;
+ }
+ body:not(.login-mode) #leaderboardView:not(.hidden) #myScoreEntryCard #selfScoreContext > span{
+  min-width:0!important;max-width:100%!important;white-space:normal!important;
+  overflow-wrap:break-word!important;
+ }
+}
+</style>
 <style id="my-score-leaderboard-total-only-20261112">
 @media(max-width:650px){
  body:not(.login-mode) #myScoreLeaderboardCard .leader-row .pts{
