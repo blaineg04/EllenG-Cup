@@ -131,6 +131,22 @@ BEGIN
    IF SQLERRM='Direct commissioner withdrawal unexpectedly allowed' THEN RAISE; END IF;
    IF SQLERRM NOT LIKE '%Completed draft golfer changes%' THEN RAISE; END IF;
  END;
+ -- A caller-controlled transaction setting must not authorize a direct roster update.
+ -- This is an intentional security release gate: PostgreSQL custom settings are not secrets.
+ BEGIN
+   PERFORM set_config('elleng.withdrawal_rpc_authorized','yes',true);
+   BEGIN
+     UPDATE public.elleng_drafts
+     SET state=jsonb_set(state,'{golfers,13}',(state#>'{golfers,13}') ||
+        jsonb_build_object('participating',false,'withdrawn',true,'withdrawn_at',clock_timestamp()))
+     WHERE id='elleng-cup';
+     RAISE EXCEPTION 'SECURITY GATE FAILED: caller-controlled setting bypassed withdrawal RPC';
+   EXCEPTION WHEN OTHERS THEN
+     IF SQLERRM LIKE 'SECURITY GATE FAILED:%' THEN RAISE; END IF;
+     IF SQLERRM NOT LIKE '%Completed draft golfer changes%' AND SQLERRM NOT LIKE '%Unauthorized roster change%' THEN RAISE; END IF;
+   END;
+   PERFORM set_config('elleng.withdrawal_rpc_authorized','',true);
+ END;
  -- Direct updates cannot bypass the RPC to withdraw a captain.
  BEGIN
    UPDATE public.elleng_drafts
