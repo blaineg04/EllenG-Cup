@@ -23,6 +23,23 @@ CREATE TRIGGER guard_draft BEFORE UPDATE ON public.elleng_drafts FOR EACH ROW EX
 \i db/releases/withdraw-golfer/staged.sql
 \i db/releases/withdraw-golfer/restore-staged.sql
 \i db/releases/withdraw-golfer/score-guard-staged.sql
+-- The score guard must be installed for both INSERT and UPDATE, not just one path.
+DO $scoreguard$
+BEGIN
+ IF NOT EXISTS (
+   SELECT 1 FROM pg_trigger tr
+   JOIN pg_class c ON c.oid=tr.tgrelid
+   JOIN pg_namespace n ON n.oid=c.relnamespace
+   WHERE n.nspname='public' AND c.relname='elleng_player_hole_scores'
+   AND tr.tgname='elleng_reject_inactive_player_score_trg'
+   AND NOT tr.tgisinternal AND tr.tgenabled <> 'D'
+   AND (tr.tgtype & 4) = 4 AND (tr.tgtype & 16) = 16
+ ) THEN RAISE EXCEPTION 'Inactive score guard missing INSERT or UPDATE protection'; END IF;
+ IF has_function_privilege('authenticated','public.elleng_reject_inactive_player_score()','EXECUTE')
+ OR has_function_privilege('anon','public.elleng_reject_inactive_player_score()','EXECUTE')
+ THEN RAISE EXCEPTION 'Score guard trigger function directly executable by clients'; END IF;
+END
+$scoreguard$;
 -- RPC permissions must be enforced independently of row-level checks.
 DO $privileges$
 BEGIN
