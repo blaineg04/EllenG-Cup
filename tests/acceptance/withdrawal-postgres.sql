@@ -23,6 +23,9 @@ CREATE TRIGGER guard_draft BEFORE UPDATE ON public.elleng_drafts FOR EACH ROW EX
 \i db/releases/withdraw-golfer/staged.sql
 \i db/releases/withdraw-golfer/restore-staged.sql
 \i db/releases/withdraw-golfer/score-guard-staged.sql
+GRANT USAGE ON SCHEMA auth TO authenticated;
+GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;
+GRANT USAGE ON SCHEMA public TO authenticated;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT UPDATE ON public.elleng_drafts TO authenticated;
 DO $$
@@ -112,6 +115,8 @@ BEGIN
  WHERE id='elleng-cup';
  IF (SELECT state->>'withdrawal_test_metadata' FROM public.elleng_drafts WHERE id='elleng-cup')<>'preserved'
  THEN RAISE EXCEPTION 'Non-roster state update unexpectedly blocked'; END IF;
+ -- Direct-update security tests run as authenticated, not the database superuser.
+ EXECUTE 'SET LOCAL ROLE authenticated';
  -- A direct roster mutation must not bypass the completed-draft guard.
  BEGIN
    UPDATE public.elleng_drafts SET state=jsonb_set(state,'{golfers,13,name}','"Tampered Name"'::jsonb)
@@ -175,6 +180,7 @@ BEGIN
    IF SQLERRM='Bulk direct withdrawal unexpectedly allowed' THEN RAISE; END IF;
    IF SQLERRM NOT LIKE '%Unauthorized roster change%' AND SQLERRM NOT LIKE '%Completed draft golfer changes%' THEN RAISE; END IF;
  END;
+ EXECUTE 'RESET ROLE';
  -- Captain protection must reject an otherwise valid withdrawal.
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  BEGIN
