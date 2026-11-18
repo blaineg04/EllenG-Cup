@@ -62,6 +62,13 @@ BEGIN
  SELECT updated_at,state INTO stamp,state_before FROM public.elleng_drafts WHERE id='elleng-cup';
  result:=public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,13,'test');
  IF result->>'ok'<>'true' THEN RAISE EXCEPTION 'Withdrawal failed'; END IF;
+ IF (SELECT state->'golfers'->13->>'participating' FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM 'false'
+ OR (SELECT state->'golfers'->13->>'withdrawn' FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM 'true'
+ THEN RAISE EXCEPTION 'Withdrawal did not mark golfer inactive'; END IF;
+ IF (SELECT nullif(state->'golfers'->13->>'withdrawn_at','') FROM public.elleng_drafts WHERE id='elleng-cup') IS NULL
+ THEN RAISE EXCEPTION 'Withdrawal did not record timestamp'; END IF;
+ IF (SELECT state->'golfers'->13->>'withdrawal_reason' FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM 'test'
+ THEN RAISE EXCEPTION 'Withdrawal did not preserve commissioner reason'; END IF;
  IF (SELECT state->'picks' FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM state_before->'picks' THEN RAISE EXCEPTION 'Picks changed'; END IF;
  IF (SELECT state->'teams' FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM state_before->'teams' THEN RAISE EXCEPTION 'Teams changed'; END IF;
  BEGIN
