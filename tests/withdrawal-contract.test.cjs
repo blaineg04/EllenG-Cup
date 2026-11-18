@@ -32,6 +32,7 @@ test("withdraw and restore retain draft picks, teams, and indexes",()=>{
 });
 test("server rejects stale withdrawn golfer score writes",()=>{
  assert.match(scoreGuard,/BEFORE INSERT OR UPDATE ON public\.elleng_player_hole_scores/);
+ assert.match(scoreGuard,/FOR SHARE OF d/);
  assert.match(scoreGuard,/v_golfer->>'withdrawn'='true'/);
  assert.match(scoreGuard,/v_golfer->>'participating'='false'/);
 });
