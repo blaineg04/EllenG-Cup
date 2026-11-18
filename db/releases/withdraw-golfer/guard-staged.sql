@@ -16,11 +16,9 @@ BEGIN
  END IF;
  SELECT count(*) INTO playing_count FROM jsonb_array_elements(old.state->'golfers')
  WHERE btrim(coalesce(value->>'name',''))<>'' AND coalesce((value->>'participating')::boolean,true);
- -- A completed draft is not a blanket authorization to rewrite golfers.
- -- Keep harmless non-roster updates working, but inspect roster changes below.
- IF jsonb_array_length(old.state->'picks')>=playing_count
-    AND old.state->'golfers' IS NOT DISTINCT FROM new.state->'golfers'
- THEN RETURN new; END IF;
+ -- Do not return early after draft completion: the narrow exception below
+ -- must be evaluated for every golfer mutation, including restored rosters.
+ -- Non-golfer state changes still pass through the original guard checks.
  -- Once a weighted draft is complete, any change to golfer data must be
  -- a validated single-golfer withdrawal/restore below, not a general roster edit.
  -- During an unfinished draft preserve the original weighted guard behavior.
