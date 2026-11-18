@@ -81,7 +81,7 @@ test("restore rejects scores, stale timestamps, active golfers and absent origin
 });
 
 test("completed drafts with 22, 23, 24, and 25 original golfers support withdraw and restore",()=>{
- for(const count of [22,23,24,25]){
+ for(const count of [11,13,15,22,23,24,25,40]){
   const split=Math.ceil(count/2);
   const state={
    golfers:Array.from({length:count},(_,i)=>({name:i===0?"Captain A":i===split?"Captain B":`Golfer ${i}`,team:i<split?0:1,participating:true,late_added:false})),
