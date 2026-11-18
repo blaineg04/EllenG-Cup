@@ -16,7 +16,11 @@ BEGIN
  END IF;
  SELECT count(*) INTO playing_count FROM jsonb_array_elements(old.state->'golfers')
  WHERE btrim(coalesce(value->>'name',''))<>'' AND coalesce((value->>'participating')::boolean,true);
- IF jsonb_array_length(old.state->'picks')>=playing_count THEN RETURN new; END IF;
+ -- A completed draft is not a blanket authorization to rewrite golfers.
+ -- Keep harmless non-roster updates working, but inspect roster changes below.
+ IF jsonb_array_length(old.state->'picks')>=playing_count
+    AND old.state->'golfers' IS NOT DISTINCT FROM new.state->'golfers'
+ THEN RETURN new; END IF;
  -- Existing paused reset exception (unchanged).
  IF jsonb_array_length(coalesce(old.state->'picks','[]'::jsonb))=2
  AND old.state->>'timerPaused'='true'
