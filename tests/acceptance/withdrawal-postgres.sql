@@ -108,6 +108,24 @@ BEGIN
  IF (SELECT count(*) FROM public.elleng_player_hole_scores WHERE tournament_id='score-guard-test-other') <> 1 THEN
    RAISE EXCEPTION 'Rejected score UPDATE did not preserve the original score';
  END IF;
+ -- Simulate a stale live score row left by a legacy client, then prove a withdrawn
+ -- golfer's score cannot be deleted. This fixture bypass is disposable-test-only.
+ ALTER TABLE public.elleng_player_hole_scores DISABLE TRIGGER elleng_reject_inactive_player_score_trg;
+ INSERT INTO public.elleng_player_hole_scores VALUES('elleng-cup-live',13,1,2,4);
+ ALTER TABLE public.elleng_player_hole_scores ENABLE TRIGGER elleng_reject_inactive_player_score_trg;
+ BEGIN
+   DELETE FROM public.elleng_player_hole_scores
+   WHERE tournament_id='elleng-cup-live' AND golfer_index=13;
+   RAISE EXCEPTION 'Withdrawn golfer score DELETE unexpectedly allowed';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+ IF (SELECT count(*) FROM public.elleng_player_hole_scores WHERE tournament_id='elleng-cup-live' AND golfer_index=13) <> 1 THEN
+   RAISE EXCEPTION 'Rejected score DELETE removed the original score';
+ END IF;
+ -- Remove synthetic fixture under a disabled trigger, never in production.
+ ALTER TABLE public.elleng_player_hole_scores DISABLE TRIGGER elleng_reject_inactive_player_score_trg;
+ DELETE FROM public.elleng_player_hole_scores WHERE tournament_id='elleng-cup-live' AND golfer_index=13;
+ ALTER TABLE public.elleng_player_hole_scores ENABLE TRIGGER elleng_reject_inactive_player_score_trg;
  DELETE FROM public.elleng_player_hole_scores WHERE tournament_id='score-guard-test-other';
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,13);
