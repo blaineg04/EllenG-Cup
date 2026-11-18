@@ -52,6 +52,13 @@ BEGIN
  result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,15);
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,14);
+ -- Ordinary non-roster state updates must continue to work after the draft.
+ -- This protects existing commissioner and scoring-adjacent metadata workflows.
+ UPDATE public.elleng_drafts
+ SET state=jsonb_set(state,'{withdrawal_test_metadata}','"preserved"'::jsonb)
+ WHERE id='elleng-cup';
+ IF (SELECT state->>'withdrawal_test_metadata' FROM public.elleng_drafts WHERE id='elleng-cup')<>'preserved'
+ THEN RAISE EXCEPTION 'Non-roster state update unexpectedly blocked'; END IF;
  -- A direct roster mutation must not bypass the completed-draft guard.
  BEGIN
    UPDATE public.elleng_drafts SET state=jsonb_set(state,'{golfers,13,name}','"Tampered Name"'::jsonb)
