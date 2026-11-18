@@ -84,6 +84,13 @@ BEGIN
  THEN RAISE EXCEPTION 'Late-added golfer restore failed'; END IF;
  IF (SELECT state->'teams' FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM state_before->'teams'
  THEN RAISE EXCEPTION 'Late-added golfer restore altered team rosters'; END IF;
+ -- Restoring a golfer must permit normal scoring again.
+ INSERT INTO public.elleng_player_hole_scores VALUES('elleng-cup-live',13,1,1,4);
+ IF (SELECT count(*) FROM public.elleng_player_hole_scores
+     WHERE tournament_id='elleng-cup-live' AND golfer_index=13)<>1
+ THEN RAISE EXCEPTION 'Restored golfer cannot score'; END IF;
+ DELETE FROM public.elleng_player_hole_scores
+ WHERE tournament_id='elleng-cup-live' AND golfer_index=13;
  -- Sequential withdrawals must preserve all original draft picks and team rosters.
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  result:=public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,14,'first');
