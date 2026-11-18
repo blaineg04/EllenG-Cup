@@ -88,6 +88,11 @@ BEGIN
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,13);
  IF result->>'ok'<>'true' THEN RAISE EXCEPTION 'Restore failed'; END IF;
+ IF (SELECT state->'picks' FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM state_before->'picks'
+ THEN RAISE EXCEPTION 'Restore changed historical draft picks'; END IF;
+ IF (SELECT state->'teams' FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM state_before->'teams'
+ THEN RAISE EXCEPTION 'Restore changed original team assignments'; END IF;
+
  IF (SELECT state->'golfers'->13->>'participating' FROM public.elleng_drafts WHERE id='elleng-cup')<>'true' THEN RAISE EXCEPTION 'Restore did not reactivate golfer'; END IF;
  -- Repeating a successful restore must fail without changing the draft.
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
