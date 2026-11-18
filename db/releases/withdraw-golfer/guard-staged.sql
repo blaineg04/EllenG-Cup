@@ -41,6 +41,7 @@ BEGIN
  AND coalesce((original_g->>'late_added')::boolean,false)=false;
  IF old.id='elleng-cup'
  AND auth.uid() IS NOT NULL AND old.owner_id=auth.uid()
+ AND current_setting('elleng.withdrawal_rpc_authorized',true)='yes'
  AND jsonb_array_length(old.state->'picks')>=original_count
  AND old.state->'picks'=new.state->'picks'
  AND old.state->'teams'=new.state->'teams'
