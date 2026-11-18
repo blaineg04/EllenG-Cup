@@ -61,7 +61,9 @@ BEGIN
    'withdrawal_reason',btrim(coalesce(p_reason,'')));
  s:=jsonb_set(s,ARRAY['golfers',p_golfer_index::text],golfer,false);
  stamp:=clock_timestamp();
+ PERFORM set_config('elleng.withdrawal_rpc_authorized','yes',true);
  UPDATE public.elleng_drafts SET state=s,updated_at=stamp WHERE id=p_draft_id;
+ PERFORM set_config('elleng.withdrawal_rpc_authorized','',true);
  RETURN jsonb_build_object('ok',true,'golfer_index',p_golfer_index,'updated_at',stamp);
 END;
 $$;
