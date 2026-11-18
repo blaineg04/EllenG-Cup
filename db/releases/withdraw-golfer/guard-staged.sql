@@ -41,7 +41,10 @@ BEGIN
  AND coalesce((original_g->>'late_added')::boolean,false)=false;
  IF old.id='elleng-cup'
  AND auth.uid() IS NOT NULL AND old.owner_id=auth.uid()
- AND current_setting('elleng.withdrawal_rpc_authorized',true)='yes'
+ AND current_user = (
+   SELECT pg_get_userbyid(proowner) FROM pg_proc
+   WHERE oid='public.elleng_withdraw_golfer(text,text,timestamptz,integer,text)'::regprocedure
+ )
  AND jsonb_array_length(old.state->'picks')>=original_count
  AND old.state->'picks'=new.state->'picks'
  AND old.state->'teams'=new.state->'teams'
