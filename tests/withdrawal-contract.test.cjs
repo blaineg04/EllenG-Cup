@@ -61,3 +61,15 @@ test("commissioner render populates both withdrawal dropdowns without focus",()=
  const render=ui.slice(start,end);
  assert.match(render,/refreshWithdrawalChoices\(\);\s*refreshRestoreChoices\(\);/);
 });
+
+test("commissioner restore confirms and refreshes both golfer dropdowns",()=>{
+ const start=ui.indexOf('$("restoreGolferBtn").addEventListener("click"');
+ const end=ui.indexOf('$("withdrawGolferBtn").addEventListener("click"',start);
+ assert.ok(start>=0&&end>start,"restore click handler missing");
+ const handler=ui.slice(start,end);
+ assert.match(handler,/if\(!isCommissioner\)/,"restore must check commissioner role");
+ assert.match(handler,/if\(!confirm\(/,"restore must require confirmation");
+ assert.match(handler,/await loadBase\(\);renderAll\(\);refreshRestoreChoices\(\);refreshWithdrawalChoices\(\);/);
+ assert.match(handler,/button\.disabled=true/);
+ assert.match(handler,/finally\{button\.disabled=false\}/);
+});
