@@ -5,11 +5,13 @@ on:
     paths:
       - 'db/releases/withdraw-golfer/**'
       - 'tests/acceptance/withdrawal-postgres.sql'
+      - 'tests/acceptance/withdrawal-score-race.sh'
       - '.github/workflows/withdrawal-postgres.yml'
   pull_request:
     paths:
       - 'db/releases/withdraw-golfer/**'
       - 'tests/acceptance/withdrawal-postgres.sql'
+      - 'tests/acceptance/withdrawal-score-race.sh'
       - '.github/workflows/withdrawal-postgres.yml'
   workflow_dispatch:
 permissions:
@@ -40,3 +42,7 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d elleng_withdrawal_test -f tests/acceptance/withdrawal-postgres.sql
+      - name: Verify score-first concurrency across PostgreSQL sessions
+        env:
+          PGPASSWORD: postgres
+        run: bash tests/acceptance/withdrawal-score-race.sh
