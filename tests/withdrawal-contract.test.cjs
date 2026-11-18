@@ -53,3 +53,11 @@ test("commissioner withdrawal refreshes both dropdowns after successful reload",
  assert.match(handler,/if\(!confirm\(/,"withdrawal must require confirmation");
  assert.match(handler,/if\(!isCommissioner\)/,"withdrawal must check commissioner role");
 });
+
+test("commissioner render populates both withdrawal dropdowns without focus",()=>{
+ const start=ui.indexOf("function renderAdmin(){");
+ const end=ui.indexOf("async function refreshLiveHandicapsBeforeStateSave",start);
+ assert.ok(start>=0&&end>start,"commissioner render function not found");
+ const render=ui.slice(start,end);
+ assert.match(render,/refreshWithdrawalChoices\(\);\s*refreshRestoreChoices\(\);/);
+});
