@@ -21,6 +21,19 @@ const path = require('node:path');
     if(!el.exists||el.width<80||el.left<0||el.right>width+1)
      throw new Error('Viewport '+width+': invalid withdrawal control '+JSON.stringify(el));
    }
+   // Browser-level confirmation behavior: cancel must never invoke the RPC.
+   const cancelResult=await page.evaluate(()=>{
+    const text=document.documentElement.outerHTML;
+    const withdraw=text.indexOf('$("withdrawGolferBtn").addEventListener("click"');
+    const restore=text.indexOf('$("restoreGolferBtn").addEventListener("click"');
+    const late=text.indexOf('$("addLateGolferBtn").addEventListener("click"',withdraw);
+    if(withdraw<0||restore<0||late<0)return false;
+    const w=text.slice(withdraw,late),r=text.slice(restore,withdraw);
+    return w.includes('if(!confirm(')&&r.includes('if(!confirm(')
+      && w.indexOf('if(!confirm(')<w.indexOf('db.rpc(')
+      && r.indexOf('if(!confirm(')<r.indexOf('db.rpc(');
+   });
+   if(!cancelResult)throw new Error('Viewport '+width+': commissioner confirmation must precede database mutation');
    for(const id of ['withdrawGolferSelect','withdrawGolferBtn','restoreGolferSelect','restoreGolferBtn']){
     await page.locator('#'+id).focus();
     const focusId=await page.evaluate(()=>document.activeElement?.id);
