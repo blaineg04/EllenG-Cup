@@ -56,7 +56,24 @@ GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;
 GRANT USAGE ON SCHEMA public TO authenticated;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT UPDATE ON public.elleng_drafts TO authenticated;
-DO $$
+-- Exercise the successful commissioner path as the actual client database role,
+-- not just as the privileged SQL test runner. SECURITY DEFINER must authorize
+-- auth.uid() while the roster guard recognizes only the trusted RPC owner.
+DO $authenticated_rpc$
+DECLARE stamp timestamptz; result jsonb;
+BEGIN
+ EXECUTE 'SET LOCAL ROLE authenticated';
+ IF current_user <> 'authenticated' THEN RAISE EXCEPTION 'Commissioner RPC test not authenticated'; END IF;
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
+ result:=public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,13,'authenticated-client');
+ IF result->>'ok' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'Authenticated commissioner withdrawal failed'; END IF;
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
+ result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,13);
+ IF result->>'ok' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'Authenticated commissioner restore failed'; END IF;
+ EXECUTE 'RESET ROLE';
+END
+$authenticated_rpc$;
+DO $
 DECLARE stamp timestamptz; result jsonb; state_before jsonb;
 BEGIN
  SELECT updated_at,state INTO stamp,state_before FROM public.elleng_drafts WHERE id='elleng-cup';
