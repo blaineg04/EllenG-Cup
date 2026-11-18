@@ -40,6 +40,28 @@ BEGIN
  result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,13);
  IF result->>'ok'<>'true' THEN RAISE EXCEPTION 'Restore failed'; END IF;
  IF (SELECT state->'golfers'->13->>'participating' FROM public.elleng_drafts WHERE id='elleng-cup')<>'true' THEN RAISE EXCEPTION 'Restore did not reactivate golfer'; END IF;
+ -- Repeating a successful restore must fail without changing the draft.
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
+ BEGIN
+   PERFORM public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,13);
+   RAISE EXCEPTION 'Duplicate restoration unexpectedly allowed';
+ EXCEPTION WHEN OTHERS THEN
+   IF SQLERRM='Duplicate restoration unexpectedly allowed' THEN RAISE; END IF;
+   IF SQLERRM NOT LIKE '%Golfer is not withdrawn%' THEN RAISE; END IF;
+ END;
+ -- Repeating a withdrawal must also fail without changing the draft.
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
+ PERFORM public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,18,'duplicate-check');
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
+ BEGIN
+   PERFORM public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,18,'duplicate-check');
+   RAISE EXCEPTION 'Duplicate withdrawal unexpectedly allowed';
+ EXCEPTION WHEN OTHERS THEN
+   IF SQLERRM='Duplicate withdrawal unexpectedly allowed' THEN RAISE; END IF;
+   IF SQLERRM NOT LIKE '%Golfer is not active%' THEN RAISE; END IF;
+ END;
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
+ PERFORM public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,18);
  -- The 24th golfer was added after the 23-pick draft; withdrawing and
  -- restoring that golfer must not require an additional draft pick.
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
