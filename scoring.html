@@ -5725,6 +5725,7 @@ async function resetGolferPin(i){
  if($("tournamentDateInput"))$("tournamentDateInput").value=draftState?.tournamentDate||"";
  if($("newTournamentName")&&!$("newTournamentName").dataset.touched){$("newTournamentName").value=tournament?.name||draftState?.tournamentName||"EllenG Cup";$("newTournamentName").dataset.touched="1"}
  renderTeamEditor(); renderPlayerEditor();
+ refreshWithdrawalChoices(); refreshRestoreChoices();
 }
 async function refreshLiveHandicapsBeforeStateSave(){
  const {data,error}=await db.from("elleng_drafts").select("state").eq("id",DRAFT_ID).single();
