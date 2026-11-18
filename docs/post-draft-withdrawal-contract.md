@@ -46,3 +46,11 @@ Do not deploy to the November 20 live tournament until the RPC, trigger, UI, sco
 9. Record environment ID, commit SHA, screenshots, actual browser results, tester, and timestamp. Only after all gates pass should a separate, explicit production release decision be made.
 
 **Rollback:** Do not delete golfer rows, picks, or scores. If a release is later authorized, capture the deployed SQL definitions and deployment version before changes; prepare a reviewed, reversible rollback for the newly introduced functions and trigger while preserving any legitimately withdrawn golfer state. Never run an unreviewed rollback on the live tournament.
+
+## Production read-only authorization audit — 2026-11-18
+- Target: EllenG Cup Supabase project `xepccqedhbucpbwuykoc` only. No SQL writes performed.
+- `public.elleng_drafts`: RLS enabled; `authenticated` has SELECT and UPDATE privileges; table owner `postgres`.
+- Existing `public.elleng_guard_weighted_roster`: owner `postgres`, `SECURITY INVOKER` (`prosecdef=false`).
+- New `elleng_withdraw_golfer` and `elleng_restore_golfer` RPCs are not installed in production.
+- Staged guard's `current_user` role check is tested in disposable PostgreSQL. It still needs a real authenticated Supabase/PostgREST rehearsal on a separate environment before release; no live score or roster changes permitted.
+- All six executed GitHub CI workflows passed on commit `8462e6c`; two optional workflows skipped. Passing CI does not authorize a merge or deployment.
