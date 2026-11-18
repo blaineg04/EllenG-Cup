@@ -69,6 +69,16 @@ BEGIN
   RAISE EXCEPTION 'Withdrawn golfer score unexpectedly allowed';
  EXCEPTION WHEN insufficient_privilege THEN NULL;
  END;
+ -- Updating an existing score into the live tournament must also reject a withdrawn golfer.
+ -- Seed the row under an unrelated tournament so no live score exists before restoration.
+ INSERT INTO public.elleng_player_hole_scores VALUES('score-guard-test-other',13,1,1,4);
+ BEGIN
+   UPDATE public.elleng_player_hole_scores
+   SET tournament_id='elleng-cup-live' WHERE tournament_id='score-guard-test-other';
+   RAISE EXCEPTION 'Withdrawn golfer score UPDATE unexpectedly allowed';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+ DELETE FROM public.elleng_player_hole_scores WHERE tournament_id='score-guard-test-other';
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,13);
  IF result->>'ok'<>'true' THEN RAISE EXCEPTION 'Restore failed'; END IF;
