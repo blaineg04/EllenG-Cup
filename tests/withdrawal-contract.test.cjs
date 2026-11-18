@@ -32,7 +32,7 @@ test("withdraw and restore retain draft picks, teams, and indexes",()=>{
  assert.match(guard,/old\.state - 'golfers'=new\.state - 'golfers'/);
 });
 test("server rejects stale withdrawn golfer score writes",()=>{
- assert.match(scoreGuard,/BEFORE INSERT OR UPDATE ON public\.elleng_player_hole_scores/);
+ assert.match(scoreGuard,/BEFORE INSERT OR UPDATE OR DELETE ON public\.elleng_player_hole_scores/);
  assert.match(scoreGuard,/FOR SHARE OF d/);
  assert.doesNotMatch(scoreGuard,/\\\\n --/,"SQL must contain actual line breaks, not escaped text");
  assert.match(scoreGuard,/v_golfer->>'withdrawn'='true'/);
@@ -93,4 +93,10 @@ test("roster rebuild preserves withdrawn golfers historical team assignments",()
  assert.match(rebuild,/g\.participating===false&&g\.withdrawn!==true/);
  assert.doesNotMatch(rebuild,/if\(g\.participating===false\)\{g\.team=null/);
  assert.match(ui,/if\(!golfer\|\|golfer\.participating===false/,"active scoring roster still filters withdrawn golfers");
+});
+
+test("inactive-score trigger covers score clearing through DELETE",()=>{
+ assert.match(scoreGuard,/TG_OP='DELETE' THEN v_row:=OLD/);
+ assert.match(scoreGuard,/IF TG_OP='DELETE' THEN RETURN OLD/);
+ assert.match(scoreGuard,/BEFORE INSERT OR UPDATE OR DELETE ON public\.elleng_player_hole_scores/);
 });
