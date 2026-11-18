@@ -57,6 +57,16 @@ BEGIN
        differences:=differences+1;
        before_base:=before_g-'participating'-'withdrawn'-'withdrawn_at'-'withdrawal_reason';
        after_base:=after_g-'participating'-'withdrawn'-'withdrawn_at'-'withdrawal_reason';
+       -- Direct table updates must not bypass RPC captain and roster protections.
+       IF EXISTS (
+         SELECT 1 FROM jsonb_array_elements(old.state->'teams') t
+         WHERE lower(btrim(coalesce(t->>'captain','')))=lower(btrim(coalesce(before_g->>'name','')))
+       ) THEN RAISE EXCEPTION 'Captain withdrawal or restore requires separate policy'; END IF;
+       IF (
+         SELECT count(*) FROM jsonb_array_elements(old.state->'teams') t,
+         jsonb_array_elements_text(coalesce(t->'roster','[]'::jsonb)) ri
+         WHERE ri=idx::text
+       )<>1 THEN RAISE EXCEPTION 'Golfer must have one original team'; END IF;
        IF differences>1 OR before_base IS DISTINCT FROM after_base
        OR NOT (
          (coalesce((before_g->>'participating')::boolean,true) IS TRUE
