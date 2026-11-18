@@ -98,5 +98,14 @@ BEGIN
    IF SQLERRM='Withdrawal after scoring unexpectedly allowed' THEN RAISE; END IF;
    IF SQLERRM NOT LIKE '%Scores exist%' THEN RAISE; END IF;
  END;
+ -- Restore must also be locked after scoring starts.
+ BEGIN
+   PERFORM public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,13);
+   RAISE EXCEPTION 'Restore after scoring unexpectedly allowed';
+ EXCEPTION WHEN OTHERS THEN
+   IF SQLERRM='Restore after scoring unexpectedly allowed' THEN RAISE; END IF;
+   IF SQLERRM NOT LIKE '%Golfer is not withdrawn%' AND SQLERRM NOT LIKE '%Scores exist%'
+   THEN RAISE; END IF;
+ END;
 
-END $$;
+END $;
