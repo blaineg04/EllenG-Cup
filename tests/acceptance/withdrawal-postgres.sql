@@ -119,7 +119,21 @@ BEGIN
    IF SQLERRM='Unauthorized withdrawal unexpectedly allowed' THEN RAISE; END IF;
    IF SQLERRM NOT LIKE '%Commissioner access required%' THEN RAISE; END IF;
  END;
+ -- A non-commissioner must also be unable to restore an already withdrawn golfer.
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  PERFORM set_config('test.uid','11111111-1111-4111-8111-111111111111',true);
+ PERFORM public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,17,'restore-auth-check');
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
+ PERFORM set_config('test.uid','22222222-2222-4222-8222-222222222222',true);
+ BEGIN
+   PERFORM public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,17);
+   RAISE EXCEPTION 'Unauthorized restoration unexpectedly allowed';
+ EXCEPTION WHEN OTHERS THEN
+   IF SQLERRM='Unauthorized restoration unexpectedly allowed' THEN RAISE; END IF;
+   IF SQLERRM NOT LIKE '%Commissioner access required%' THEN RAISE; END IF;
+ END;
+ PERFORM set_config('test.uid','11111111-1111-4111-8111-111111111111',true);
+ PERFORM public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,17);
  -- Withdraw another golfer before scoring so restore lockout is tested against a valid withdrawn target.
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  result:=public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,16,'restore-lockout');
