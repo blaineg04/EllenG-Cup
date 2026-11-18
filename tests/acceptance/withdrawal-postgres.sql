@@ -117,6 +117,10 @@ BEGIN
  THEN RAISE EXCEPTION 'Non-roster state update unexpectedly blocked'; END IF;
  -- Direct-update security tests run as authenticated, not the database superuser.
  EXECUTE 'SET LOCAL ROLE authenticated';
+ IF current_user <> 'authenticated' THEN RAISE EXCEPTION 'Direct-update tests not using authenticated role'; END IF;
+ IF NOT has_table_privilege(current_user,'public.elleng_drafts','UPDATE') THEN
+   RAISE EXCEPTION 'Authenticated role lacks UPDATE; direct-update security test would be misleading';
+ END IF;
  -- A direct roster mutation must not bypass the completed-draft guard.
  BEGIN
    UPDATE public.elleng_drafts SET state=jsonb_set(state,'{golfers,13,name}','"Tampered Name"'::jsonb)
