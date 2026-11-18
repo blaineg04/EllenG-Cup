@@ -84,3 +84,13 @@ test("golfer dropdown filters retain late additions and hide captains and withdr
  assert.doesNotMatch(withdraw,/late_added===false/,"late additions must remain eligible");
  assert.match(restore,/g\.withdrawn===true&&g\.participating===false/);
 });
+
+test("roster rebuild preserves withdrawn golfers historical team assignments",()=>{
+ const start=ui.indexOf("function rebuildTeamRosters(){");
+ const end=ui.indexOf("const TEAM_DEFAULT_COLORS",start);
+ assert.ok(start>=0&&end>start,"roster rebuild not found");
+ const rebuild=ui.slice(start,end);
+ assert.match(rebuild,/g\.participating===false&&g\.withdrawn!==true/);
+ assert.doesNotMatch(rebuild,/if\(g\.participating===false\)\{g\.team=null/);
+ assert.match(ui,/if\(!golfer\|\|golfer\.participating===false/,"active scoring roster still filters withdrawn golfers");
+});
