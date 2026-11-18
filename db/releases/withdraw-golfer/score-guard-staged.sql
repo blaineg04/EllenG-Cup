@@ -7,7 +7,10 @@ AS $$
 DECLARE v_state jsonb; v_golfer jsonb;
 BEGIN
  IF NEW.tournament_id IS DISTINCT FROM 'elleng-cup-live' THEN RETURN NEW; END IF;
- -- Lock the draft row to serialize with commissioner withdrawal/restore updates.\n -- A score arriving first forces the commissioner RPC to observe it and reject withdrawal.\n -- A withdrawal arriving first forces this score write to see inactive status.\n SELECT d.state INTO v_state FROM public.elleng_tournaments t
+ -- Lock the draft row to serialize with commissioner withdrawal/restore updates.
+ -- A score arriving first forces the commissioner RPC to observe it and reject withdrawal.
+ -- A withdrawal arriving first forces this score write to see inactive status.
+ SELECT d.state INTO v_state FROM public.elleng_tournaments t
  JOIN public.elleng_drafts d ON d.id=t.draft_id
  WHERE t.id=NEW.tournament_id FOR SHARE OF d;
  IF v_state IS NULL OR jsonb_typeof(v_state->'golfers')<>'array'
