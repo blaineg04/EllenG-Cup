@@ -79,3 +79,30 @@ test("restore rejects scores, stale timestamps, active golfers and absent origin
  altered.teams[1].roster=altered.teams[1].roster.filter(i=>i!==13);
  assert.equal(preflightRestore(args(altered,13)).ok,false);
 });
+
+test("completed drafts with 22, 23, 24, and 25 original golfers support withdraw and restore",()=>{
+ for(const count of [22,23,24,25]){
+  const split=Math.ceil(count/2);
+  const state={
+   golfers:Array.from({length:count},(_,i)=>({name:i===0?"Captain A":i===split?"Captain B":`Golfer ${i}`,team:i<split?0:1,participating:true,late_added:false})),
+   teams:[{captain:"Captain A",roster:Array.from({length:split},(_,i)=>i)},
+          {captain:"Captain B",roster:Array.from({length:count-split},(_,i)=>i+split)}],
+   picks:Array.from({length:count},(_,i)=>({golfer:i}))
+  };
+  const before=JSON.stringify(state);
+  const index=split+1;
+  const withdrawn=previewWithdrawal(args(state,index));
+  assert.equal(withdrawn.ok,true,`withdraw ${count}`);
+  const restored=previewRestore(args(withdrawn.state,index));
+  assert.equal(restored.ok,true,`restore ${count}`);
+  assert.deepEqual(restored.state.teams,state.teams);
+  assert.deepEqual(restored.state.picks,state.picks);
+  assert.equal(JSON.stringify(state),before);
+  const incomplete=structuredClone(state);
+  incomplete.picks.pop();
+  assert.equal(preflightWithdrawal(args(incomplete,index)).ok,false,`incomplete ${count}`);
+  const withdrawnIncomplete=structuredClone(withdrawn.state);
+  withdrawnIncomplete.picks.pop();
+  assert.equal(preflightRestore(args(withdrawnIncomplete,index)).ok,false,`incomplete restore ${count}`);
+ }
+});
