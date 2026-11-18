@@ -8,7 +8,7 @@ AS $$
 DECLARE
  d public.elleng_drafts%ROWTYPE;
  t public.elleng_tournaments%ROWTYPE;
- s jsonb; g jsonb; stamp timestamptz; roster_count integer;
+ s jsonb; g jsonb; stamp timestamptz; roster_count integer; original_count integer;
 BEGIN
  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Sign in required' USING ERRCODE='42501'; END IF;
  IF p_draft_id IS DISTINCT FROM 'elleng-cup' OR p_tournament_id IS DISTINCT FROM 'elleng-cup-live'
@@ -26,8 +26,13 @@ BEGIN
  OR jsonb_typeof(s->'golfers') IS DISTINCT FROM 'array'
  OR jsonb_typeof(s->'teams') IS DISTINCT FROM 'array'
  OR jsonb_array_length(s->'teams')<>2
- OR jsonb_array_length(s->'picks')<>23
+ OR jsonb_typeof(s->'picks') IS DISTINCT FROM 'array'
  THEN RAISE EXCEPTION 'Unsupported draft structure'; END IF;
+ SELECT count(*) INTO original_count FROM jsonb_array_elements(s->'golfers') original_g
+ WHERE btrim(coalesce(original_g->>'name',''))<>''
+ AND coalesce((original_g->>'late_added')::boolean,false)=false;
+ IF jsonb_array_length(s->'picks')<original_count
+ THEN RAISE EXCEPTION 'Draft not complete'; END IF;
  IF p_golfer_index IS NULL OR p_golfer_index<0 OR p_golfer_index>=jsonb_array_length(s->'golfers')
  THEN RAISE EXCEPTION 'Invalid golfer'; END IF;
  g:=s#>ARRAY['golfers',p_golfer_index::text];
