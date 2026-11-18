@@ -21,6 +21,9 @@ BEGIN
  IF jsonb_array_length(old.state->'picks')>=playing_count
     AND old.state->'golfers' IS NOT DISTINCT FROM new.state->'golfers'
  THEN RETURN new; END IF;
+ -- Once a weighted draft is complete, any change to golfer data must be
+ -- a validated single-golfer withdrawal/restore below, not a general roster edit.
+ -- During an unfinished draft preserve the original weighted guard behavior.
  -- Existing paused reset exception (unchanged).
  IF jsonb_array_length(coalesce(old.state->'picks','[]'::jsonb))=2
  AND old.state->>'timerPaused'='true'
@@ -79,6 +82,11 @@ BEGIN
  SELECT jsonb_agg(jsonb_build_array(ordinality,value->'name',value->'band',value->'self_ranked') ORDER BY ordinality)
  INTO new_field FROM jsonb_array_elements(new.state->'golfers') WITH ORDINALITY
  WHERE btrim(coalesce(value->>'name',''))<>'' AND coalesce((value->>'participating')::boolean,true);
+ IF jsonb_array_length(old.state->'picks')>=playing_count
+    AND old.state->'golfers' IS DISTINCT FROM new.state->'golfers'
+ THEN
+   RAISE EXCEPTION 'Completed draft golfer changes require an authorized withdrawal or restore';
+ END IF;
  IF old_field IS DISTINCT FROM new_field THEN
    RAISE EXCEPTION 'Playing roster and handicap bands are locked until the draft is complete';
  END IF;
