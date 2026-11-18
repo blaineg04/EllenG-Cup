@@ -7,7 +7,10 @@ const path = require('node:path');
    const page=await browser.newPage({viewport:{width,height:850}});
    await page.goto('file://'+path.resolve('scoring.html'),{waitUntil:'domcontentloaded'});
    const result=await page.evaluate(()=>{
-    for(const id of ['app','adminView'])document.getElementById(id)?.classList.remove('hidden');
+    for(let node=document.getElementById('withdrawGolferSelect');node;node=node.parentElement){
+     node.classList.remove('hidden');
+     if(getComputedStyle(node).display==='none')node.style.display='block';
+    }
     const ids=['withdrawGolferSelect','withdrawGolferBtn','restoreGolferSelect','restoreGolferBtn'];
     return ids.map(id=>{
      const e=document.getElementById(id), r=e?.getBoundingClientRect();
