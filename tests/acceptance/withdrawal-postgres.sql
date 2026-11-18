@@ -94,6 +94,11 @@ BEGIN
  THEN RAISE EXCEPTION 'Restore changed original team assignments'; END IF;
 
  IF (SELECT state->'golfers'->13->>'participating' FROM public.elleng_drafts WHERE id='elleng-cup')<>'true' THEN RAISE EXCEPTION 'Restore did not reactivate golfer'; END IF;
+ IF (SELECT state->'golfers'->13->>'withdrawn' FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM 'false'
+ THEN RAISE EXCEPTION 'Restore did not clear withdrawn status'; END IF;
+ IF (SELECT state->'golfers'->13 ? 'withdrawn_at' FROM public.elleng_drafts WHERE id='elleng-cup')
+ OR (SELECT state->'golfers'->13 ? 'withdrawal_reason' FROM public.elleng_drafts WHERE id='elleng-cup')
+ THEN RAISE EXCEPTION 'Restore left stale withdrawal metadata'; END IF;
  -- Repeating a successful restore must fail without changing the draft.
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  BEGIN
