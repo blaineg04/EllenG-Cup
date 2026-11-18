@@ -40,6 +40,18 @@ BEGIN
  result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,13);
  IF result->>'ok'<>'true' THEN RAISE EXCEPTION 'Restore failed'; END IF;
  IF (SELECT state->'golfers'->13->>'participating' FROM public.elleng_drafts WHERE id='elleng-cup')<>'true' THEN RAISE EXCEPTION 'Restore did not reactivate golfer'; END IF;
+ -- Sequential withdrawals must preserve all original draft picks and team rosters.
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
+ result:=public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,14,'first');
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
+ result:=public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,15,'second');
+ IF (SELECT state->'picks' FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM state_before->'picks'
+ OR (SELECT state->'teams' FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM state_before->'teams'
+ THEN RAISE EXCEPTION 'Sequential withdrawal changed historical draft'; END IF;
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
+ result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,15);
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
+ result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,14);
  -- Captain protection must reject an otherwise valid withdrawal.
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  BEGIN
