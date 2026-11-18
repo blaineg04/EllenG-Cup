@@ -112,4 +112,4 @@ BEGIN
    THEN RAISE; END IF;
  END;
 
-END $;
+END $$;
