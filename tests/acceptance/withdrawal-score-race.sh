@@ -30,7 +30,9 @@ fi
 psql -v ON_ERROR_STOP=1 -At -c "SELECT (state->'golfers'->13->>'participating')='true' FROM public.elleng_drafts WHERE id='elleng-cup';" | grep -qx t
 echo 'PASS: committed score blocked concurrent withdrawal; golfer remains active'
 
-# Reverse order: commissioner withdrawal commits before a stale score submission.
+# Reverse order: use a score-free setup for a new golfer withdrawal.
+psql -v ON_ERROR_STOP=1 -c "DELETE FROM public.elleng_player_hole_scores WHERE tournament_id='elleng-cup-live';"
+# Commissioner withdrawal commits before a stale score submission.
 psql -v ON_ERROR_STOP=1 <<'SQL' > /tmp/elleng-score-race-c.log 2>&1 &
 SELECT set_config('test.uid','11111111-1111-4111-8111-111111111111',false);
 BEGIN;
