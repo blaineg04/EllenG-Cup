@@ -89,6 +89,10 @@ BEGIN
    IF SQLERRM NOT LIKE '%Commissioner access required%' THEN RAISE; END IF;
  END;
  PERFORM set_config('test.uid','11111111-1111-4111-8111-111111111111',true);
+ -- Withdraw another golfer before scoring so restore lockout is tested against a valid withdrawn target.
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
+ result:=public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,16,'restore-lockout');
+ SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  -- Once any player score exists, withdrawals must be rejected.
  INSERT INTO public.elleng_player_hole_scores VALUES('elleng-cup-live',13,1,1,4);
  BEGIN
@@ -100,11 +104,11 @@ BEGIN
  END;
  -- Restore must also be locked after scoring starts.
  BEGIN
-   PERFORM public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,13);
+   PERFORM public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,16);
    RAISE EXCEPTION 'Restore after scoring unexpectedly allowed';
  EXCEPTION WHEN OTHERS THEN
    IF SQLERRM='Restore after scoring unexpectedly allowed' THEN RAISE; END IF;
-   IF SQLERRM NOT LIKE '%Golfer is not withdrawn%' AND SQLERRM NOT LIKE '%Scores exist%'
+   IF SQLERRM NOT LIKE '%Scores exist%'
    THEN RAISE; END IF;
  END;
 
