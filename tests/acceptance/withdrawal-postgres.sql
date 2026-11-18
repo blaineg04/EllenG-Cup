@@ -52,6 +52,16 @@ BEGIN
  result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,15);
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,14);
+ -- A direct roster mutation must not bypass the completed-draft guard.
+ BEGIN
+   UPDATE public.elleng_drafts SET state=jsonb_set(state,'{golfers,13,name}','"Tampered Name"'::jsonb)
+   WHERE id='elleng-cup';
+   RAISE EXCEPTION 'Direct roster mutation unexpectedly allowed';
+ EXCEPTION WHEN OTHERS THEN
+   IF SQLERRM='Direct roster mutation unexpectedly allowed' THEN RAISE; END IF;
+   IF SQLERRM NOT LIKE '%Completed draft golfer changes%' AND SQLERRM NOT LIKE '%Unauthorized roster change%'
+   THEN RAISE; END IF;
+ END;
  -- Captain protection must reject an otherwise valid withdrawal.
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  BEGIN
