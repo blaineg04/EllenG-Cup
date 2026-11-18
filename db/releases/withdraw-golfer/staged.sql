@@ -51,7 +51,7 @@ BEGIN
    coalesce((g->>'late_added')::boolean,false)=false;
  -- The historical 23 picks remain immutable; after a withdrawal the number of
  -- currently active original golfers can be smaller than the pick count.
- IF jsonb_array_length(s->'picks')<active_original
+ IF jsonb_array_length(s->'picks')<>23 OR jsonb_array_length(s->'picks')<active_original
  THEN RAISE EXCEPTION 'Draft not complete'; END IF;
  IF EXISTS(SELECT 1 FROM public.elleng_team_scores WHERE tournament_id=p_tournament_id)
  OR EXISTS(SELECT 1 FROM public.elleng_player_hole_scores WHERE tournament_id=p_tournament_id)
