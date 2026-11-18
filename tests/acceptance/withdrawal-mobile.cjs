@@ -3,7 +3,7 @@ const path = require('node:path');
 (async () => {
  const browser = await chromium.launch({headless:true});
  try {
-  for(const width of [375, 390, 768, 1280]){
+  for(const width of [320, 375, 390, 768, 1280]){
    const page=await browser.newPage({viewport:{width,height:850}});
    await page.goto('file://'+path.resolve('scoring.html'),{waitUntil:'domcontentloaded'});
    const result=await page.evaluate(()=>{
@@ -21,7 +21,19 @@ const path = require('node:path');
     if(!el.exists||el.width<80||el.left<0||el.right>width+1)
      throw new Error('Viewport '+width+': invalid withdrawal control '+JSON.stringify(el));
    }
-   console.log('PASS viewport '+width+'px: withdrawal and restore controls fit');
+   for(const id of ['withdrawGolferSelect','withdrawGolferBtn','restoreGolferSelect','restoreGolferBtn']){
+    await page.locator('#'+id).focus();
+    const focusId=await page.evaluate(()=>document.activeElement?.id);
+    if(focusId!==id)throw new Error('Viewport '+width+': keyboard focus failed on '+id);
+   }
+   const accessible=await page.evaluate(()=>{
+    return ['withdrawGolferSelect','restoreGolferSelect'].every(id=>{
+     const el=document.getElementById(id);
+     return !!document.querySelector('label[for="'+id+'"]') && !!el;
+    }) && ['withdrawGolferMsg','restoreGolferMsg'].every(id=>document.getElementById(id)?.getAttribute('role')==='status');
+   });
+   if(!accessible)throw new Error('Viewport '+width+': missing labels or status announcements');
+   console.log('PASS viewport '+width+'px: controls fit, receive focus and have accessible labels/status');
    await page.close();
   }
  } finally {await browser.close();}
