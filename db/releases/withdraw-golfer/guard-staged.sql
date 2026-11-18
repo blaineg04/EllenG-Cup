@@ -1,6 +1,6 @@
 -- STAGED ONLY. Replaces the existing trigger function, not the trigger.
 -- Preserve the original weighted draft guard, with one tightly constrained pre-scoring
--- withdrawal exception. This exception is only valid for a single golfer and a
+-- withdrawal/restore exception. This exception is only valid for a single golfer and a
 -- byte-for-byte identical state outside that golfer's withdrawal flags.
 CREATE OR REPLACE FUNCTION public.elleng_guard_weighted_roster()
 RETURNS trigger LANGUAGE plpgsql SET search_path TO 'public'
@@ -34,7 +34,7 @@ BEGIN
  AND NOT EXISTS(SELECT 1 FROM public.elleng_group_assignments WHERE draft_id='elleng-cup')
  AND EXISTS(SELECT 1 FROM public.elleng_tournaments WHERE id='elleng-cup-live' AND status='setup')
  THEN RETURN new; END IF;
- -- Narrow single-golfer withdrawal exception, for completed 23-pick tournament.
+ -- Narrow single-golfer withdrawal or restore exception, for completed 23-pick tournament.
  IF old.id='elleng-cup'
  AND auth.uid() IS NOT NULL AND old.owner_id=auth.uid()
  AND jsonb_array_length(old.state->'picks')=23
@@ -55,10 +55,19 @@ BEGIN
        before_base:=before_g-'participating'-'withdrawn'-'withdrawn_at'-'withdrawal_reason';
        after_base:=after_g-'participating'-'withdrawn'-'withdrawn_at'-'withdrawal_reason';
        IF differences>1 OR before_base IS DISTINCT FROM after_base
-       OR coalesce((before_g->>'participating')::boolean,true) IS NOT TRUE
-       OR after_g->>'participating' IS DISTINCT FROM 'false'
-       OR after_g->>'withdrawn' IS DISTINCT FROM 'true'
-       OR after_g->>'withdrawn_at' IS NULL
+       OR NOT (
+         (coalesce((before_g->>'participating')::boolean,true) IS TRUE
+          AND after_g->>'participating'='false'
+          AND after_g->>'withdrawn'='true'
+          AND after_g->>'withdrawn_at' IS NOT NULL)
+         OR
+         (before_g->>'participating'='false'
+          AND before_g->>'withdrawn'='true'
+          AND after_g->>'participating'='true'
+          AND after_g->>'withdrawn'='false'
+          AND after_g->>'withdrawn_at' IS NULL
+          AND after_g->>'withdrawal_reason' IS NULL)
+       )
        THEN RAISE EXCEPTION 'Unauthorized roster change'; END IF;
      END IF;
    END LOOP;
