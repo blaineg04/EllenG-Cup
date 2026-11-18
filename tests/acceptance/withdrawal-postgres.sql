@@ -58,7 +58,7 @@ BEGIN
    RAISE EXCEPTION 'Duplicate withdrawal unexpectedly allowed';
  EXCEPTION WHEN OTHERS THEN
    IF SQLERRM='Duplicate withdrawal unexpectedly allowed' THEN RAISE; END IF;
-   IF SQLERRM NOT LIKE '%Golfer is not active%' THEN RAISE; END IF;
+   IF SQLERRM NOT LIKE '%Golfer not active%' THEN RAISE; END IF;
  END;
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  PERFORM public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,18);
