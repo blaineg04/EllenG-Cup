@@ -25,7 +25,7 @@ CREATE TRIGGER guard_draft BEFORE UPDATE ON public.elleng_drafts FOR EACH ROW EX
 \i db/releases/withdraw-golfer/score-guard-staged.sql
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT UPDATE ON public.elleng_drafts TO authenticated;
-DO $
+DO $$
 DECLARE stamp timestamptz; result jsonb; state_before jsonb;
 BEGIN
  SELECT updated_at,state INTO stamp,state_before FROM public.elleng_drafts WHERE id='elleng-cup';
