@@ -23,6 +23,17 @@ CREATE TRIGGER guard_draft BEFORE UPDATE ON public.elleng_drafts FOR EACH ROW EX
 \i db/releases/withdraw-golfer/staged.sql
 \i db/releases/withdraw-golfer/restore-staged.sql
 \i db/releases/withdraw-golfer/score-guard-staged.sql
+-- RPC permissions must be enforced independently of row-level checks.
+DO $privileges$
+BEGIN
+ IF has_function_privilege('anon','public.elleng_withdraw_golfer(text,text,timestamptz,integer,text)','EXECUTE')
+ OR has_function_privilege('anon','public.elleng_restore_golfer(text,text,timestamptz,integer)','EXECUTE')
+ THEN RAISE EXCEPTION 'Anonymous role can execute withdrawal or restore RPC'; END IF;
+ IF NOT has_function_privilege('authenticated','public.elleng_withdraw_golfer(text,text,timestamptz,integer,text)','EXECUTE')
+ OR NOT has_function_privilege('authenticated','public.elleng_restore_golfer(text,text,timestamptz,integer)','EXECUTE')
+ THEN RAISE EXCEPTION 'Authenticated role cannot execute commissioner RPC'; END IF;
+END
+$privileges$;
 GRANT USAGE ON SCHEMA auth TO authenticated;
 GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;
 GRANT USAGE ON SCHEMA public TO authenticated;
