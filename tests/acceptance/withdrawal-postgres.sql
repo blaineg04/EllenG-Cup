@@ -73,7 +73,7 @@ BEGIN
  EXECUTE 'RESET ROLE';
 END
 $authenticated_rpc$;
-DO $
+DO $$
 DECLARE stamp timestamptz; result jsonb; state_before jsonb;
 BEGIN
  SELECT updated_at,state INTO stamp,state_before FROM public.elleng_drafts WHERE id='elleng-cup';
