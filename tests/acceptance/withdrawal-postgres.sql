@@ -62,6 +62,30 @@ BEGIN
    IF SQLERRM NOT LIKE '%Completed draft golfer changes%' AND SQLERRM NOT LIKE '%Unauthorized roster change%'
    THEN RAISE; END IF;
  END;
+ -- Direct updates cannot bypass the RPC to withdraw a captain.
+ BEGIN
+   UPDATE public.elleng_drafts
+   SET state=jsonb_set(state,'{golfers,0}',(state#>'{golfers,0}') ||
+      jsonb_build_object('participating',false,'withdrawn',true,'withdrawn_at',clock_timestamp()))
+   WHERE id='elleng-cup';
+   RAISE EXCEPTION 'Direct captain withdrawal unexpectedly allowed';
+ EXCEPTION WHEN OTHERS THEN
+   IF SQLERRM='Direct captain withdrawal unexpectedly allowed' THEN RAISE; END IF;
+   IF SQLERRM NOT LIKE '%Captain withdrawal%' THEN RAISE; END IF;
+ END;
+ -- Direct updates cannot withdraw two golfers in one write.
+ BEGIN
+   UPDATE public.elleng_drafts SET state=jsonb_set(
+      jsonb_set(state,'{golfers,13}',(state#>'{golfers,13}') ||
+         jsonb_build_object('participating',false,'withdrawn',true,'withdrawn_at',clock_timestamp())),
+      '{golfers,14}',(state#>'{golfers,14}') ||
+         jsonb_build_object('participating',false,'withdrawn',true,'withdrawn_at',clock_timestamp()))
+   WHERE id='elleng-cup';
+   RAISE EXCEPTION 'Bulk direct withdrawal unexpectedly allowed';
+ EXCEPTION WHEN OTHERS THEN
+   IF SQLERRM='Bulk direct withdrawal unexpectedly allowed' THEN RAISE; END IF;
+   IF SQLERRM NOT LIKE '%Unauthorized roster change%' THEN RAISE; END IF;
+ END;
  -- Captain protection must reject an otherwise valid withdrawal.
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  BEGIN
