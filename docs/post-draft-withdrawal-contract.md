@@ -60,3 +60,8 @@ Do not deploy to the November 20 live tournament until the RPC, trigger, UI, sco
 - UPDATE policy `elleng_owner_update` is restricted to `auth.uid() = owner_id` in **both** USING and WITH CHECK.
 - INSERT policies likewise require `auth.uid() = owner_id`.
 - These observations are read-only and do not validate PostgREST/RPC end-to-end behavior. No production writes, schema updates, or deployment performed.
+
+## Scoring RPC integration gate (identified during review)
+- The production browser score path calls `elleng_test_authorized_shamble` rather than writing `elleng_player_hole_scores` directly.
+- The staged inactive-score trigger covers INSERT and UPDATE, **not DELETE**. Before release, inspect the actual deployed definition of `elleng_test_authorized_shamble` **read-only** and verify whether clearing a score uses DELETE or an alternate write path. A withdrawn golfer must not be able to alter score records through that RPC even if the client UI excludes them.
+- If the scoring RPC can bypass the guard, stage an explicit server-side authorization fix and test it in disposable PostgreSQL and real authenticated local Supabase before any production deployment. Do not change the existing scoring RPC on production for rehearsal.
