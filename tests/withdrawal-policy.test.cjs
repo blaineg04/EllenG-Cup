@@ -1,7 +1,7 @@
 "use strict";
 const assert=require("node:assert/strict");
 const test=require("node:test");
-const {activeRoster,preflightWithdrawal,previewWithdrawal}=require("../lib/withdrawal-policy.cjs");
+const {activeRoster,preflightWithdrawal,previewWithdrawal,preflightRestore,previewRestore}=require("../lib/withdrawal-policy.cjs");
 const makeState=()=>({
  golfers:Array.from({length:24},(_,i)=>({name:i===0?"Jarad Jones":i===12?"Carl LeMaire":`Golfer ${i}`,team:i<12?0:1,participating:true,late_added:i===23})),
  teams:[{captain:"Jarad Jones",roster:Array.from({length:12},(_,i)=>i)},{captain:"Carl LeMaire",roster:Array.from({length:12},(_,i)=>i+12)}],
@@ -56,4 +56,26 @@ test("two sequential withdrawals remain valid with uneven teams",()=>{
 test("unstarted draft is rejected",()=>{
  const state=makeState();state.picks=state.picks.slice(0,8);
  assert.equal(preflightWithdrawal(args(state,13)).ok,false);
+});
+
+test("withdraw then restore returns to the original teams without changing picks",()=>{
+ const original=makeState();
+ const withdrawn=previewWithdrawal(args(original,13));
+ assert.equal(withdrawn.ok,true);
+ const restored=previewRestore(args(withdrawn.state,13));
+ assert.equal(restored.ok,true);
+ assert.deepEqual(restored.activeCounts,[12,12]);
+ assert.deepEqual(restored.state.picks,original.picks);
+ assert.deepEqual(restored.state.teams,original.teams);
+ assert.equal(restored.state.golfers[13].withdrawn,false);
+ assert.equal(restored.state.golfers[13].participating,true);
+});
+test("restore rejects scores, stale timestamps, active golfers and absent original team",()=>{
+ const first=previewWithdrawal(args(makeState(),13));
+ assert.equal(preflightRestore(args(makeState(),13)).ok,false);
+ assert.equal(preflightRestore({...args(first.state,13),scoresExist:true}).ok,false);
+ assert.equal(preflightRestore({...args(first.state,13),actualUpdatedAt:"v2"}).ok,false);
+ const altered=JSON.parse(JSON.stringify(first.state));
+ altered.teams[1].roster=altered.teams[1].roster.filter(i=>i!==13);
+ assert.equal(preflightRestore(args(altered,13)).ok,false);
 });
