@@ -4790,7 +4790,7 @@ function renderPlayersDirectory(){
  const total=$("playerDirectoryTotal");
  if(total)total.textContent=publicRosterUnavailable?"Total golfers in app: temporarily unavailable":`Total golfers in app: ${golfers.length+inactiveAccounts.length}`;
  const q=($("playerDirectorySearch")?.value||"").trim().toLowerCase();
- const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:g.withdrawn===true?"Withdrawn — "+(draftState?.teams?.[Number(g.team)]?.name||"Team "+(Number(g.team)+1)):g.participating===false?"Not in this tournament":ti==null?"Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q));
+ const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);const originalTeam=(draftState?.teams||[]).findIndex(t=>(t.roster||[]).some(r=>Number(typeof r==="object"?r?.golferIndex:r)===g.index));const withdrawnTeam=originalTeam>=0?(draftState.teams[originalTeam]?.name||`Team ${originalTeam+1}`):"original team unavailable";return {...g,teamIndex:ti,teamName:g.withdrawn===true?"Withdrawn — "+withdrawnTeam:g.participating===false?"Not in this tournament":ti==null?"Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q));
  const rowHtml=g=>{const band=playerBandLabel(g);const bandChip=band==="—"?"":`<span class="player-roster-band" title="Handicap band ${esc(band)}">${esc(band)}</span>`;return `<div class="player-row-public player-roster-only" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}<div class="player-team-inline">${esc(g.teamName)}</div></div>${bandChip}<div class="player-open-arrow">›</div></div>`};
  if(!rows.length&&!inactiveAccounts.some(a=>!q||String(a.displayName).toLowerCase().includes(q))){root.innerHTML=rosterWarning+'<div class="note">No matching players found.</div>';return}
  const sorted=rows.sort((a,b)=>{const ap=a.name.trim().split(/\s+/),bp=b.name.trim().split(/\s+/);return ap.at(-1).localeCompare(bp.at(-1),undefined,{sensitivity:"base"})||ap.slice(0,-1).join(" ").localeCompare(bp.slice(0,-1).join(" "),undefined,{sensitivity:"base"})||a.index-b.index;});
@@ -6681,7 +6681,7 @@ function refreshWithdrawalChoices(){
   .filter(({g})=>g&&g.name&&g.participating!==false)
   .filter(({g})=>!(draftState.teams||[]).some(t=>String(t.captain||"").trim().toLowerCase()===String(g.name).trim().toLowerCase()))
   .filter(({i})=>(draftState.teams||[]).some(t=>(t.roster||[]).some(r=>Number(typeof r==="object"?r.golferIndex:r)===i)));
- sel.innerHTML='<option value="">Choose golfer</option>'+options.map(({g,i})=>`<option value="${i}">${esc(g.name)} — ${esc(draftState.teams[Number(g.team)]?.name||"Team")}</option>`).join("");
+ sel.innerHTML='<option value="">Choose golfer</option>'+options.map(({g,i})=>`<option value="${i}">${esc(g.name)} — ${esc(draftState.teams.find(t=>(t.roster||[]).some(r=>Number(typeof r==="object"?r?.golferIndex:r)===i))?.name||"Team")}</option>`).join("");
  if(options.some(({i})=>String(i)===prior))sel.value=prior;
 }
 $("withdrawGolferSelect").addEventListener("focus",refreshWithdrawalChoices);
