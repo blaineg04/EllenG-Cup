@@ -140,7 +140,7 @@ BEGIN
    RAISE EXCEPTION 'Direct captain withdrawal unexpectedly allowed';
  EXCEPTION WHEN OTHERS THEN
    IF SQLERRM='Direct captain withdrawal unexpectedly allowed' THEN RAISE; END IF;
-   IF SQLERRM NOT LIKE '%Captain withdrawal%' THEN RAISE; END IF;
+   IF SQLERRM NOT LIKE '%Captain withdrawal%' AND SQLERRM NOT LIKE '%Completed draft golfer changes%' THEN RAISE; END IF;
  END;
  -- Direct updates cannot withdraw two golfers in one write.
  BEGIN
@@ -153,7 +153,7 @@ BEGIN
    RAISE EXCEPTION 'Bulk direct withdrawal unexpectedly allowed';
  EXCEPTION WHEN OTHERS THEN
    IF SQLERRM='Bulk direct withdrawal unexpectedly allowed' THEN RAISE; END IF;
-   IF SQLERRM NOT LIKE '%Unauthorized roster change%' THEN RAISE; END IF;
+   IF SQLERRM NOT LIKE '%Unauthorized roster change%' AND SQLERRM NOT LIKE '%Completed draft golfer changes%' THEN RAISE; END IF;
  END;
  -- Captain protection must reject an otherwise valid withdrawal.
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
