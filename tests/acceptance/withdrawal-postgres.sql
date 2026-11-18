@@ -120,6 +120,17 @@ BEGIN
    IF SQLERRM NOT LIKE '%Completed draft golfer changes%' AND SQLERRM NOT LIKE '%Unauthorized roster change%'
    THEN RAISE; END IF;
  END;
+ -- Even an authenticated commissioner cannot directly toggle a noncaptain's withdrawal flags.
+ BEGIN
+   UPDATE public.elleng_drafts
+   SET state=jsonb_set(state,'{golfers,13}',(state#>'{golfers,13}') ||
+      jsonb_build_object('participating',false,'withdrawn',true,'withdrawn_at',clock_timestamp()))
+   WHERE id='elleng-cup';
+   RAISE EXCEPTION 'Direct commissioner withdrawal unexpectedly allowed';
+ EXCEPTION WHEN OTHERS THEN
+   IF SQLERRM='Direct commissioner withdrawal unexpectedly allowed' THEN RAISE; END IF;
+   IF SQLERRM NOT LIKE '%Completed draft golfer changes%' THEN RAISE; END IF;
+ END;
  -- Direct updates cannot bypass the RPC to withdraw a captain.
  BEGIN
    UPDATE public.elleng_drafts
