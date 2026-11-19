@@ -8,6 +8,13 @@ Target: EllenG Cup November 20, 2026 only. No production writes until all checks
 - 7 Donny Wyble: Team Jarad (1) -> Team Carl (0)
 - 20 Patrick Carlton: Team Jarad (1) -> Team Carl (0)
 
+## Verified as of Nov 19
+- PostgreSQL 16 CI run #16 passed, including the real two-session tee-group versus tournament lock contention test in both directions.
+- Isolated commissioner moves, permission checks, stale version, direct guard bypass, captain/group/score blocking, withdrawal/restore, repeated move and withdrawn golfer regression checks passed.
+- Production read-only preflight: setup, 23 historical picks, zero score records, zero group assignments. Draft timestamp unchanged at 2026-11-19 14:28:01.61347+00. Recheck immediately before any deployment.
+- **Not verified:** live authenticated commissioner RPC call, concurrent scoring insert against real score trigger, independent private draft snapshot, historical pick semantics in app, and two-device app validation.
+- **Not installed in production:** commissioner RPC, revised guard, group assignment lock. **No golfer moved.**
+
 ## Mandatory isolated PostgreSQL tests
 1. Apply staged-rpc.sql and guard-staged.sql in a disposable database using a schema equivalent to production.
 2. Authorized commissioner: execute each change with current updated_at; confirm golfers.team, rosters, picks, participation agree; no duplicates.
