@@ -97,4 +97,28 @@ BEGIN
   THEN RAISE EXCEPTION 'invalid move changed state: %',scenario; END IF;
  END LOOP;
 END $invalid$;
+-- Object-form rosters must retain their representation on a successful move.
+INSERT INTO transfer_fixture.drafts(id,state,owner_id,status)
+SELECT 'object-move',
+ jsonb_set(
+  jsonb_set(state,'{teams,0,roster}',
+   '[{"golferIndex":0},{"golferIndex":2}]'::jsonb),
+  '{teams,1,roster}',
+  '[{"golferIndex":1},{"golferIndex":3}]'::jsonb),
+ 'commissioner','completed'
+FROM transfer_fixture.drafts WHERE id='move';
+INSERT INTO transfer_fixture.tournaments(id,draft_id,status)
+VALUES ('object-event','object-move','setup');
+SELECT transfer_fixture.move_golfer('commissioner','object-event','object-move',
+ (SELECT updated_at FROM transfer_fixture.drafts WHERE id='object-move'),2,1);
+DO $object$
+DECLARE s jsonb;
+BEGIN
+ SELECT state INTO s FROM transfer_fixture.drafts WHERE id='object-move';
+ IF s#>'{teams,0,roster}' IS DISTINCT FROM '[{"golferIndex":0}]'::jsonb
+ OR s#>'{teams,1,roster}' IS DISTINCT FROM
+  '[{"golferIndex":1},{"golferIndex":3},{"golferIndex":2}]'::jsonb
+ OR s#>>'{golfers,2,team}' <> '1'
+ THEN RAISE EXCEPTION 'object roster move failed'; END IF;
+END $object$;
 ROLLBACK;
