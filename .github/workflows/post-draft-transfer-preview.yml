@@ -11,6 +11,7 @@ on:
       - 'tests/post-draft-team-transfer-simulator.test.cjs'
       - 'lib/post-draft-team-transfer-postcondition.cjs'
       - 'tests/post-draft-team-transfer-postcondition.test.cjs'
+      - 'tests/post-draft-team-transfer-live-shape.test.cjs'
       - '.github/workflows/post-draft-transfer-preview.yml'
 jobs:
   preview:
