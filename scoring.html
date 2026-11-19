@@ -7418,6 +7418,27 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
  }
 }
 </style>
+
+<style id="extras-final-mobile-sizing-fix">
+@media(max-width:900px){
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent > #teamMomentumCard{
+   display:block!important;position:relative!important;flex:none!important;
+   height:auto!important;min-height:0!important;max-height:none!important;
+   align-self:stretch!important;overflow:visible!important;
+ }
+ body:not(.login-mode).extras-screen-active #extrasView #teamMomentumCard > .row{
+   height:auto!important;min-height:0!important;flex:none!important;
+ }
+ body:not(.login-mode).extras-screen-active #extrasView #teamMomentumMeter{
+   display:block!important;position:static!important;flex:none!important;
+   height:auto!important;min-height:0!important;max-height:none!important;
+   overflow:visible!important;margin-top:6px!important;
+ }
+ body:not(.login-mode).extras-screen-active #extrasView #teamMomentumMeter .momentum-row{
+   display:grid!important;height:auto!important;min-height:0!important;
+ }
+}
+</style>
 </body>
 
 <style id="v2766-handicap-restore">
