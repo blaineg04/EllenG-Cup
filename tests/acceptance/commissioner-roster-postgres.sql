@@ -100,4 +100,14 @@ BEGIN
  IF (SELECT state FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM before_state
  THEN RAISE EXCEPTION 'Score-blocked request modified roster'; END IF;
 END $negative$;
+-- Verify public API permissions: anon must never invoke the privileged move RPC.
+DO $permissions$
+BEGIN
+ IF has_function_privilege('anon',
+    'public.elleng_commissioner_move_golfer(timestamptz,integer,text,integer,boolean)',
+    'EXECUTE') THEN RAISE EXCEPTION 'Anonymous execution unexpectedly granted'; END IF;
+ IF NOT has_function_privilege('authenticated',
+    'public.elleng_commissioner_move_golfer(timestamptz,integer,text,integer,boolean)',
+    'EXECUTE') THEN RAISE EXCEPTION 'Authenticated commissioner RPC unavailable'; END IF;
+END $permissions$;
 SELECT 'Commissioner roster move fixture passed' AS result;
