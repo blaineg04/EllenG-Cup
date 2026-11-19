@@ -27,3 +27,6 @@ test('allow unassigned golfer slots outside rosters',()=>{const s=draft();while(
 
 test('reject draft completion not independently verified',()=>assert.equal(previewTransfer(draft(),{...move,draftComplete:false}).ok,false));
 test('reject live tournament status',()=>assert.equal(previewTransfer(draft(),{...move,tournamentStatus:'live'}).ok,false));
+
+test('reject unrelated assigned golfer missing from roster',()=>{const s=draft();s.teams[1].roster=[1];assert.equal(previewTransfer(s,move).ok,false)});
+test('reject target assigned golfer missing from roster',()=>{const s=draft();s.teams[0].roster=[0];assert.equal(previewTransfer(s,move).ok,false)});
