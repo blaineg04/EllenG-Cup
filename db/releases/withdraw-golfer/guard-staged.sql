@@ -38,6 +38,7 @@ BEGIN
  -- Narrow single-golfer withdrawal or restore exception for a completed variable-size draft.
  SELECT count(*) INTO original_count FROM jsonb_array_elements(old.state->'golfers') original_g
  WHERE btrim(coalesce(original_g->>'name',''))<>''
+ AND original_g->>'team' IN ('0','1')
  AND coalesce((original_g->>'late_added')::boolean,false)=false;
  IF old.id='elleng-cup'
  AND auth.uid() IS NOT NULL AND old.owner_id=auth.uid()
