@@ -13,7 +13,7 @@ DECLARE
  s jsonb; team_a integer; team_b integer; i integer; j integer;
  roster jsonb; updated_roster jsonb; entry jsonb; member_idx integer;
  first_hits integer:=0; second_hits integer:=0; originals integer;
- captain_name text; golfer_name text; revision timestamptz;
+ captain_name text; golfer_name text; captain_marker jsonb; revision timestamptz;
 BEGIN
  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Sign in required' USING ERRCODE='42501'; END IF;
  IF p_draft_id IS DISTINCT FROM 'elleng-cup' OR p_tournament_id IS DISTINCT FROM 'elleng-cup-live'
@@ -52,8 +52,12 @@ BEGIN
   THEN RAISE EXCEPTION 'Inactive or unnamed golfer cannot swap'; END IF;
   golfer_name:=lower(btrim(s#>>ARRAY['golfers',i::text,'name']));
   FOR j IN 0..1 LOOP
+   captain_marker:=s#>ARRAY['teams',j::text,'captain'];
    captain_name:=lower(btrim(coalesce(s#>>ARRAY['teams',j::text,'captain'],'')));
-   IF captain_name=golfer_name THEN RAISE EXCEPTION 'Captains cannot swap'; END IF;
+   IF captain_name=golfer_name
+      OR (jsonb_typeof(captain_marker)='number' AND captain_marker::text=i::text)
+      OR (jsonb_typeof(captain_marker)='object' AND captain_marker->>'golferIndex'=i::text)
+   THEN RAISE EXCEPTION 'Captains cannot swap'; END IF;
   END LOOP;
  END LOOP;
  team_a:=(s#>>ARRAY['golfers',p_first::text,'team'])::integer;
@@ -69,6 +73,9 @@ BEGIN
    ELSIF jsonb_typeof(entry)='object' AND entry ? 'golferIndex'
    THEN member_idx:=(entry->>'golferIndex')::integer;
    ELSE RAISE EXCEPTION 'Invalid roster entry'; END IF;
+   IF member_idx<0 OR member_idx>=jsonb_array_length(s->'golfers')
+   OR s#>>ARRAY['golfers',member_idx::text,'team'] IS DISTINCT FROM j::text
+   THEN RAISE EXCEPTION 'Stored roster and golfer team disagree'; END IF;
    IF member_idx=p_first THEN
     first_hits:=first_hits+1;
     IF j<>team_a THEN RAISE EXCEPTION 'First golfer roster mismatch'; END IF;
