@@ -25,7 +25,7 @@ const ctx={
  setSyncStatus:()=>{},
  console
 };
-vm.runInNewContext(html.slice(start,end)+'\nsubscribeLive();',ctx,{timeout:1000});
+vm.runInNewContext('let liveChannel=null;\n'+html.slice(start,end)+'\nsubscribeLive();',ctx,{timeout:1000});
 assert.equal(typeof handlers.elleng_player_hole_scores,'function');
 assert.equal(typeof handlers.status,'function');
 (async()=>{
