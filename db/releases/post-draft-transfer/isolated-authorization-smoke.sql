@@ -1,7 +1,7 @@
 -- Isolated authorization fixture only. No real tournament data.
 BEGIN;
 INSERT INTO transfer_fixture.drafts(id,state,owner_id,status) VALUES
- ('gate', '{"golfers":[],"teams":[]}'::jsonb,'commissioner','completed');
+ ('gate', jsonb_build_object('draftRules','weighted','picks',jsonb_build_array(0,1),'golfers',jsonb_build_array(jsonb_build_object('name','Captain A','team',0),jsonb_build_object('name','Captain B','team',1))),'commissioner','setup');
 INSERT INTO transfer_fixture.tournaments(id,draft_id,status) VALUES ('event','gate','setup');
 SELECT transfer_fixture.check_transfer_gate('commissioner','event','gate',
  (SELECT updated_at FROM transfer_fixture.drafts WHERE id='gate'));
@@ -18,7 +18,7 @@ BEGIN
  FOR scenario IN SELECT unnest(ARRAY['anonymous','other_user','wrong_draft','stale','live','incomplete','player','team','pair']) LOOP
    BEGIN
      IF scenario='live' THEN UPDATE transfer_fixture.tournaments SET status='live' WHERE id='event'; END IF;
-     IF scenario='incomplete' THEN UPDATE transfer_fixture.drafts SET status='drafting' WHERE id='gate'; END IF;
+     IF scenario='incomplete' THEN UPDATE transfer_fixture.drafts SET state=jsonb_set(state,'{picks}','[]'::jsonb) WHERE id='gate'; END IF;
      IF scenario IN ('player','team','pair') THEN
        INSERT INTO transfer_fixture.score_presence VALUES ('event',scenario);
      END IF;
@@ -36,7 +36,7 @@ BEGIN
      END;
      IF scenario IN ('player','team','pair') THEN DELETE FROM transfer_fixture.score_presence WHERE tournament_id='event'; END IF;
      IF scenario='live' THEN UPDATE transfer_fixture.tournaments SET status='setup' WHERE id='event'; END IF;
-     IF scenario='incomplete' THEN UPDATE transfer_fixture.drafts SET status='completed' WHERE id='gate'; END IF;
+     IF scenario='incomplete' THEN UPDATE transfer_fixture.drafts SET state=jsonb_set(state,'{picks}','[0,1]'::jsonb) WHERE id='gate'; END IF;
    END;
  END LOOP;
 END $test$;
