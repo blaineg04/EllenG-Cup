@@ -5,6 +5,12 @@ INSERT INTO transfer_fixture.drafts(id,state,owner_id,status) VALUES
 INSERT INTO transfer_fixture.tournaments(id,draft_id,status) VALUES ('event','gate','setup');
 SELECT transfer_fixture.check_transfer_gate('commissioner','event','gate',
  (SELECT updated_at FROM transfer_fixture.drafts WHERE id='gate'));
+-- Scores belonging to a different tournament must not block this tournament.
+INSERT INTO transfer_fixture.score_presence VALUES ('other-event','player');
+SELECT transfer_fixture.check_transfer_gate('commissioner','event','gate',
+ (SELECT updated_at FROM transfer_fixture.drafts WHERE id='gate'));
+DELETE FROM transfer_fixture.score_presence WHERE tournament_id='other-event';
+-- A rejected request must not change the stored draft state or revision.
 DO $test$
 DECLARE scenario text;
         err text;
