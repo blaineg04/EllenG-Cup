@@ -56,6 +56,17 @@ BEGIN
   IF s#>>ARRAY['golfers',n::text,'team']<>'0' THEN RAISE EXCEPTION 'Expected Carl: %',n; END IF;
  END LOOP;
  IF s#>>'{golfers,15,team}'<>'1' THEN RAISE EXCEPTION 'Michael not on Jarad'; END IF;
+ -- Verify each golfer appears in the correct team roster and has one matching pick.
+ FOREACH n IN ARRAY ARRAY[56,15,7,20] LOOP
+  IF (SELECT count(*) FROM jsonb_array_elements(s->'teams') WITH ORDINALITY t(team,ord),
+       jsonb_array_elements_text(t.team->'roster') ri
+       WHERE ri=n::text AND (t.ord-1)::text=s#>>ARRAY['golfers',n::text,'team'])<>1
+  THEN RAISE EXCEPTION 'Roster destination mismatch for %',n; END IF;
+  IF (SELECT count(*) FROM jsonb_array_elements(s->'picks') p
+       WHERE p->>'golfer'=n::text AND p->>'team'=s#>>ARRAY['golfers',n::text,'team'])<>1
+  THEN RAISE EXCEPTION 'Pick destination mismatch for %',n; END IF;
+ END LOOP;
+ IF jsonb_array_length(s->'picks')<>25 THEN RAISE EXCEPTION 'Unexpected pick count after activation'; END IF;
  FOREACH n IN ARRAY ARRAY[56,15,7,20] LOOP
   IF (SELECT count(*) FROM jsonb_array_elements(s->'teams') t,
       jsonb_array_elements_text(t->'roster') ri WHERE ri=n::text)<>1
