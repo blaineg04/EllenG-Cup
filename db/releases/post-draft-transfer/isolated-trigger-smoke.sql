@@ -49,6 +49,22 @@ BEGIN
   IF SQLERRM='FAIL: captain transfer unexpectedly accepted' THEN RAISE; END IF;
  END;
  BEGIN
+  UPDATE transfer_fixture.drafts SET state =
+    jsonb_set(state,'{teams,0,roster}','[0,2]'::jsonb)
+    WHERE id='case';
+  RAISE EXCEPTION 'FAIL: duplicated roster membership unexpectedly accepted';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM='FAIL: duplicated roster membership unexpectedly accepted' THEN RAISE; END IF;
+ END;
+ BEGIN
+  UPDATE transfer_fixture.drafts SET state =
+    jsonb_set(state,'{teams,1,roster}','[1,3]'::jsonb)
+    WHERE id='case';
+  RAISE EXCEPTION 'FAIL: missing golfer membership unexpectedly accepted';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM='FAIL: missing golfer membership unexpectedly accepted' THEN RAISE; END IF;
+ END;
+ BEGIN
   UPDATE transfer_fixture.drafts SET state=jsonb_set(state,'{golfers,2,name}','"Changed"'::jsonb) WHERE id='case';
   RAISE EXCEPTION 'FAIL: golfer name change unexpectedly accepted';
  EXCEPTION WHEN raise_exception THEN
