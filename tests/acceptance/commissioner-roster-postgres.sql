@@ -23,7 +23,7 @@ SELECT 'elleng-cup','11111111-1111-4111-8111-111111111111'::uuid,
    ELSE 'Golfer '||i END,
   'team',CASE WHEN i=56 THEN NULL WHEN i IN (6,12,5,26,15,13,17,18,2,25,19,11) THEN 0
     WHEN i IN (38,9,10,14,1,0,20,21,4,7,8,27) THEN 1 ELSE NULL END,
-  'participating',i<>56) ORDER BY i) FROM generate_series(0,56) i),
+  'participating',i<>56,'late_added',i=27) ORDER BY i) FROM generate_series(0,56) i),
  'teams',jsonb_build_array(
    jsonb_build_object('captain','Captain Carl','roster',to_jsonb(ARRAY[6,12,5,26,15,13,17,18,2,25,19,11])),
    jsonb_build_object('captain','Captain Jarad','roster',to_jsonb(ARRAY[38,9,10,14,1,0,20,21,4,7,8,27]))),
