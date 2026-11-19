@@ -111,6 +111,22 @@ BEGIN
  IF (SELECT state FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM before_state
  THEN RAISE EXCEPTION 'Score-blocked request modified roster'; END IF;
 END $negative$;
+-- A direct draft JSON update must not bypass the commissioner-only RPC.
+DO $direct$
+DECLARE original_state jsonb; blocked boolean:=false;
+BEGIN
+ SELECT state INTO original_state FROM public.elleng_drafts WHERE id='elleng-cup';
+ BEGIN
+  UPDATE public.elleng_drafts
+   SET state=jsonb_set(state,'{golfers,15,team}','0'::jsonb)
+   WHERE id='elleng-cup';
+ EXCEPTION WHEN OTHERS THEN
+  blocked:=true;
+ END;
+ IF NOT blocked THEN RAISE EXCEPTION 'Direct completed-draft golfer update was allowed'; END IF;
+ IF (SELECT state FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM original_state
+ THEN RAISE EXCEPTION 'Rejected direct update modified roster'; END IF;
+END $direct$;
 -- Verify public API permissions: anon must never invoke the privileged move RPC.
 DO $permissions$
 BEGIN
