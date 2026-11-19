@@ -1,4 +1,5 @@
 -- REVIEW CANDIDATE ONLY. Do not apply to production.
+BEGIN;
 -- Requires the separately reviewed weighted guard integration before execution.
 -- This RPC is deliberately not granted to authenticated users in this file.
 -- A later release must install a trigger guard that independently validates
@@ -43,6 +44,8 @@ BEGIN
  WHERE btrim(coalesce(g->>'name',''))<>'' AND g->>'team' IN ('0','1')
  AND coalesce((g->>'late_added')::boolean,false)=false;
  IF originals<2 OR jsonb_array_length(s->'picks')<originals THEN RAISE EXCEPTION 'Draft not complete'; END IF;
+ IF EXISTS(SELECT 1 FROM public.elleng_group_assignments WHERE draft_id=p_draft_id)
+ THEN RAISE EXCEPTION 'Pairings already assigned; team changes are locked'; END IF;
  IF p_first IS NULL OR p_second IS NULL OR p_first=p_second OR p_first<0 OR p_second<0
  OR p_first>=jsonb_array_length(s->'golfers') OR p_second>=jsonb_array_length(s->'golfers')
  THEN RAISE EXCEPTION 'Invalid golfers'; END IF;
@@ -110,3 +113,4 @@ END $fn$;
 -- Intentionally no GRANT EXECUTE. The existing weighted guard rejects this
 -- update until a separately reviewed exact-delta exception is installed.
 REVOKE ALL ON FUNCTION public.elleng_swap_post_draft_golfers(text,text,timestamptz,integer,integer) FROM PUBLIC,anon,authenticated;
+COMMIT;
