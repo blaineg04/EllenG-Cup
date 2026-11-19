@@ -2,7 +2,7 @@
 BEGIN;
 INSERT INTO transfer_fixture.drafts(id,state,owner_id,status) VALUES
 ('move',jsonb_build_object(
- 'draftRules','weighted','picks',jsonb_build_array(jsonb_build_object('golfer',2)),
+ 'draftRules','weighted','picks',jsonb_build_array(0,1,2,3),
  'golfers',jsonb_build_array(
   jsonb_build_object('name','Captain A','team',0),
   jsonb_build_object('name','Captain B','team',1),
@@ -11,7 +11,7 @@ INSERT INTO transfer_fixture.drafts(id,state,owner_id,status) VALUES
  'teams',jsonb_build_array(
   jsonb_build_object('captain','Captain A','roster',jsonb_build_array(0,2)),
   jsonb_build_object('captain','Captain B','roster',jsonb_build_array(1,3)))
-),'commissioner','completed');
+),'commissioner','setup');
 INSERT INTO transfer_fixture.tournaments(id,draft_id,status) VALUES ('move-event','move','setup');
 SELECT transfer_fixture.move_golfer('commissioner','move-event','move',
  (SELECT updated_at FROM transfer_fixture.drafts WHERE id='move'),2,1);
@@ -107,7 +107,7 @@ SELECT 'object-move',
    '[{"golferIndex":0},{"golferIndex":2}]'::jsonb),
   '{teams,1,roster}',
   '[{"golferIndex":1},{"golferIndex":3}]'::jsonb),
- 'commissioner','completed'
+ 'commissioner','setup'
 FROM transfer_fixture.drafts WHERE id='move';
 INSERT INTO transfer_fixture.tournaments(id,draft_id,status)
 VALUES ('object-event','object-move','setup');
