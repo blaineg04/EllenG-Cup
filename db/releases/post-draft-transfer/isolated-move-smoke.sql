@@ -101,7 +101,9 @@ END $invalid$;
 INSERT INTO transfer_fixture.drafts(id,state,owner_id,status)
 SELECT 'object-move',
  jsonb_set(
-  jsonb_set(state,'{teams,0,roster}',
+  jsonb_set(
+   jsonb_set(state,'{golfers,2,team}','0'::jsonb),
+   '{teams,0,roster}',
    '[{"golferIndex":0},{"golferIndex":2}]'::jsonb),
   '{teams,1,roster}',
   '[{"golferIndex":1},{"golferIndex":3}]'::jsonb),
