@@ -113,6 +113,20 @@ BEGIN
  IF (SELECT state FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM before_state
  THEN RAISE EXCEPTION 'Score-blocked request modified roster'; END IF;
 END $negative$;
+-- The tee-group lock trigger must exist and cover all mutation operations.
+DO $group_lock$
+DECLARE definition text;
+BEGIN
+ SELECT pg_get_triggerdef(t.oid) INTO definition
+ FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid
+ WHERE c.relname='elleng_group_assignments'
+   AND t.tgname='elleng_lock_group_assignment_parent' AND NOT t.tgisinternal;
+ IF definition IS NULL OR definition NOT LIKE '%BEFORE INSERT OR DELETE OR UPDATE%'
+ THEN RAISE EXCEPTION 'Group-assignment lock trigger missing or incomplete: %',definition; END IF;
+ IF pg_get_functiondef('public.elleng_lock_tournament_for_group_assignment()'::regprocedure)
+   NOT LIKE '%FOR UPDATE%'
+ THEN RAISE EXCEPTION 'Group-assignment trigger does not lock tournament parent'; END IF;
+END $group_lock$;
 -- Verify group assignments block moves even when no scores have been entered.
 DO $groups$
 DECLARE stamp timestamptz; before_state jsonb; blocked boolean:=false;
