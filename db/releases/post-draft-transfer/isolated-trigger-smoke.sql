@@ -37,6 +37,18 @@ BEGIN
   IF SQLERRM='FAIL: changed picks unexpectedly accepted' THEN RAISE; END IF;
  END;
  BEGIN
+  UPDATE transfer_fixture.drafts SET state =
+    jsonb_set(
+      jsonb_set(
+        jsonb_set(state,'{golfers,0,team}','1'::jsonb),
+        '{teams,0,roster}','[]'::jsonb),
+      '{teams,1,roster}','[1,3,2,0]'::jsonb)
+    WHERE id='case';
+  RAISE EXCEPTION 'FAIL: captain transfer unexpectedly accepted';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM='FAIL: captain transfer unexpectedly accepted' THEN RAISE; END IF;
+ END;
+ BEGIN
   UPDATE transfer_fixture.drafts SET state=jsonb_set(state,'{golfers,2,name}','"Changed"'::jsonb) WHERE id='case';
   RAISE EXCEPTION 'FAIL: golfer name change unexpectedly accepted';
  EXCEPTION WHEN raise_exception THEN
