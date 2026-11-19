@@ -4205,7 +4205,19 @@ function renderPointsExtras(){
  if($("tournamentMvpCard"))$("tournamentMvpCard").innerHTML=ranked.length?`<strong>${esc(draftState.golfers[ranked[0].index].name)}</strong><div>${ranked[0].points} individual points • ${ranked[0].holes}/18 holes</div>`:'<div class="note">Individual points will appear once scores are saved.</div>';
  if($("postRoundRecap"))$("postRoundRecap").innerHTML=x.totals.slice().sort((a,b)=>b.pts-a.pts).map(t=>`<div class="row between"><strong>${esc(teams[t.team].name)}</strong><span>${t.pts} pts</span></div>`).join("");
  // Legacy stroke-only extras do not describe this format.
- for(const id of ["bestWorstHoleRecap","featuredMatchup","playerSpotlight","holeBattleTimeline","teamMomentumMeter","tournamentAwards","tournamentPulse","paceTracker"]){const el=$(id);if(el)el.innerHTML='<div class="note">18-hole shamble: follow individual and team points on the leaderboard.</div>';}
+ // Render shamble Extras from individual scoring totals, not legacy team-stroke rows.
+ const started=x.players.some(p=>p.holes>0);
+ const byPoints=x.totals.map((t,ti)=>({ti,name:teams[ti]?.name||`Team ${ti+1}`,pts:t.pts})).sort((a,b)=>b.pts-a.pts);
+ const put=(id,html)=>{const el=$(id);if(el)el.innerHTML=html;};
+ if(byPoints.length>=2&&started){
+  const a=byPoints[0],b=byPoints[1],gap=a.pts-b.pts;
+  put("featuredMatchup",`<div class="wow-main">${esc(a.name)} <span style="color:var(--gold)">vs</span> ${esc(b.name)}</div><div class="wow-sub">${fmt(a.pts)}–${fmt(b.pts)} Cup points • ${fmt(gap)} point gap</div>`);
+ }else put("featuredMatchup",'<div class="note">The closest team battle will appear when official Cup points begin posting.</div>');
+ const top=ranked[0];
+ put("playerSpotlight",top?`<div class="wow-main">${esc(draftState.golfers[top.index]?.name||"Golfer")}</div><div class="wow-sub">${top.points} points • ${top.holes}/18 holes scored</div>`:'<div class="note">Player Spotlight will appear once individual scores are posted.</div>');
+ put("teamMomentumMeter",started?byPoints.map(t=>`<div class="momentum-row"><strong>${esc(t.name)}</strong><span>${t.pts} pts</span></div>`).join(""):'<div class="note">Team momentum will appear after scoring begins.</div>');
+ put("paceTracker",teams.map((t,ti)=>{const roster=teamRosterGolfers(ti),holes=roster.map(g=>x.players[g.index]?.holes||0);const done=holes.length?Math.min(...holes):0;return `<div class="pace-row"><strong>${esc(t.name)}</strong><span>${done}/18 holes completed by all golfers</span></div>`}).join(""));
+ for(const id of ["bestWorstHoleRecap","holeBattleTimeline","tournamentAwards","tournamentPulse"]){put(id,'<div class="note">Shamble results are shown in the individual and team points leaderboard.</div>');}
  if($("pointsGolferCountLabel"))$("pointsGolferCountLabel").classList.toggle("hidden",false);
 }
 
