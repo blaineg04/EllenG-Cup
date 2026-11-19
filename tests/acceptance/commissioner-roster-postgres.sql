@@ -31,6 +31,7 @@ SELECT 'elleng-cup','11111111-1111-4111-8111-111111111111'::uuid,
   FROM (SELECT unnest(ARRAY[6,12,5,26,15,13,17,18,2,25,19,11,38,9,10,14,1,0,20,21,4,7,8,27]) i) a)),
  now();
 \i db/releases/withdraw-golfer/staged.sql
+\i db/releases/withdraw-golfer/restore-staged.sql
 \i db/releases/commissioner-roster-adjustment/staged-rpc.sql
 \i db/releases/commissioner-roster-adjustment/guard-staged.sql
 CREATE TRIGGER guard_draft BEFORE UPDATE ON public.elleng_drafts FOR EACH ROW EXECUTE FUNCTION public.elleng_guard_weighted_roster();
@@ -154,6 +155,20 @@ BEGIN
  OR after_state->'picks' IS DISTINCT FROM before_state->'picks'
  THEN RAISE EXCEPTION 'Existing withdrawal RPC regression'; END IF;
 END $withdraw$;
+-- Regression: restore must work after an authorized withdrawal without moving teams.
+DO $restore$
+DECLARE stamp timestamptz; result jsonb; before_state jsonb; after_state jsonb;
+BEGIN
+ SELECT updated_at,state INTO stamp,before_state FROM public.elleng_drafts WHERE id='elleng-cup';
+ result:=public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,15);
+ SELECT state INTO after_state FROM public.elleng_drafts WHERE id='elleng-cup';
+ IF result->>'ok'<>'true'
+ OR after_state#>>'{golfers,15,participating}'<>'true'
+ OR after_state#>>'{golfers,15,withdrawn}'<>'false'
+ OR after_state->'teams' IS DISTINCT FROM before_state->'teams'
+ OR after_state->'picks' IS DISTINCT FROM before_state->'picks'
+ THEN RAISE EXCEPTION 'Existing restore RPC regression'; END IF;
+END $restore$;
 -- A direct draft JSON update must not bypass the commissioner-only RPC.
 DO $direct$
 DECLARE original_state jsonb; blocked boolean:=false;
