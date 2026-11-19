@@ -4217,7 +4217,10 @@ function renderPointsExtras(){
  put("playerSpotlight",top?`<div class="wow-main">${esc(draftState.golfers[top.index]?.name||"Golfer")}</div><div class="wow-sub">${top.points} points • ${top.holes}/18 holes scored</div>`:'<div class="note">Player Spotlight will appear once individual scores are posted.</div>');
  put("teamMomentumMeter",started?byPoints.map(t=>`<div class="momentum-row"><strong>${esc(t.name)}</strong><span>${t.pts} pts</span></div>`).join(""):'<div class="note">Team momentum will appear after scoring begins.</div>');
  put("paceTracker",teams.map((t,ti)=>{const roster=teamRosterGolfers(ti),holes=roster.map(g=>x.players[g.index]?.holes||0);const done=holes.length?Math.min(...holes):0;return `<div class="pace-row"><strong>${esc(t.name)}</strong><span>${done}/18 holes completed by all golfers</span></div>`}).join(""));
- for(const id of ["bestWorstHoleRecap","holeBattleTimeline","tournamentAwards","tournamentPulse"]){put(id,'<div class="note">Shamble results are shown in the individual and team points leaderboard.</div>');}
+ // Shamble-only live summaries; these use the same authoritative player totals as the leaderboard.
+ put("tournamentPulse",started?byPoints.map(t=>`<div class="momentum-row"><strong>${esc(t.name)}</strong><span>${t.pts} Cup pts</span></div>`).join(""):'<div class="note">Team pulse will appear after golfers start posting scores.</div>');
+ put("tournamentAwards",ranked.length?`<div class="momentum-row"><strong>Individual points leader: ${esc(draftState.golfers[ranked[0].index]?.name||"Golfer")}</strong><span>${ranked[0].points} pts</span></div><div class="note">Live leader only; final awards are not determined until scoring is complete.</div>`:'<div class="note">Individual awards leaders will appear once golfers post scores.</div>');
+ for(const id of ["bestWorstHoleRecap","holeBattleTimeline"]){put(id,'<div class="note">Hole-by-hole results will appear after all golfers on a team complete a hole.</div>');}
  if($("pointsGolferCountLabel"))$("pointsGolferCountLabel").classList.toggle("hidden",false);
 }
 
