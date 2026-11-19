@@ -1,0 +1,21 @@
+name: Post-draft transfer preview tests
+on:
+  push:
+    branches:
+      - development/post-draft-team-transfer-spec-20261119
+  pull_request:
+    paths:
+      - 'lib/post-draft-team-transfer-preview.cjs'
+      - 'tests/post-draft-team-transfer-preview.test.cjs'
+      - '.github/workflows/post-draft-transfer-preview.yml'
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/post-draft-team-transfer-preview.test.cjs
