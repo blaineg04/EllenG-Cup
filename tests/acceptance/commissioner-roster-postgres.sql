@@ -63,4 +63,41 @@ BEGIN
  END LOOP;
  EXECUTE 'RESET ROLE';
 END $test$;
+-- Negative cases: invalid identity, stale version, unauthorized user, scoring.
+DO $negative$
+DECLARE stamp timestamptz; before_state jsonb; rejected boolean;
+BEGIN
+ SELECT updated_at,state INTO stamp,before_state FROM public.elleng_drafts WHERE id='elleng-cup';
+ BEGIN
+  PERFORM public.elleng_commissioner_move_golfer(stamp,15,'Wrong Golfer',0,false);
+  RAISE EXCEPTION 'Identity mismatch unexpectedly succeeded';
+ EXCEPTION WHEN OTHERS THEN
+  IF SQLERRM='Identity mismatch unexpectedly succeeded' THEN RAISE; END IF;
+ END;
+ BEGIN
+  PERFORM public.elleng_commissioner_move_golfer(stamp - interval '1 second',15,'Michael Glover',0,false);
+  RAISE EXCEPTION 'Stale version unexpectedly succeeded';
+ EXCEPTION WHEN OTHERS THEN
+  IF SQLERRM='Stale version unexpectedly succeeded' THEN RAISE; END IF;
+ END;
+ PERFORM set_config('test.uid','22222222-2222-4222-8222-222222222222',true);
+ BEGIN
+  PERFORM public.elleng_commissioner_move_golfer(stamp,15,'Michael Glover',0,false);
+  RAISE EXCEPTION 'Unauthorized user unexpectedly succeeded';
+ EXCEPTION WHEN OTHERS THEN
+  IF SQLERRM='Unauthorized user unexpectedly succeeded' THEN RAISE; END IF;
+ END;
+ PERFORM set_config('test.uid','11111111-1111-4111-8111-111111111111',true);
+ IF (SELECT state FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM before_state
+ THEN RAISE EXCEPTION 'Rejected request modified roster'; END IF;
+ INSERT INTO public.elleng_player_hole_scores VALUES('elleng-cup-live');
+ BEGIN
+  PERFORM public.elleng_commissioner_move_golfer(stamp,15,'Michael Glover',0,false);
+  RAISE EXCEPTION 'Score lock unexpectedly bypassed';
+ EXCEPTION WHEN OTHERS THEN
+  IF SQLERRM='Score lock unexpectedly bypassed' THEN RAISE; END IF;
+ END;
+ IF (SELECT state FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM before_state
+ THEN RAISE EXCEPTION 'Score-blocked request modified roster'; END IF;
+END $negative$;
 SELECT 'Commissioner roster move fixture passed' AS result;
