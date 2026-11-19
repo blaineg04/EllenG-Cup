@@ -28,18 +28,6 @@ BEGIN
  THEN RAISE EXCEPTION 'fixture move failed'; END IF;
 END $$;
 -- Confirm object-form roster entries also pass the exact team-alignment guard.
-UPDATE transfer_fixture.drafts SET state =
-  jsonb_set(
-    jsonb_set(
-      jsonb_set(
-        jsonb_set(
-          jsonb_set(state,'{golfers,2,team}','0'::jsonb),
-          '{teams,0,roster}','[0,{"golferIndex":2}]'::jsonb),
-        '{teams,1,roster}','[1,3]'::jsonb),
-      '{golfers,3,team}','0'::jsonb),
-    '{teams,0,roster}','[0,{"golferIndex":2},{"golferIndex":3}]'::jsonb)
- WHERE id='case' AND false;
--- The no-op above intentionally avoids an invalid intermediate transfer.
 -- Perform a valid object-form move from team 1 back to team 0.
 UPDATE transfer_fixture.drafts SET state =
   jsonb_set(
