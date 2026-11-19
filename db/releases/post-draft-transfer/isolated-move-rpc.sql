@@ -14,6 +14,9 @@ BEGIN
  THEN RAISE EXCEPTION 'invalid golfer'; END IF;
  IF p_destination IS NULL OR p_destination NOT IN (0,1) OR s#>>ARRAY['golfers',p_golfer::text,'team'] NOT IN ('0','1')
  THEN RAISE EXCEPTION 'invalid destination or team'; END IF;
+ IF coalesce((s#>>ARRAY['golfers',p_golfer::text,'participating'])::boolean,true)=false
+    OR coalesce((s#>>ARRAY['golfers',p_golfer::text,'withdrawn'])::boolean,false)=true
+ THEN RAISE EXCEPTION 'inactive golfer cannot move'; END IF;
  old_team := (s#>>ARRAY['golfers',p_golfer::text,'team'])::integer;
  IF old_team=p_destination THEN RAISE EXCEPTION 'same team'; END IF;
  old_roster := s#>ARRAY['teams',old_team::text,'roster'];
