@@ -198,6 +198,23 @@ BEGIN
  OR after_state->'picks' IS DISTINCT FROM before_state->'picks'
  THEN RAISE EXCEPTION 'Existing restore RPC regression'; END IF;
 END $restore$;
+-- A withdrawn golfer must be restored before a commissioner can move them.
+DO $withdrawn_move$
+DECLARE stamp timestamptz; original_state jsonb; blocked boolean:=false;
+BEGIN
+ SELECT updated_at,state INTO stamp,original_state FROM public.elleng_drafts WHERE id='elleng-cup';
+ PERFORM public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,15,'fixture');
+ SELECT updated_at,state INTO stamp,original_state FROM public.elleng_drafts WHERE id='elleng-cup';
+ BEGIN
+  PERFORM public.elleng_commissioner_move_golfer(stamp,15,'Michael Glover',0,false);
+ EXCEPTION WHEN OTHERS THEN blocked:=true;
+ END;
+ IF NOT blocked THEN RAISE EXCEPTION 'Withdrawn golfer move was accepted'; END IF;
+ IF (SELECT state FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM original_state
+ THEN RAISE EXCEPTION 'Withdrawn golfer move modified draft'; END IF;
+ PERFORM public.elleng_restore_golfer('elleng-cup','elleng-cup-live',
+  (SELECT updated_at FROM public.elleng_drafts WHERE id='elleng-cup'),15);
+END $withdrawn_move$;
 -- A direct draft JSON update must not bypass the commissioner-only RPC.
 DO $direct$
 DECLARE original_state jsonb; blocked boolean:=false;
