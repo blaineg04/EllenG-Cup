@@ -76,4 +76,25 @@ BEGIN
  IF (SELECT state FROM transfer_fixture.drafts WHERE id='move') IS DISTINCT FROM before_state
  THEN RAISE EXCEPTION 'scored move changed state'; END IF;
 END $scores$;
+-- Reject captain, same-team, and out-of-range moves without any mutation.
+DO $invalid$
+DECLARE scenario text; golfer_index integer; destination integer;
+        before_state jsonb; err text;
+BEGIN
+ SELECT state INTO before_state FROM transfer_fixture.drafts WHERE id='move';
+ FOREACH scenario IN ARRAY ARRAY['captain','same_team','bad_destination','bad_golfer'] LOOP
+  golfer_index:=CASE scenario WHEN 'captain' THEN 0 WHEN 'bad_golfer' THEN 99 ELSE 3 END;
+  destination:=CASE scenario WHEN 'same_team' THEN 1 WHEN 'bad_destination' THEN 7 ELSE 0 END;
+  BEGIN
+   PERFORM transfer_fixture.move_golfer('commissioner','move-event','move',
+    (SELECT updated_at FROM transfer_fixture.drafts WHERE id='move'),golfer_index,destination);
+   RAISE EXCEPTION 'unexpected invalid move success: %',scenario;
+  EXCEPTION WHEN raise_exception THEN
+   GET STACKED DIAGNOSTICS err=MESSAGE_TEXT;
+   IF err LIKE 'unexpected invalid move success:%' THEN RAISE; END IF;
+  END;
+  IF (SELECT state FROM transfer_fixture.drafts WHERE id='move') IS DISTINCT FROM before_state
+  THEN RAISE EXCEPTION 'invalid move changed state: %',scenario; END IF;
+ END LOOP;
+END $invalid$;
 ROLLBACK;
