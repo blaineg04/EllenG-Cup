@@ -49,8 +49,8 @@ BEGIN
   IF changed NOT IN (1,2) THEN RAISE EXCEPTION 'expected one move or two swapped golfers'; END IF;
   old_teams:=OLD.state->'teams';
   new_teams:=NEW.state->'teams';
-  IF old_teams->0-'roster' IS DISTINCT FROM new_teams->0-'roster'
-     OR old_teams->1-'roster' IS DISTINCT FROM new_teams->1-'roster'
+  IF (old_teams->0)-'roster' IS DISTINCT FROM (new_teams->0)-'roster'
+     OR (old_teams->1)-'roster' IS DISTINCT FROM (new_teams->1)-'roster'
   THEN RAISE EXCEPTION 'team metadata changed'; END IF;
   IF old_teams->0->'roster' IS NOT DISTINCT FROM new_teams->0->'roster'
      OR old_teams->1->'roster' IS NOT DISTINCT FROM new_teams->1->'roster'
