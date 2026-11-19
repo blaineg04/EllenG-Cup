@@ -15,6 +15,8 @@ jobs:
         with:
           node-version: '22'
       - name: Test isolated shamble scoring fixture
-        run: |\n          node tests/shamble-extras-fixture.test.cjs\n          node tests/shamble-extras-render.test.cjs
+        run: |
+          node tests/shamble-extras-fixture.test.cjs
+          node tests/shamble-extras-render.test.cjs
           node tests/shamble-extras-realtime.test.cjs
           node tests/shamble-20-golfer-load.test.cjs
