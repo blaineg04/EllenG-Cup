@@ -26,3 +26,11 @@ test('preview blocks captain swaps and unverifiable scoring',()=>{
  assert.equal(previewCommissionerChange(state,'swap',0,3,verified).ok,false);
  assert.equal(previewCommissionerChange(state,'move',2,null,{}).ok,false);
 });
+
+test('commissioner selector excludes unused reserved slots and invalid roster entries',()=>{
+ const extended=structuredClone(state);
+ extended.golfers.push({name:'',team:0},{name:'Unused',team:0,participating:false});
+ extended.teams[0].roster.push(4,5,999);
+ const view=buildCommissionerTransferView(extended);
+ assert.deepEqual(view.teams[0].golfers.map(g=>g.name),['Jarad','Alice']);
+});
