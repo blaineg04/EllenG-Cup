@@ -3151,6 +3151,14 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   white-space:normal!important;max-height:none!important;overflow:visible!important;
  }
 }
+
+@media(max-width:900px){
+ body.extras-screen-active #extrasView #teamMomentumCard{min-height:0!important;height:auto!important;max-height:none!important;flex:0 0 auto!important}
+ body.extras-screen-active #extrasView #teamMomentumCard .wow-body,
+ body.extras-screen-active #extrasView #teamMomentumCard #teamMomentumMeter{min-height:0!important;height:auto!important;max-height:none!important;overflow:visible!important}
+ body.extras-screen-active #extrasView #tournamentExtrasContent .wow-body .note,
+ body.extras-screen-active #extrasView #tournamentExtrasContent .wow-body .status{display:block!important;white-space:normal!important;max-height:none!important;overflow:visible!important}
+}
 </style>
 </head>
 <body class="login-mode">
@@ -4374,7 +4382,7 @@ function renderWhatChangedFeed(){
 }
 function renderOnTheClock(){
  const el=$("onTheClock");if(!el)return;const c=closestTeams();
- if(!c){el.innerHTML='<div class="note">Pressure moments will appear after scoring begins.</div>';return}
+ if(!c||(!c.a.pts&&!c.b.pts)){el.innerHTML='<div class="note">Pressure moments will appear after scoring begins.</div>';return}
  let h=1;
  for(let x=1;x<=18;x++){const count=scores.filter(r=>Number(r.hole)===x&&r.score!=null).length;if(count<teams.length){h=x;break}}
  const leader=c.a.pts>=c.b.pts?c.a:c.b, chaser=leader===c.a?c.b:c.a;
