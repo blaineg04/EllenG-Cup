@@ -349,6 +349,8 @@ BEGIN
  PERFORM set_config('test.uid','11111111-1111-4111-8111-111111111111',true);
  PERFORM public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,17,'restore-auth-check');
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
+ EXECUTE 'SET LOCAL ROLE authenticated';
+ IF current_user <> 'authenticated' THEN RAISE EXCEPTION 'Non-commissioner restore test not using authenticated role'; END IF;
  PERFORM set_config('test.uid','22222222-2222-4222-8222-222222222222',true);
  BEGIN
    PERFORM public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,17);
@@ -357,6 +359,7 @@ BEGIN
    IF SQLERRM='Unauthorized restoration unexpectedly allowed' THEN RAISE; END IF;
    IF SQLERRM NOT LIKE '%Commissioner access required%' THEN RAISE; END IF;
  END;
+ EXECUTE 'RESET ROLE';
  PERFORM set_config('test.uid','11111111-1111-4111-8111-111111111111',true);
  PERFORM public.elleng_restore_golfer('elleng-cup','elleng-cup-live',stamp,17);
  -- Withdraw another golfer before scoring so restore lockout is tested against a valid withdrawn target.
