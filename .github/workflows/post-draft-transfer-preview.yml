@@ -1,0 +1,79 @@
+name: Post-draft transfer preview tests
+on:
+  push:
+    branches:
+      - development/post-draft-team-transfer-spec-20261119
+  pull_request:
+    paths:
+      - 'lib/post-draft-team-transfer-preview.cjs'
+      - 'tests/post-draft-team-transfer-preview.test.cjs'
+      - 'lib/post-draft-team-transfer-simulator.cjs'
+      - 'tests/post-draft-team-transfer-simulator.test.cjs'
+      - 'lib/post-draft-team-transfer-postcondition.cjs'
+      - 'tests/post-draft-team-transfer-postcondition.test.cjs'
+      - 'tests/post-draft-team-transfer-live-shape.test.cjs'
+      - 'lib/post-draft-transfer-guard-delta.cjs'
+      - 'tests/post-draft-transfer-guard-delta.test.cjs'
+      - 'lib/post-draft-transfer-locked-gate.cjs'
+      - 'tests/post-draft-transfer-locked-gate.test.cjs'
+      - 'lib/post-draft-transfer-transaction-plan.cjs'
+      - 'tests/post-draft-transfer-transaction-plan.test.cjs'
+      - 'lib/post-draft-commissioner-view.cjs'
+      - 'tests/post-draft-commissioner-view.test.cjs'
+      - 'db/releases/post-draft-transfer/**'
+      - '.github/workflows/post-draft-transfer-preview.yml'
+jobs:
+  preview:
+    runs-on: [self-hosted, macOS]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/post-draft-team-transfer-*.test.cjs tests/post-draft-transfer-*.test.cjs tests/post-draft-commissioner-*.test.cjs
+  isolated-postgres:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: fixture
+          POSTGRES_PASSWORD: fixture-only-password
+          POSTGRES_DB: transfer_fixture
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U fixture -d transfer_fixture"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: fixture
+      PGPASSWORD: fixture-only-password
+      PGDATABASE: transfer_fixture
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Install isolated test-only trigger
+        run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-trigger-fixture.sql
+      - name: Run rollback-only trigger smoke tests
+        run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-trigger-smoke.sql
+      - name: Install isolated authorization fixture
+        run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-authorization-fixture.sql
+      - name: Test commissioner authorization and score gates
+        run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-authorization-smoke.sql
+      - name: Install disposable atomic move RPC
+        run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-move-rpc.sql
+      - name: Test atomic move and denied write
+        run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-move-smoke.sql
+      - name: Install disposable two-golfer swap RPC
+        run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-swap-rpc.sql
+      - name: Test atomic swap and rejected swaps
+        run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-swap-smoke.sql

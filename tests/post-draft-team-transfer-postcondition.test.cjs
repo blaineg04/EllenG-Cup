@@ -1,0 +1,18 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict');
+const {simulateTransfer}=require('../lib/post-draft-team-transfer-simulator.cjs');
+const {validateTransferPostcondition:verify}=require('../lib/post-draft-team-transfer-postcondition.cjs');
+const make=()=>({golfers:[{name:'Jarad',team:0},{name:'Carl',team:1},{name:'A',team:0,band:'B'},{name:'B',team:1,band:'C'}],teams:[{captain:'Jarad',roster:[0,2]},{captain:'Carl',roster:[1,3]}],picks:[{golfer:2,team:0}],timerPaused:true});
+const gate={scoresExist:false,draftComplete:true,tournamentStatus:'setup'};
+const move={...gate,operation:'move',golferIndex:2,destinationTeamIndex:1};
+const swap={...gate,operation:'swap',golferIndex:2,otherGolferIndex:3};
+test('accept valid move',()=>{const s=make(),r=simulateTransfer(s,move);assert.equal(r.ok,true);assert.equal(verify(s,r.state,move).ok,true)});
+test('accept valid swap',()=>{const s=make(),r=simulateTransfer(s,swap);assert.equal(r.ok,true);assert.equal(verify(s,r.state,swap).ok,true)});
+test('reject changed picks',()=>{const s=make(),r=simulateTransfer(s,move);r.state.picks=[];assert.equal(verify(s,r.state,move).ok,false)});
+test('reject changed unrelated golfer',()=>{const s=make(),r=simulateTransfer(s,move);r.state.golfers[3].band='A';assert.equal(verify(s,r.state,move).ok,false)});
+test('reject changed moved golfer metadata',()=>{const s=make(),r=simulateTransfer(s,move);r.state.golfers[2].name='Other';assert.equal(verify(s,r.state,move).ok,false)});
+test('reject changed team captain',()=>{const s=make(),r=simulateTransfer(s,move);r.state.teams[0].captain='Other';assert.equal(verify(s,r.state,move).ok,false)});
+test('reject unrelated roster removal',()=>{const s=make(),r=simulateTransfer(s,move);r.state.teams[1].roster.shift();assert.equal(verify(s,r.state,move).ok,false)});
+test('reject duplicate roster member',()=>{const s=make(),r=simulateTransfer(s,move);r.state.teams[0].roster.push(2);assert.equal(verify(s,r.state,move).ok,false)});
+test('reject draft metadata modification',()=>{const s=make(),r=simulateTransfer(s,move);r.state.timerPaused=false;assert.equal(verify(s,r.state,move).ok,false)});
+test('reject incomplete move',()=>{const s=make(),r=simulateTransfer(s,move);r.state.golfers[2].team=0;assert.equal(verify(s,r.state,move).ok,false)});
