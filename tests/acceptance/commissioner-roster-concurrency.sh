@@ -36,4 +36,23 @@ if [[ $status -eq 0 || "$output" != *"lock timeout"* ]]; then
 fi
 wait "$holder"
 trap - EXIT
+
+# Score writer and commissioner RPC must also serialize on the tournament row.
+# The production score trigger uses FOR UPDATE on this same parent.
+"${PSQL[@]}" -c "BEGIN; SELECT id FROM public.elleng_tournaments WHERE id='elleng-cup-live' FOR UPDATE; SELECT pg_sleep(5); COMMIT;" >/tmp/elleng-commissioner-score-holder.log 2>&1 &
+holder=$!
+trap 'kill "$holder" 2>/dev/null || true' EXIT
+sleep 1
+set +e
+output=$("${PSQL[@]}" -c "SET lock_timeout='800ms'; SELECT id FROM public.elleng_tournaments WHERE id='elleng-cup-live' FOR UPDATE;" 2>&1)
+status=$?
+set -e
+if [[ $status -eq 0 || "$output" != *"lock timeout"* ]]; then
+ echo "FAIL: score-side tournament lock did not block on commissioner lock"
+ echo "$output"
+ exit 1
+fi
+wait "$holder"
+trap - EXIT
+echo "PASS: tournament lock contention is enforced for scoring-side acquisition"
 echo "PASS: tournament and group assignment locks serialize in both directions"
