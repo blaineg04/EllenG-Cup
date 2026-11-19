@@ -5,6 +5,7 @@ on:
       - 'db/releases/commissioner-roster-adjustment/**'
       - 'tests/acceptance/commissioner-roster-postgres.sql'
       - '.github/workflows/commissioner-roster-postgres.yml'
+      - 'tests/acceptance/commissioner-roster-concurrency.sh'
   workflow_dispatch:
 permissions:
   contents: read
@@ -34,3 +35,7 @@ jobs:
         env:
           PGPASSWORD: postgres
         run: psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d elleng_roster_test -f tests/acceptance/commissioner-roster-postgres.sql
+      - name: Verify real concurrent tee-group and commissioner lock contention
+        env:
+          PGPASSWORD: postgres
+        run: bash tests/acceptance/commissioner-roster-concurrency.sh
