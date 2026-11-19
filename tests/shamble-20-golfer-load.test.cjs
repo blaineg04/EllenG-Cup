@@ -34,7 +34,7 @@ async function save(r){
  assert.equal(fetched.length,360,'complete score readback');
  assert.deepEqual(pageCalls,[[0,499]]);
  // Retest an uneven roster with one withdrawn golfer and no scores counted for them.
- const uneven={golfers:golfers.map((g,i)=>({...g,participating:i!==19})),teams:[{name:'Fixture A',roster:Array.from({length:11},(_,i)=>i)},{name:'Fixture B',roster:Array.from({length:9},(_,i)=>i+11)}]};
+ const uneven={golfers:golfers.map((g,i)=>({...g,team:i<11?0:1,participating:i!==19})),teams:[{name:'Fixture A',roster:Array.from({length:11},(_,i)=>i)},{name:'Fixture B',roster:Array.from({length:9},(_,i)=>i+11)}]};
  const unevenRows=submitted.map(r=>({...r,team_index:r.golfer_index<11?0:1}));
  const y=scoring.summarize(uneven,unevenRows,pars,9);
  assert.equal(y.completeHoles,18);
