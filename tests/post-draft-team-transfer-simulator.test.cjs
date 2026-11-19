@@ -6,3 +6,25 @@ test('move changes both rosters and golfer team but never mutates input',()=>{co
 test('swap keeps team sizes, draft picks and identity stable',()=>{const s=draft(),r=simulateTransfer(s,{operation:'swap',golferIndex:2,otherGolferIndex:3,scoresExist:false});assert.equal(r.ok,true);assert.deepEqual(r.state.teams.map(t=>t.roster),[[0,3],[1,2]]);assert.equal(r.state.golfers[2].team,1);assert.equal(r.state.golfers[3].team,0);assert.deepEqual(r.state.picks,s.picks)});
 test('reject score-present transfer without mutation',()=>{const s=draft(),before=JSON.stringify(s),r=simulateTransfer(s,{operation:'move',golferIndex:2,destinationTeamIndex:1,scoresExist:true});assert.equal(r.ok,false);assert.equal(JSON.stringify(s),before)});
 test('preserve object roster entries',()=>{const s=draft();s.teams[0].roster[1]={golferIndex:2,tag:'keep'};const r=simulateTransfer(s,{operation:'move',golferIndex:2,destinationTeamIndex:1,scoresExist:false});assert.deepEqual(r.state.teams[1].roster[2],{golferIndex:2,tag:'keep'})});
+
+for (const count of [21,22,23,24,40]) {
+ test('preserve all golfer identities and picks for '+count+' golfers',()=>{
+  const s=draft();
+  for(let i=4;i<count;i++){
+   const team=i%2;
+   s.golfers.push({name:'Golfer '+i,team,participating:true});
+   s.teams[team].roster.push(i);
+  }
+  const before=JSON.stringify(s);
+  const result=simulateTransfer(s,{operation:'swap',golferIndex:2,otherGolferIndex:3,scoresExist:false});
+  assert.equal(result.ok,true);
+  assert.equal(JSON.stringify(s),before);
+  assert.equal(result.state.golfers.length,count);
+  assert.deepEqual(result.state.picks,s.picks);
+  assert.deepEqual(result.state.scoreRows,s.scoreRows);
+  const indexes=result.state.teams.flatMap(t=>t.roster);
+  assert.equal(indexes.length,count);
+  assert.equal(new Set(indexes).size,count);
+  for(let i=0;i<count;i++)assert.equal(result.state.golfers[i].team,result.state.teams.findIndex(t=>t.roster.includes(i)));
+ });
+}
