@@ -28,7 +28,7 @@ SELECT 'elleng-cup','11111111-1111-4111-8111-111111111111'::uuid,
    jsonb_build_object('captain','Captain Carl','roster',to_jsonb(ARRAY[6,12,5,26,15,13,17,18,2,25,19,11])),
    jsonb_build_object('captain','Captain Jarad','roster',to_jsonb(ARRAY[38,9,10,14,1,0,20,21,4,7,8,27]))),
  'picks',(SELECT jsonb_agg(jsonb_build_object('golfer',i,'team',CASE WHEN i IN (6,12,5,26,15,13,17,18,2,25,19,11) THEN 0 ELSE 1 END))
-  FROM (SELECT unnest(ARRAY[6,12,5,26,15,13,17,18,2,25,19,11,38,9,10,14,1,0,20,21,4,7,8,27]) i) a)),
+  FROM (SELECT unnest(ARRAY[6,12,5,26,15,13,17,18,2,25,19,11,38,9,10,14,1,0,20,21,4,7,8]) i) a)),
  now();
 \i db/releases/withdraw-golfer/staged.sql
 \i db/releases/withdraw-golfer/restore-staged.sql
@@ -68,7 +68,7 @@ BEGIN
        WHERE p->>'golfer'=n::text AND p->>'team'=s#>>ARRAY['golfers',n::text,'team'])<>1
   THEN RAISE EXCEPTION 'Pick destination mismatch for %',n; END IF;
  END LOOP;
- IF jsonb_array_length(s->'picks')<>25 THEN RAISE EXCEPTION 'Unexpected pick count after activation'; END IF;
+ IF jsonb_array_length(s->'picks')<>24 THEN RAISE EXCEPTION 'Unexpected pick count after activation'; END IF;
  FOREACH n IN ARRAY ARRAY[56,15,7,20] LOOP
   IF (SELECT count(*) FROM jsonb_array_elements(s->'teams') t,
       jsonb_array_elements_text(t->'roster') ri WHERE ri=n::text)<>1
