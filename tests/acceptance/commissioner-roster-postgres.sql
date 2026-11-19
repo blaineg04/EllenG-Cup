@@ -111,6 +111,35 @@ BEGIN
  IF (SELECT state FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM before_state
  THEN RAISE EXCEPTION 'Score-blocked request modified roster'; END IF;
 END $negative$;
+-- Verify group assignments block moves even when no scores have been entered.
+DO $groups$
+DECLARE stamp timestamptz; before_state jsonb; blocked boolean:=false;
+BEGIN
+ DELETE FROM public.elleng_player_hole_scores WHERE tournament_id='elleng-cup-live';
+ SELECT updated_at,state INTO stamp,before_state FROM public.elleng_drafts WHERE id='elleng-cup';
+ INSERT INTO public.elleng_group_assignments VALUES('elleng-cup');
+ BEGIN
+  PERFORM public.elleng_commissioner_move_golfer(stamp,15,'Michael Glover',0,false);
+ EXCEPTION WHEN OTHERS THEN blocked:=true;
+ END;
+ IF NOT blocked THEN RAISE EXCEPTION 'Group-assigned roster change unexpectedly succeeded'; END IF;
+ IF (SELECT state FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM before_state
+ THEN RAISE EXCEPTION 'Group-blocked request modified roster'; END IF;
+ DELETE FROM public.elleng_group_assignments WHERE draft_id='elleng-cup';
+END $groups$;
+-- Captains must never be reassigned through the commissioner move operation.
+DO $captain$
+DECLARE stamp timestamptz; before_state jsonb; blocked boolean:=false;
+BEGIN
+ SELECT updated_at,state INTO stamp,before_state FROM public.elleng_drafts WHERE id='elleng-cup';
+ BEGIN
+  PERFORM public.elleng_commissioner_move_golfer(stamp,6,'Captain Carl',1,false);
+ EXCEPTION WHEN OTHERS THEN blocked:=true;
+ END;
+ IF NOT blocked THEN RAISE EXCEPTION 'Captain reassignment unexpectedly succeeded'; END IF;
+ IF (SELECT state FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM before_state
+ THEN RAISE EXCEPTION 'Captain-blocked request modified roster'; END IF;
+END $captain$;
 -- A direct draft JSON update must not bypass the commissioner-only RPC.
 DO $direct$
 DECLARE original_state jsonb; blocked boolean:=false;
