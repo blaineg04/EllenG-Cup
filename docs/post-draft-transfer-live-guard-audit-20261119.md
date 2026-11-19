@@ -16,3 +16,11 @@ Do **not** install a generic SECURITY DEFINER move RPC or directly update `ellen
 The function output inspected here was truncated at 3,500 characters per function, so this is **not a complete review** of either definition. Retrieve full definitions before authoring executable SQL. Review RLS and actual table schema separately.
 
 Status: investigation only. No production change authorized.
+
+## Full-definition follow-up (same day; supersedes the earlier incomplete inference)
+
+Retrieved the **entire 6,477-character installed guard** using a read-only catalog query. Correction: the guard's final completed-draft rejection is conditional on `old.state->'golfers' IS DISTINCT FROM new.state->'golfers'`; it does **not** explicitly reject a teams-only roster update. Therefore the earlier description that it rejects every team-roster change was too broad. **Do not interpret this as permission** to use a generic draft save: a teams-only update would leave golfer.team out of sync with the authoritative roster, and a combined update would be rejected. The guard must explicitly protect both fields and allow only a validated atomic RPC path.
+
+Live read-only metadata: weighted draft, 23 picks, 70 golfer array slots (not 70 active players), numeric roster entries, numeric golfer.team, tournament status setup, zero rows in each of the three scoring tables at inspection time. Counts are a point-in-time observation, **not** a guarantee that scoring has not begun later. This confirms that using golfers.length as an active count is wrong.
+
+Important security gap to address in the proposed guard: a direct teams-only change can apparently evade its completed-draft golfer-change check. The fix should be narrow and regression-tested; do not deploy a guard replacement immediately before tournament play.
