@@ -18,6 +18,10 @@ DECLARE
   idx integer;
   old_teams jsonb;
   new_teams jsonb;
+  member jsonb;
+  team_idx integer;
+  member_idx integer;
+  seen integer[];
 BEGIN
   IF OLD.state->>'draftRules' IS DISTINCT FROM 'weighted'
      OR NEW.state->>'draftRules' IS DISTINCT FROM 'weighted'
@@ -63,7 +67,41 @@ BEGIN
   IF old_teams->0->'roster' IS NOT DISTINCT FROM new_teams->0->'roster'
      OR old_teams->1->'roster' IS NOT DISTINCT FROM new_teams->1->'roster'
   THEN RAISE EXCEPTION 'both rosters must change'; END IF;
-  -- Not production-ready: full roster membership, auth, status and score
+  -- Validate every roster entry against its authoritative golfer.team.
+  -- This isolated fixture currently supports numeric roster entries only.
+  -- Object-form entries must be supported before any production integration.
+  seen := array_fill(0, ARRAY[jsonb_array_length(NEW.state->'golfers')]);
+  FOR team_idx IN 0..1 LOOP
+    IF jsonb_typeof(new_teams->team_idx->'roster') <> 'array'
+    THEN RAISE EXCEPTION 'roster must be array'; END IF;
+    FOR member IN SELECT value FROM jsonb_array_elements(new_teams->team_idx->'roster') LOOP
+      IF jsonb_typeof(member) <> 'number'
+         OR member::text !~ '^(0|[1-9][0-9]*)
+  -- checks MUST be implemented and exercised before adapting to production.
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS guard_delta ON transfer_fixture.drafts;
+CREATE TRIGGER guard_delta BEFORE UPDATE OF state ON transfer_fixture.drafts
+FOR EACH ROW EXECUTE FUNCTION transfer_fixture.guard_delta();
+COMMIT;
+
+      THEN RAISE EXCEPTION 'invalid roster entry'; END IF;
+      member_idx := (member::text)::integer;
+      IF member_idx < 0 OR member_idx >= array_length(seen,1)
+      THEN RAISE EXCEPTION 'roster index out of bounds'; END IF;
+      seen[member_idx+1] := seen[member_idx+1]+1;
+      IF seen[member_idx+1] > 1
+      THEN RAISE EXCEPTION 'golfer duplicated across rosters'; END IF;
+      IF NEW.state#>>ARRAY['golfers',member_idx::text,'team'] <> team_idx::text
+      THEN RAISE EXCEPTION 'roster does not match golfer team'; END IF;
+    END LOOP;
+  END LOOP;
+  FOR idx IN 0..jsonb_array_length(NEW.state->'golfers')-1 LOOP
+    IF NEW.state#>>ARRAY['golfers',idx::text,'team'] IN ('0','1')
+       AND seen[idx+1] <> 1
+    THEN RAISE EXCEPTION 'assigned golfer missing from roster'; END IF;
+  END LOOP;
+  -- Not production-ready: object-form roster membership, auth, status and score
   -- checks MUST be implemented and exercised before adapting to production.
   RETURN NEW;
 END $$;
