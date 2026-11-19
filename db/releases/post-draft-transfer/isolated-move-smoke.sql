@@ -82,9 +82,9 @@ DECLARE scenario text; golfer_index integer; destination integer;
         before_state jsonb; err text;
 BEGIN
  SELECT state INTO before_state FROM transfer_fixture.drafts WHERE id='move';
- FOREACH scenario IN ARRAY ARRAY['captain','same_team','bad_destination','bad_golfer'] LOOP
-  golfer_index:=CASE scenario WHEN 'captain' THEN 0 WHEN 'bad_golfer' THEN 99 ELSE 3 END;
-  destination:=CASE scenario WHEN 'same_team' THEN 1 WHEN 'bad_destination' THEN 7 ELSE 0 END;
+ FOREACH scenario IN ARRAY ARRAY['captain','same_team','bad_destination','bad_golfer','null_golfer','null_destination'] LOOP
+  golfer_index:=CASE scenario WHEN 'captain' THEN 0 WHEN 'bad_golfer' THEN 99 WHEN 'null_golfer' THEN NULL ELSE 3 END;
+  destination:=CASE scenario WHEN 'same_team' THEN 1 WHEN 'bad_destination' THEN 7 WHEN 'null_destination' THEN NULL ELSE 0 END;
   BEGIN
    PERFORM transfer_fixture.move_golfer('commissioner','move-event','move',
     (SELECT updated_at FROM transfer_fixture.drafts WHERE id='move'),golfer_index,destination);
