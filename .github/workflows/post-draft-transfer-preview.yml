@@ -63,3 +63,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-trigger-fixture.sql
       - name: Run rollback-only trigger smoke tests
         run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-trigger-smoke.sql
+      - name: Install isolated authorization fixture
+        run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-authorization-fixture.sql
+      - name: Test commissioner authorization and score gates
+        run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-authorization-smoke.sql
