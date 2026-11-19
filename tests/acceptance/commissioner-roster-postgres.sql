@@ -140,6 +140,20 @@ BEGIN
  IF (SELECT state FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM before_state
  THEN RAISE EXCEPTION 'Captain-blocked request modified roster'; END IF;
 END $captain$;
+-- Regression: the new guard must continue permitting the existing authorized withdrawal RPC.
+DO $withdraw$
+DECLARE stamp timestamptz; result jsonb; before_state jsonb; after_state jsonb;
+BEGIN
+ SELECT updated_at,state INTO stamp,before_state FROM public.elleng_drafts WHERE id='elleng-cup';
+ result:=public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,15,'fixture');
+ SELECT state INTO after_state FROM public.elleng_drafts WHERE id='elleng-cup';
+ IF result->>'ok'<>'true'
+ OR after_state#>>'{golfers,15,participating}'<>'false'
+ OR after_state#>>'{golfers,15,withdrawn}'<>'true'
+ OR after_state->'teams' IS DISTINCT FROM before_state->'teams'
+ OR after_state->'picks' IS DISTINCT FROM before_state->'picks'
+ THEN RAISE EXCEPTION 'Existing withdrawal RPC regression'; END IF;
+END $withdraw$;
 -- A direct draft JSON update must not bypass the commissioner-only RPC.
 DO $direct$
 DECLARE original_state jsonb; blocked boolean:=false;
