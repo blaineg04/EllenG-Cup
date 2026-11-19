@@ -39,6 +39,14 @@ BEGIN
     new_g := NEW.state#>ARRAY['golfers',idx::text];
     IF old_g IS DISTINCT FROM new_g THEN
       changed := changed+1;
+      IF EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(OLD.state->'teams') AS t(value)
+        WHERE lower(btrim(coalesce(t.value->>'captain',''))) =
+              lower(btrim(coalesce(old_g->>'name','')))
+           OR t.value->'captain' = to_jsonb(idx)
+           OR t.value->'captain'->>'golferIndex' = idx::text
+      ) THEN RAISE EXCEPTION 'captain transfer forbidden'; END IF;
       IF old_g-'team' IS DISTINCT FROM new_g-'team'
       THEN RAISE EXCEPTION 'golfer metadata changed'; END IF;
       IF old_g->>'team' NOT IN ('0','1') OR new_g->>'team' NOT IN ('0','1')
@@ -55,7 +63,7 @@ BEGIN
   IF old_teams->0->'roster' IS NOT DISTINCT FROM new_teams->0->'roster'
      OR old_teams->1->'roster' IS NOT DISTINCT FROM new_teams->1->'roster'
   THEN RAISE EXCEPTION 'both rosters must change'; END IF;
-  -- Not production-ready: full roster membership, captain, auth, status and score
+  -- Not production-ready: full roster membership, auth, status and score
   -- checks MUST be implemented and exercised before adapting to production.
   RETURN NEW;
 END $$;
