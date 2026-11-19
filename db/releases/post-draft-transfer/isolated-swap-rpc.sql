@@ -14,6 +14,11 @@ BEGIN
     OR p_first>=jsonb_array_length(s->'golfers')
     OR p_second>=jsonb_array_length(s->'golfers')
  THEN RAISE EXCEPTION 'invalid swap golfers'; END IF;
+ IF coalesce((s#>>ARRAY['golfers',p_first::text,'participating'])::boolean,true)=false
+    OR coalesce((s#>>ARRAY['golfers',p_second::text,'participating'])::boolean,true)=false
+    OR coalesce((s#>>ARRAY['golfers',p_first::text,'withdrawn'])::boolean,false)=true
+    OR coalesce((s#>>ARRAY['golfers',p_second::text,'withdrawn'])::boolean,false)=true
+ THEN RAISE EXCEPTION 'inactive golfer cannot swap'; END IF;
  a:=(s#>>ARRAY['golfers',p_first::text,'team'])::integer;
  b:=(s#>>ARRAY['golfers',p_second::text,'team'])::integer;
  IF a NOT IN (0,1) OR b NOT IN (0,1) OR a=b
