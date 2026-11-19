@@ -1,5 +1,8 @@
 name: Offline shamble Extras fixture
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - fix/extras-mobile-readable-20261119
