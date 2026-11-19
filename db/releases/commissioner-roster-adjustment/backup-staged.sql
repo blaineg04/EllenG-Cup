@@ -11,9 +11,14 @@ CREATE TABLE IF NOT EXISTS public.elleng_roster_release_backups (
  captured_at timestamptz NOT NULL DEFAULT clock_timestamp(),
  release_tag text NOT NULL UNIQUE
 );
+ALTER TABLE public.elleng_roster_release_backups ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.elleng_roster_release_backups FROM PUBLIC,anon,authenticated;
 REVOKE ALL ON SEQUENCE public.elleng_roster_release_backups_backup_id_seq FROM PUBLIC,anon,authenticated;
 -- Run this INSERT once under the migration/administrative role only.
+-- Capture under the same transaction-level locks as the transfer preflight.
+BEGIN;
+SELECT id FROM public.elleng_tournaments WHERE id='elleng-cup-live' FOR UPDATE;
+SELECT id FROM public.elleng_drafts WHERE id='elleng-cup' FOR UPDATE;
 -- ON CONFLICT is intentionally omitted so accidental retries fail closed.
 INSERT INTO public.elleng_roster_release_backups
  (draft_id,original_owner_id,original_updated_at,original_state,state_md5,release_tag)
@@ -36,3 +41,4 @@ END $verify$;
 SELECT backup_id,draft_id,original_updated_at,state_md5,captured_at
 FROM public.elleng_roster_release_backups
 WHERE release_tag='elleng-cup-2026-11-20-pre-roster-move';
+COMMIT;
