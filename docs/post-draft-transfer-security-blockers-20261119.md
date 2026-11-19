@@ -10,3 +10,16 @@ Read-only inspection of EllenGCup Supabase project `xepccqedhbucpbwuykoc`, Novem
 6. Before executable SQL: verify installed guard dependencies and function owners; inspect full RLS predicates, table grants, trigger definitions, and scoring lock behavior. Then implement an isolated PostgreSQL fixture and tests. Do not deploy a migration or change production without explicit approval.
 
 No live data was modified.
+
+## Dependency resolution and RLS follow-up
+
+**Correction to item 2:** The function `public.elleng_withdraw_golfer(text,text,timestamptz,integer,text)` **does exist** in production, owned by `postgres`. The earlier catalog call contained two SELECT statements and surfaced only the final result set; absence from that output was not evidence of absence. A single-result function-name query confirmed the function. Do not remove, rename, or replace it.
+
+Read-only `pg_policies` inspection confirmed:
+- `elleng_owner_update` UPDATE `USING` and `WITH CHECK` both compare `auth.uid()` to `owner_id`.
+- `authenticated can read draft` SELECT policy has `USING (true)`.
+- Both authenticated INSERT policies check `auth.uid() = owner_id`.
+
+These are row-level policies, **not** an adequate post-draft transfer authorization mechanism by themselves. An RPC must enforce commissioner identity, complete roster integrity, draft state, no-score gate, lock ordering, and optimistic concurrency. The existing withdrawal function must remain functional.
+
+All inspection was SELECT-only. No production mutation.
