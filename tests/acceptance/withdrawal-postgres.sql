@@ -18,6 +18,22 @@ SELECT 'elleng-cup','11111111-1111-4111-8111-111111111111'::uuid,
  'teams',jsonb_build_array(jsonb_build_object('captain','Captain A','roster',(SELECT jsonb_agg(i ORDER BY i) FROM generate_series(0,11) i)),jsonb_build_object('captain','Captain B','roster',(SELECT jsonb_agg(i ORDER BY i) FROM generate_series(12,23) i))),
  'picks',(SELECT jsonb_agg(jsonb_build_object('golfer',i) ORDER BY i) FROM generate_series(0,22) i)),
  now();
+-- Mirror the live registration/draft mismatch and fail if the fixture drifts.
+DO $fixture$
+DECLARE registered integer; active integer; original_drafted integer; picks integer;
+BEGIN
+ SELECT jsonb_array_length(state->'golfers'),
+   (SELECT count(*) FROM jsonb_array_elements(state->'golfers') g
+    WHERE coalesce((g->>'participating')::boolean,true)),
+   (SELECT count(*) FROM jsonb_array_elements(state->'golfers') g
+    WHERE g->>'team' IN ('0','1') AND coalesce((g->>'late_added')::boolean,false)=false),
+   jsonb_array_length(state->'picks')
+ INTO registered,active,original_drafted,picks
+ FROM public.elleng_drafts WHERE id='elleng-cup';
+ IF registered<>40 OR active<>24 OR original_drafted<>23 OR picks<>23 THEN
+   RAISE EXCEPTION 'Live-shaped withdrawal fixture drift: %, %, %, %',registered,active,original_drafted,picks;
+ END IF;
+END $fixture$;
 \i db/releases/withdraw-golfer/guard-staged.sql
 CREATE TRIGGER guard_draft BEFORE UPDATE ON public.elleng_drafts FOR EACH ROW EXECUTE FUNCTION public.elleng_guard_weighted_roster();
 \i db/releases/withdraw-golfer/staged.sql
