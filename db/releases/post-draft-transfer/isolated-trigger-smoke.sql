@@ -46,12 +46,11 @@ UPDATE transfer_fixture.drafts SET state =
       '{teams,0,roster}','[0,{"golferIndex":3}]'::jsonb),
     '{teams,1,roster}','[1,{"golferIndex":2}]'::jsonb)
  WHERE id='case';
-DO $
-BEGIN
- IF (SELECT state#>>'{golfers,2,team}' FROM transfer_fixture.drafts WHERE id='case') <> '1'
- OR (SELECT state#>>'{golfers,3,team}' FROM transfer_fixture.drafts WHERE id='case') <> '0'
- THEN RAISE EXCEPTION 'fixture swap failed'; END IF;
-END $;
+-- Assert the swap using plain SQL to avoid dollar-quote serialization issues.
+SELECT CASE WHEN
+ (SELECT state#>>'{golfers,2,team}' FROM transfer_fixture.drafts WHERE id='case') = '1'
+ AND (SELECT state#>>'{golfers,3,team}' FROM transfer_fixture.drafts WHERE id='case') = '0'
+ THEN 'swap verified' ELSE (1/0)::text END AS swap_result;
 -- Negative cases are expected to raise, captured by nested exception blocks.
 DO $$
 BEGIN
