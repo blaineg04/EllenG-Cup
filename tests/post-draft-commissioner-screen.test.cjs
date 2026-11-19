@@ -24,3 +24,21 @@ test('unverified scoring does not present a valid preview',()=>{
  const html=renderCommissionerTransfer(state,{golferIndex:2,otherGolferIndex:3});
  assert.match(html,/Draft completion not verified/);
 });
+
+test('move preview names the destination but never enables saving',()=>{
+ const html=renderCommissionerTransfer(state,{operation:'move',golferIndex:2,verified});
+ assert.match(html,/Alice → Team Carl/);
+ assert.doesNotMatch(html,/id="eg-transfer-second"/);
+ assert.match(html,/disabled aria-disabled="true"/);
+});
+test('a captain selection is explicitly rejected',()=>{
+ const html=renderCommissionerTransfer(state,{operation:'move',golferIndex:0,verified});
+ assert.match(html,/Captains cannot be transferred/);
+ assert.match(html,/disabled aria-disabled="true"/);
+});
+test('withdrawn golfers cannot be selected as swap targets',()=>{
+ const s=structuredClone(state);s.golfers[3].withdrawn=true;
+ const html=renderCommissionerTransfer(s,{operation:'swap',golferIndex:2,otherGolferIndex:3,verified});
+ assert.doesNotMatch(html,/value="3"/);
+ assert.match(html,/Invalid swap golfer/);
+});
