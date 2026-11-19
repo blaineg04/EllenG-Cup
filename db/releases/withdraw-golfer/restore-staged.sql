@@ -30,6 +30,7 @@ BEGIN
  THEN RAISE EXCEPTION 'Unsupported draft structure'; END IF;
  SELECT count(*) INTO original_count FROM jsonb_array_elements(s->'golfers') original_g
  WHERE btrim(coalesce(original_g->>'name',''))<>''
+ AND original_g->>'team' IN ('0','1')
  AND coalesce((original_g->>'late_added')::boolean,false)=false;
  IF jsonb_array_length(s->'picks')<original_count
  THEN RAISE EXCEPTION 'Draft not complete'; END IF;
