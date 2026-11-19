@@ -1,0 +1,80 @@
+name: Isolated 20-session PostgreSQL scoring load
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  concurrent-score-writes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exercise 20 simultaneous database sessions in disposable PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql postgresql-client >/dev/null
+          pg_version="$(ls /etc/postgresql | sort -V | tail -1)"
+          sudo pg_ctlcluster "$pg_version" main start || sudo pg_ctlcluster "$pg_version" main status
+          db="elleng_20_concurrent_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          trap 'sudo -u postgres dropdb --if-exists "$db" >/dev/null 2>&1 || true' EXIT
+          sudo -u postgres createdb "$db"
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -f tests/acceptance/disposable-23-golfer-authorization.sql
+          pids=()
+          for golfer in $(seq 0 19); do
+            (
+              for hole in $(seq 1 18); do
+                strokes=$((3 + ((golfer + hole + 1) % 4)))
+                sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -c "BEGIN; SELECT set_config('elleng.fixture_actor','$golfer',true); SELECT concurrency_fixture.save_score($golfer,$hole,$strokes); COMMIT;" >/dev/null
+              done
+            ) &
+            pids+=("$!")
+          done
+          failed=0
+          for pid in "${pids[@]}"; do
+            wait "$pid" || failed=1
+          done
+          test "$failed" -eq 0
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" <<'SQL'
+          DO $$
+          DECLARE g integer; h integer; actual integer; expected integer;
+          BEGIN
+            IF (SELECT count(*) FROM concurrency_fixture.scores) <> 414 THEN
+              RAISE EXCEPTION 'Lost or duplicated rows';
+            END IF;
+            FOR g IN 0..19 LOOP
+              FOR h IN 1..18 LOOP
+                expected := 3 + ((g+h+1)%4);
+                SELECT strokes INTO actual FROM concurrency_fixture.scores WHERE golfer_id=g AND hole=h;
+                IF actual IS DISTINCT FROM expected THEN
+                  RAISE EXCEPTION 'Readback mismatch golfer %, hole %: expected %, got %',g,h,expected,actual;
+                END IF;
+              END LOOP;
+            END LOOP;
+            FOR g IN 20..22 LOOP
+              FOR h IN 1..18 LOOP
+                expected := 3 + ((g+h)%4);
+                SELECT strokes INTO actual FROM concurrency_fixture.scores WHERE golfer_id=g AND hole=h;
+                IF actual IS DISTINCT FROM expected THEN
+                  RAISE EXCEPTION 'Unrelated golfer changed: %, hole %',g,h;
+                END IF;
+              END LOOP;
+            END LOOP;
+            RAISE NOTICE 'PASS: 20 simultaneous PostgreSQL actors, 360 updates verified; 54 unrelated scores preserved';
+          END $$;
+          SQL
+          # Simulate a golfer correcting a saved score while another golfer saves.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -c "BEGIN; SELECT set_config('elleng.fixture_actor','0',true); SELECT concurrency_fixture.save_score(0,1,7); COMMIT;" >/dev/null &
+          correction_pid=$!
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -c "BEGIN; SELECT set_config('elleng.fixture_actor','1',true); SELECT concurrency_fixture.save_score(1,1,6); COMMIT;" >/dev/null &
+          second_pid=$!
+          wait "$correction_pid"
+          wait "$second_pid"
+          test "$(sudo -u postgres psql -X -At -d "$db" -c 'SELECT strokes FROM concurrency_fixture.scores WHERE golfer_id=0 AND hole=1')" = 7
+          test "$(sudo -u postgres psql -X -At -d "$db" -c 'SELECT strokes FROM concurrency_fixture.scores WHERE golfer_id=1 AND hole=1')" = 6
+          test "$(sudo -u postgres psql -X -At -d "$db" -c 'SELECT count(*) FROM concurrency_fixture.scores')" = 414
+          echo 'PASS: concurrent score corrections preserved both golfers without duplicates'

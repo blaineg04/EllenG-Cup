@@ -1,0 +1,25 @@
+name: Offline shamble Extras fixture
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - fix/extras-mobile-readable-20261119
+  workflow_dispatch:
+jobs:
+  fixture:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test isolated shamble scoring fixture
+        run: |
+          node tests/shamble-extras-fixture.test.cjs
+          node tests/shamble-extras-render.test.cjs
+          node tests/shamble-extras-realtime.test.cjs
+          node tests/shamble-20-golfer-load.test.cjs

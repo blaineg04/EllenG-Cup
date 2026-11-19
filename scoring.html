@@ -2601,7 +2601,7 @@ body:not(.player-simple-home) #playerExtrasToggleCard{display:none!important}
   body:not(.login-mode).extras-screen-active #extrasView #tournamentPulseCard > .card{display:none!important}
   body:not(.login-mode).extras-screen-active #extrasView #tournamentPulseCard #tournamentPulse{display:block!important}
 
-  body:not(.login-mode).extras-screen-active #extrasView #postRoundRecapCard .row:not(:first-child),
+  body:not(.login-mode).extras-screen-active #extrasView #postRoundRecapCard > .row:not(:first-child),
   body:not(.login-mode).extras-screen-active #extrasView #postRoundRecapCard .winner-tools,
   body:not(.login-mode).extras-screen-active #extrasView #winnerGraphicPreview{display:none!important}
 
@@ -3087,6 +3087,77 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
  body.player-simple-home #homeView .home-hero .row{flex-wrap:wrap!important;}
  body.player-simple-home #homeView .home-hero .badge,
  body.player-simple-home #homeView .home-hero .status{white-space:normal!important;overflow-wrap:anywhere!important;max-width:100%!important;}
+}
+</style>
+
+<style id="extras-readable-mobile-preview-fix">
+/* Isolated preview-only mobile Tournament Extras readability fix. */
+@media (max-width:900px){
+ body:not(.login-mode).extras-screen-active #extrasView:not(.hidden),
+ body:not(.login-mode).extras-screen-active #extrasView .extras-shell,
+ body:not(.login-mode).extras-screen-active #extrasView .extras-scroll{
+   overflow-y:auto!important;overflow-x:hidden!important;
+ }
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent{
+   display:flex!important;flex-direction:column!important;gap:10px!important;
+   height:auto!important;max-height:none!important;overflow:visible!important;
+ }
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent > *{
+   flex:0 0 auto!important;min-height:90px!important;height:auto!important;
+   max-height:none!important;overflow:visible!important;padding:12px!important;
+ }
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent .premium-label,
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent .badge{font-size:10px!important;line-height:1.3!important}
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent h2{font-size:17px!important;line-height:1.3!important;white-space:normal!important}
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent .status,
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent .note,
+ body:not(.login-mode).extras-screen-active #extrasView .wow-sub{font-size:13px!important;line-height:1.4!important;white-space:normal!important;display:block!important}
+ body:not(.login-mode).extras-screen-active #extrasView .wow-main{font-size:17px!important;line-height:1.3!important;white-space:normal!important}
+ body:not(.login-mode).extras-screen-active #extrasView .wow-body,
+ body:not(.login-mode).extras-screen-active #extrasView #whatChangedFeed,
+ body:not(.login-mode).extras-screen-active #extrasView #paceTracker,
+ body:not(.login-mode).extras-screen-active #extrasView #momentumTracker,
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentPulse,
+ body:not(.login-mode).extras-screen-active #extrasView #postRoundRecap,
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentAwards{
+   flex:0 0 auto!important;max-height:none!important;overflow:visible!important;
+   font-size:13px!important;line-height:1.4!important;
+ }
+ body:not(.login-mode).extras-screen-active #extrasView .event-feed > *:nth-child(n+3),
+ body:not(.login-mode).extras-screen-active #extrasView .pace-list > *:nth-child(n+3),
+ body:not(.login-mode).extras-screen-active #extrasView .momentum-grid > *:nth-child(n+3),
+ body:not(.login-mode).extras-screen-active #extrasView .pulse-list > *:nth-child(n+3),
+ body:not(.login-mode).extras-screen-active #extrasView .awards-grid > *:nth-child(n+3){display:revert!important}
+}
+
+/* Ensure empty-state explanations remain visible before official scores exist. */
+@media (max-width:900px){
+ body:not(.login-mode).extras-screen-active #extrasView #featuredMatchup,
+ body:not(.login-mode).extras-screen-active #extrasView #playerSpotlight,
+ body:not(.login-mode).extras-screen-active #extrasView #whatChangedFeed,
+ body:not(.login-mode).extras-screen-active #extrasView #onTheClock,
+ body:not(.login-mode).extras-screen-active #extrasView #paceTracker{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  height:auto!important;min-height:28px!important;max-height:none!important;
+  overflow:visible!important;margin-top:8px!important;
+ }
+ body:not(.login-mode).extras-screen-active #extrasView #whatChangedFeed .event-item,
+ body:not(.login-mode).extras-screen-active #extrasView #paceTracker .pace-row{
+  display:grid!important;height:auto!important;max-height:none!important;
+ }
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent .note{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  font-size:13px!important;line-height:1.45!important;
+  white-space:normal!important;max-height:none!important;overflow:visible!important;
+ }
+}
+
+@media(max-width:900px){
+ body.extras-screen-active #extrasView #teamMomentumCard{min-height:0!important;height:auto!important;max-height:none!important;flex:0 0 auto!important}
+ body.extras-screen-active #extrasView #teamMomentumCard .wow-body,
+ body.extras-screen-active #extrasView #teamMomentumCard #teamMomentumMeter{min-height:0!important;height:auto!important;max-height:none!important;overflow:visible!important}
+ body.extras-screen-active #extrasView #tournamentExtrasContent .wow-body .note,
+ body.extras-screen-active #extrasView #tournamentExtrasContent .wow-body .status{display:block!important;white-space:normal!important;max-height:none!important;overflow:visible!important}
 }
 </style>
 </head>
@@ -4132,9 +4203,24 @@ function renderPointsExtras(){
  const chosen=$("teamRosterSelect")?.value||"all";$("teamCards").innerHTML=teams.map((t,ti)=>({t,ti})).filter(({ti})=>chosen==="all"||String(ti)===chosen).map(({t,ti})=>`<div class="golfer-roster-shell" style="display:block;position:relative;box-sizing:border-box;width:100%;height:auto;min-height:0;max-height:none;overflow:visible;background:#fffdf6;border:1px solid #e4d7ad;border-radius:16px;padding:16px 14px;margin:0 0 16px;box-shadow:0 9px 24px rgba(0,0,0,.16)"><h3>${esc(t.name)} • ${x.totals[ti].pts} pts</h3>${teamRosterGolfers(ti).map(g=>`<div class="team-points-row"><span class="team-points-name">${esc(g.name)}</span><strong class="team-points-value">${x.players[g.index].points} pts</strong><span class="team-points-holes">${x.players[g.index].holes}/18 holes</span></div>`).join("")||"No golfers assigned yet."}</div>`).join("");
  const ranked=x.players.filter(p=>p.holes).sort((a,b)=>b.points-a.points||a.index-b.index);
  if($("tournamentMvpCard"))$("tournamentMvpCard").innerHTML=ranked.length?`<strong>${esc(draftState.golfers[ranked[0].index].name)}</strong><div>${ranked[0].points} individual points • ${ranked[0].holes}/18 holes</div>`:'<div class="note">Individual points will appear once scores are saved.</div>';
- if($("postRoundRecap"))$("postRoundRecap").innerHTML=x.totals.slice().sort((a,b)=>b.pts-a.pts).map(t=>`<div class="row between"><strong>${esc(teams[t.team].name)}</strong><span>${t.pts} pts</span></div>`).join("");
+ if($("postRoundRecap"))$("postRoundRecap").innerHTML=teams.map((t,ti)=>({name:t.name,pts:Number(x.totals.find(v=>Number(v.team)===ti)?.pts??x.totals[ti]?.pts??0)})).sort((a,b)=>b.pts-a.pts).map(t=>`<div class="row between"><strong>${esc(t.name)}</strong><span>${t.pts} pts</span></div>`).join("");
  // Legacy stroke-only extras do not describe this format.
- for(const id of ["bestWorstHoleRecap","featuredMatchup","playerSpotlight","holeBattleTimeline","teamMomentumMeter","tournamentAwards","tournamentPulse","paceTracker"]){const el=$(id);if(el)el.innerHTML='<div class="note">18-hole shamble: follow individual and team points on the leaderboard.</div>';}
+ // Render shamble Extras from individual scoring totals, not legacy team-stroke rows.
+ const started=x.players.some(p=>p.holes>0);
+ const byPoints=x.totals.map((t,ti)=>({ti,name:teams[ti]?.name||`Team ${ti+1}`,pts:t.pts})).sort((a,b)=>b.pts-a.pts);
+ const put=(id,html)=>{const el=$(id);if(el)el.innerHTML=html;};
+ if(byPoints.length>=2&&started){
+  const a=byPoints[0],b=byPoints[1],gap=a.pts-b.pts;
+  put("featuredMatchup",`<div class="wow-main">${esc(a.name)} <span style="color:var(--gold)">vs</span> ${esc(b.name)}</div><div class="wow-sub">${fmt(a.pts)}–${fmt(b.pts)} Cup points • ${fmt(gap)} point gap</div>`);
+ }else put("featuredMatchup",'<div class="note">The closest team battle will appear when official Cup points begin posting.</div>');
+ const top=ranked[0];
+ put("playerSpotlight",top?`<div class="wow-main">${esc(draftState.golfers[top.index]?.name||"Golfer")}</div><div class="wow-sub">${top.points} points • ${top.holes}/18 holes scored</div>`:'<div class="note">Player Spotlight will appear once individual scores are posted.</div>');
+ put("teamMomentumMeter",started?byPoints.map(t=>`<div class="momentum-row"><strong>${esc(t.name)}</strong><span>${t.pts} pts</span></div>`).join(""):'<div class="note">Team momentum will appear after scoring begins.</div>');
+ put("paceTracker",teams.map((t,ti)=>{const roster=teamRosterGolfers(ti),holes=roster.map(g=>x.players[g.index]?.holes||0);const done=holes.length?Math.min(...holes):0;return `<div class="pace-row"><strong>${esc(t.name)}</strong><span>${done}/18 holes completed by all golfers</span></div>`}).join(""));
+ // Shamble-only live summaries; these use the same authoritative player totals as the leaderboard.
+ put("tournamentPulse",started?byPoints.map(t=>`<div class="momentum-row"><strong>${esc(t.name)}</strong><span>${t.pts} Cup pts</span></div>`).join(""):'<div class="note">Team pulse will appear after golfers start posting scores.</div>');
+ put("tournamentAwards",ranked.length?`<div class="momentum-row"><strong>Individual points leader: ${esc(draftState.golfers[ranked[0].index]?.name||"Golfer")}</strong><span>${ranked[0].points} pts</span></div><div class="note">Live leader only; final awards are not determined until scoring is complete.</div>`:'<div class="note">Individual awards leaders will appear once golfers post scores.</div>');
+ for(const id of ["bestWorstHoleRecap","holeBattleTimeline"]){put(id,'<div class="note">Hole-by-hole results will appear after all golfers on a team complete a hole.</div>');}
  if($("pointsGolferCountLabel"))$("pointsGolferCountLabel").classList.toggle("hidden",false);
 }
 
@@ -4311,7 +4397,7 @@ function renderWhatChangedFeed(){
 }
 function renderOnTheClock(){
  const el=$("onTheClock");if(!el)return;const c=closestTeams();
- if(!c){el.innerHTML='<div class="note">Pressure moments will appear after scoring begins.</div>';return}
+ if(!c||(!c.a.pts&&!c.b.pts)){el.innerHTML='<div class="note">Pressure moments will appear after scoring begins.</div>';return}
  let h=1;
  for(let x=1;x<=18;x++){const count=scores.filter(r=>Number(r.hole)===x&&r.score!=null).length;if(count<teams.length){h=x;break}}
  const leader=c.a.pts>=c.b.pts?c.a:c.b, chaser=leader===c.a?c.b:c.a;
@@ -7344,6 +7430,27 @@ if($("resetAllRsvps"))$("resetAllRsvps").addEventListener("click",resetAllRsvps)
  }
  body:not(.login-mode) #myScoreLeaderboardCard .leader-row{
    grid-template-rows:minmax(0,auto) minmax(0,auto)!important;
+ }
+}
+</style>
+
+<style id="extras-final-mobile-sizing-fix">
+@media(max-width:900px){
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent > #teamMomentumCard{
+   display:block!important;position:relative!important;flex:none!important;
+   height:auto!important;min-height:0!important;max-height:none!important;
+   align-self:stretch!important;overflow:visible!important;
+ }
+ body:not(.login-mode).extras-screen-active #extrasView #teamMomentumCard > .row{
+   height:auto!important;min-height:0!important;flex:none!important;
+ }
+ body:not(.login-mode).extras-screen-active #extrasView #teamMomentumMeter{
+   display:block!important;position:static!important;flex:none!important;
+   height:auto!important;min-height:0!important;max-height:none!important;
+   overflow:visible!important;margin-top:6px!important;
+ }
+ body:not(.login-mode).extras-screen-active #extrasView #teamMomentumMeter .momentum-row{
+   display:grid!important;height:auto!important;min-height:0!important;
  }
 }
 </style>
