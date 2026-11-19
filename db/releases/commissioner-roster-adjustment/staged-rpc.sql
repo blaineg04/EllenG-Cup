@@ -57,6 +57,12 @@ BEGIN
  IF g->>'team' IN ('0','1') THEN
    source_team:=(g->>'team')::integer;
    IF roster_hits<>1 OR pick_hits<>1 THEN RAISE EXCEPTION 'Existing draft assignment inconsistent'; END IF;
+   IF NOT EXISTS (SELECT 1 FROM jsonb_array_elements_text(s#>ARRAY['teams',source_team::text,'roster']) ri
+                  WHERE ri=p_golfer_index::text)
+   THEN RAISE EXCEPTION 'Golfer roster conflicts with recorded team'; END IF;
+   IF NOT EXISTS (SELECT 1 FROM jsonb_array_elements(s->'picks') p
+                  WHERE p->>'golfer'=p_golfer_index::text AND p->>'team'=source_team::text)
+   THEN RAISE EXCEPTION 'Historical pick conflicts with recorded team'; END IF;
    IF coalesce((g->>'withdrawn')::boolean,false) THEN RAISE EXCEPTION 'Withdrawn golfer requires restore first'; END IF;
  ELSE
    source_team:=NULL;
