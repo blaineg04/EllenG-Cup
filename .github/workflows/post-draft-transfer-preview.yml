@@ -71,3 +71,7 @@ jobs:
         run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-move-rpc.sql
       - name: Test atomic move and denied write
         run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-move-smoke.sql
+      - name: Install disposable two-golfer swap RPC
+        run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-swap-rpc.sql
+      - name: Test atomic swap and rejected swaps
+        run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-swap-smoke.sql
