@@ -12,6 +12,8 @@ on:
       - 'lib/post-draft-team-transfer-postcondition.cjs'
       - 'tests/post-draft-team-transfer-postcondition.test.cjs'
       - 'tests/post-draft-team-transfer-live-shape.test.cjs'
+      - 'lib/post-draft-transfer-guard-delta.cjs'
+      - 'tests/post-draft-transfer-guard-delta.test.cjs'
       - '.github/workflows/post-draft-transfer-preview.yml'
 jobs:
   preview:
@@ -23,4 +25,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/post-draft-team-transfer-*.test.cjs
+      - run: node --test tests/post-draft-team-transfer-*.test.cjs tests/post-draft-transfer-guard-delta.test.cjs
