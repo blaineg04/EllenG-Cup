@@ -75,4 +75,26 @@ BEGIN
  OR s#>>'{golfers,3,team}' <> '0'
  THEN RAISE EXCEPTION 'mixed object/numeric swap postcondition failed'; END IF;
 END $objects$;
+-- Withdrawn/nonparticipating golfers are rejected even when roster membership remains.
+INSERT INTO transfer_fixture.drafts(id,state,owner_id,status)
+SELECT 'inactive-swap',
+ jsonb_set(state,'{golfers,2,participating}','false'::jsonb),
+ owner_id,status FROM transfer_fixture.drafts WHERE id='swap';
+INSERT INTO transfer_fixture.tournaments(id,draft_id,status)
+VALUES ('inactive-swap-event','inactive-swap','setup');
+DO $inactive$
+DECLARE before_state jsonb; message text;
+BEGIN
+ SELECT state INTO before_state FROM transfer_fixture.drafts WHERE id='inactive-swap';
+ BEGIN
+  PERFORM transfer_fixture.swap_golfers('commissioner','inactive-swap-event','inactive-swap',
+   (SELECT updated_at FROM transfer_fixture.drafts WHERE id='inactive-swap'),2,3);
+  RAISE EXCEPTION 'unexpectedly accepted inactive golfer';
+ EXCEPTION WHEN raise_exception THEN
+  GET STACKED DIAGNOSTICS message=MESSAGE_TEXT;
+  IF message='unexpectedly accepted inactive golfer' THEN RAISE; END IF;
+ END;
+ IF (SELECT state FROM transfer_fixture.drafts WHERE id='inactive-swap') IS DISTINCT FROM before_state
+ THEN RAISE EXCEPTION 'inactive swap changed draft'; END IF;
+END $inactive$;
 ROLLBACK;
