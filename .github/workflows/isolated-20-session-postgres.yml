@@ -67,3 +67,14 @@ jobs:
             RAISE NOTICE 'PASS: 20 simultaneous PostgreSQL actors, 360 updates verified; 54 unrelated scores preserved';
           END $$;
           SQL
+          # Simulate a golfer correcting a saved score while another golfer saves.
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -c "BEGIN; SELECT set_config('elleng.fixture_actor','0',true); SELECT concurrency_fixture.save_score(0,1,7); COMMIT;" >/dev/null &
+          correction_pid=$!
+          sudo -u postgres psql -X -v ON_ERROR_STOP=1 -d "$db" -c "BEGIN; SELECT set_config('elleng.fixture_actor','1',true); SELECT concurrency_fixture.save_score(1,1,6); COMMIT;" >/dev/null &
+          second_pid=$!
+          wait "$correction_pid"
+          wait "$second_pid"
+          test "$(sudo -u postgres psql -X -At -d "$db" -c 'SELECT strokes FROM concurrency_fixture.scores WHERE golfer_id=0 AND hole=1')" = 7
+          test "$(sudo -u postgres psql -X -At -d "$db" -c 'SELECT strokes FROM concurrency_fixture.scores WHERE golfer_id=1 AND hole=1')" = 6
+          test "$(sudo -u postgres psql -X -At -d "$db" -c 'SELECT count(*) FROM concurrency_fixture.scores')" = 414
+          echo 'PASS: concurrent score corrections preserved both golfers without duplicates'
