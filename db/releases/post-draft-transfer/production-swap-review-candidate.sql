@@ -13,6 +13,7 @@ DECLARE
  s jsonb; team_a integer; team_b integer; i integer; j integer;
  roster jsonb; updated_roster jsonb; entry jsonb; member_idx integer;
  first_hits integer:=0; second_hits integer:=0; originals integer;
+ member_counts integer[]; assigned_idx integer;
  captain_name text; golfer_name text; captain_marker jsonb; revision timestamptz;
 BEGIN
  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Sign in required' USING ERRCODE='42501'; END IF;
@@ -64,6 +65,7 @@ BEGIN
  team_b:=(s#>>ARRAY['golfers',p_second::text,'team'])::integer;
  IF team_a NOT IN (0,1) OR team_b NOT IN (0,1) OR team_a=team_b
  THEN RAISE EXCEPTION 'Golfers must be on opposite teams'; END IF;
+ member_counts:=array_fill(0,ARRAY[jsonb_array_length(s->'golfers')],ARRAY[0]);
  FOR j IN 0..1 LOOP
   roster:=s#>ARRAY['teams',j::text,'roster'];
   IF jsonb_typeof(roster) IS DISTINCT FROM 'array' THEN RAISE EXCEPTION 'Invalid roster'; END IF;
@@ -76,6 +78,8 @@ BEGIN
    IF member_idx<0 OR member_idx>=jsonb_array_length(s->'golfers')
    OR s#>>ARRAY['golfers',member_idx::text,'team'] IS DISTINCT FROM j::text
    THEN RAISE EXCEPTION 'Stored roster and golfer team disagree'; END IF;
+   member_counts[member_idx+1]:=member_counts[member_idx+1]+1;
+   IF member_counts[member_idx+1]<>1 THEN RAISE EXCEPTION 'Duplicate golfer in team rosters'; END IF;
    IF member_idx=p_first THEN
     first_hits:=first_hits+1;
     IF j<>team_a THEN RAISE EXCEPTION 'First golfer roster mismatch'; END IF;
@@ -92,6 +96,11 @@ BEGIN
   s:=jsonb_set(s,ARRAY['teams',j::text,'roster'],updated_roster);
  END LOOP;
  IF first_hits<>1 OR second_hits<>1 THEN RAISE EXCEPTION 'Golfer roster membership invalid'; END IF;
+ FOR assigned_idx IN 0..jsonb_array_length(s->'golfers')-1 LOOP
+  IF s#>>ARRAY['golfers',assigned_idx::text,'team'] IN ('0','1')
+     AND member_counts[assigned_idx+1]<>1
+  THEN RAISE EXCEPTION 'Assigned golfer missing from team roster'; END IF;
+ END LOOP;
  s:=jsonb_set(s,ARRAY['golfers',p_first::text,'team'],to_jsonb(team_b));
  s:=jsonb_set(s,ARRAY['golfers',p_second::text,'team'],to_jsonb(team_a));
  revision:=clock_timestamp();
