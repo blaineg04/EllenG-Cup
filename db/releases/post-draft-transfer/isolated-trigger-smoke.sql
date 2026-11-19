@@ -36,6 +36,22 @@ UPDATE transfer_fixture.drafts SET state =
       '{teams,0,roster}','[0,{"golferIndex":2}]'::jsonb),
     '{teams,1,roster}','[1,3]'::jsonb)
  WHERE id='case';
+-- Successful two-golfer swap with mixed numeric/object roster entries.
+UPDATE transfer_fixture.drafts SET state =
+  jsonb_set(
+    jsonb_set(
+      jsonb_set(
+        jsonb_set(state,'{golfers,2,team}','1'::jsonb),
+        '{golfers,3,team}','0'::jsonb),
+      '{teams,0,roster}','[0,{"golferIndex":3}]'::jsonb),
+    '{teams,1,roster}','[1,{"golferIndex":2}]'::jsonb)
+ WHERE id='case';
+DO $
+BEGIN
+ IF (SELECT state#>>'{golfers,2,team}' FROM transfer_fixture.drafts WHERE id='case') <> '1'
+ OR (SELECT state#>>'{golfers,3,team}' FROM transfer_fixture.drafts WHERE id='case') <> '0'
+ THEN RAISE EXCEPTION 'fixture swap failed'; END IF;
+END $;
 -- Negative cases are expected to raise, captured by nested exception blocks.
 DO $$
 BEGIN
