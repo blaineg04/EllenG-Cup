@@ -92,7 +92,9 @@ BEGIN
   RAISE EXCEPTION 'unexpectedly accepted inactive golfer';
  EXCEPTION WHEN raise_exception THEN
   GET STACKED DIAGNOSTICS message=MESSAGE_TEXT;
-  IF message='unexpectedly accepted inactive golfer' THEN RAISE; END IF;
+  IF message IS DISTINCT FROM 'inactive golfer cannot swap' THEN
+   RAISE EXCEPTION 'wrong inactive swap rejection: %',message;
+  END IF;
  END;
  IF (SELECT state FROM transfer_fixture.drafts WHERE id='inactive-swap') IS DISTINCT FROM before_state
  THEN RAISE EXCEPTION 'inactive swap changed draft'; END IF;
