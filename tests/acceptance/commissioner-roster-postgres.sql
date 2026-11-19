@@ -34,6 +34,7 @@ SELECT 'elleng-cup','11111111-1111-4111-8111-111111111111'::uuid,
 \i db/releases/withdraw-golfer/restore-staged.sql
 \i db/releases/commissioner-roster-adjustment/staged-rpc.sql
 \i db/releases/commissioner-roster-adjustment/guard-staged.sql
+\i db/releases/commissioner-roster-adjustment/group-assignment-lock-staged.sql
 CREATE TRIGGER guard_draft BEFORE UPDATE ON public.elleng_drafts FOR EACH ROW EXECUTE FUNCTION public.elleng_guard_weighted_roster();
 GRANT USAGE ON SCHEMA auth,public TO authenticated;
 GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;
