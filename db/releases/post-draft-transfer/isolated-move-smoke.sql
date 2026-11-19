@@ -40,4 +40,40 @@ BEGIN
  IF (SELECT state FROM transfer_fixture.drafts WHERE id='move') IS DISTINCT FROM before_state
  THEN RAISE EXCEPTION 'rejected move changed state'; END IF;
 END $verify$;
+-- A stale revision must fail without changing the saved roster.
+DO $stale$
+DECLARE before_state jsonb; err text;
+BEGIN
+ SELECT state INTO before_state FROM transfer_fixture.drafts WHERE id='move';
+ BEGIN
+  PERFORM transfer_fixture.move_golfer('commissioner','move-event','move',
+   '2000-01-01'::timestamptz,3,0);
+  RAISE EXCEPTION 'unexpected stale move success';
+ EXCEPTION WHEN raise_exception THEN
+  GET STACKED DIAGNOSTICS err=MESSAGE_TEXT;
+  IF err='unexpected stale move success' THEN RAISE; END IF;
+ END;
+ IF (SELECT state FROM transfer_fixture.drafts WHERE id='move') IS DISTINCT FROM before_state
+ THEN RAISE EXCEPTION 'stale move changed state'; END IF;
+END $stale$;
+-- Any score category must block even a commissioner with a fresh revision.
+DO $scores$
+DECLARE kind text; before_state jsonb; err text;
+BEGIN
+ SELECT state INTO before_state FROM transfer_fixture.drafts WHERE id='move';
+ FOREACH kind IN ARRAY ARRAY['player','team','pair'] LOOP
+  INSERT INTO transfer_fixture.score_presence VALUES ('move-event',kind);
+  BEGIN
+   PERFORM transfer_fixture.move_golfer('commissioner','move-event','move',
+    (SELECT updated_at FROM transfer_fixture.drafts WHERE id='move'),3,0);
+   RAISE EXCEPTION 'unexpected scored move success';
+  EXCEPTION WHEN raise_exception THEN
+   GET STACKED DIAGNOSTICS err=MESSAGE_TEXT;
+   IF err='unexpected scored move success' THEN RAISE; END IF;
+  END;
+  DELETE FROM transfer_fixture.score_presence WHERE tournament_id='move-event';
+ END LOOP;
+ IF (SELECT state FROM transfer_fixture.drafts WHERE id='move') IS DISTINCT FROM before_state
+ THEN RAISE EXCEPTION 'scored move changed state'; END IF;
+END $scores$;
 ROLLBACK;
