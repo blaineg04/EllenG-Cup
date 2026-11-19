@@ -3757,7 +3757,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./reset-request-badge.js"></script>
 <script src="config.js"></script>
-<script src="client-health.js"></script><script src="shamble-points.js"></script>
+<script src="client-health.js"></script><script src="shamble-points.js?v=rehearsal-gator-20261118"></script>
 <script src="event-rsvp-client.js"></script>
 <div id="broadcastOverlay" class="broadcast-overlay" aria-hidden="true">
   <div class="broadcast-shell">
@@ -4047,7 +4047,12 @@ function renderPointsEntry(){
 }
 function renderPointsExtras(){
  const x=shambleSummary(),set=(id,value)=>{const el=$(id);if(el)el.textContent=value;};
- set("homeHolesComplete",x.completeHoles+" / 18");set("broadcastHoles",x.completeHoles+" / 18");set("homeSpecialText","Gator Hole: Secret until the Commissioner reveals it. The winning team earns 10 bonus points; tied teams split the bonus equally.");
+ set("homeHolesComplete",x.completeHoles+" / 18");set("broadcastHoles",x.completeHoles+" / 18");const gh=Number(tournament?.gator_hole)||0, revealed=!!tournament?.gator_revealed;
+ const gatorReady=gh>=1&&gh<=18&&x.holes[gh-1]?.every(h=>h.complete);
+ const bonus=x.gatorBonus||[];
+ const awarded=bonus.map((v,i)=>v>0?`${teams[i]?.name||'Team '+(i+1)} +${v} pts`:null).filter(Boolean);
+ const detail=!revealed?"Gator Hole: Secret until the Commissioner reveals it.":!gh?"Gator Hole: Not selected.":!gatorReady?`Gator Hole: Hole ${gh} • Waiting for all golfers to finish.`:`Gator Hole: Hole ${gh} • ${awarded.length?awarded.join(' • '):'Bonus pending verification'}.`;
+ set("homeSpecialText",detail+" The winning team earns 10 bonus points; tied teams split the bonus equally.");
  set("broadcastSpecial","18-hole shamble • Every golfer counts");
  const chosen=$("teamRosterSelect")?.value||"all";$("teamCards").innerHTML=teams.map((t,ti)=>({t,ti})).filter(({ti})=>chosen==="all"||String(ti)===chosen).map(({t,ti})=>`<div class="card team-points-card"><h3>${esc(t.name)} • ${x.totals[ti].pts} pts</h3>${teamRosterGolfers(ti).map(g=>`<div class="team-points-row"><span class="team-points-name">${esc(g.name)}</span><strong class="team-points-value">${x.players[g.index].points} pts</strong><span class="team-points-holes">${x.players[g.index].holes}/18 holes</span></div>`).join("")||"No golfers assigned yet."}</div>`).join("");
  const ranked=x.players.filter(p=>p.holes).sort((a,b)=>b.points-a.points||a.index-b.index);
