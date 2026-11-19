@@ -11,6 +11,40 @@ INSERT INTO transfer_fixture.tournaments(id,draft_id,status)
 VALUES ('incomplete-event','incomplete-gate','setup');
 SELECT transfer_fixture.check_transfer_gate('commissioner','event','gate',
  (SELECT updated_at FROM transfer_fixture.drafts WHERE id='gate'));
+-- Live-shaped completion regression: 23 original picks, 19 still participating.
+-- A withdrawn original golfer must not make a completed draft appear incomplete.
+INSERT INTO transfer_fixture.drafts(id,state,owner_id,status)
+SELECT 'withdrawn-complete',
+ jsonb_build_object(
+  'draftRules','weighted',
+  'picks',(SELECT jsonb_agg(i) FROM generate_series(0,22) AS i),
+  'golfers',(SELECT jsonb_agg(jsonb_build_object(
+    'name','Golfer '||i,'team',i%2,
+    'participating',i<19) ORDER BY i)
+    FROM generate_series(0,22) AS i)),
+ 'commissioner','setup';
+INSERT INTO transfer_fixture.tournaments(id,draft_id,status)
+VALUES ('withdrawn-event','withdrawn-complete','setup');
+SELECT transfer_fixture.check_transfer_gate('commissioner','withdrawn-event','withdrawn-complete',
+ (SELECT updated_at FROM transfer_fixture.drafts WHERE id='withdrawn-complete'));
+-- A draft with only 22 of 23 original picks must be denied.
+INSERT INTO transfer_fixture.drafts(id,state,owner_id,status)
+SELECT 'one-pick-short',jsonb_set(state,'{picks}',state->'picks' - 22),owner_id,status
+FROM transfer_fixture.drafts WHERE id='withdrawn-complete';
+INSERT INTO transfer_fixture.tournaments(id,draft_id,status)
+VALUES ('short-event','one-pick-short','setup');
+DO $short$
+DECLARE message text;
+BEGIN
+ BEGIN
+  PERFORM transfer_fixture.check_transfer_gate('commissioner','short-event','one-pick-short',
+   (SELECT updated_at FROM transfer_fixture.drafts WHERE id='one-pick-short'));
+  RAISE EXCEPTION 'unexpectedly accepted incomplete 22-of-23 draft';
+ EXCEPTION WHEN raise_exception THEN
+  GET STACKED DIAGNOSTICS message=MESSAGE_TEXT;
+  IF message='unexpectedly accepted incomplete 22-of-23 draft' THEN RAISE; END IF;
+ END;
+END $short$;
 -- Scores belonging to a different tournament must not block this tournament.
 INSERT INTO transfer_fixture.score_presence VALUES ('other-event','player');
 SELECT transfer_fixture.check_transfer_gate('commissioner','event','gate',
