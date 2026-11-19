@@ -14,6 +14,10 @@ on:
       - 'tests/post-draft-team-transfer-live-shape.test.cjs'
       - 'lib/post-draft-transfer-guard-delta.cjs'
       - 'tests/post-draft-transfer-guard-delta.test.cjs'
+      - 'lib/post-draft-transfer-locked-gate.cjs'
+      - 'tests/post-draft-transfer-locked-gate.test.cjs'
+      - 'lib/post-draft-transfer-transaction-plan.cjs'
+      - 'tests/post-draft-transfer-transaction-plan.test.cjs'
       - 'db/releases/post-draft-transfer/**'
       - '.github/workflows/post-draft-transfer-preview.yml'
 jobs:
@@ -26,7 +30,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/post-draft-team-transfer-*.test.cjs tests/post-draft-transfer-guard-delta.test.cjs
+      - run: node --test tests/post-draft-team-transfer-*.test.cjs tests/post-draft-transfer-*.test.cjs
   isolated-postgres:
     runs-on: ubuntu-latest
     permissions:
