@@ -24,13 +24,16 @@ for(const [label,change] of [
  test('locked gate rejects '+label,()=>{const f=fixture();change(f);assert.equal(authorizeLockedTransfer(f).ok,false)});
 }
 
-test('live-shaped 23-pick draft stays eligible after four withdrawals',()=>{
+test('live-shaped 23-pick draft permits swap with four withdrawn golfers',()=>{
  const f=fixture();
- for(let i=4;i<23;i++) f.draft.state.golfers.push({name:'Golfer '+i,team:i%2});
+ for(let i=4;i<23;i++) {
+   f.draft.state.golfers.push({name:'Golfer '+i,team:i%2});
+   f.draft.state.teams[i%2].roster.push(i);
+ }
  f.draft.state.picks=Array.from({length:23},(_,i)=>i);
  for(let i=19;i<23;i++) f.draft.state.golfers[i].participating=false;
- // The live-shaped completion gate must not reject because of status='setup'.
- // Roster consistency is separately checked by previewTransfer.
- const gate=authorizeLockedTransfer(f);
- assert.notEqual(gate.reason,'Draft completion not verified');
+ assert.equal(f.draft.status,'setup');
+ assert.equal(authorizeLockedTransfer(f).ok,true);
+ f.draft.state.picks.pop();
+ assert.equal(authorizeLockedTransfer(f).reason,'Draft completion not verified');
 });
