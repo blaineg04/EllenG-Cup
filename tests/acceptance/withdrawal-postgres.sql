@@ -332,6 +332,9 @@ BEGIN
  END;
  PERFORM set_config('test.uid','11111111-1111-4111-8111-111111111111',true);
  -- A signed-in non-commissioner must not be allowed to withdraw a golfer.
+ -- Execute as the authenticated database role, not the privileged test runner.
+ EXECUTE 'SET LOCAL ROLE authenticated';
+ IF current_user <> 'authenticated' THEN RAISE EXCEPTION 'Non-commissioner role simulation not authenticated'; END IF;
  PERFORM set_config('test.uid','22222222-2222-4222-8222-222222222222',true);
  BEGIN
    PERFORM public.elleng_withdraw_golfer('elleng-cup','elleng-cup-live',stamp,13,'unauthorized');
@@ -340,6 +343,7 @@ BEGIN
    IF SQLERRM='Unauthorized withdrawal unexpectedly allowed' THEN RAISE; END IF;
    IF SQLERRM NOT LIKE '%Commissioner access required%' THEN RAISE; END IF;
  END;
+ EXECUTE 'RESET ROLE';
  -- A non-commissioner must also be unable to restore an already withdrawn golfer.
  SELECT updated_at INTO stamp FROM public.elleng_drafts WHERE id='elleng-cup';
  PERFORM set_config('test.uid','11111111-1111-4111-8111-111111111111',true);
