@@ -3170,7 +3170,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 
 <div class="home-grid">
   <div class="home-tile"><div class="status">CURRENT LEADER</div><strong id="homeLeader" class="big">—</strong><div id="homeLeaderPts" class="status" style="margin-top:5px">No official points yet</div></div>
-  <div class="home-tile"><div class="status">HOLES COMPLETE</div><strong id="homeHolesComplete" class="big">0 / 18</strong><div class="status" style="margin-top:5px">Updates automatically</div></div>
+  <div class="home-tile"><div class="status">BOTH TEAMS COMPLETE</div><strong id="homeHolesComplete" class="big">0 / 18</strong><div class="status" id="homePersonalProgress" style="margin-top:5px">Your holes: —</div></div>
   <div class="home-tile"><div class="status">TEAMS</div><strong id="homeTeamCount" class="big">—</strong><div id="homePlayerCount" class="status" style="margin-top:5px">Players loaded</div></div>
   <div class="home-tile"><div class="status">FORMAT</div><strong id="homeFormat" class="big" style="font-size:18px">EllenG</strong><div id="homeFormatSub" class="status" style="margin-top:5px">Front 9 / Back 9</div></div>
 </div>
@@ -5874,6 +5874,7 @@ function renderHome(){
  if($("homeLeaderPts"))$("homeLeaderPts").textContent=hasOfficialLeader?`${lead.pts.toFixed(lead.pts%1?1:0)} Cup pts • Thru ${lead.thru||0}`:"No official points yet";
  let complete=0;for(let h=1;h<=18;h++){const count=teams.filter((_,ti)=>(typeof isShamblePoints==="function"&&isShamblePoints()?shambleSummary().holes[h-1]?.[ti]?.complete:scores.some(x=>Number(x.team_index)===ti&&Number(x.hole)===h&&x.score!=null))).length;if(count===teams.length)complete++}
  if($("homeHolesComplete"))$("homeHolesComplete").textContent=`${complete} / 18`;
+ if($("homePersonalProgress")){const personal=currentGolferIndex==null?null:new Set(playerScores.filter(r=>Number(r.golfer_index)===Number(currentGolferIndex)&&r.score!=null&&Number(r.score)>0).map(r=>Number(r.hole))).size;$("homePersonalProgress").textContent=personal==null?"Your holes: —":`Your holes: ${personal}/18`; }
  if($("homeTeamCount"))$("homeTeamCount").textContent=draftState?.teamCountConfirmed===true?String(teams.length):"—";
  const playerCount=(draftState.golfers||[]).filter(g=>(g?.name||"").trim()).length;
  if($("homePlayerCount"))$("homePlayerCount").textContent=`${playerCount} player${playerCount===1?"":"s"}`;
