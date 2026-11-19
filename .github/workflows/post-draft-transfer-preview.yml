@@ -22,7 +22,7 @@ on:
       - '.github/workflows/post-draft-transfer-preview.yml'
 jobs:
   preview:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, macOS]
     permissions:
       contents: read
     steps:
