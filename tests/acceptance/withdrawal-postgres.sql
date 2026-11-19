@@ -14,7 +14,7 @@ INSERT INTO public.elleng_tournaments VALUES('elleng-cup-live','elleng-cup','set
 INSERT INTO public.elleng_drafts
 SELECT 'elleng-cup','11111111-1111-4111-8111-111111111111'::uuid,
  jsonb_build_object('draftRules','weighted','playFormat','shamble_points',
- 'golfers',(SELECT jsonb_agg(jsonb_build_object('name',CASE WHEN i=0 THEN 'Captain A' WHEN i=12 THEN 'Captain B' ELSE 'Golfer '||i END,'team',CASE WHEN i<12 THEN 0 ELSE 1 END,'participating',true,'late_added',i=23) ORDER BY i) FROM generate_series(0,23) i),
+ 'golfers',(SELECT jsonb_agg(jsonb_build_object('name',CASE WHEN i=0 THEN 'Captain A' WHEN i=12 THEN 'Captain B' ELSE 'Golfer '||i END,'team',CASE WHEN i<12 THEN 0 WHEN i<24 THEN 1 ELSE NULL END,'participating',i<24,'late_added',i=23) ORDER BY i) FROM generate_series(0,39) i),
  'teams',jsonb_build_array(jsonb_build_object('captain','Captain A','roster',(SELECT jsonb_agg(i ORDER BY i) FROM generate_series(0,11) i)),jsonb_build_object('captain','Captain B','roster',(SELECT jsonb_agg(i ORDER BY i) FROM generate_series(12,23) i))),
  'picks',(SELECT jsonb_agg(jsonb_build_object('golfer',i) ORDER BY i) FROM generate_series(0,22) i)),
  now();
