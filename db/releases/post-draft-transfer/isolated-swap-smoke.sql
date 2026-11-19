@@ -2,7 +2,7 @@
 BEGIN;
 INSERT INTO transfer_fixture.drafts(id,state,owner_id,status)
 VALUES ('swap',jsonb_build_object(
- 'draftRules','weighted','picks','[]'::jsonb,
+ 'draftRules','weighted','picks',jsonb_build_array(0,1,2,3),
  'golfers',jsonb_build_array(
  jsonb_build_object('name','Captain A','team',0),
  jsonb_build_object('name','Captain B','team',1),
@@ -11,7 +11,7 @@ VALUES ('swap',jsonb_build_object(
  'teams',jsonb_build_array(
  jsonb_build_object('captain','Captain A','roster',jsonb_build_array(0,2)),
  jsonb_build_object('captain','Captain B','roster',jsonb_build_array(1,3)))
-),'commissioner','completed');
+),'commissioner','setup');
 INSERT INTO transfer_fixture.tournaments VALUES ('swap-event','swap','setup');
 SELECT transfer_fixture.swap_golfers('commissioner','swap-event','swap',
  (SELECT updated_at FROM transfer_fixture.drafts WHERE id='swap'),2,3);
@@ -59,7 +59,7 @@ SELECT 'swap-objects',
    '[{"golferIndex":0},{"golferIndex":2,"slot":"first"}]'::jsonb),
   '{teams,1,roster}',
   '[1,3]'::jsonb),
- 'commissioner','completed'
+ 'commissioner','setup'
 FROM transfer_fixture.drafts WHERE id='swap';
 INSERT INTO transfer_fixture.tournaments VALUES ('swap-objects-event','swap-objects','setup');
 SELECT transfer_fixture.swap_golfers('commissioner','swap-objects-event','swap-objects',
