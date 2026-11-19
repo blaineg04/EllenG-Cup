@@ -19,3 +19,8 @@ test('reject golfer team disagreement',()=>{const s=draft();s.golfers[2].team=1;
 test('reject invalid roster member',()=>{const s=draft();s.teams[1].roster.push(999);assert.equal(previewTransfer(s,move).ok,false)});
 test('reject missing roster array',()=>{const s=draft();delete s.teams[1].roster;assert.equal(previewTransfer(s,move).ok,false)});
 test('reject mismatched swap golfer team',()=>{const s=draft();s.golfers[3].team=0;assert.equal(previewTransfer(s,{operation:'swap',golferIndex:2,otherGolferIndex:3,scoresExist:false}).ok,false)});
+
+test('reject unrelated golfer with mismatched team',()=>{const s=draft();s.golfers[3].team=0;assert.equal(previewTransfer(s,move).ok,false)});
+test('reject numeric captain index',()=>{const s=draft();s.teams[0].captain=2;assert.equal(previewTransfer(s,move).ok,false)});
+test('reject object captain index',()=>{const s=draft();s.teams[0].captain={golferIndex:2};assert.equal(previewTransfer(s,move).ok,false)});
+test('allow unassigned golfer slots outside rosters',()=>{const s=draft();while(s.golfers.length<70)s.golfers.push({name:'',team:null});assert.equal(previewTransfer(s,move).ok,true)});
