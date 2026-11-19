@@ -16,6 +16,11 @@ BEGIN
  END IF;
  SELECT count(*) INTO playing_count FROM jsonb_array_elements(old.state->'golfers')
  WHERE btrim(coalesce(value->>'name',''))<>'' AND coalesce((value->>'participating')::boolean,true);
+ -- Preserve the original completed-draft behavior for every other draft.
+ -- Only the target tournament receives the narrower post-draft protection.
+ IF old.id IS DISTINCT FROM 'elleng-cup'
+    AND jsonb_array_length(old.state->'picks')>=playing_count
+ THEN RETURN new; END IF;
  -- Do not return early after draft completion: the narrow exception below
  -- must be evaluated for every golfer mutation, including restored rosters.
  -- Non-golfer state changes still pass through the original guard checks.
