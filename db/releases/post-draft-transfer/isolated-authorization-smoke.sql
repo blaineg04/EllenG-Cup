@@ -29,7 +29,7 @@ SELECT transfer_fixture.check_transfer_gate('commissioner','withdrawn-event','wi
  (SELECT updated_at FROM transfer_fixture.drafts WHERE id='withdrawn-complete'));
 -- A draft with only 22 of 23 original picks must be denied.
 INSERT INTO transfer_fixture.drafts(id,state,owner_id,status)
-SELECT 'one-pick-short',jsonb_set(state,'{picks}',state->'picks' - 22),owner_id,status
+SELECT 'one-pick-short',jsonb_set(state,'{picks}',(state->'picks') - 22),owner_id,status
 FROM transfer_fixture.drafts WHERE id='withdrawn-complete';
 INSERT INTO transfer_fixture.tournaments(id,draft_id,status)
 VALUES ('short-event','one-pick-short','setup');
