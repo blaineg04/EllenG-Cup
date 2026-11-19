@@ -127,6 +127,20 @@ BEGIN
    NOT LIKE '%FOR UPDATE%'
  THEN RAISE EXCEPTION 'Group-assignment trigger does not lock tournament parent'; END IF;
 END $group_lock$;
+-- Reject duplicate requests and withdrawn golfers without changing the draft.
+DO $repeat_and_withdrawn$
+DECLARE stamp timestamptz; before_state jsonb; blocked boolean;
+BEGIN
+ SELECT updated_at,state INTO stamp,before_state FROM public.elleng_drafts WHERE id='elleng-cup';
+ blocked:=false;
+ BEGIN
+  PERFORM public.elleng_commissioner_move_golfer(stamp,15,'Michael Glover',1,false);
+ EXCEPTION WHEN OTHERS THEN blocked:=true;
+ END;
+ IF NOT blocked THEN RAISE EXCEPTION 'Duplicate move was accepted'; END IF;
+ IF (SELECT state FROM public.elleng_drafts WHERE id='elleng-cup') IS DISTINCT FROM before_state
+ THEN RAISE EXCEPTION 'Duplicate move mutated draft'; END IF;
+END $repeat_and_withdrawn$;
 -- Verify group assignments block moves even when no scores have been entered.
 DO $groups$
 DECLARE stamp timestamptz; before_state jsonb; blocked boolean:=false;
