@@ -35,7 +35,7 @@
 Do not deploy to the November 20 live tournament until the RPC, trigger, UI, score-write protections, and isolated end-to-end tests are implemented and pass. No live golfer is to be withdrawn for testing.
 
 ## Isolated authenticated release rehearsal (required; not yet completed)
-1. Create a **separate disposable Supabase database** and deploy the staged SQL there in dependency order: weighted-roster guard, withdraw RPC, restore RPC, then inactive-score trigger. Never use the live EllenG Cup project for test writes.
+1. **Do not create any new Supabase database, project, or branch.** The commissioner explicitly prohibited this. Use the existing GitHub Actions disposable PostgreSQL service for SQL and authenticated-database-role tests, plus existing MacBook runner for browser/UI tests. Apply staged SQL in dependency order: weighted-roster guard, withdraw RPC, restore RPC, then inactive-score trigger. Never use the live EllenG Cup project for test writes. PostgreSQL-role simulation is not equivalent to a real Supabase/PostgREST authenticated session; record that limitation explicitly. A real authenticated API test remains an unmet release gate unless it can be performed safely using existing infrastructure without production writes.
 2. Seed a representative **two-team, 23-pick shamble draft** with 24 active golfers (one late addition), two captains, stable golfer indexes, and no scores. Capture baseline draft JSON, team rosters, account links, and score-row counts.
 3. Sign in as the commissioner using an isolated test account. In a real browser at 320px and 390px, verify both selectors populate on opening the commissioner screen. Withdraw a noncaptain on Team 2, accept confirmation, and verify 12 vs 11 active golfers, zero compensating points, original 23 picks and team rosters unchanged, and the golfer marked Withdrawn in Players.
 4. Sign in as a different authenticated golfer. Verify commissioner controls are inaccessible and direct withdrawal/restore RPC requests are denied. Verify scoring as the withdrawn golfer is rejected by the database.
@@ -43,7 +43,7 @@ Do not deploy to the November 20 live tournament until the RPC, trigger, UI, sco
 6. Repeat withdrawal and restore with a Team 1 noncaptain, plus cancel confirmation, stale timestamp, captain selection, duplicate withdrawal/restore, and simulated network errors. Confirm errors are visible and buttons recover.
 7. Begin scoring for a different active golfer. Verify **both** withdrawal and restore are blocked, and the score remains intact. Test score-first and withdrawal-first races with separate database sessions.
 8. Verify the mobile Home, Teams, My Score, Players, and commissioner layouts have not regressed. Confirm all relevant CI workflows pass for the exact proposed release commit.
-9. Record environment ID, commit SHA, screenshots, actual browser results, tester, and timestamp. Only after all gates pass should a separate, explicit production release decision be made.
+9. Record environment, commit SHA, screenshots, actual browser results, tester, timestamp, and any untested Supabase API permissions. Do not represent database-role simulation as an end-to-end API pass. Only after all gates pass should a separate, explicit production release decision be made.
 
 **Rollback:** Do not delete golfer rows, picks, or scores. If a release is later authorized, capture the deployed SQL definitions and deployment version before changes; prepare a reviewed, reversible rollback for the newly introduced functions and trigger while preserving any legitimately withdrawn golfer state. Never run an unreviewed rollback on the live tournament.
 
@@ -52,7 +52,7 @@ Do not deploy to the November 20 live tournament until the RPC, trigger, UI, sco
 - `public.elleng_drafts`: RLS enabled; `authenticated` has SELECT and UPDATE privileges; table owner `postgres`.
 - Existing `public.elleng_guard_weighted_roster`: owner `postgres`, `SECURITY INVOKER` (`prosecdef=false`).
 - New `elleng_withdraw_golfer` and `elleng_restore_golfer` RPCs are not installed in production.
-- Staged guard's `current_user` role check is tested in disposable PostgreSQL. It still needs a real authenticated Supabase/PostgREST rehearsal on a separate environment before release; no live score or roster changes permitted.
+- Staged guard's `current_user` role check is tested in disposable PostgreSQL. It still needs a real authenticated Supabase/PostgREST rehearsal without live tournament writes before release; no live score or roster changes permitted.
 - All six executed GitHub CI workflows passed on commit `8462e6c`; two optional workflows skipped. Passing CI does not authorize a merge or deployment.
 
 ### Read-only RLS policy verification (2026-11-18)
@@ -63,5 +63,5 @@ Do not deploy to the November 20 live tournament until the RPC, trigger, UI, sco
 
 ## Scoring RPC integration gate (identified during review)
 - The production browser score path calls `elleng_test_authorized_shamble` rather than writing `elleng_player_hole_scores` directly.
-- The staged inactive-score trigger covers INSERT and UPDATE, **not DELETE**. Before release, inspect the actual deployed definition of `elleng_test_authorized_shamble` **read-only** and verify whether clearing a score uses DELETE or an alternate write path. A withdrawn golfer must not be able to alter score records through that RPC even if the client UI excludes them.
+- The staged inactive-score trigger covers INSERT, UPDATE, and DELETE; this was updated after the original review. Before release, inspect the actual deployed definition of `elleng_test_authorized_shamble` **read-only** and verify whether clearing a score uses DELETE or an alternate write path. A withdrawn golfer must not be able to alter score records through that RPC even if the client UI excludes them.
 - If the scoring RPC can bypass the guard, stage an explicit server-side authorization fix and test it in disposable PostgreSQL and real authenticated local Supabase before any production deployment. Do not change the existing scoring RPC on production for rehearsal.
