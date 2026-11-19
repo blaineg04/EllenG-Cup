@@ -47,4 +47,32 @@ BEGIN
   THEN RAISE EXCEPTION 'rejected swap changed state: %',scenario; END IF;
  END LOOP;
 END $reject$;
+-- Mixed roster representations must preserve each slot's object metadata.
+INSERT INTO transfer_fixture.drafts(id,state,owner_id,status)
+SELECT 'swap-objects',
+ jsonb_set(
+  jsonb_set(
+   jsonb_set(
+    jsonb_set(state,'{golfers,2,team}','0'::jsonb),
+    '{golfers,3,team}','1'::jsonb),
+   '{teams,0,roster}',
+   '[{"golferIndex":0},{"golferIndex":2,"slot":"first"}]'::jsonb),
+  '{teams,1,roster}',
+  '[1,3]'::jsonb),
+ 'commissioner','completed'
+FROM transfer_fixture.drafts WHERE id='swap';
+INSERT INTO transfer_fixture.tournaments VALUES ('swap-objects-event','swap-objects','setup');
+SELECT transfer_fixture.swap_golfers('commissioner','swap-objects-event','swap-objects',
+ (SELECT updated_at FROM transfer_fixture.drafts WHERE id='swap-objects'),2,3);
+DO $objects$
+DECLARE s jsonb;
+BEGIN
+ SELECT state INTO s FROM transfer_fixture.drafts WHERE id='swap-objects';
+ IF s#>'{teams,0,roster}' IS DISTINCT FROM
+  '[{"golferIndex":0},{"golferIndex":3,"slot":"first"}]'::jsonb
+ OR s#>'{teams,1,roster}' IS DISTINCT FROM '[1,2]'::jsonb
+ OR s#>>'{golfers,2,team}' <> '1'
+ OR s#>>'{golfers,3,team}' <> '0'
+ THEN RAISE EXCEPTION 'mixed object/numeric swap postcondition failed'; END IF;
+END $objects$;
 ROLLBACK;
