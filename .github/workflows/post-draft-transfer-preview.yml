@@ -14,6 +14,7 @@ on:
       - 'tests/post-draft-team-transfer-live-shape.test.cjs'
       - 'lib/post-draft-transfer-guard-delta.cjs'
       - 'tests/post-draft-transfer-guard-delta.test.cjs'
+      - 'db/releases/post-draft-transfer/**'
       - '.github/workflows/post-draft-transfer-preview.yml'
 jobs:
   preview:
@@ -26,3 +27,35 @@ jobs:
         with:
           node-version: '22'
       - run: node --test tests/post-draft-team-transfer-*.test.cjs tests/post-draft-transfer-guard-delta.test.cjs
+  isolated-postgres:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: fixture
+          POSTGRES_PASSWORD: fixture-only-password
+          POSTGRES_DB: transfer_fixture
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U fixture -d transfer_fixture"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: fixture
+      PGPASSWORD: fixture-only-password
+      PGDATABASE: transfer_fixture
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Install isolated test-only trigger
+        run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-trigger-fixture.sql
+      - name: Run rollback-only trigger smoke tests
+        run: psql -X -v ON_ERROR_STOP=1 -f db/releases/post-draft-transfer/isolated-trigger-smoke.sql
