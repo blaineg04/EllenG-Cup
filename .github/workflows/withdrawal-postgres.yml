@@ -1,0 +1,48 @@
+name: Withdrawal PostgreSQL integration (disposable)
+on:
+  push:
+    branches: [feature/commissioner-post-draft-withdrawal]
+    paths:
+      - 'db/releases/withdraw-golfer/**'
+      - 'tests/acceptance/withdrawal-postgres.sql'
+      - 'tests/acceptance/withdrawal-score-race.sh'
+      - '.github/workflows/withdrawal-postgres.yml'
+  pull_request:
+    paths:
+      - 'db/releases/withdraw-golfer/**'
+      - 'tests/acceptance/withdrawal-postgres.sql'
+      - 'tests/acceptance/withdrawal-score-race.sh'
+      - '.github/workflows/withdrawal-postgres.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: elleng_withdrawal_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Execute staged RPCs and score guard in disposable PostgreSQL
+        env:
+          PGPASSWORD: postgres
+        run: psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d elleng_withdrawal_test -f tests/acceptance/withdrawal-postgres.sql
+      - name: Verify score-first concurrency across PostgreSQL sessions
+        env:
+          PGPASSWORD: postgres
+        run: bash tests/acceptance/withdrawal-score-race.sh

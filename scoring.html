@@ -3739,6 +3739,18 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   <div id="addGolferMsg" class="status" style="margin-top:9px"></div>
   <div class="row" style="margin-top:12px"><button id="addLateGolferBtn" type="button" class="secondary save-wide">Add Late Golfer (After Draft)</button></div>
   <div id="addLateGolferMsg" class="status" style="margin-top:9px">Commissioner only. Preserves draft picks and existing assignments.</div>
+  <div style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px">
+    <strong>Withdraw Drafted Golfer (Before Scoring)</strong>
+    <div class="note">Uneven teams are allowed. Draft picks and player accounts remain intact. Captains cannot be withdrawn here.</div>
+    <label for="withdrawGolferSelect">Active golfer</label>
+    <select id="withdrawGolferSelect" style="width:100%;margin:6px 0"><option value="">Choose golfer</option></select>
+    <button id="withdrawGolferBtn" type="button" class="secondary save-wide">Withdraw Golfer</button>
+    <div id="withdrawGolferMsg" class="status" role="status" style="margin-top:8px"></div>
+    <label for="restoreGolferSelect">Restore a withdrawn golfer</label>
+    <select id="restoreGolferSelect" style="width:100%;margin:6px 0"><option value="">Choose withdrawn golfer</option></select>
+    <button id="restoreGolferBtn" type="button" class="secondary save-wide">Restore Golfer (Before Scoring)</button>
+    <div id="restoreGolferMsg" class="status" role="status" style="margin-top:8px"></div>
+  </div>
 </div>
 
 <div id="adminPlayers" class="card admin-card">
@@ -4778,7 +4790,7 @@ function renderPlayersDirectory(){
  const total=$("playerDirectoryTotal");
  if(total)total.textContent=publicRosterUnavailable?"Total golfers in app: temporarily unavailable":`Total golfers in app: ${golfers.length+inactiveAccounts.length}`;
  const q=($("playerDirectorySearch")?.value||"").trim().toLowerCase();
- const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);return {...g,teamIndex:ti,teamName:g.participating===false?"Not in this tournament":ti==null?"Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q));
+ const rows=golfers.map(g=>{const ti=golferTeamIndex(g.index);const originalTeam=(draftState?.teams||[]).findIndex(t=>(t.roster||[]).some(r=>Number(typeof r==="object"?r?.golferIndex:r)===g.index));const withdrawnTeam=originalTeam>=0?(draftState.teams[originalTeam]?.name||`Team ${originalTeam+1}`):"original team unavailable";return {...g,teamIndex:ti,teamName:g.withdrawn===true?"Withdrawn — "+withdrawnTeam:g.participating===false?"Not in this tournament":ti==null?"Unassigned":(draftState?.teams?.[ti]?.name||`Team ${ti+1}`)}}).filter(g=>!q||g.name.toLowerCase().includes(q)||g.teamName.toLowerCase().includes(q));
  const rowHtml=g=>{const band=playerBandLabel(g);const bandChip=band==="—"?"":`<span class="player-roster-band" title="Handicap band ${esc(band)}">${esc(band)}</span>`;return `<div class="player-row-public player-roster-only" data-player-profile="${g.index}" role="button" tabindex="0" aria-label="View ${esc(g.name)} profile">${publicPlayerAvatar(g)}<div class="player-name-public">${esc(g.name)}<div class="player-team-inline">${esc(g.teamName)}</div></div>${bandChip}<div class="player-open-arrow">›</div></div>`};
  if(!rows.length&&!inactiveAccounts.some(a=>!q||String(a.displayName).toLowerCase().includes(q))){root.innerHTML=rosterWarning+'<div class="note">No matching players found.</div>';return}
  const sorted=rows.sort((a,b)=>{const ap=a.name.trim().split(/\s+/),bp=b.name.trim().split(/\s+/);return ap.at(-1).localeCompare(bp.at(-1),undefined,{sensitivity:"base"})||ap.slice(0,-1).join(" ").localeCompare(bp.slice(0,-1).join(" "),undefined,{sensitivity:"base"})||a.index-b.index;});
@@ -5047,8 +5059,10 @@ async function loadBase(){
   const roster=Array.isArray(x.roster)?x.roster:[];
   const rosterNames=roster.map(r=>{
    if(typeof r==="string")return r;
-   if(typeof r==="number")return golfers[r]?.name||"";
-   return r?.name||golfers[r?.golferIndex]?.name||"";
+   if(typeof r==="number")return golfers[r]?.participating===false?"":(golfers[r]?.name||"");
+   if(r&&typeof r==="object"&&Number.isInteger(Number(r.golferIndex)))
+    return golfers[Number(r.golferIndex)]?.participating===false?"":(r.name||golfers[Number(r.golferIndex)]?.name||"");
+   return r?.name||"";
   }).filter(Boolean);
   return {name:x.name||`Team ${i+1}`,captain:x.captain||"",roster:rosterNames};
  });
@@ -5099,7 +5113,7 @@ function ensureDraftShape(){
 }
 function rebuildTeamRosters(){
  ensureDraftShape(); draftState.teams.forEach(t=>t.roster=[]);
- draftState.golfers.forEach((g,i)=>{if(g.participating===false){g.team=null;return}let ti=(g.team==null||g.team==="")?null:Number(g.team);if(Number.isInteger(ti)&&ti>=0&&ti<draftState.teams.length){g.team=ti;draftState.teams[ti].roster.push(i)}else g.team=null});
+ draftState.golfers.forEach((g,i)=>{if(g.participating===false&&g.withdrawn!==true){g.team=null;return}let ti=(g.team==null||g.team==="")?null:Number(g.team);if(Number.isInteger(ti)&&ti>=0&&ti<draftState.teams.length){g.team=ti;draftState.teams[ti].roster.push(i)}else g.team=null});
 }
 
 const TEAM_DEFAULT_COLORS=["#d5a72c","#188754","#2f6fc0","#a7263d","#8750b5","#df6f2f","#248b8b","#6f7a85","#b48a17"];
@@ -5711,6 +5725,7 @@ async function resetGolferPin(i){
  if($("tournamentDateInput"))$("tournamentDateInput").value=draftState?.tournamentDate||"";
  if($("newTournamentName")&&!$("newTournamentName").dataset.touched){$("newTournamentName").value=tournament?.name||draftState?.tournamentName||"EllenG Cup";$("newTournamentName").dataset.touched="1"}
  renderTeamEditor(); renderPlayerEditor();
+ refreshWithdrawalChoices(); refreshRestoreChoices();
 }
 async function refreshLiveHandicapsBeforeStateSave(){
  const {data,error}=await db.from("elleng_drafts").select("state").eq("id",DRAFT_ID).single();
@@ -6658,6 +6673,74 @@ $("createMissingLogins")?.addEventListener("click",async()=>{
   if(result.failed?.length)msg.textContent=`${result.created} created; ${result.failed.length} account(s) need attention: ${result.failed.map(x=>x.name).join(", ")}.`;
   renderAll();
  }catch(e){msg.textContent=e?.message||"Unable to verify missing logins."}
+ finally{button.disabled=false}
+});
+function refreshWithdrawalChoices(){
+ const sel=$("withdrawGolferSelect");if(!sel||!draftState)return;
+ const prior=sel.value;
+ const options=(draftState.golfers||[]).map((g,i)=>({g,i}))
+  .filter(({g})=>g&&g.name&&g.participating!==false)
+  .filter(({g})=>!(draftState.teams||[]).some(t=>String(t.captain||"").trim().toLowerCase()===String(g.name).trim().toLowerCase()))
+  .filter(({i})=>(draftState.teams||[]).some(t=>(t.roster||[]).some(r=>Number(typeof r==="object"?r.golferIndex:r)===i)));
+ sel.innerHTML='<option value="">Choose golfer</option>'+options.map(({g,i})=>`<option value="${i}">${esc(g.name)} — ${esc(draftState.teams.find(t=>(t.roster||[]).some(r=>Number(typeof r==="object"?r?.golferIndex:r)===i))?.name||"Team")}</option>`).join("");
+ if(options.some(({i})=>String(i)===prior))sel.value=prior;
+}
+$("withdrawGolferSelect").addEventListener("focus",refreshWithdrawalChoices);
+function refreshRestoreChoices(){
+ const sel=$("restoreGolferSelect");if(!sel||!draftState)return;
+ const prior=sel.value;
+ const options=(draftState.golfers||[]).map((g,i)=>({g,i}))
+  .filter(({g})=>g&&g.name&&g.withdrawn===true&&g.participating===false);
+ sel.innerHTML='<option value="">Choose withdrawn golfer</option>'+options.map(({g,i})=>`<option value="${i}">${esc(g.name)}</option>`).join("");
+ if(options.some(({i})=>String(i)===prior))sel.value=prior;
+}
+$("restoreGolferSelect").addEventListener("focus",refreshRestoreChoices);
+$("restoreGolferBtn").addEventListener("click",async()=>{
+ const msg=$("restoreGolferMsg"),button=$("restoreGolferBtn");
+ if(!isCommissioner){msg.textContent="Commissioner sign-in required.";return}
+ const raw=$("restoreGolferSelect")?.value,index=Number(raw);
+ if(!raw||!Number.isSafeInteger(index)){msg.textContent="Choose a withdrawn golfer.";return}
+ const g=draftState?.golfers?.[index];
+ if(!g||g.withdrawn!==true){msg.textContent="Golfer unavailable; refresh.";return}
+ if(!confirm(`Restore ${g.name} to their original team before scoring?`))return;
+ button.disabled=true;msg.textContent="Restoring golfer…";
+ try{
+  const {data,error}=await db.rpc("elleng_restore_golfer",{
+   p_draft_id:DRAFT_ID,p_tournament_id:TOURNAMENT_ID,
+   p_expected_updated_at:draftUpdatedAt,p_golfer_index:index
+  });
+  if(error)throw error;
+  if(!data?.ok)throw new Error("Database did not confirm restoration.");
+  msg.textContent="Restoration saved. Refreshing…";
+  try{await loadBase();renderAll();refreshRestoreChoices();refreshWithdrawalChoices();
+   msg.textContent=`${g.name} restored to their original team.`;
+  }catch(refreshError){msg.textContent="Restoration saved; refresh the page to verify."}
+ }catch(e){msg.textContent=e?.message||"Restoration failed; no changes confirmed."}
+ finally{button.disabled=false}
+});
+
+$("withdrawGolferBtn").addEventListener("click",async()=>{
+ const msg=$("withdrawGolferMsg"),button=$("withdrawGolferBtn");
+ if(!isCommissioner){msg.textContent="Commissioner sign-in required.";return}
+ const index=Number($("withdrawGolferSelect")?.value);
+ const raw=$("withdrawGolferSelect")?.value;
+ if(!raw||!Number.isSafeInteger(index)){msg.textContent="Choose an active golfer.";return}
+ const g=draftState?.golfers?.[index];
+ if(!g||g.participating===false){msg.textContent="Golfer unavailable; refresh.";return}
+ if(!confirm(`Withdraw ${g.name} from this tournament before scoring? Team points will not be balanced. Original draft pick and account will remain.`))return;
+ button.disabled=true;msg.textContent="Withdrawing golfer…";
+ try{
+  const {data,error}=await db.rpc("elleng_withdraw_golfer",{
+   p_draft_id:DRAFT_ID,p_tournament_id:TOURNAMENT_ID,
+   p_expected_updated_at:draftUpdatedAt,p_golfer_index:index,p_reason:""
+  });
+  if(error)throw error;
+  if(!data?.ok)throw new Error("Database did not confirm withdrawal.");
+  msg.textContent="Withdrawal saved. Refreshing active teams…";
+  try{await loadBase();renderAll();refreshWithdrawalChoices();refreshRestoreChoices();
+   msg.textContent=`${g.name} withdrawn. Draft picks and player account retained.`;
+  }catch(refreshError){msg.textContent="Withdrawal saved; refresh the page to verify team counts."}
+ }catch(e){msg.textContent=e?.message||"Withdrawal failed; no changes confirmed."}
  finally{button.disabled=false}
 });
 $("addLateGolferBtn").addEventListener("click",async()=>{

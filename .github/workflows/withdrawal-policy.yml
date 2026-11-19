@@ -1,0 +1,26 @@
+name: Withdrawal policy isolated tests
+on:
+  push:
+    branches: [feature/commissioner-post-draft-withdrawal]
+  pull_request:
+    paths:
+      - 'lib/withdrawal-policy.cjs'
+      - 'tests/withdrawal-policy.test.cjs'
+      - 'tests/withdrawal-contract.test.cjs'
+      - 'db/releases/withdraw-golfer/**'
+      - 'scoring.html'
+      - '.github/workflows/withdrawal-policy.yml'
+  workflow_dispatch:
+jobs:
+  withdrawal-policy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test withdrawal invariants
+        run: node --test tests/withdrawal-policy.test.cjs tests/withdrawal-contract.test.cjs
