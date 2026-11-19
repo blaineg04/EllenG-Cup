@@ -30,12 +30,14 @@ SELECT 'elleng-cup','11111111-1111-4111-8111-111111111111'::uuid,
  'picks',(SELECT jsonb_agg(jsonb_build_object('golfer',i,'team',CASE WHEN i=15 THEN 0 ELSE 1 END))
   FROM (SELECT unnest(ARRAY[6,12,5,26,15,13,17,18,2,25,19,11,38,9,10,14,1,0,20,21,4,7,8,27]) i) a)),
  now();
+\i db/releases/withdraw-golfer/staged.sql
 \i db/releases/commissioner-roster-adjustment/staged-rpc.sql
 \i db/releases/commissioner-roster-adjustment/guard-staged.sql
 CREATE TRIGGER guard_draft BEFORE UPDATE ON public.elleng_drafts FOR EACH ROW EXECUTE FUNCTION public.elleng_guard_weighted_roster();
 GRANT USAGE ON SCHEMA auth,public TO authenticated;
 GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT UPDATE ON public.elleng_drafts TO authenticated;
 DO $test$
 DECLARE st timestamptz; s jsonb; n integer; entry jsonb;
 BEGIN
