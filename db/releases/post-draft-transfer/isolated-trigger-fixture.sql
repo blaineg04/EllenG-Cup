@@ -68,23 +68,14 @@ BEGIN
      OR old_teams->1->'roster' IS NOT DISTINCT FROM new_teams->1->'roster'
   THEN RAISE EXCEPTION 'both rosters must change'; END IF;
   -- Validate every roster entry against its authoritative golfer.team.
-  -- This isolated fixture currently supports numeric roster entries only.
-  -- Object-form entries must be supported before any production integration.
+  -- This isolated fixture supports numeric roster entries only.
   seen := array_fill(0, ARRAY[jsonb_array_length(NEW.state->'golfers')]);
   FOR team_idx IN 0..1 LOOP
     IF jsonb_typeof(new_teams->team_idx->'roster') <> 'array'
     THEN RAISE EXCEPTION 'roster must be array'; END IF;
     FOR member IN SELECT value FROM jsonb_array_elements(new_teams->team_idx->'roster') LOOP
       IF jsonb_typeof(member) <> 'number'
-         OR member::text !~ '^(0|[1-9][0-9]*)
-  -- checks MUST be implemented and exercised before adapting to production.
-  RETURN NEW;
-END $$;
-DROP TRIGGER IF EXISTS guard_delta ON transfer_fixture.drafts;
-CREATE TRIGGER guard_delta BEFORE UPDATE OF state ON transfer_fixture.drafts
-FOR EACH ROW EXECUTE FUNCTION transfer_fixture.guard_delta();
-COMMIT;
-
+         OR member::text !~ '^(0|[1-9][0-9]*)$'
       THEN RAISE EXCEPTION 'invalid roster entry'; END IF;
       member_idx := (member::text)::integer;
       IF member_idx < 0 OR member_idx >= array_length(seen,1)
