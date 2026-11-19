@@ -3129,6 +3129,28 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
  body:not(.login-mode).extras-screen-active #extrasView .pulse-list > *:nth-child(n+3),
  body:not(.login-mode).extras-screen-active #extrasView .awards-grid > *:nth-child(n+3){display:revert!important}
 }
+
+/* Ensure empty-state explanations remain visible before official scores exist. */
+@media (max-width:900px){
+ body:not(.login-mode).extras-screen-active #extrasView #featuredMatchup,
+ body:not(.login-mode).extras-screen-active #extrasView #playerSpotlight,
+ body:not(.login-mode).extras-screen-active #extrasView #whatChangedFeed,
+ body:not(.login-mode).extras-screen-active #extrasView #onTheClock,
+ body:not(.login-mode).extras-screen-active #extrasView #paceTracker{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  height:auto!important;min-height:28px!important;max-height:none!important;
+  overflow:visible!important;margin-top:8px!important;
+ }
+ body:not(.login-mode).extras-screen-active #extrasView #whatChangedFeed .event-item,
+ body:not(.login-mode).extras-screen-active #extrasView #paceTracker .pace-row{
+  display:grid!important;height:auto!important;max-height:none!important;
+ }
+ body:not(.login-mode).extras-screen-active #extrasView #tournamentExtrasContent .note{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  font-size:13px!important;line-height:1.45!important;
+  white-space:normal!important;max-height:none!important;overflow:visible!important;
+ }
+}
 </style>
 </head>
 <body class="login-mode">
