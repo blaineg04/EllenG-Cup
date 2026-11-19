@@ -129,6 +129,24 @@ BEGIN
  ALTER TABLE public.elleng_player_hole_scores DISABLE TRIGGER elleng_reject_inactive_player_score_trg;
  INSERT INTO public.elleng_player_hole_scores VALUES('elleng-cup-live',13,1,2,4);
  ALTER TABLE public.elleng_player_hole_scores ENABLE TRIGGER elleng_reject_inactive_player_score_trg;
+ -- A legacy withdrawn score must not be relabeled to another golfer or moved
+ -- to another tournament through UPDATE. The original row is protected too.
+ BEGIN
+   UPDATE public.elleng_player_hole_scores SET golfer_index=12
+   WHERE tournament_id='elleng-cup-live' AND golfer_index=13;
+   RAISE EXCEPTION 'Withdrawn golfer score reassignment unexpectedly allowed';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+ BEGIN
+   UPDATE public.elleng_player_hole_scores SET tournament_id='score-guard-test-other'
+   WHERE tournament_id='elleng-cup-live' AND golfer_index=13;
+   RAISE EXCEPTION 'Withdrawn golfer score relocation unexpectedly allowed';
+ EXCEPTION WHEN insufficient_privilege THEN NULL;
+ END;
+ IF (SELECT count(*) FROM public.elleng_player_hole_scores
+     WHERE tournament_id='elleng-cup-live' AND golfer_index=13) <> 1 THEN
+   RAISE EXCEPTION 'Rejected score reassignment or relocation altered the original row';
+ END IF;
  BEGIN
    DELETE FROM public.elleng_player_hole_scores
    WHERE tournament_id='elleng-cup-live' AND golfer_index=13;
