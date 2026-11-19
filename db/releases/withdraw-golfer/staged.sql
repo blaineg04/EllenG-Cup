@@ -47,6 +47,7 @@ BEGIN
  IF roster_count<>1 THEN RAISE EXCEPTION 'Golfer must be on exactly one team'; END IF;
  SELECT count(*) INTO active_original FROM jsonb_array_elements(s->'golfers') g
  WHERE btrim(coalesce(g->>'name',''))<>'' AND
+   g->>'team' IN ('0','1') AND
    coalesce((g->>'late_added')::boolean,false)=false;
  -- All original golfers must have historical picks; late additions do not require picks.
  -- Count withdrawn original golfers too, so an incomplete draft cannot pass after withdrawal.
