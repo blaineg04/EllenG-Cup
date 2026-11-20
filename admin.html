@@ -668,8 +668,11 @@ document.getElementById("applyRosterMove").addEventListener("click",async()=>{
   });
   if(error)throw error;
   if(!data?.ok)throw new Error("Transfer was not confirmed by the database.");
-  status.textContent=move.name+" transfer confirmed. Reloading roster…";
-  await openAdmin();
+  status.textContent=move.name+" transfer confirmed. Refreshing roster…";
+  await load(()=>commissionerAuthEpoch===epoch&&commissionerUserId===userId,()=>{
+   if(liveMode)liveRender();else setupRender();
+  });
+  if(commissionerAuthEpoch===epoch&&commissionerUserId===userId)status.textContent=move.name+" transfer confirmed. Roster updated.";
  }catch(error){status.textContent="Transfer not completed: "+(error?.message||"unknown error");}
  finally{button.disabled=false;}
 });
