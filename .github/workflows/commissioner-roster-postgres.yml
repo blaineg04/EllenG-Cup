@@ -1,0 +1,41 @@
+name: Commissioner roster PostgreSQL integration (disposable)
+on:
+  pull_request:
+    paths:
+      - 'db/releases/commissioner-roster-adjustment/**'
+      - 'tests/acceptance/commissioner-roster-postgres.sql'
+      - '.github/workflows/commissioner-roster-postgres.yml'
+      - 'tests/acceptance/commissioner-roster-concurrency.sh'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: elleng_roster_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Execute isolated commissioner roster acceptance test
+        env:
+          PGPASSWORD: postgres
+        run: psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d elleng_roster_test -f tests/acceptance/commissioner-roster-postgres.sql
+      - name: Verify real concurrent tee-group and commissioner lock contention
+        env:
+          PGPASSWORD: postgres
+        run: bash tests/acceptance/commissioner-roster-concurrency.sh

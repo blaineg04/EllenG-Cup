@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EllenG Cup Commissioner</title><link rel="stylesheet" href="style.css"><style>.global-main-menu-bar{display:flex;justify-content:center;padding:12px}.global-main-menu-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 18px;border:2px solid #d5a72c;border-radius:999px;background:#0b2437;color:#fff;font-weight:900;text-decoration:none}</style></head><body class="commissioner-draft-page">
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EllenG Cup Commissioner</title><link rel="stylesheet" href="style.css"><style>.global-main-menu-bar{display:flex;justify-content:center;padding:12px}.global-main-menu-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 18px;border:2px solid #d5a72c;border-radius:999px;background:#0b2437;color:#fff;font-weight:900;text-decoration:none}@media(max-width:420px){#commissionerRosterMoves{min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere}#commissionerRosterMoves select,#commissionerRosterMoves button{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box;margin:8px 0;white-space:normal}}</style></head><body class="commissioner-draft-page">
 <div class="top"><img src="gator.jpeg"><div><h1>EllenG Cup — Commissioner</h1><div>Live Supabase Draft Control</div></div><div style="margin-left:auto" id="connection">CONNECTING</div></div>
 <nav class="global-main-menu-bar" aria-label="Main menu"><a class="global-main-menu-btn" href="./scoring.html#hub">← Main Menu</a></nav>
 <div class="wrap">
@@ -10,7 +10,7 @@
 <input id="password" type="password" autocomplete="current-password" placeholder="Password" style="max-width:240px">
 <button id="login" class="gold">Sign In</button>
 </div><div id="authMsg" class="muted"></div></div>
-<div id="adminApp" style="display:none"><div class="card"><div class="actions"><button id="setupBtn" class="alt">Setup</button><button id="undo" class="gold">Undo Pick</button><button id="prepareWeighted" class="gold">Prepare Balanced Draft</button><button id="prepareFairDraft" class="gold" type="button">Prepare Fair Draft (v2)</button><button id="pause" class="alt">Pause/Resume</button><button id="resetClock" class="alt">Reset Clock</button><button id="resetEntireDraft" class="alt" type="button">Reset Entire Draft</button></div></div>
+<div id="adminApp" style="display:none"><section id="commissionerRosterMoves" class="card" aria-label="Commissioner golfer transfers"><h2>Commissioner golfer transfers — Nov 20</h2><p class="muted">Only the four approved transfers are available. Requires the installed commissioner-only database function. Disabled once scoring or tee groups begin.</p><select id="rosterMoveTarget" aria-label="Approved golfer transfer"><option value="">Select approved transfer</option><option value="56">Connor Castille → Team Carl (activate)</option><option value="15">Michael Glover → Team Jarad</option><option value="7">Donny Wyble → Team Carl</option><option value="20">Patrick Carlton → Team Carl</option></select> <button id="applyRosterMove" class="gold" type="button">Apply selected transfer</button><p id="rosterMoveStatus" class="muted" role="status"></p></section><div class="card"><div class="actions"><button id="setupBtn" class="alt">Setup</button><button id="undo" class="gold">Undo Pick</button><button id="prepareWeighted" class="gold">Prepare Balanced Draft</button><button id="prepareFairDraft" class="gold" type="button">Prepare Fair Draft (v2)</button><button id="pause" class="alt">Pause/Resume</button><button id="resetClock" class="alt">Reset Clock</button><button id="resetEntireDraft" class="alt" type="button">Reset Entire Draft</button></div></div>
 <section class="card" aria-labelledby="rsvpPreviewHeading"><h3 id="rsvpPreviewHeading">Approved RSVP cross-check</h3>
 <p id="rsvpReadinessStatus" class="muted" role="status" aria-live="polite">Event RSVP preview is disabled until the reviewed migration and authenticated rehearsal are approved.</p>
 <button id="refreshRsvpPreview" type="button" class="alt" disabled>Check approved RSVPs (read-only)</button></section>
@@ -638,5 +638,43 @@ document.getElementById("login").onclick=async()=>{
  }
 };
 document.getElementById("refreshRsvpPreview").onclick=()=>rsvpPreviewController.refresh();
+
+const approvedRosterMoves=Object.freeze({
+ 56:{name:"Connor Castille",team:0,activate:true},
+ 15:{name:"Michael Glover",team:1,activate:false},
+ 7:{name:"Donny Wyble",team:0,activate:false},
+ 20:{name:"Patrick Carlton",team:0,activate:false}
+});
+document.getElementById("applyRosterMove").addEventListener("click",async()=>{
+ const button=document.getElementById("applyRosterMove");
+ const status=document.getElementById("rosterMoveStatus");
+ const index=Number(document.getElementById("rosterMoveTarget").value);
+ const move=approvedRosterMoves[index];
+ if(!move||!commissionerUserId||savingDraft||button.disabled)return;
+ const epoch=commissionerAuthEpoch,userId=commissionerUserId;
+ if(document.visibilityState==="hidden"||navigator.onLine===false)return;
+ if(!confirm("Move "+move.name+" to "+(move.team===0?"Team Carl":"Team Jarad")+"? This changes the live tournament roster."))return;
+ button.disabled=true;status.textContent="Checking commissioner session and latest draft…";
+ try{
+  const {data:identity,error:authError}=await db.auth.getUser();
+  if(authError||identity?.user?.id!==userId||commissionerAuthEpoch!==epoch)throw new Error("Commissioner session changed.");
+  const {data:latest,error:readError}=await db.from("elleng_drafts").select("owner_id,updated_at,state").eq("id",cfg.draftId).single();
+  if(readError||!latest||latest.owner_id!==userId)throw new Error("Commissioner ownership could not be verified.");
+  if(commissionerAuthEpoch!==epoch||commissionerUserId!==userId)throw new Error("Session changed during verification.");
+  if(latest.state?.golfers?.[index]?.name!==move.name)throw new Error("Golfer identity changed; transfer blocked.");
+  const {data,error}=await db.rpc("elleng_commissioner_move_golfer",{
+   p_expected_updated_at:latest.updated_at,p_golfer_index:index,
+   p_expected_name:move.name,p_destination_team:move.team,p_activate:move.activate
+  });
+  if(error)throw error;
+  if(!data?.ok)throw new Error("Transfer was not confirmed by the database.");
+  status.textContent=move.name+" transfer confirmed. Refreshing roster…";
+  await load(()=>commissionerAuthEpoch===epoch&&commissionerUserId===userId,()=>{
+   if(liveMode)liveRender();else setupRender();
+  });
+  if(commissionerAuthEpoch===epoch&&commissionerUserId===userId)status.textContent=move.name+" transfer confirmed. Roster updated.";
+ }catch(error){status.textContent="Transfer not completed: "+(error?.message||"unknown error");}
+ finally{button.disabled=false;}
+});
 (async()=>{try{await openAdmin()}catch(e){document.getElementById("authMsg").textContent=e.message}})();</script></body></html>
 
