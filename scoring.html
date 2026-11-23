@@ -6078,6 +6078,8 @@ function safeFeatureRender(name,fn){
  catch(e){console.warn(`${name} render skipped`,e)}
 }
 function renderAll(){
+ // Directory is read-only here; never refresh it through draft-state saves.
+ if(isCommissioner)void refreshGolferDirectory();
  if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • 18 HOLES`;
  $("liveBadge").textContent=isCommissioner?"COMMISSIONER":(tournament?.status||"setup").toUpperCase();
  const playerName=currentGolferIndex!=null?String(draftState?.golfers?.[currentGolferIndex]?.name||""):"";
@@ -6781,7 +6783,7 @@ $("addLateGolferBtn").addEventListener("click",async()=>{
 });
 async function refreshGolferDirectory(){
  const el=$("directoryGolferList");if(!el||!isCommissioner)return;
- if(!["complete","archived"].includes(String(tournament?.status||"").toLowerCase())){el.textContent="";return;}
+ if(!["complete","completed","archived"].includes(String(tournament?.status||"").toLowerCase())){el.textContent="";return;}
  const {data,error}=await db.from("elleng_golfer_directory").select("id,name,band,handicap,created_at").order("created_at",{ascending:false}).limit(100);
  if(error){el.textContent="Golfer directory unavailable until the new database migration is deployed.";return;}
  el.replaceChildren();
@@ -6798,9 +6800,11 @@ $("addGolferBtn").addEventListener("click",async()=>{
  const name=$("newGolferName").value.trim();
  if(!name){$("addGolferMsg").textContent="Enter the golfer's name.";return}
  const participating=$("newGolferParticipation").value==="true";
+ const currentStatus=String(tournament?.status||"").toLowerCase();
+ const historicalTournament=["complete","completed","archived"].includes(currentStatus);
  // Historical tournaments are immutable. Register new golfers in the directory,
  // never in the completed draft JSON or its legacy player-account index.
- if(["complete","archived"].includes(String(tournament?.status||"").toLowerCase())){
+ if(historicalTournament){
    const msg=$("addGolferMsg");
    if(participating){msg.textContent="This tournament is complete. Register as Not playing; enroll in the next tournament separately.";return;}
    if(photoFile){msg.textContent="For completed tournaments, use the photo URL field for now. File upload will be available after directory photo storage is connected.";return;}
