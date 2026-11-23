@@ -6803,12 +6803,23 @@ async function refreshGolferDirectory(force=false){
      const button=document.createElement("button");button.type="button";button.className="secondary";
      button.textContent="Link existing login";button.style.marginLeft="8px";
      button.addEventListener("click",async()=>{
-       const accountId=window.prompt("Enter the existing player's Supabase auth user UUID. This does not create an account or change a tournament.");
-       if(accountId===null)return;
-       const value=accountId.trim();
-       if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)){
-         window.alert("Enter a valid auth user UUID. No changes made.");return;
+       // Never ask a commissioner to find or paste raw auth UUIDs.
+       // Only offer a uniquely matched existing golfer login; ambiguous names
+       // must be resolved separately rather than risking a wrong identity link.
+       const normalized=String(g.name||"").trim().replace(/\\s+/g," ").toLocaleLowerCase();
+       const matches=(playerAccounts||[]).filter(a=>{
+         const index=Number(a.golfer_index);
+         const golfer=draftState?.golfers?.[index];
+         return a.user_id && golfer &&
+           String(golfer.name||"").trim().replace(/\\s+/g," ").toLocaleLowerCase()===normalized;
+       });
+       if(matches.length!==1){
+         window.alert(matches.length?"Multiple matching player accounts found. Resolve duplicates before linking.":"No matching existing player account found. Account creation for directory golfers is not yet available.");
+         return;
        }
+       const account=matches[0];
+       if(!window.confirm("Link "+g.name+" to existing login "+String(account.username||"")+"? This will not change tournament assignments."))return;
+       const value=String(account.user_id);
        button.disabled=true;
        try{
          const {error}=await db.rpc("elleng_link_directory_golfer",{p_directory_id:g.id,p_player_user_id:value});
