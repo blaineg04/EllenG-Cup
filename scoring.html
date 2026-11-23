@@ -6790,12 +6790,37 @@ async function refreshGolferDirectory(force=false){
  try {
  const el=$("directoryGolferList");if(!el||!isCommissioner)return;
  if(String(tournament?.status||"").toLowerCase()==="setup" && !(draftState?.picks||[]).length){el.textContent="";return;}
- const {data,error}=await db.from("elleng_golfer_directory").select("id,name,band,handicap,created_at").order("created_at",{ascending:false}).limit(100);
+ const {data,error}=await db.from("elleng_golfer_directory").select("id,name,band,handicap,player_user_id,created_at").order("created_at",{ascending:false}).limit(100);
  if(error){el.textContent="Golfer directory unavailable until the new database migration is deployed.";return;}
  el.replaceChildren();
  const title=document.createElement("strong");title.textContent="Registered for future tournaments (not playing):";el.append(title);
  const list=document.createElement("ul");
- for(const g of data||[]){const li=document.createElement("li");li.textContent=g.name+(g.band?" · Band "+g.band:"");list.append(li);}
+ for(const g of data||[]){
+   const li=document.createElement("li");
+   const name=document.createElement("span");name.textContent=g.name+(g.band?" · Band "+g.band:"")+(g.player_user_id?" · Login linked":" · No login linked");
+   li.append(name);
+   if(!g.player_user_id){
+     const button=document.createElement("button");button.type="button";button.className="secondary";
+     button.textContent="Link existing login";button.style.marginLeft="8px";
+     button.addEventListener("click",async()=>{
+       const accountId=window.prompt("Enter the existing player's Supabase auth user UUID. This does not create an account or change a tournament.");
+       if(accountId===null)return;
+       const value=accountId.trim();
+       if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)){
+         window.alert("Enter a valid auth user UUID. No changes made.");return;
+       }
+       button.disabled=true;
+       try{
+         const {error}=await db.rpc("elleng_link_directory_golfer",{p_directory_id:g.id,p_player_user_id:value});
+         if(error)throw error;
+         golferDirectoryLastRefresh=0;await refreshGolferDirectory(true);
+       }catch(e){window.alert("Unable to link login: "+(e?.message||"Unknown error"));}
+       finally{button.disabled=false;}
+     });
+     li.append(button);
+   }
+   list.append(li);
+ }
  if(!list.children.length){const empty=document.createElement("li");empty.textContent="No future golfers registered yet.";list.append(empty);}
  el.append(list);
  golferDirectoryLastRefresh=Date.now();
