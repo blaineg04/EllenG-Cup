@@ -6796,6 +6796,7 @@ async function refreshGolferDirectory(force=false){
  const title=document.createElement("strong");title.textContent="Registered for future tournaments (not playing):";el.append(title);
  const list=document.createElement("ul");
  for(const g of data||[]){const li=document.createElement("li");li.textContent=g.name+(g.band?" · Band "+g.band:"");list.append(li);}
+ if(!list.children.length){const empty=document.createElement("li");empty.textContent="No future golfers registered yet.";list.append(empty);}
  el.append(list);
  golferDirectoryLastRefresh=Date.now();
  } finally {golferDirectoryRefreshInFlight=false;}
@@ -6826,7 +6827,10 @@ $("addGolferBtn").addEventListener("click",async()=>{
      $("newGolferName").value="";$("newGolferHcp").value="";$("newGolferBand").value="";$("newGolferPhoto").value="";
      const directory=$("directoryGolferList");
      if(directory)await refreshGolferDirectory(true);
-   }catch(e){msg.textContent="Directory registration unavailable: "+(e?.message||"Unable to register")+". No tournament changes were made.";}
+   }catch(e){
+     const duplicate=String(e?.code||"")==="23505" || /duplicate key|unique constraint/i.test(String(e?.message||""));
+     msg.textContent=duplicate?"This golfer is already registered in the directory. No duplicate was created.":"Directory registration unavailable: "+(e?.message||"Unable to register")+". No tournament changes were made.";
+   }
    finally{button.disabled=false;}
    return;
  }
