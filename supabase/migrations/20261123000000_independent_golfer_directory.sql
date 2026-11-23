@@ -11,6 +11,9 @@ create table if not exists public.elleng_golfer_directory (
   updated_at timestamptz not null default now()
 );
 create index if not exists elleng_golfer_directory_owner_idx on public.elleng_golfer_directory(owner_id);
+-- Prevent duplicate names for the same commissioner, case/space insensitive.
+create unique index if not exists elleng_golfer_directory_owner_name_unique
+  on public.elleng_golfer_directory(owner_id, lower(btrim(name)));
 alter table public.elleng_golfer_directory enable row level security;
 revoke all on public.elleng_golfer_directory from public, anon, authenticated;
 grant select on public.elleng_golfer_directory to authenticated;
