@@ -30,7 +30,7 @@ create policy elleng_golfer_directory_owner_read on public.elleng_golfer_directo
 -- Commissioner-only; validates identity and prevents assigning one auth user twice.
 create or replace function public.elleng_link_directory_golfer(
   p_directory_id uuid, p_player_user_id uuid
-) returns void language plpgsql security definer set search_path = '' as $
+) returns void language plpgsql security definer set search_path = '' as $link$
 declare v_owner uuid := auth.uid();
 begin
   if v_owner is null or not exists (
@@ -44,7 +44,7 @@ begin
    where g.id=p_directory_id and g.owner_id=v_owner
      and (g.player_user_id is null or g.player_user_id=p_player_user_id);
   if not found then raise exception 'Directory golfer not found or already linked'; end if;
-end $;
+end $link$;
 revoke all on function public.elleng_link_directory_golfer(uuid,uuid) from public,anon;
 grant execute on function public.elleng_link_directory_golfer(uuid,uuid) to authenticated;
 
