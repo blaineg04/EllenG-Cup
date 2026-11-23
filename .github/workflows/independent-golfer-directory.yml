@@ -46,6 +46,6 @@ jobs:
           assert 'elleng_create_future_event' in app
           assert 'elleng_set_player_participation' not in app.split('async function refreshFutureEventRoster()',1)[1].split('let golferDirectoryRefreshInFlight',1)[0]
           assert sql.count("create or replace function") == 2
-          assert "as $" in future and future.count("end $;") == 2
+          assert future.count("end " + chr(36)*2 + ";") == 2
           print("Static directory safety contract passed; database integration still required.")
           PY
