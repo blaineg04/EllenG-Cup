@@ -6091,7 +6091,7 @@ function safeFeatureRender(name,fn){
 }
 function renderAll(){
  // Directory is read-only here; never refresh it through draft-state saves.
- if(isCommissioner)void refreshGolferDirectory();
+ if(isCommissioner){void refreshGolferDirectory();if(!futureEventInitialLoadDone){futureEventInitialLoadDone=true;void refreshFutureEvents();}}
  if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • 18 HOLES`;
  $("liveBadge").textContent=isCommissioner?"COMMISSIONER":(tournament?.status||"setup").toUpperCase();
  const playerName=currentGolferIndex!=null?String(draftState?.golfers?.[currentGolferIndex]?.name||""):"";
@@ -6849,7 +6849,7 @@ $("createFutureEventBtn").addEventListener("click",async()=>{
  }catch(e){$("futureEventMsg").textContent="Unable to create future event: "+(e?.message||"Unknown error");}
  finally{button.disabled=false;}
 });
-if(isCommissioner)void refreshFutureEvents();
+let futureEventInitialLoadDone=false;
 let golferDirectoryRefreshInFlight=false;
 let golferDirectoryLastRefresh=0;
 async function refreshGolferDirectory(force=false){
