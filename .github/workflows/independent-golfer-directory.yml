@@ -15,8 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Verify immutable historical tournament registration contract
-        shell: python
+        shell: bash
         run: |
+          python - <<'PY'
           from pathlib import Path
           app = Path("scoring.html").read_text()
           sql = Path("supabase/migrations/20261123000000_independent_golfer_directory.sql").read_text()
@@ -36,3 +37,4 @@ jobs:
           assert 'before_tournament is distinct from after_tournament' in tests
           assert 'rollback;' in tests.lower()
           print("Static directory safety contract passed; database integration still required.")
+          PY
