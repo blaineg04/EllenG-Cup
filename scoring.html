@@ -6781,7 +6781,13 @@ $("addLateGolferBtn").addEventListener("click",async()=>{
  }catch(e){msg.textContent=e?.message||"Late addition was not confirmed. Refresh before retrying."}
  finally{button.disabled=false}
 });
-async function refreshGolferDirectory(){
+let golferDirectoryRefreshInFlight=false;
+let golferDirectoryLastRefresh=0;
+async function refreshGolferDirectory(force=false){
+ if(golferDirectoryRefreshInFlight)return;
+ if(!force && Date.now()-golferDirectoryLastRefresh<30000)return;
+ golferDirectoryRefreshInFlight=true;
+ try {
  const el=$("directoryGolferList");if(!el||!isCommissioner)return;
  if(String(tournament?.status||"").toLowerCase()==="setup" && !(draftState?.picks||[]).length){el.textContent="";return;}
  const {data,error}=await db.from("elleng_golfer_directory").select("id,name,band,handicap,created_at").order("created_at",{ascending:false}).limit(100);
@@ -6791,6 +6797,8 @@ async function refreshGolferDirectory(){
  const list=document.createElement("ul");
  for(const g of data||[]){const li=document.createElement("li");li.textContent=g.name+(g.band?" · Band "+g.band:"");list.append(li);}
  el.append(list);
+ golferDirectoryLastRefresh=Date.now();
+ } finally {golferDirectoryRefreshInFlight=false;}
 }
 $("addGolferBtn").addEventListener("click",async()=>{
  const photoUrl=($("newGolferPhoto")?.value||"").trim();
@@ -6817,7 +6825,7 @@ $("addGolferBtn").addEventListener("click",async()=>{
      msg.textContent="Golfer registered in directory (Not playing). Existing draft and scores unchanged. Future tournament enrollment and player login are separate steps.";
      $("newGolferName").value="";$("newGolferHcp").value="";$("newGolferBand").value="";$("newGolferPhoto").value="";
      const directory=$("directoryGolferList");
-     if(directory)await refreshGolferDirectory();
+     if(directory)await refreshGolferDirectory(true);
    }catch(e){msg.textContent="Directory registration unavailable: "+(e?.message||"Unable to register")+". No tournament changes were made.";}
    finally{button.disabled=false;}
    return;
