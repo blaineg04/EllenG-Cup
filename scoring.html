@@ -6783,7 +6783,7 @@ $("addLateGolferBtn").addEventListener("click",async()=>{
 });
 async function refreshGolferDirectory(){
  const el=$("directoryGolferList");if(!el||!isCommissioner)return;
- if(!["complete","completed","archived"].includes(String(tournament?.status||"").toLowerCase())){el.textContent="";return;}
+ if(String(tournament?.status||"").toLowerCase()==="setup" && !(draftState?.picks||[]).length){el.textContent="";return;}
  const {data,error}=await db.from("elleng_golfer_directory").select("id,name,band,handicap,created_at").order("created_at",{ascending:false}).limit(100);
  if(error){el.textContent="Golfer directory unavailable until the new database migration is deployed.";return;}
  el.replaceChildren();
@@ -6801,20 +6801,20 @@ $("addGolferBtn").addEventListener("click",async()=>{
  if(!name){$("addGolferMsg").textContent="Enter the golfer's name.";return}
  const participating=$("newGolferParticipation").value==="true";
  const currentStatus=String(tournament?.status||"").toLowerCase();
- const historicalTournament=["complete","completed","archived"].includes(currentStatus);
+ const historicalTournament=currentStatus!=="setup" || (draftState.picks||[]).length>0;
  // Historical tournaments are immutable. Register new golfers in the directory,
  // never in the completed draft JSON or its legacy player-account index.
  if(historicalTournament){
    const msg=$("addGolferMsg");
-   if(participating){msg.textContent="This tournament is complete. Register as Not playing; enroll in the next tournament separately.";return;}
-   if(photoFile){msg.textContent="For completed tournaments, use the photo URL field for now. File upload will be available after directory photo storage is connected.";return;}
+   if(participating){msg.textContent="This tournament is not in setup or its draft has begun. Register as Not playing; enroll in a future tournament separately.";return;}
+   if(photoFile){msg.textContent="For directory registration, use the photo URL field for now. File upload will be available after directory photo storage is connected.";return;}
    const newHcp=($("newGolferHcp")?.value||"").trim();
    const newBand=bandFromHandicapValue(newHcp)||$("newGolferBand").value||"";
    const button=$("addGolferBtn");button.disabled=true;msg.textContent="Registering golfer in directory…";
    try{
      const {data,error}=await db.rpc("elleng_register_directory_golfer",{p_name:name,p_band:newBand,p_handicap:newHcp,p_photo_url:photoUrl});
      if(error)throw error;
-     msg.textContent="Golfer registered in directory (Not playing). November 20 draft and scores unchanged. Future tournament enrollment and player login are separate steps.";
+     msg.textContent="Golfer registered in directory (Not playing). Existing draft and scores unchanged. Future tournament enrollment and player login are separate steps.";
      $("newGolferName").value="";$("newGolferHcp").value="";$("newGolferBand").value="";$("newGolferPhoto").value="";
      const directory=$("directoryGolferList");
      if(directory)await refreshGolferDirectory();
