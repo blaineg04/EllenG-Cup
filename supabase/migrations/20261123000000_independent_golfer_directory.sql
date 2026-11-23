@@ -7,9 +7,14 @@ create table if not exists public.elleng_golfer_directory (
   band text not null default '' check (band in ('','A','B','C','D')),
   handicap text not null default '',
   photo_url text not null default '',
+  -- Optional stable auth identity; no account is created merely by registering.
+  player_user_id uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+create unique index if not exists elleng_golfer_directory_player_user_unique
+  on public.elleng_golfer_directory(player_user_id)
+  where player_user_id is not null;
 create index if not exists elleng_golfer_directory_owner_idx on public.elleng_golfer_directory(owner_id);
 -- Prevent duplicate names for the same commissioner, case/space insensitive.
 create unique index if not exists elleng_golfer_directory_owner_name_unique
