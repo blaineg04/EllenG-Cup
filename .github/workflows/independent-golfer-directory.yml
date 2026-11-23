@@ -1,0 +1,38 @@
+name: Independent golfer directory safety
+on:
+  pull_request:
+    paths:
+      - 'scoring.html'
+      - 'supabase/migrations/*independent_golfer_directory.sql'
+      - 'supabase/tests/independent_golfer_directory_isolation.sql'
+      - '.github/workflows/independent-golfer-directory.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify immutable historical tournament registration contract
+        shell: python
+        run: |
+          from pathlib import Path
+          app = Path("scoring.html").read_text()
+          sql = Path("supabase/migrations/20261123000000_independent_golfer_directory.sql").read_text()
+          tests = Path("supabase/tests/independent_golfer_directory_isolation.sql").read_text()
+          handler = app.split('$("addGolferBtn").addEventListener("click",async()=>{',1)[1]
+          directory_path = handler.split('if(historicalTournament){',1)[1].split('const teamVal=participating?',1)[0]
+          assert 'db.rpc("elleng_register_directory_golfer"' in directory_path
+          assert 'db.rpc("elleng_set_player_participation"' not in directory_path
+          assert 'saveDraftState(' not in directory_path
+          assert 'ensureAutomaticPlayerAccounts(' not in directory_path
+          assert 'if(photoFile)' in directory_path
+          assert 'return;' in directory_path
+          assert 'create policy elleng_golfer_directory_owner_read' in sql
+          assert 'grant execute on function public.elleng_register_directory_golfer' in sql
+          assert 'elleng_golfer_directory_owner_name_unique' in sql
+          assert 'before_draft is distinct from after_draft' in tests
+          assert 'before_tournament is distinct from after_tournament' in tests
+          assert 'rollback;' in tests.lower()
+          print("Static directory safety contract passed; database integration still required.")
