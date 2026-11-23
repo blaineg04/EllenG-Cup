@@ -6826,10 +6826,14 @@ async function refreshFutureEventRoster(){
      const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=selected.get(g.id)===true;
      checkbox.addEventListener("change",async()=>{
        checkbox.disabled=true;
-       const {error}=await db.rpc("elleng_set_future_enrollment",{p_event_id:eventId,p_golfer_id:g.id,p_participating:checkbox.checked});
-       if(error){checkbox.checked=!checkbox.checked;$("futureEventMsg").textContent="Enrollment not saved: "+error.message;}
-       else $("futureEventMsg").textContent="Future event enrollment saved. Completed tournament unchanged.";
-       checkbox.disabled=false;
+       try{
+         const {error}=await db.rpc("elleng_set_future_enrollment",{p_event_id:eventId,p_golfer_id:g.id,p_participating:checkbox.checked});
+         if(error)throw error;
+         $("futureEventMsg").textContent="Future event enrollment saved. Completed tournament unchanged.";
+       }catch(e){
+         checkbox.checked=!checkbox.checked;
+         $("futureEventMsg").textContent="Enrollment not saved: "+(e?.message||"Connection error");
+       }finally{checkbox.disabled=false;}
      });
      label.append(checkbox,document.createTextNode(" "+g.name));roster.append(label);
    }
