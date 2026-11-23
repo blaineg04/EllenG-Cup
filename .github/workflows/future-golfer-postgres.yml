@@ -6,6 +6,7 @@ on:
       - 'supabase/migrations/*future_event_enrollments.sql'
       - 'supabase/tests/*directory*.sql'
       - 'supabase/tests/future_event_enrollment_isolation.sql'
+      - 'supabase/tests/future_golfer_rpc_authorization.sql'
       - '.github/workflows/future-golfer-postgres.yml'
   workflow_dispatch:
 permissions:
@@ -43,3 +44,4 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261123000001_future_event_enrollments.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/independent_golfer_directory_isolation.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/future_event_enrollment_isolation.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/future_golfer_rpc_authorization.sql
