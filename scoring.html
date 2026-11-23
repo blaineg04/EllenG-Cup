@@ -6806,12 +6806,12 @@ async function refreshGolferDirectory(force=false){
        // Never ask a commissioner to find or paste raw auth UUIDs.
        // Only offer a uniquely matched existing golfer login; ambiguous names
        // must be resolved separately rather than risking a wrong identity link.
-       const normalized=String(g.name||"").trim().replace(/\\s+/g," ").toLocaleLowerCase();
+       const normalized=String(g.name||"").trim().replace(/\s+/g," ").toLocaleLowerCase();
        const matches=(playerAccounts||[]).filter(a=>{
          const index=Number(a.golfer_index);
          const golfer=draftState?.golfers?.[index];
          return a.user_id && golfer &&
-           String(golfer.name||"").trim().replace(/\\s+/g," ").toLocaleLowerCase()===normalized;
+           String(golfer.name||"").trim().replace(/\s+/g," ").toLocaleLowerCase()===normalized;
        });
        if(matches.length!==1){
          window.alert(matches.length?"Multiple matching player accounts found. Resolve duplicates before linking.":"No matching existing player account found. Account creation for directory golfers is not yet available.");
