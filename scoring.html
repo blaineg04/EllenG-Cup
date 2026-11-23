@@ -3737,6 +3737,7 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   </div>
   <div class="row" style="margin-top:12px"><button id="addGolferBtn" class="primary save-wide">Add Golfer</button></div>
   <div id="addGolferMsg" class="status" style="margin-top:9px"></div>
+  <div id="directoryGolferList" class="note" style="margin-top:10px" aria-live="polite"></div>
   <div class="row" style="margin-top:12px"><button id="addLateGolferBtn" type="button" class="secondary save-wide">Add Late Golfer (After Draft)</button></div>
   <div id="addLateGolferMsg" class="status" style="margin-top:9px">Commissioner only. Preserves draft picks and existing assignments.</div>
   <div style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px">
@@ -6778,6 +6779,17 @@ $("addLateGolferBtn").addEventListener("click",async()=>{
  }catch(e){msg.textContent=e?.message||"Late addition was not confirmed. Refresh before retrying."}
  finally{button.disabled=false}
 });
+async function refreshGolferDirectory(){
+ const el=$("directoryGolferList");if(!el||!isCommissioner)return;
+ if(!["complete","archived"].includes(String(tournament?.status||"").toLowerCase())){el.textContent="";return;}
+ const {data,error}=await db.from("elleng_golfer_directory").select("id,name,band,handicap,created_at").order("created_at",{ascending:false}).limit(100);
+ if(error){el.textContent="Golfer directory unavailable until the new database migration is deployed.";return;}
+ el.replaceChildren();
+ const title=document.createElement("strong");title.textContent="Registered for future tournaments (not playing):";el.append(title);
+ const list=document.createElement("ul");
+ for(const g of data||[]){const li=document.createElement("li");li.textContent=g.name+(g.band?" · Band "+g.band:"");list.append(li);}
+ el.append(list);
+}
 $("addGolferBtn").addEventListener("click",async()=>{
  const photoUrl=($("newGolferPhoto")?.value||"").trim();
  const photoFile=$("newGolferPhotoFile")?.files?.[0]||null;
@@ -6786,6 +6798,26 @@ $("addGolferBtn").addEventListener("click",async()=>{
  const name=$("newGolferName").value.trim();
  if(!name){$("addGolferMsg").textContent="Enter the golfer's name.";return}
  const participating=$("newGolferParticipation").value==="true";
+ // Historical tournaments are immutable. Register new golfers in the directory,
+ // never in the completed draft JSON or its legacy player-account index.
+ if(["complete","archived"].includes(String(tournament?.status||"").toLowerCase())){
+   const msg=$("addGolferMsg");
+   if(participating){msg.textContent="This tournament is complete. Register as Not playing; enroll in the next tournament separately.";return;}
+   if(photoFile){msg.textContent="For completed tournaments, use the photo URL field for now. File upload will be available after directory photo storage is connected.";return;}
+   const newHcp=($("newGolferHcp")?.value||"").trim();
+   const newBand=bandFromHandicapValue(newHcp)||$("newGolferBand").value||"";
+   const button=$("addGolferBtn");button.disabled=true;msg.textContent="Registering golfer in directory…";
+   try{
+     const {data,error}=await db.rpc("elleng_register_directory_golfer",{p_name:name,p_band:newBand,p_handicap:newHcp,p_photo_url:photoUrl});
+     if(error)throw error;
+     msg.textContent="Golfer registered in directory (Not playing). November 20 draft and scores unchanged. Future tournament enrollment and player login are separate steps.";
+     $("newGolferName").value="";$("newGolferHcp").value="";$("newGolferBand").value="";$("newGolferPhoto").value="";
+     const directory=$("directoryGolferList");
+     if(directory)await refreshGolferDirectory();
+   }catch(e){msg.textContent="Directory registration unavailable: "+(e?.message||"Unable to register")+". No tournament changes were made.";}
+   finally{button.disabled=false;}
+   return;
+ }
  if(participating&&(tournament?.status!=="setup"||(draftState.picks||[]).length)){$("addGolferMsg").textContent="Playing golfers can only be added during tournament setup.";return}
  const teamVal=participating?$("newGolferTeam").value:"";
  const newHcp=$("newGolferHcp").value.trim(); const newBand=bandFromHandicapValue(newHcp)||$("newGolferBand").value||""; const g={name,hcp:newHcp,band:newBand,self_ranked:!!newBand,participating,team:teamVal===""?null:Number(teamVal),photo_url:photoUrl};
