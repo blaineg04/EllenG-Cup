@@ -4,6 +4,7 @@ begin;
 grant usage on schema auth to authenticated;
 grant execute on function auth.uid() to authenticated;
 set local role authenticated;
+create temp table authorization_fixture_ids(event_id uuid,golfer_id uuid) on commit drop;
 select set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',true);
 do $auth_test$
 declare v_rejected boolean := false;
@@ -23,6 +24,7 @@ begin
  v_golfer := public.elleng_register_directory_golfer('Authorized disposable golfer','','');
  if v_golfer is null then raise exception 'Commissioner registration failed'; end if;
  perform public.elleng_set_future_enrollment(v_event,v_golfer,true);
+ insert into authorization_fixture_ids values(v_event,v_golfer);
  if not exists(select 1 from public.elleng_future_event_enrollments
   where event_id=v_event and golfer_id=v_golfer and participating)
  then raise exception 'Commissioner enrollment failed'; end if;
@@ -32,8 +34,7 @@ select set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222'
 do $auth_test$
 declare v_event uuid; v_golfer uuid; v_denied boolean := false;
 begin
- select id into v_event from public.elleng_future_events where title='Authorized disposable event';
- select id into v_golfer from public.elleng_golfer_directory where name='Authorized disposable Golfer';
+ select event_id,golfer_id into v_event,v_golfer from authorization_fixture_ids;
  if v_event is null or v_golfer is null then raise exception 'Authorization fixtures missing'; end if;
  begin
   perform public.elleng_set_future_enrollment(v_event,v_golfer,false);
