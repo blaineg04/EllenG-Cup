@@ -4,15 +4,12 @@ begin;
 do $test$
 declare
  v_owner uuid;
- v_other uuid;
  v_event uuid;
  v_golfer uuid;
- v_other_golfer uuid;
  v_before_draft jsonb;
  v_after_draft jsonb;
  v_before_tournament jsonb;
  v_after_tournament jsonb;
- v_denied boolean := false;
 begin
  select owner_id,to_jsonb(d) into v_owner,v_before_draft from public.elleng_drafts d where d.id='elleng-cup';
  select to_jsonb(t) into v_before_tournament from public.elleng_tournaments t where t.id='elleng-cup-live';
