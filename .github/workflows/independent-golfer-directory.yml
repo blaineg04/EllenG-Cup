@@ -5,6 +5,7 @@ on:
       - 'scoring.html'
       - 'supabase/migrations/*independent_golfer_directory.sql'
       - 'supabase/tests/independent_golfer_directory_isolation.sql'
+      - 'supabase/migrations/*future_event_enrollments.sql'
       - '.github/workflows/independent-golfer-directory.yml'
   workflow_dispatch:
 permissions:
@@ -22,6 +23,7 @@ jobs:
           app = Path("scoring.html").read_text()
           sql = Path("supabase/migrations/20261123000000_independent_golfer_directory.sql").read_text()
           tests = Path("supabase/tests/independent_golfer_directory_isolation.sql").read_text()
+          future = Path("supabase/migrations/20261123000001_future_event_enrollments.sql").read_text()
           handler = app.split('$("addGolferBtn").addEventListener("click",async()=>{',1)[1]
           directory_path = handler.split('if(historicalTournament){',1)[1].split('const teamVal=participating?',1)[0]
           assert 'db.rpc("elleng_register_directory_golfer"' in directory_path
@@ -36,5 +38,14 @@ jobs:
           assert 'before_draft is distinct from after_draft' in tests
           assert 'before_tournament is distinct from after_tournament' in tests
           assert 'rollback;' in tests.lower()
+          assert 'create table if not exists public.elleng_future_events' in future
+          assert 'create table if not exists public.elleng_future_event_enrollments' in future
+          assert 'elleng_set_future_enrollment' in future
+          assert 'elleng_create_future_event' in future
+          assert 'elleng_set_future_enrollment' in app
+          assert 'elleng_create_future_event' in app
+          assert 'elleng_set_player_participation' not in app.split('async function refreshFutureEventRoster()',1)[1].split('let golferDirectoryRefreshInFlight',1)[0]
+          assert "as $" in sql and "end $;" in sql
+          assert "as $" in future and future.count("end $;") == 2
           print("Static directory safety contract passed; database integration still required.")
           PY
