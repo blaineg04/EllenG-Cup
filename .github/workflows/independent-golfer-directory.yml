@@ -45,7 +45,13 @@ jobs:
           assert 'elleng_set_future_enrollment' in app
           assert 'elleng_create_future_event' in app
           assert 'elleng_set_player_participation' not in app.split('async function refreshFutureEventRoster()',1)[1].split('let golferDirectoryRefreshInFlight',1)[0]
-          assert sql.count("create or replace function") == 2
+          assert sql.count("create or replace function") == 3
+          import_sql = sql.split("create or replace function public.elleng_import_directory_roster()",1)[1]
+          assert "on conflict do nothing" in import_sql
+          assert "owner_id=v_owner" in import_sql
+          assert "update public.elleng_drafts" not in import_sql.lower()
+          assert "update public.elleng_tournaments" not in import_sql.lower()
+          assert 'db.rpc("elleng_import_directory_roster")' in app
           assert future.count("end " + chr(36)*2 + ";") == 2
           print("Static directory safety contract passed; database integration still required.")
           PY
