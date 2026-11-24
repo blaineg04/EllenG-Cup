@@ -87,7 +87,11 @@ jobs:
           status,session=call('/auth/v1/token?grant_type=password',{'email':'owner@example.test','password':pw},anon)
           assert status==200
           token=session['access_token']
-          status,gid=call('/rest/v1/rpc/elleng_register_directory_golfer',{'p_name':'Isolated Golfer'},anon,token)
+          subprocess.run(['psql',os.environ['DB_URL'],'-v','ON_ERROR_STOP=1','-c',"NOTIFY pgrst, 'reload schema';"],check=True)
+          for attempt in range(20):
+              status,gid=call('/rest/v1/rpc/elleng_register_directory_golfer',{'p_name':'Isolated Golfer'},anon,token)
+              if status!=404 or gid.get('code')!='PGRST202':break
+              time.sleep(2)
           assert status==200,(status,gid)
           payload={'action':'create_directory_login','directory_id':gid,'username':'isolatednewgolfer','password':'IsolatedGolfer123!'}
           time.sleep(15)
