@@ -6841,6 +6841,26 @@ async function refreshFutureEventRoster(){
      label.append(checkbox,document.createTextNode(" "+g.name));roster.append(label);
    }
    if(!(golfers.data||[]).length)roster.textContent="Register golfers in the independent directory first.";
+   const preview=document.createElement("button");
+   preview.type="button";preview.className="secondary";preview.textContent="Preview future draft roster";
+   const output=document.createElement("div");output.setAttribute("aria-live","polite");
+   preview.addEventListener("click",async()=>{
+     preview.disabled=true;
+     try{
+       const {data,error}=await db.rpc("elleng_future_draft_roster",{p_event_id:eventId});
+       if(request!==futureRosterRequest)return;
+       if(error)throw error;
+       output.replaceChildren();
+       const heading=document.createElement("strong");heading.textContent="Draft roster preview: "+(data||[]).length+" golfers";output.append(heading);
+       const list=document.createElement("ul");
+       for(const golfer of data||[]){
+         const item=document.createElement("li");item.textContent=golfer.name+(golfer.band?" · Band "+golfer.band:"");list.append(item);
+       }
+       output.append(list);
+     }catch(e){if(request===futureRosterRequest)output.textContent="Unable to preview roster: "+(e?.message||"Connection error");}
+     finally{preview.disabled=false;}
+   });
+   roster.append(preview,output);
  }catch(e){if(request!==futureRosterRequest)return;$("futureEventMsg").textContent="Unable to load future event roster: "+(e?.message||"Unknown error");}
 }
 $("futureEventSelect").addEventListener("change",()=>void refreshFutureEventRoster());
