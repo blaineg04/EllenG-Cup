@@ -67,5 +67,12 @@ jobs:
           assert 'elleng_drafts' not in login
           assert 'action:"create_directory_login"' in app
           assert 'directory_id:g.id' in app
-          print("Static directory and create-only login safety contracts passed; Auth integration still required.")
+          profile = app.split('async function showIndependentGolferProfile(){',1)[1].split('async function enterApp(){',1)[0]
+          assert '.eq("player_user_id",user.id).maybeSingle()' in profile
+          assert 'currentGolferIndex=' not in profile
+          assert '$("app").classList.add("hidden")' in profile
+          assert 'db.auth.signOut()' in profile
+          entry = app.split('async function enterApp(){',1)[1].split('function closeAppHub()',1)[0]
+          assert entry.index('if(await showIndependentGolferProfile())return;') < entry.index('await loadBase();')
+          print("Static directory, login and profile isolation contracts passed; Auth integration still required.")
           PY
