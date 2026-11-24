@@ -6912,9 +6912,24 @@ async function refreshGolferDirectory(force=false){
    const name=document.createElement("span");name.textContent=g.name+(g.band?" · Band "+g.band:"")+(g.player_user_id?" · Login linked":" · No login linked");
    li.append(name);
    if(!g.player_user_id){
-     const note=document.createElement("small");
-     note.textContent=" · Login linking unavailable until account identity checks are implemented";
-     li.append(note);
+     const username=document.createElement("input");username.placeholder="New username";username.autocomplete="off";
+     const password=document.createElement("input");password.type="password";password.placeholder="New password (8+ characters)";password.autocomplete="new-password";
+     const button=document.createElement("button");button.type="button";button.className="secondary";button.textContent="Create Login";
+     const status=document.createElement("small");status.setAttribute("role","status");
+     button.addEventListener("click",async()=>{
+       if(!isCommissioner||button.disabled)return;
+       if(!/^[a-z0-9]{2,64}$/i.test(username.value.trim())||password.value.length<8||password.value.length>72){status.textContent="Enter a new alphanumeric username and an 8–72 character password.";return;}
+       button.disabled=true;
+       try{
+         const {data,error}=await db.functions.invoke("player-admin",{body:{action:"create_directory_login",draft_id:DRAFT_ID,directory_id:g.id,username:username.value.trim(),password:password.value}});
+         if(error||!data?.ok)throw new Error("Login creation not confirmed. Check the directory before retrying; use an unused username.");
+         password.value="";
+         status.textContent="Login created.";
+         await refreshGolferDirectory(true);
+       }catch(e){status.textContent=e.message; }
+       finally{password.value="";button.disabled=false;}
+     });
+     li.append(username,password,button,status);
    }
    list.append(li);
  }
@@ -6945,7 +6960,7 @@ $("addGolferBtn").addEventListener("click",async()=>{
    try{
      const {data,error}=await db.rpc("elleng_register_directory_golfer",{p_name:name,p_band:newBand,p_handicap:newHcp,p_photo_url:photoUrl});
      if(error)throw error;
-     msg.textContent="Golfer registered in directory (Not playing). Existing draft and scores unchanged. Future tournament enrollment and player login are separate steps.";
+     msg.textContent="Golfer registered in directory (Not playing). Existing draft and scores unchanged. Create a login using the new golfer’s directory row below. Future tournament enrollment is separate.";
      $("newGolferName").value="";$("newGolferHcp").value="";$("newGolferBand").value="";$("newGolferPhoto").value="";
      const directory=$("directoryGolferList");
      if(directory)await refreshGolferDirectory(true);
