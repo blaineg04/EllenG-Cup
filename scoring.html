@@ -3162,6 +3162,14 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 <div id="connectionStatus" class="status" style="margin-top:7px;font-weight:700">Checking app connection…</div>
 </section>
 
+<section id="independentProfileCard" class="card login hidden">
+<h2 id="independentProfileName"></h2>
+<p id="independentProfileHandicap"></p>
+<p class="note">Your golfer account is registered. You are not enrolled in the historical tournament. Contact the commissioner for future tournament enrollment.</p>
+<button id="independentProfileSignOut" class="secondary" type="button">Sign Out</button>
+<div id="independentProfileStatus" role="status"></div>
+</section>
+
 <section id="passwordChangeCard" class="card login hidden">
 <h2 style="margin-top:0">Choose Your Password</h2>
 <p class="note">This is your first sign-in. Create a password you will use for your EllenG Cup account from now on.</p>
@@ -3737,6 +3745,19 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
   </div>
   <div class="row" style="margin-top:12px"><button id="addGolferBtn" class="primary save-wide">Add Golfer</button></div>
   <div id="addGolferMsg" class="status" style="margin-top:9px"></div>
+  <div id="directoryGolferList" class="note" style="margin-top:10px" aria-live="polite"></div>
+  <div class="note" style="margin-top:12px">
+    <strong>Future event registration (separate from completed tournaments)</strong>
+    <div class="row" style="margin-top:8px">
+      <input id="futureEventTitle" maxlength="120" placeholder="Future event name" aria-label="Future event name">
+      <input id="futureEventDate" type="date" aria-label="Future event date">
+      <button id="createFutureEventBtn" type="button" class="secondary">Create future event</button>
+    </div>
+    <label for="futureEventSelect">Event</label>
+    <select id="futureEventSelect" aria-label="Future event"><option value="">Select future event</option></select>
+    <div id="futureEventRoster" aria-live="polite"></div>
+    <div id="futureEventMsg" class="status" aria-live="polite"></div>
+  </div>
   <div class="row" style="margin-top:12px"><button id="addLateGolferBtn" type="button" class="secondary save-wide">Add Late Golfer (After Draft)</button></div>
   <div id="addLateGolferMsg" class="status" style="margin-top:9px">Commissioner only. Preserves draft picks and existing assignments.</div>
   <div style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px">
@@ -6077,6 +6098,8 @@ function safeFeatureRender(name,fn){
  catch(e){console.warn(`${name} render skipped`,e)}
 }
 function renderAll(){
+ // Directory is read-only here; never refresh it through draft-state saves.
+ if(isCommissioner){void refreshGolferDirectory();if(!futureEventInitialLoadDone){futureEventInitialLoadDone=true;void refreshFutureEvents();}}
  if($("tournamentSubtitle"))$("tournamentSubtitle").textContent=`LIVE TOURNAMENT SCORING • 18 HOLES`;
  $("liveBadge").textContent=isCommissioner?"COMMISSIONER":(tournament?.status||"setup").toUpperCase();
  const playerName=currentGolferIndex!=null?String(draftState?.golfers?.[currentGolferIndex]?.name||""):"";
@@ -6251,11 +6274,34 @@ function forceSignedInHome(){
  window.scrollTo({top:0,behavior:"auto"});
 }
 
+async function showIndependentGolferProfile(){
+ if(!user)return false;
+ const {data:profile,error}=await db.from("elleng_golfer_directory").select("id,name,band,handicap").eq("player_user_id",user.id).maybeSingle();
+ // Older deployments may not have the directory yet. Preserve legacy login.
+ if(error){if(["42P01","PGRST205"].includes(error.code))return false;throw error;}
+ if(!profile)return false;
+ $("loginCard").classList.add("hidden");
+ $("app").classList.add("hidden");
+ $("passwordChangeCard").classList.add("hidden");
+ $("appHub")?.classList.add("hidden");
+ setMobileNavVisible(false);setGlobalMenuVisible(false);
+ $("independentProfileName").textContent=profile.name;
+ $("independentProfileHandicap").textContent=profile.handicap?"Handicap: "+profile.handicap:"Handicap not set";
+ $("independentProfileCard").classList.remove("hidden");
+ return true;
+}
+$("independentProfileSignOut").addEventListener("click",async()=>{
+ const {error}=await db.auth.signOut();
+ if(error){$("independentProfileStatus").textContent="Unable to sign out. Try again.";return;}
+ user=null;$("independentProfileCard").classList.add("hidden");await enterViewer();
+});
 async function enterApp(){
 document.body.classList.remove("login-mode");setGlobalMenuVisible(false);setMobileNavVisible(false);
  
  $("loginMsg").textContent="Signed in — loading tournament…";
  try{
+  $("independentProfileCard").classList.add("hidden");
+  if(await showIndependentGolferProfile())return;
   await loadBase();
   await Promise.all([
     loadPublicRoster(),
@@ -6778,6 +6824,151 @@ $("addLateGolferBtn").addEventListener("click",async()=>{
  }catch(e){msg.textContent=e?.message||"Late addition was not confirmed. Refresh before retrying."}
  finally{button.disabled=false}
 });
+let futureEventLoadInFlight=false;
+async function refreshFutureEvents(){
+ if(!isCommissioner||futureEventLoadInFlight)return;
+ futureEventLoadInFlight=true;
+ try{
+   const select=$("futureEventSelect");if(!select)return;
+   const selected=select.value;
+   const {data,error}=await db.from("elleng_future_events").select("id,title,event_date").order("created_at",{ascending:false}).limit(100);
+   if(error)throw error;
+   select.replaceChildren(new Option("Select future event",""));
+   for(const e of data||[])select.add(new Option(e.title+(e.event_date?" · "+e.event_date:""),e.id));
+   if((data||[]).some(e=>e.id===selected))select.value=selected;
+   await refreshFutureEventRoster();
+ }catch(e){$("futureEventMsg").textContent="Future events unavailable: "+(e?.message||"Database migration pending");}
+ finally{futureEventLoadInFlight=false;}
+}
+let futureRosterRequest=0;
+async function refreshFutureEventRoster(){
+ const request=++futureRosterRequest;
+ const eventId=$("futureEventSelect")?.value;
+ const roster=$("futureEventRoster");if(!roster)return;
+ roster.replaceChildren();
+ if(!eventId)return;
+ try{
+   const [golfers,enrollments]=await Promise.all([
+     db.from("elleng_golfer_directory").select("id,name").order("name"),
+     db.from("elleng_future_event_enrollments").select("golfer_id,participating").eq("event_id",eventId)
+   ]);
+   if(request!==futureRosterRequest || $("futureEventSelect")?.value!==eventId)return;
+   if(golfers.error)throw golfers.error;if(enrollments.error)throw enrollments.error;
+   const selected=new Map((enrollments.data||[]).map(e=>[e.golfer_id,e.participating]));
+   for(const g of golfers.data||[]){
+     const label=document.createElement("label");label.style.display="block";
+     const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=selected.get(g.id)===true;
+     checkbox.addEventListener("change",async()=>{
+       checkbox.disabled=true;
+       try{
+         const {error}=await db.rpc("elleng_set_future_enrollment",{p_event_id:eventId,p_golfer_id:g.id,p_participating:checkbox.checked});
+         if(error)throw error;
+         $("futureEventMsg").textContent="Future event enrollment saved. Completed tournament unchanged.";
+       }catch(e){
+         checkbox.checked=!checkbox.checked;
+         $("futureEventMsg").textContent="Enrollment not saved: "+(e?.message||"Connection error");
+       }finally{checkbox.disabled=false;}
+     });
+     label.append(checkbox,document.createTextNode(" "+g.name));roster.append(label);
+   }
+   if(!(golfers.data||[]).length)roster.textContent="Register golfers in the independent directory first.";
+   const preview=document.createElement("button");
+   preview.type="button";preview.className="secondary";preview.textContent="Preview future draft roster";
+   const output=document.createElement("div");output.setAttribute("aria-live","polite");
+   preview.addEventListener("click",async()=>{
+     preview.disabled=true;
+     try{
+       const {data,error}=await db.rpc("elleng_future_draft_roster",{p_event_id:eventId});
+       if(request!==futureRosterRequest)return;
+       if(error)throw error;
+       output.replaceChildren();
+       const heading=document.createElement("strong");heading.textContent="Draft roster preview: "+(data||[]).length+" golfers";output.append(heading);
+       const list=document.createElement("ul");
+       for(const golfer of data||[]){
+         const item=document.createElement("li");item.textContent=golfer.name+(golfer.band?" · Band "+golfer.band:"");list.append(item);
+       }
+       output.append(list);
+     }catch(e){if(request===futureRosterRequest)output.textContent="Unable to preview roster: "+(e?.message||"Connection error");}
+     finally{preview.disabled=false;}
+   });
+   roster.append(preview,output);
+ }catch(e){if(request!==futureRosterRequest)return;$("futureEventMsg").textContent="Unable to load future event roster: "+(e?.message||"Unknown error");}
+}
+$("futureEventSelect").addEventListener("change",()=>void refreshFutureEventRoster());
+$("createFutureEventBtn").addEventListener("click",async()=>{
+ if(!isCommissioner)return;
+ const title=$("futureEventTitle").value.trim();if(!title){$("futureEventMsg").textContent="Enter a future event name.";return;}
+ const button=$("createFutureEventBtn");button.disabled=true;
+ try{
+   const {data,error}=await db.rpc("elleng_create_future_event",{p_title:title,p_event_date:$("futureEventDate").value||null});
+   if(error)throw error;
+   await refreshFutureEvents();$("futureEventSelect").value=data;await refreshFutureEventRoster();
+   $("futureEventMsg").textContent="Future event created. Select golfers to mark as playing.";
+ }catch(e){$("futureEventMsg").textContent="Unable to create future event: "+(e?.message||"Unknown error");}
+ finally{button.disabled=false;}
+});
+let futureEventInitialLoadDone=false;
+let golferDirectoryRefreshInFlight=false;
+let golferDirectoryLastRefresh=0;
+async function refreshGolferDirectory(force=false){
+ if(golferDirectoryRefreshInFlight)return;
+ if(!force && Date.now()-golferDirectoryLastRefresh<30000)return;
+ golferDirectoryRefreshInFlight=true;
+ try {
+ const el=$("directoryGolferList");if(!el||!isCommissioner)return;
+ if(String(tournament?.status||"").toLowerCase()==="setup" && !(draftState?.picks||[]).length){el.textContent="";return;}
+ const {data,error}=await db.from("elleng_golfer_directory").select("id,name,band,handicap,player_user_id,created_at").order("created_at",{ascending:false}).limit(100);
+ if(error){el.textContent="Golfer directory unavailable until the new database migration is deployed.";return;}
+ el.replaceChildren();
+ const title=document.createElement("strong");title.textContent="Registered for future tournaments (not playing):";el.append(title);
+ const importButton=document.createElement("button");
+ importButton.type="button";importButton.className="secondary";importButton.textContent="Import existing golfers";
+ importButton.addEventListener("click",async()=>{
+   if(!isCommissioner||!window.confirm("Copy existing golfer names into the future directory? Historical teams, scores and accounts will not change."))return;
+   importButton.disabled=true;
+   try{
+     const {data,error}=await db.rpc("elleng_import_directory_roster");
+     if(error)throw error;
+     golferDirectoryLastRefresh=0;
+     await refreshGolferDirectory(true);
+     await refreshFutureEventRoster();
+     window.alert(String(data)+" golfer(s) imported. Existing entries skipped.");
+   }catch(e){window.alert("Import failed: "+(e?.message||"Connection error"));}
+   finally{importButton.disabled=false;}
+ });
+ el.append(importButton);
+ const list=document.createElement("ul");
+ for(const g of data||[]){
+   const li=document.createElement("li");
+   const name=document.createElement("span");name.textContent=g.name+(g.band?" · Band "+g.band:"")+(g.player_user_id?" · Login linked":" · No login linked");
+   li.append(name);
+   if(!g.player_user_id){
+     const username=document.createElement("input");username.placeholder="New username";username.autocomplete="off";
+     const password=document.createElement("input");password.type="password";password.placeholder="New password (8+ characters)";password.autocomplete="new-password";
+     const button=document.createElement("button");button.type="button";button.className="secondary";button.textContent="Create Login";
+     const status=document.createElement("small");status.setAttribute("role","status");
+     button.addEventListener("click",async()=>{
+       if(!isCommissioner||button.disabled)return;
+       if(!/^[a-z0-9]{2,64}$/i.test(username.value.trim())||password.value.length<8||password.value.length>72){status.textContent="Enter a new alphanumeric username and an 8–72 character password.";return;}
+       button.disabled=true;
+       try{
+         const {data,error}=await db.functions.invoke("player-admin",{body:{action:"create_directory_login",draft_id:DRAFT_ID,directory_id:g.id,username:username.value.trim(),password:password.value}});
+         if(error||!data?.ok)throw new Error("Login creation not confirmed. Check the directory before retrying; use an unused username.");
+         password.value="";
+         status.textContent="Login created.";
+         await refreshGolferDirectory(true);
+       }catch(e){status.textContent=e.message; }
+       finally{password.value="";button.disabled=false;}
+     });
+     li.append(username,password,button,status);
+   }
+   list.append(li);
+ }
+ if(!list.children.length){const empty=document.createElement("li");empty.textContent="No future golfers registered yet.";list.append(empty);}
+ el.append(list);
+ golferDirectoryLastRefresh=Date.now();
+ } finally {golferDirectoryRefreshInFlight=false;}
+}
 $("addGolferBtn").addEventListener("click",async()=>{
  const photoUrl=($("newGolferPhoto")?.value||"").trim();
  const photoFile=$("newGolferPhotoFile")?.files?.[0]||null;
@@ -6786,6 +6977,31 @@ $("addGolferBtn").addEventListener("click",async()=>{
  const name=$("newGolferName").value.trim();
  if(!name){$("addGolferMsg").textContent="Enter the golfer's name.";return}
  const participating=$("newGolferParticipation").value==="true";
+ const currentStatus=String(tournament?.status||"").toLowerCase();
+ const historicalTournament=currentStatus!=="setup" || (draftState.picks||[]).length>0;
+ // Historical tournaments are immutable. Register new golfers in the directory,
+ // never in the completed draft JSON or its legacy player-account index.
+ if(historicalTournament){
+   const msg=$("addGolferMsg");
+   if(participating){msg.textContent="This tournament is not in setup or its draft has begun. Register as Not playing; enroll in a future tournament separately.";return;}
+   if(photoFile){msg.textContent="For directory registration, use the photo URL field for now. File upload will be available after directory photo storage is connected.";return;}
+   const newHcp=($("newGolferHcp")?.value||"").trim();
+   const newBand=bandFromHandicapValue(newHcp)||$("newGolferBand").value||"";
+   const button=$("addGolferBtn");button.disabled=true;msg.textContent="Registering golfer in directory…";
+   try{
+     const {data,error}=await db.rpc("elleng_register_directory_golfer",{p_name:name,p_band:newBand,p_handicap:newHcp,p_photo_url:photoUrl});
+     if(error)throw error;
+     msg.textContent="Golfer registered in directory (Not playing). Existing draft and scores unchanged. Create a login using the new golfer’s directory row below. Future tournament enrollment is separate.";
+     $("newGolferName").value="";$("newGolferHcp").value="";$("newGolferBand").value="";$("newGolferPhoto").value="";
+     const directory=$("directoryGolferList");
+     if(directory)await refreshGolferDirectory(true);
+   }catch(e){
+     const duplicate=String(e?.code||"")==="23505" || /duplicate key|unique constraint/i.test(String(e?.message||""));
+     msg.textContent=duplicate?"This golfer is already registered in the directory. No duplicate was created.":"Directory registration unavailable: "+(e?.message||"Unable to register")+". No tournament changes were made.";
+   }
+   finally{button.disabled=false;}
+   return;
+ }
  if(participating&&(tournament?.status!=="setup"||(draftState.picks||[]).length)){$("addGolferMsg").textContent="Playing golfers can only be added during tournament setup.";return}
  const teamVal=participating?$("newGolferTeam").value:"";
  const newHcp=$("newGolferHcp").value.trim(); const newBand=bandFromHandicapValue(newHcp)||$("newGolferBand").value||""; const g={name,hcp:newHcp,band:newBand,self_ranked:!!newBand,participating,team:teamVal===""?null:Number(teamVal),photo_url:photoUrl};

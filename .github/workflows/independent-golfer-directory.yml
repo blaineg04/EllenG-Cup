@@ -1,0 +1,78 @@
+name: Independent golfer directory safety
+on:
+  pull_request:
+    paths:
+      - 'scoring.html'
+      - 'supabase/functions/player-admin/index.ts'
+      - 'supabase/migrations/*independent_golfer_directory.sql'
+      - 'supabase/tests/independent_golfer_directory_isolation.sql'
+      - 'supabase/migrations/*future_event_enrollments.sql'
+      - '.github/workflows/independent-golfer-directory.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify immutable historical tournament registration contract
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          app = Path("scoring.html").read_text()
+          sql = Path("supabase/migrations/20261123000000_independent_golfer_directory.sql").read_text()
+          tests = Path("supabase/tests/independent_golfer_directory_isolation.sql").read_text()
+          future = Path("supabase/migrations/20261123000001_future_event_enrollments.sql").read_text()
+          handler = app.split('$("addGolferBtn").addEventListener("click",async()=>{',1)[1]
+          directory_path = handler.split('if(historicalTournament){',1)[1].split('const teamVal=participating?',1)[0]
+          assert 'db.rpc("elleng_register_directory_golfer"' in directory_path
+          assert 'db.rpc("elleng_set_player_participation"' not in directory_path
+          assert 'saveDraftState(' not in directory_path
+          assert 'ensureAutomaticPlayerAccounts(' not in directory_path
+          assert 'if(photoFile)' in directory_path
+          assert 'return;' in directory_path
+          assert 'create policy elleng_golfer_directory_owner_read' in sql
+          assert 'grant execute on function public.elleng_register_directory_golfer' in sql
+          assert 'elleng_golfer_directory_owner_name_unique' in sql
+          assert 'before_draft is distinct from after_draft' in tests
+          assert 'before_tournament is distinct from after_tournament' in tests
+          assert 'rollback;' in tests.lower()
+          assert 'create table if not exists public.elleng_future_events' in future
+          assert 'create table if not exists public.elleng_future_event_enrollments' in future
+          assert 'elleng_set_future_enrollment' in future
+          assert 'elleng_create_future_event' in future
+          assert 'elleng_set_future_enrollment' in app
+          assert 'elleng_create_future_event' in app
+          assert 'elleng_set_player_participation' not in app.split('async function refreshFutureEventRoster()',1)[1].split('let golferDirectoryRefreshInFlight',1)[0]
+          assert sql.count("create or replace function") == 3
+          import_sql = sql.split("create or replace function public.elleng_import_directory_roster()",1)[1]
+          assert "on conflict do nothing" in import_sql
+          assert "owner_id=v_owner" in import_sql
+          assert "update public.elleng_drafts" not in import_sql.lower()
+          assert "update public.elleng_tournaments" not in import_sql.lower()
+          assert 'db.rpc("elleng_import_directory_roster")' in app
+          assert future.count("end " + chr(36)*2 + ";") == 2
+          backend = Path("supabase/functions/player-admin/index.ts").read_text()
+          login = backend.split('if(action==="create_directory_login"){',1)[1].split('if(action==="list"){',1)[0]
+          assert 'draft.owner_id!==user.id' in backend.split('if(action==="create_directory_login"){',1)[0]
+          assert 'admin.auth.admin.createUser(' in login
+          assert 'updateUserById' not in login
+          assert 'listUsers' not in login
+          assert 'if(entry.player_user_id)' in login
+          assert '.is("player_user_id",null)' in login
+          assert login.count('.eq("owner_id",user.id)') == 2
+          assert 'elleng_player_accounts' not in login
+          assert 'elleng_drafts' not in login
+          assert 'action:"create_directory_login"' in app
+          assert 'directory_id:g.id' in app
+          profile = app.split('async function showIndependentGolferProfile(){',1)[1].split('async function enterApp(){',1)[0]
+          assert '.eq("player_user_id",user.id).maybeSingle()' in profile
+          assert 'currentGolferIndex=' not in profile
+          assert '$("app").classList.add("hidden")' in profile
+          assert 'db.auth.signOut()' in profile
+          entry = app.split('async function enterApp(){',1)[1].split('function closeAppHub()',1)[0]
+          assert entry.index('if(await showIndependentGolferProfile())return;') < entry.index('await loadBase();')
+          print("Static directory, login and profile isolation contracts passed; Auth integration still required.")
+          PY
