@@ -176,7 +176,8 @@ jobs:
               await ap.locator('#loginBtn').click();
               await ap.locator('#hubScoring').waitFor({state:'visible'}).catch(async error => { console.error('Full dashboard initialization:', await ap.locator('#loginMsg').textContent()); throw error; });
               await ap.locator('#hubScoring').click();
-              await ap.locator('#adminTab').click();
+              await ap.locator('#mobileMoreBtn').click();
+              await ap.locator('#moreAdminBtn').click();
               await ap.locator('#newGolferName').waitFor({state:'visible'});
               await ap.locator('#newGolferName').fill('Browser Registered Golfer');
               await ap.locator('#newGolferParticipation').selectOption('false');
