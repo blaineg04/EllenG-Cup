@@ -35,6 +35,10 @@ begin
  if v_golfer is null then raise exception 'Commissioner registration failed'; end if;
  perform public.elleng_set_future_enrollment(v_event,v_golfer,true);
  insert into authorization_fixture_ids values(v_event,v_golfer);
+ if (select count(*) from public.elleng_future_draft_roster(v_event)) <> 1 then raise exception 'Draft roster must contain only enrolled golfers'; end if;
+ perform public.elleng_set_future_enrollment(v_event,v_golfer,false);
+ if exists(select 1 from public.elleng_future_draft_roster(v_event)) then raise exception 'Withdrawn golfer remains in future draft roster'; end if;
+ perform public.elleng_set_future_enrollment(v_event,v_golfer,true);
  if not exists(select 1 from public.elleng_future_event_enrollments
   where event_id=v_event and golfer_id=v_golfer and participating)
  then raise exception 'Commissioner enrollment failed'; end if;
@@ -51,6 +55,12 @@ begin
  exception when insufficient_privilege then v_denied := true;
  end;
  if not v_denied then raise exception 'Noncommissioner changed another event enrollment'; end if;
+ v_denied := false;
+ begin
+  perform public.elleng_future_draft_roster(v_event);
+ exception when insufficient_privilege then v_denied := true;
+ end;
+ if not v_denied then raise exception 'Noncommissioner read future draft roster'; end if;
  v_denied := false;
  begin
   perform public.elleng_link_directory_golfer(v_golfer,'22222222-2222-4222-8222-222222222222');
