@@ -1,0 +1,58 @@
+name: Independent golfer real Auth integration
+on:
+  pull_request:
+    paths:
+      - 'supabase/functions/player-admin/**'
+      - 'supabase/migrations/*directory*.sql'
+      - '.github/workflows/directory-auth-integration.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start disposable local Supabase
+        run: |
+          mkdir -p /tmp/elleng-auth
+          cd /tmp/elleng-auth
+          supabase init
+          supabase start
+          supabase status -o env > /tmp/elleng-local.env
+      - name: Exercise real Auth and duplicate rejection
+        shell: bash
+        run: |
+          set -euo pipefail
+          source /tmp/elleng-local.env
+          export API_URL ANON_KEY SERVICE_ROLE_KEY
+          python - <<'PY'
+          import os, json, urllib.request, urllib.error
+          base = os.environ['API_URL']
+          assert base.startswith(('http://127.0.0.1:', 'http://localhost:'))
+          def call(path, body, key):
+              req = urllib.request.Request(base+path, json.dumps(body).encode(), {'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json'})
+              try:
+                  with urllib.request.urlopen(req) as r: return r.status,json.load(r)
+              except urllib.error.HTTPError as e: return e.code,json.load(e)
+          email='directorytest@players.ellengcup.app'
+          original='IsolatedTestPassword123!'
+          service=os.environ['SERVICE_ROLE_KEY']
+          anon=os.environ['ANON_KEY']
+          status,created=call('/auth/v1/admin/users',{'email':email,'password':original,'email_confirm':True},service)
+          assert status in (200,201), status
+          status,duplicate=call('/auth/v1/admin/users',{'email':email,'password':'DifferentPassword123!','email_confirm':True},service)
+          assert status in (400,409,422), status
+          status,session=call('/auth/v1/token?grant_type=password',{'email':email,'password':original},anon)
+          assert status==200 and session['user']['id']==created['id']
+          status,_=call('/auth/v1/token?grant_type=password',{'email':email,'password':'DifferentPassword123!'},anon)
+          assert status==400
+          print('Real local Auth: creation, duplicate rejection and original password verified.')
+          PY
+      - name: Stop disposable services
+        if: always()
+        run: cd /tmp/elleng-auth && supabase stop --no-backup
