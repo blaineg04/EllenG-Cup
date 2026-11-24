@@ -3,6 +3,7 @@
 begin;
 grant usage on schema auth to authenticated;
 grant execute on function auth.uid() to authenticated;
+update public.elleng_drafts set state=state || '{"golfers":[{"name":"Historical test golfer"},{"name":" historical test golfer "}]}'::jsonb where id='elleng-cup';
 set local role authenticated;
 create temp table authorization_fixture_ids(event_id uuid,golfer_id uuid) on commit drop;
 select set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',true);
@@ -19,6 +20,8 @@ select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111'
 do $auth_test$
 declare v_event uuid; v_golfer uuid; v_other uuid;
 begin
+ if public.elleng_import_directory_roster() <> 1 then raise exception 'Historical import count incorrect'; end if;
+ if public.elleng_import_directory_roster() <> 0 then raise exception 'Repeated import duplicated golfers'; end if;
  v_event := public.elleng_create_future_event('Authorized disposable event',current_date+30);
  if v_event is null then raise exception 'Commissioner event creation failed'; end if;
  v_golfer := public.elleng_register_directory_golfer('Authorized disposable golfer','','');
