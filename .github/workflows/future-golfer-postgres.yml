@@ -4,6 +4,7 @@ on:
     paths:
       - 'supabase/migrations/*independent_golfer_directory.sql'
       - 'supabase/migrations/*future_event_enrollments.sql'
+      - 'supabase/migrations/*directory_self_read.sql'
       - 'supabase/tests/*directory*.sql'
       - 'supabase/tests/future_event_enrollment_isolation.sql'
       - 'supabase/tests/future_golfer_rpc_authorization.sql'
@@ -42,6 +43,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/tests/disposable_directory_fixture.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261123000000_independent_golfer_directory.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261123000001_future_event_enrollments.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261123000002_directory_self_read.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/directory_self_read.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/independent_golfer_directory_isolation.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/future_event_enrollment_isolation.sql
           psql -v ON_ERROR_STOP=1 -f supabase/tests/future_golfer_rpc_authorization.sql
