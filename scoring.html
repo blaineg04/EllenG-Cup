@@ -3162,6 +3162,14 @@ body.my-profile-open #myProfilePhotoCard .self-photo-filename{color:#4b5c66!impo
 <div id="connectionStatus" class="status" style="margin-top:7px;font-weight:700">Checking app connection…</div>
 </section>
 
+<section id="independentProfileCard" class="card login hidden">
+<h2 id="independentProfileName"></h2>
+<p id="independentProfileHandicap"></p>
+<p class="note">Your golfer account is registered. You are not enrolled in the historical tournament. Contact the commissioner for future tournament enrollment.</p>
+<button id="independentProfileSignOut" class="secondary" type="button">Sign Out</button>
+<div id="independentProfileStatus" role="status"></div>
+</section>
+
 <section id="passwordChangeCard" class="card login hidden">
 <h2 style="margin-top:0">Choose Your Password</h2>
 <p class="note">This is your first sign-in. Create a password you will use for your EllenG Cup account from now on.</p>
@@ -6266,11 +6274,34 @@ function forceSignedInHome(){
  window.scrollTo({top:0,behavior:"auto"});
 }
 
+async function showIndependentGolferProfile(){
+ if(!user)return false;
+ const {data:profile,error}=await db.from("elleng_golfer_directory").select("id,name,band,handicap").eq("player_user_id",user.id).maybeSingle();
+ // Older deployments may not have the directory yet. Preserve legacy login.
+ if(error){if(["42P01","PGRST205"].includes(error.code))return false;throw error;}
+ if(!profile)return false;
+ $("loginCard").classList.add("hidden");
+ $("app").classList.add("hidden");
+ $("passwordChangeCard").classList.add("hidden");
+ $("appHub")?.classList.add("hidden");
+ setMobileNavVisible(false);setGlobalMenuVisible(false);
+ $("independentProfileName").textContent=profile.name;
+ $("independentProfileHandicap").textContent=profile.handicap?"Handicap: "+profile.handicap:"Handicap not set";
+ $("independentProfileCard").classList.remove("hidden");
+ return true;
+}
+$("independentProfileSignOut").addEventListener("click",async()=>{
+ const {error}=await db.auth.signOut();
+ if(error){$("independentProfileStatus").textContent="Unable to sign out. Try again.";return;}
+ user=null;$("independentProfileCard").classList.add("hidden");await enterViewer();
+});
 async function enterApp(){
 document.body.classList.remove("login-mode");setGlobalMenuVisible(false);setMobileNavVisible(false);
  
  $("loginMsg").textContent="Signed in — loading tournament…";
  try{
+  $("independentProfileCard").classList.add("hidden");
+  if(await showIndependentGolferProfile())return;
   await loadBase();
   await Promise.all([
     loadPublicRoster(),
