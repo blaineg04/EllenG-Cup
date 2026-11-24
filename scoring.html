@@ -6809,7 +6809,9 @@ async function refreshFutureEvents(){
  }catch(e){$("futureEventMsg").textContent="Future events unavailable: "+(e?.message||"Database migration pending");}
  finally{futureEventLoadInFlight=false;}
 }
+let futureRosterRequest=0;
 async function refreshFutureEventRoster(){
+ const request=++futureRosterRequest;
  const eventId=$("futureEventSelect")?.value;
  const roster=$("futureEventRoster");if(!roster)return;
  roster.replaceChildren();
@@ -6819,6 +6821,7 @@ async function refreshFutureEventRoster(){
      db.from("elleng_golfer_directory").select("id,name").order("name"),
      db.from("elleng_future_event_enrollments").select("golfer_id,participating").eq("event_id",eventId)
    ]);
+   if(request!==futureRosterRequest || $("futureEventSelect")?.value!==eventId)return;
    if(golfers.error)throw golfers.error;if(enrollments.error)throw enrollments.error;
    const selected=new Map((enrollments.data||[]).map(e=>[e.golfer_id,e.participating]));
    for(const g of golfers.data||[]){
@@ -6838,7 +6841,7 @@ async function refreshFutureEventRoster(){
      label.append(checkbox,document.createTextNode(" "+g.name));roster.append(label);
    }
    if(!(golfers.data||[]).length)roster.textContent="Register golfers in the independent directory first.";
- }catch(e){$("futureEventMsg").textContent="Unable to load future event roster: "+(e?.message||"Unknown error");}
+ }catch(e){if(request!==futureRosterRequest)return;$("futureEventMsg").textContent="Unable to load future event roster: "+(e?.message||"Unknown error");}
 }
 $("futureEventSelect").addEventListener("change",()=>void refreshFutureEventRoster());
 $("createFutureEventBtn").addEventListener("click",async()=>{
