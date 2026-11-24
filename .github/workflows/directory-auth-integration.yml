@@ -138,7 +138,7 @@ jobs:
                   const html = require('node:fs').readFileSync(process.cwd()+'/scoring.html','utf8');
                   const anchor = 'async function enterApp(){';
                   assert.ok(html.includes(anchor));
-                  const fixture = 'async function enterApp(){ if(user && user.email==="owner@example.test"){ isCommissioner=true; tournament={status:"completed"}; draftState={teams:[],golfers:[],picks:[]}; document.body.classList.remove("login-mode"); $("loginCard").classList.add("hidden"); $("app").classList.remove("hidden"); $("app").style.display="block"; let node=$("newGolferName"); while(node && node!==document.body){node.classList.remove("hidden");node.style.display="";node=node.parentElement;} await refreshGolferDirectory(true); return; }';
+                  const fixture = 'async function enterApp(){ if(user && user.email==="owner@example.test"){ isCommissioner=true; tournament={status:"completed"}; draftState={teams:[],golfers:[],picks:[]}; document.body.classList.remove("login-mode"); $("loginCard").classList.add("hidden"); $("app").classList.remove("hidden"); $("app").style.display="block"; let node=$("newGolferName"); while(node && node!==document.body){node.classList.remove("hidden");node.style.setProperty("display",node.tagName==="INPUT"?"block":"block","important");node.style.setProperty("visibility","visible","important");node=node.parentElement;} await refreshGolferDirectory(true); document.body.dataset.fixtureReady="true"; return; }';
                   return route.fulfill({contentType:'text/html',body:html.replace(anchor,fixture)});
                 }
                 if (url.pathname.endsWith('/config.js')) return route.fulfill({contentType:'application/javascript',body:'window.ELLENG_CONFIG='+JSON.stringify({supabaseUrl:process.env.API_URL,supabaseAnonKey:process.env.ANON_KEY})});
@@ -151,6 +151,7 @@ jobs:
               await ap.locator('#email').fill('owner@example.test');
               await ap.locator('#password').fill('IsolatedCommissioner123!');
               await ap.locator('#loginBtn').click();
+              await ap.waitForFunction(() => document.body.dataset.fixtureReady === 'true').catch(async error => { console.error('Commissioner fixture initialization:', await ap.locator('#loginMsg').textContent()); throw error; });
               await ap.locator('#newGolferName').waitFor({state:'visible'});
               await ap.locator('#newGolferName').fill('Browser Registered Golfer');
               await ap.locator('#newGolferParticipation').selectOption('false');
