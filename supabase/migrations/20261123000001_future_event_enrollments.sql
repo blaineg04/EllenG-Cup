@@ -70,3 +70,32 @@ begin
 end $roster$;
 revoke all on function public.elleng_future_draft_roster(uuid) from public,anon;
 grant execute on function public.elleng_future_draft_roster(uuid) to authenticated;
+
+-- Each future event has its own immutable initial roster snapshot.
+create table public.elleng_future_draft_sessions (
+ event_id uuid primary key references public.elleng_future_events(id) on delete cascade,
+ roster jsonb not null check(jsonb_typeof(roster)='array'),
+ created_at timestamptz not null default now()
+);
+alter table public.elleng_future_draft_sessions enable row level security;
+revoke all on public.elleng_future_draft_sessions from public,anon,authenticated;
+grant select on public.elleng_future_draft_sessions to authenticated;
+create policy future_draft_session_owner_read on public.elleng_future_draft_sessions
+ for select to authenticated using (exists(select 1 from public.elleng_future_events e where e.id=event_id and e.owner_id=auth.uid()));
+create function public.elleng_prepare_future_draft(p_event_id uuid)
+returns integer language plpgsql security definer set search_path='' as $prepare$
+declare v_roster jsonb; v_count integer;
+begin
+ perform 1 from public.elleng_future_events where id=p_event_id and owner_id=auth.uid() for update;
+ if not found then raise exception 'Event unavailable' using errcode='42501'; end if;
+ select roster into v_roster from public.elleng_future_draft_sessions where event_id=p_event_id;
+ if found then return jsonb_array_length(v_roster); end if;
+ select coalesce(jsonb_agg(to_jsonb(r) order by r.name,r.golfer_id),'[]'::jsonb) into v_roster
+ from public.elleng_future_draft_roster(p_event_id) r;
+ v_count:=jsonb_array_length(v_roster);
+ if v_count not between 2 and 40 then raise exception 'Draft requires 2 to 40 participating golfers'; end if;
+ insert into public.elleng_future_draft_sessions(event_id,roster) values(p_event_id,v_roster);
+ return v_count;
+end $prepare$;
+revoke all on function public.elleng_prepare_future_draft(uuid) from public,anon;
+grant execute on function public.elleng_prepare_future_draft(uuid) to authenticated;
