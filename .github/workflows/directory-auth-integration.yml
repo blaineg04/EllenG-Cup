@@ -175,8 +175,13 @@ jobs:
               await row.waitFor({state:'visible'});
               await row.getByPlaceholder('New username',{exact:true}).fill('browsernewgolfer');
               await row.getByPlaceholder('New password (8+ characters)',{exact:true}).fill('BrowserGolfer123!');
+              const loginResponse = ap.waitForResponse(res => res.url().endsWith('/functions/v1/player-admin') && res.request().method()==='POST');
               await row.getByRole('button',{name:'Create Login'}).click();
+              const linked = await loginResponse;
+              assert.ok(linked.ok(), 'Create Login HTTP '+linked.status());
+              await linked.finished();
               await row.filter({hasText:'Login linked'}).waitFor({state:'visible'});
+              await admin.unrouteAll({behavior:'wait'});
               await admin.close();
               const page = await context.newPage();
               await page.goto('http://127.0.0.1:8765/scoring.html');
