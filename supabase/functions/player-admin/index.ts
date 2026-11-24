@@ -28,6 +28,29 @@ Deno.serve(async(req:Request)=>{
     if(draft.owner_id!==user.id) return json({error:"Commissioner access required."},403);
     const golfers=Array.isArray(draft.state?.golfers)?draft.state.golfers:[];
 
+    if(action==="create_directory_login"){
+      if(draftId!=="elleng-cup") return json({error:"Invalid directory scope."},400);
+      const id=String(body?.directory_id||"");
+      const username=clean(body?.username);
+      const password=String(body?.password||"");
+      if(!/^[0-9a-f-]{36}$/i.test(id)||username.length<2||username.length>64||password.length<8||password.length>72) return json({error:"Invalid directory ID, username or password."},400);
+      const {data:entry,error:readError}=await admin.from("elleng_golfer_directory").select("id,player_user_id").eq("id",id).eq("owner_id",user.id).maybeSingle();
+      if(readError) throw readError;
+      if(!entry) return json({error:"Directory golfer not found."},404);
+      if(entry.player_user_id) return json({error:"Golfer already has a login."},409);
+      // Create only: never adopt or reset an existing Auth identity.
+      const {data:created,error:createError}=await admin.auth.admin.createUser({email:username+DOMAIN,password,email_confirm:true});
+      if(createError||!created?.user) return json({error:"Unable to create login. Choose an unused username."},409);
+      const newId=created.user.id;
+      const {data:linked,error:linkError}=await admin.from("elleng_golfer_directory").update({player_user_id:newId,updated_at:new Date().toISOString()}).eq("id",id).eq("owner_id",user.id).is("player_user_id",null).select("id").maybeSingle();
+      if(linkError||!linked){
+        // Do not delete on ambiguous database errors: the write may have succeeded.
+        if(!linkError) await admin.auth.admin.deleteUser(newId);
+        return json({error:"Login linking could not be confirmed. Commissioner review required."},409);
+      }
+      return json({ok:true,username,user_id:newId});
+    }
+
     if(action==="list"){
       const {data,error}=await admin.from("elleng_player_accounts").select("golfer_index,user_id,username,display_name,photo_url,must_change_password").eq("draft_id",draftId).order("golfer_index");
       if(error) throw error;
