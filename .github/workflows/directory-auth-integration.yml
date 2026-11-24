@@ -53,6 +53,53 @@ jobs:
           assert status==400
           print('Real local Auth: creation, duplicate rejection and original password verified.')
           PY
+      - name: Exercise deployed player-admin handler against local Auth
+        shell: bash
+        run: |
+          set -euo pipefail
+          source /tmp/elleng-local.env
+          export API_URL ANON_KEY SERVICE_ROLE_KEY DB_URL
+          mkdir -p /tmp/elleng-auth/supabase/functions/player-admin
+          cp supabase/functions/player-admin/index.ts /tmp/elleng-auth/supabase/functions/player-admin/
+          export PGPASSWORD=postgres
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -c 'create table public.elleng_drafts(id text primary key,owner_id uuid not null,state jsonb not null);'
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20261123000000_independent_golfer_directory.sql
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20261123000002_directory_self_read.sql
+          (cd /tmp/elleng-auth && supabase functions serve player-admin --no-verify-jwt) >/tmp/elleng-edge.log 2>&1 &
+          python - <<'PY'
+          import os,json,urllib.request,urllib.error,time,subprocess
+          base=os.environ['API_URL']
+          assert base.startswith(('http://127.0.0.1:', 'http://localhost:'))
+          anon=os.environ['ANON_KEY']; service=os.environ['SERVICE_ROLE_KEY']
+          def call(path,body,key,token=None):
+              req=urllib.request.Request(base+path,json.dumps(body).encode(),{'apikey':key,'Authorization':'Bearer '+(token or key),'Content-Type':'application/json'})
+              try:
+                  with urllib.request.urlopen(req,timeout=30) as r:return r.status,json.load(r)
+              except urllib.error.HTTPError as e:return e.code,json.load(e)
+          pw='IsolatedCommissioner123!'
+          status,owner=call('/auth/v1/admin/users',{'email':'owner@example.test','password':pw,'email_confirm':True},service)
+          assert status in (200,201)
+          oid=owner['id']
+          import uuid
+          uuid.UUID(oid)
+          subprocess.run(['psql',os.environ['DB_URL'],'-v','ON_ERROR_STOP=1','-c',f"insert into public.elleng_drafts values ('elleng-cup','{oid}','{{}}');"],check=True)
+          status,session=call('/auth/v1/token?grant_type=password',{'email':'owner@example.test','password':pw},anon)
+          assert status==200
+          token=session['access_token']
+          status,gid=call('/rest/v1/rpc/elleng_register_directory_golfer',{'p_name':'Isolated Golfer'},anon,token)
+          assert status==200,(status,gid)
+          payload={'action':'create_directory_login','directory_id':gid,'username':'isolatednewgolfer','password':'IsolatedGolfer123!'}
+          time.sleep(15)
+          status,result=call('/functions/v1/player-admin',payload,anon,token)
+          assert status==200,(status,result)
+          status,player=call('/auth/v1/token?grant_type=password',{'email':'isolatednewgolfer@players.ellengcup.app','password':payload['password']},anon)
+          assert status==200 and player['user']['id']==result['user_id']
+          status,_=call('/functions/v1/player-admin',payload,anon,player['access_token'])
+          assert status==403,status
+          status,_=call('/functions/v1/player-admin',payload,anon,token)
+          assert status==409,status
+          print('Real player-admin registration, sign-in and authorization verified.')
+          PY
       - name: Stop disposable services
         if: always()
         run: cd /tmp/elleng-auth && supabase stop --no-backup
