@@ -4,6 +4,7 @@ begin;
 grant usage on schema auth to authenticated;
 grant execute on function auth.uid() to authenticated;
 update public.elleng_drafts set state=state || '{"golfers":[{"name":"Historical test golfer"},{"name":" historical test golfer "}]}'::jsonb where id='elleng-cup';
+create temp table historical_import_snapshot as select state from public.elleng_drafts where id='elleng-cup';
 set local role authenticated;
 create temp table authorization_fixture_ids(event_id uuid,golfer_id uuid) on commit drop;
 select set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',true);
@@ -51,4 +52,11 @@ begin
  end;
  if not v_denied then raise exception 'Noncommissioner linked another golfer account'; end if;
 end $auth_test$;
+reset role;
+do $snapshot$
+begin
+ if (select state from public.elleng_drafts where id='elleng-cup') is distinct from (select state from historical_import_snapshot) then
+  raise exception 'Historical draft changed during directory import or enrollment';
+ end if;
+end $snapshot$;
 rollback;
