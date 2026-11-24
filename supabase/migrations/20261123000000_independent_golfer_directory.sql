@@ -62,3 +62,21 @@ begin
 end $$;
 revoke all on function public.elleng_register_directory_golfer(text,text,text,text) from public, anon;
 grant execute on function public.elleng_register_directory_golfer(text,text,text,text) to authenticated;
+
+-- Explicit commissioner import of historical roster names; never writes historical state.
+create or replace function public.elleng_import_directory_roster()
+returns integer language plpgsql security definer set search_path='' as $import$
+declare v_owner uuid:=auth.uid(); v_state jsonb; v_count integer;
+begin
+ select state into v_state from public.elleng_drafts where id='elleng-cup' and owner_id=v_owner;
+ if not found then raise exception 'Commissioner authorization required' using errcode='42501'; end if;
+ insert into public.elleng_golfer_directory(owner_id,name)
+ select v_owner,btrim(g->>'name')
+ from jsonb_array_elements(case when jsonb_typeof(v_state->'golfers')='array' then v_state->'golfers' else '[]'::jsonb end) g
+ where length(btrim(g->>'name')) between 1 and 160
+ on conflict do nothing;
+ get diagnostics v_count = row_count;
+ return v_count;
+end $import$;
+revoke all on function public.elleng_import_directory_roster() from public,anon;
+grant execute on function public.elleng_import_directory_roster() to authenticated;
