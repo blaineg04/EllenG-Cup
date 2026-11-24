@@ -18,7 +18,8 @@
   ],
   "git": {
     "deploymentEnabled": {
-      "development/nov20-release-reconciliation-20261026": false
+      "development/nov20-release-reconciliation-20261026": false,
+      "fix/independent-golfer-directory-20261123": false
     }
   }
 }
