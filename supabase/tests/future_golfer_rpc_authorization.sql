@@ -16,6 +16,12 @@ begin
  exception when insufficient_privilege then v_rejected := true;
  end;
  if not v_rejected then raise exception 'Noncommissioner created future event'; end if;
+ v_rejected := false;
+ begin
+  perform public.elleng_import_directory_roster();
+ exception when insufficient_privilege then v_rejected := true;
+ end;
+ if not v_rejected then raise exception 'Noncommissioner imported historical roster'; end if;
 end $auth_test$;
 select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',true);
 do $auth_test$
