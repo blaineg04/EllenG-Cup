@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'scoring.html'
+      - 'supabase/functions/player-admin/index.ts'
       - 'supabase/migrations/*independent_golfer_directory.sql'
       - 'supabase/tests/independent_golfer_directory_isolation.sql'
       - 'supabase/migrations/*future_event_enrollments.sql'
@@ -53,5 +54,18 @@ jobs:
           assert "update public.elleng_tournaments" not in import_sql.lower()
           assert 'db.rpc("elleng_import_directory_roster")' in app
           assert future.count("end " + chr(36)*2 + ";") == 2
-          print("Static directory safety contract passed; database integration still required.")
+          backend = Path("supabase/functions/player-admin/index.ts").read_text()
+          login = backend.split('if(action==="create_directory_login"){',1)[1].split('if(action==="list"){',1)[0]
+          assert 'draft.owner_id!==user.id' in backend.split('if(action==="create_directory_login"){',1)[0]
+          assert 'admin.auth.admin.createUser(' in login
+          assert 'updateUserById' not in login
+          assert 'listUsers' not in login
+          assert 'if(entry.player_user_id)' in login
+          assert '.is("player_user_id",null)' in login
+          assert login.count('.eq("owner_id",user.id)') == 2
+          assert 'elleng_player_accounts' not in login
+          assert 'elleng_drafts' not in login
+          assert 'action:"create_directory_login"' in app
+          assert 'directory_id:g.id' in app
+          print("Static directory and create-only login safety contracts passed; Auth integration still required.")
           PY
