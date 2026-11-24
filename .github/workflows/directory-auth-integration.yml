@@ -23,7 +23,7 @@ jobs:
           mkdir -p /tmp/elleng-auth
           cd /tmp/elleng-auth
           supabase init
-          supabase start
+          supabase start -x inbucket
           supabase status -o env > /tmp/elleng-local.env
       - name: Exercise real Auth and duplicate rejection
         shell: bash
