@@ -64,6 +64,7 @@ jobs:
           cp supabase/functions/player-admin/index.ts /tmp/elleng-auth/supabase/functions/player-admin/
           export PGPASSWORD=postgres
           psql "$DB_URL" -v ON_ERROR_STOP=1 -c 'create table public.elleng_drafts(id text primary key,owner_id uuid not null,state jsonb not null);'
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -c 'grant select on public.elleng_drafts to authenticated;'
           psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20261123000000_independent_golfer_directory.sql
           psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20261123000002_directory_self_read.sql
           (cd /tmp/elleng-auth && supabase functions serve player-admin --no-verify-jwt) >/tmp/elleng-edge.log 2>&1 &
@@ -140,13 +141,20 @@ jobs:
               const admin = await browser.newContext({...devices['iPhone 13'], serviceWorkers:'block'});
               await admin.route('**/*', async route => {
                 const url = new URL(route.request().url());
-                if (url.origin === 'http://127.0.0.1:8765' && url.pathname.endsWith('/scoring.html')) {
-                  const html = require('node:fs').readFileSync(process.cwd()+'/scoring.html','utf8');
-                  const anchor = 'async function enterApp(){';
-                  assert.ok(html.includes(anchor));
-                  const fixture = 'async function enterApp(){ if(user && user.email==="owner@example.test"){ isCommissioner=true; tournament={status:"completed"}; draftState={teams:[],golfers:[],picks:[]}; document.body.classList.remove("login-mode"); $("loginCard").classList.add("hidden"); $("app").classList.remove("hidden"); $("app").style.display="block"; let node=$("newGolferName"); while(node && node!==document.body){node.classList.remove("hidden");node.style.setProperty("display",node.tagName==="INPUT"?"block":"block","important");node.style.setProperty("visibility","visible","important");node=node.parentElement;} await refreshGolferDirectory(true); document.body.dataset.fixtureReady="true"; return; }';
-                  const response = await route.fetch();
-                  return route.fulfill({response,body:html.replace(anchor,fixture)});
+                // Unmodified application; fixture only unrelated legacy read dependencies.
+                const fixtureJson = body => route.fulfill({contentType:'application/json',body:JSON.stringify(body),headers:{'access-control-allow-origin':'http://127.0.0.1:8765'}});
+                if (url.origin === new URL(process.env.API_URL).origin && route.request().method() !== 'OPTIONS') {
+                  if (url.pathname === '/rest/v1/elleng_tournaments' && route.request().method()==='GET') return fixtureJson({id:'elleng-cup-live',name:'Isolated completed tournament',status:'completed',pars:Array(18).fill(4)});
+                  if (url.pathname === '/rest/v1/elleng_drafts' && route.request().method()==='GET') {
+                    const response=await route.fetch({url:process.env.API_URL+'/rest/v1/elleng_drafts?select=owner_id,state&id=eq.elleng-cup',headers:{...route.request().headers(),accept:'application/vnd.pgrst.object+json'}});
+                    assert.ok(response.ok(),'Draft fixture read failed '+response.status());
+                    const draft=await response.json();
+                    return fixtureJson({...draft,updated_at:null,tournament_name:'Isolated completed tournament',tournament_date:'2026-11-20'});
+                  }
+                  if (url.pathname === '/functions/v1/player-profile') return fixtureJson({linked:false});
+                  if (url.pathname === '/functions/v1/player-public-roster') return fixtureJson({players:[]});
+                  if (url.pathname === '/functions/v1/player-admin' && route.request().postDataJSON()?.action==='list') return fixtureJson({accounts:[]});
+                  if (route.request().method()==='GET' && ['/rest/v1/elleng_captains','/rest/v1/elleng_team_scores','/rest/v1/elleng_player_hole_scores','/rest/v1/elleng_pair_hole_scores','/rest/v1/elleng_tournament_archives','/rest/v1/elleng_rsvps','/rest/v1/elleng_group_assignments','/rest/v1/elleng_trash_talk'].includes(url.pathname)) return fixtureJson([]);
                 }
                 if (url.pathname.endsWith('/config.js')) return route.fulfill({contentType:'application/javascript',body:'window.ELLENG_CONFIG='+JSON.stringify({supabaseUrl:process.env.API_URL,supabaseAnonKey:process.env.ANON_KEY})});
                 if (url.hostname === 'cdn.jsdelivr.net' && url.pathname.includes('supabase-js')) return route.fulfill({contentType:'application/javascript',path:require('node:path').join(__dirname,'node_modules/@supabase/supabase-js/dist/umd/supabase.js')});
@@ -166,7 +174,9 @@ jobs:
               await ap.locator('#email').fill('owner@example.test');
               await ap.locator('#password').fill('IsolatedCommissioner123!');
               await ap.locator('#loginBtn').click();
-              await ap.waitForFunction(() => document.body.dataset.fixtureReady === 'true').catch(async error => { console.error('Commissioner fixture initialization:', await ap.locator('#loginMsg').textContent()); throw error; });
+              await ap.locator('#hubScoring').waitFor({state:'visible'}).catch(async error => { console.error('Full dashboard initialization:', await ap.locator('#loginMsg').textContent()); throw error; });
+              await ap.locator('#hubScoring').click();
+              await ap.locator('#adminTab').click();
               await ap.locator('#newGolferName').waitFor({state:'visible'});
               await ap.locator('#newGolferName').fill('Browser Registered Golfer');
               await ap.locator('#newGolferParticipation').selectOption('false');
