@@ -6870,6 +6870,22 @@ async function refreshGolferDirectory(force=false){
  if(error){el.textContent="Golfer directory unavailable until the new database migration is deployed.";return;}
  el.replaceChildren();
  const title=document.createElement("strong");title.textContent="Registered for future tournaments (not playing):";el.append(title);
+ const importButton=document.createElement("button");
+ importButton.type="button";importButton.className="secondary";importButton.textContent="Import existing golfers";
+ importButton.addEventListener("click",async()=>{
+   if(!isCommissioner||!window.confirm("Copy existing golfer names into the future directory? Historical teams, scores and accounts will not change."))return;
+   importButton.disabled=true;
+   try{
+     const {data,error}=await db.rpc("elleng_import_directory_roster");
+     if(error)throw error;
+     golferDirectoryLastRefresh=0;
+     await refreshGolferDirectory(true);
+     await refreshFutureEventRoster();
+     window.alert(String(data)+" golfer(s) imported. Existing entries skipped.");
+   }catch(e){window.alert("Import failed: "+(e?.message||"Connection error"));}
+   finally{importButton.disabled=false;}
+ });
+ el.append(importButton);
  const list=document.createElement("ul");
  for(const g of data||[]){
    const li=document.createElement("li");
