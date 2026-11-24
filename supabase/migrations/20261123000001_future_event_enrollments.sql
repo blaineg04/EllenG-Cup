@@ -54,3 +54,19 @@ begin
 end $$;
 revoke all on function public.elleng_set_future_enrollment(uuid,uuid,boolean) from public,anon;
 grant execute on function public.elleng_set_future_enrollment(uuid,uuid,boolean) to authenticated;
+
+-- Read-only draft preparation: return only enrolled golfers for the selected event.
+create or replace function public.elleng_future_draft_roster(p_event_id uuid)
+returns table(golfer_id uuid,name text,band text,handicap text)
+language plpgsql security definer set search_path='' as $roster$
+begin
+ if not exists(select 1 from public.elleng_future_events e where e.id=p_event_id and e.owner_id=auth.uid())
+ then raise exception 'Event unavailable' using errcode='42501'; end if;
+ return query select g.id,g.name,g.band,g.handicap
+ from public.elleng_future_event_enrollments en
+ join public.elleng_golfer_directory g on g.id=en.golfer_id
+ where en.event_id=p_event_id and en.participating and g.owner_id=auth.uid()
+ order by g.name,g.id;
+end $roster$;
+revoke all on function public.elleng_future_draft_roster(uuid) from public,anon;
+grant execute on function public.elleng_future_draft_roster(uuid) to authenticated;
